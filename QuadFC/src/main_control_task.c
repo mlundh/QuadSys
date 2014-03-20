@@ -1,10 +1,22 @@
 /*
  * main_control_task.c
+ * Copyright (C) 2014  Martin Lundh
  *
- * Created: 2013-03-29 19:06:46
- *  Author: Martin Lundh
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * QuadFC - A quadcopter flight controller.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/* QuadFC - A quadcopter flight controller.
  * 
  *
  * This is the main task in the QuadFC. This is the core of the QuadFC and interfaces 
