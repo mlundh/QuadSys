@@ -1,0 +1,103 @@
+/*
+ * Test_task.h
+ *
+ * Created: 2013-02-09 14:01:38
+ *  Author: Martin Lundh
+ */ 
+
+
+#ifndef COMMUNICATION_TASKS_H_
+#define COMMUNICATION_TASKS_H_
+
+/* Kernel includes. */
+#include "FreeRTOS.h"
+#include "task.h"
+#include "queue.h"
+#include "asf.h"
+#include "debug_macros.h"
+
+
+/* Atmel library includes. */
+#include "freertos_uart_serial.h"
+
+/* Use USART1 (labeled RX2 17 and TX2 16)*/
+#define TERMINAL_USART USART1
+
+
+void create_communication_tasks(void);
+
+void tx_task(void *pvParameters);
+void rx_task(void *pvParameters);
+void CommunicationSend(const void * const pvItemToQueue, uint8_t bytesToSend);
+void ReadControlValuesPid(uint8_t *raw_data, control_values_pid_t *pidValues);
+void WriteControlValuesPid(uint8_t *raw_data, control_values_pid_t *pidValues);
+void HandleCommunication(communicaion_packet_t *packet, uint8_t* temp_frame);
+void SendAck(communicaion_packet_t *QSP_packet, uint8_t* temp_frame);
+void WriteLogParameters(uint8_t *raw_data);
+
+typedef enum QSP_control_octets{
+	frame_boundary_octet = 0x7E,
+	frame_boundary_octet_replacement = 0x5E,
+	control_escape_octet = 0x7D,
+	control_escape_octet_replacement = 0x5D
+}QSP_control_octets_t;
+
+typedef enum  QSP_control{
+	test = 0,
+
+	// Request commands do not carry any data. They should allways be followed by a response
+	// from the remote party.
+	req_pid_rate_param = 1,     // Request PID rate parameters.
+	req_pid_angle_param = 2,    // Request PID angle parameters.
+	req_pid_rate_limit = 3,     // Request PID rate limits.
+	req_pid_angle_limit = 4,    // Request PID angle limits.
+	req_logging_param = 5,      // Request what parameters are beeing logged at the moment.
+	req_logg_start = 6,         // Request logging to begin.
+	req_fc_state = 7,           // Request Flight controller state.
+	req_placeholder_4 = 8,
+	req_placeholder_5 = 9,
+	req_placeholder_6 = 10,
+	req_placeholder_7 = 11,
+	req_placeholder_8 = 12,
+	req_placeholder_9 = 13,
+	req_placeholder_11 = 15,
+	req_placeholder_12 = 16,
+	req_placeholder_13 = 17,
+	req_placeholder_14 = 18,
+	
+
+	// Data commands carry data, they may travell both ways and do not
+	// allways need to be preceded by a request.
+	data_pid_rate_param = 21,       // Deliver PID rate parameters.
+	data_pid_angle_param = 22,      // Deliver PID angle parameters.
+	data_pid_rate_limit = 23,       // Deliver PID rate limits.
+	data_pid_angle_limit = 24,      // Deliver PID angle limits.
+	data_logging_param = 25,        // Deliver Logging parameters.
+	data_log = 26,                 // Deliver logg data.
+	data_fc_state = 27,             // Deliver flight controller state.
+	data_placeholder_4 = 28,
+	data_placeholder_5 = 29,
+	data_placeholder_6 = 30,
+	data_placeholder_7 = 31,
+	data_placeholder_8 = 32,
+	data_placeholder_9 = 33,
+	data_placeholder_11 = 35,
+	data_placeholder_12 = 36,
+	data_placeholder_13 = 37,
+	data_placeholder_14 = 38,
+	data_placeholder_15 = 39,
+	data_placeholder_16 = 20,
+	
+	ctrl_req_pending = 246,
+	ctrl_state_fc_disarmed = 247,
+	ctrl_state_fc_configure = 248,
+    ctrl_req_state_fc_configure = 249,
+    ctrl_req_state_fc_disarmed = 250,
+	ctrl_crc_error = 251,        // Previous frame had an invald CRC, bad transmission, retransmitt.
+	ctrl_invalid_command = 252,  // previous command was not valid.
+	ctrl_ack = 253,              // Send acknoledge to the caller.
+	ctrl_echo = 254              // Echo the frame back to the caller.
+}QSP_control_t;
+
+
+#endif /* COMMUNICATION-TASKS-H- */
