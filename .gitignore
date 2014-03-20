@@ -1,0 +1,9 @@
+/.vagrant
+/QuadFC/out
+/*.d
+/*.o
+/*.elf
+/*.bin
+/QuadFC/*.cproject
+/QuadFC/*.project
+/QuadFC/.settings
