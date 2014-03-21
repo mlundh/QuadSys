@@ -2,24 +2,25 @@
 #
 # Makefile - Rules for building the driver library and examples.
 #
-# Copyright (c) 2005,2006 Luminary Micro, Inc.  All rights reserved.
+# Copyright (C) 2014  Martin Lundh
 #
-# Software License Agreement
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
 #
-# Luminary Micro, Inc. (LMI) is supplying this software for use solely and
-# exclusively on LMI's Stellaris Family of microcontroller products.
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
 #
-# The software is owned by LMI and/or its suppliers, and is protected under
-# applicable copyright laws.  All rights are reserved.  Any use in violation
-# of the foregoing restrictions may subject the user to criminal sanctions
-# under applicable laws, as well as to civil liability for the breach of the
-# terms and conditions of this license.
-#
-# THIS SOFTWARE IS PROVIDED "AS IS".  NO WARRANTIES, WHETHER EXPRESS, IMPLIED
-# OR STATUTORY, INCLUDING, BUT NOT LIMITED TO, IMPLIED WARRANTIES OF
-# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE APPLY TO THIS SOFTWARE.
-# LMI SHALL NOT, IN ANY CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL, OR
-# CONSEQUENTIAL DAMAGES, FOR ANY REASON WHATSOEVER.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
 #
 #******************************************************************************
 # Make does not offer a recursive wildcard function, so here's one:
