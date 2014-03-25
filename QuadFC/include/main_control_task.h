@@ -258,6 +258,9 @@ uint8_t nr_log_parameters;
 uint32_t log_freq;
 int32_t time_main;
 
+
+#define MAX_MOTORS (8)
+
 void create_main_control_task(void);
 void main_control_task(void *pvParameters);
 

@@ -188,67 +188,76 @@ void satellite_decode_signal(uint8_t data[], receiver_data_t *decoded_data){
          *
          * Sync data arrives first and could be anything. Should always be assigned to default.
          * All other data will be correctly assigned after that. */
-		switch (channel)														 
+        if(!(check & 0x80))
         {
-            case 0:
-				if (!(check & 0x1) && (check & 0x80)) /* Sync data arrives first and could be anything. Should always be assigned to default.*/
-				{
-                    decoded_data->ch0 = (int32_t)channel_data;
-                    check |= 0x1;	// make sure that each channel is assigned to once and only once.
-                    break;
-				}
-
-            case 1:
-				if (!(check & 0x2) && (check & 0x80))
-				{
-    				decoded_data->ch1 = (int32_t)channel_data;
-    				check |= 0x2;
-    				break;
-				}
-            case 2:
-				if (!(check & 0x4) && (check & 0x80))
-				{
-    				decoded_data->ch2 = (int32_t)channel_data;
-    				check |= 0x4;
-    				break;
-				}
-            case 3:
-				if (!(check & 0x8) && (check & 0x80))
-				{
-    				decoded_data->ch3 = (int32_t)channel_data;
-    				check |= 0x8;
-    				break;
-				}
-            case 4:
-				if (!(check & 0x10) && (check & 0x80))
-				{
-    				decoded_data->ch4 = (int32_t)channel_data;
-    				check |= 0x10;
-    				break;
-				}
-            case 5:
-				if (!(check & 0x20) && (check & 0x80))
-				{
-    				decoded_data->ch5 = (int32_t)channel_data;
-    				check |= 0x20;
-    				break;
-				}
-            case 6:
-				if (!(check & 0x40) && (check & 0x80))
-				{
-    				decoded_data->ch6 = (int32_t)channel_data;
-    				check |= 0x40;
-    				break;
-				}
-            default:
-				if (!(check & 0x80))
-				{
-    				decoded_data->sync = (int32_t)raw_data;
-    				check |= 0x80;
-    				
-				}
-                break;
+			decoded_data->sync = (int32_t)raw_data;
+			check |= 0x80;
         }
+        else
+        {
+			switch (channel)
+			{
+				case 0:
+					if (!(check & 0x1)) /* */
+					{
+						decoded_data->ch0 = (int32_t)channel_data;
+						check |= 0x1;	// make sure that each channel is assigned to once and only once.
+
+					}
+					break;
+				case 1:
+					if (!(check & 0x2))
+					{
+						decoded_data->ch1 = (int32_t)channel_data;
+						check |= 0x2;
+
+					}
+					break;
+				case 2:
+					if (!(check & 0x4))
+					{
+						decoded_data->ch2 = (int32_t)channel_data;
+						check |= 0x4;
+
+					}
+					break;
+				case 3:
+					if (!(check & 0x8))
+					{
+						decoded_data->ch3 = (int32_t)channel_data;
+						check |= 0x8;
+
+					}
+					break;
+				case 4:
+					if (!(check & 0x10))
+					{
+						decoded_data->ch4 = (int32_t)channel_data;
+						check |= 0x10;
+
+					}
+					break;
+				case 5:
+					if (!(check & 0x20))
+					{
+						decoded_data->ch5 = (int32_t)channel_data;
+						check |= 0x20;
+
+					}
+					break;
+				case 6:
+					if (!(check & 0x40))
+					{
+						decoded_data->ch6 = (int32_t)channel_data;
+						check |= 0x40;
+
+					}
+					break;
+				default:
+						decoded_data->connection_ok = 1;
+					break;
+			}
+		}
     }
 	if (check != 0xFF) // If not all bits are set to "1" then something is wrong.
 	{

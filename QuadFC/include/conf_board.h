@@ -44,10 +44,16 @@
 #ifndef CONF_BOARD_H_INCLUDED
 #define CONF_BOARD_H_INCLUDED
 
-/** Configure PWM pins used to control LEDs on board */
+/** Configure PWM pins used to control motors */
 #define CONF_BOARD_PWM_PIN_9
 #define CONF_BOARD_PWM_PIN_8
 #define CONF_BOARD_PWM_PIN_7
+#define CONF_BOARD_PWM_PIN_6
+#define CONF_BOARD_PWM_PIN_34
+#define CONF_BOARD_PWM_PIN_36
+#define CONF_BOARD_PWM_PIN_38
+#define CONF_BOARD_PWM_PIN_40
+
 
 #define CONF_BOARD_TWI0
 

@@ -123,6 +123,7 @@ void main_control_task(void *pvParameters)
 	// declared as public in main_control_task.h
     parameters_angle = pvPortMalloc(sizeof(control_values_pid_t)); /*PID parameters used in angle mode*/
     parameters_rate = pvPortMalloc(sizeof(control_values_pid_t)); /*PID parameters used in rate mode*/
+
     control_values_pid_t *ctrl_error_angle = pvPortMalloc(sizeof(control_values_pid_t)); /*control error signal used in angle mode*/
     control_values_pid_t *ctrl_error_rate = pvPortMalloc(sizeof(control_values_pid_t)); /*control error signal used in rate mode*/
     control_values_pid_t *ctrl_limit_rate = pvPortMalloc(sizeof(control_values_pid_t)); /*control error signal used in rate mode*/
@@ -153,6 +154,7 @@ void main_control_task(void *pvParameters)
 		log_parameters[i] = NULL;
 	}
 	
+	int32_t motor_setpoint[MAX_MOTORS] = { 0 };
 	
 	xSemaphoreTake(x_param_mutex, portMAX_DELAY);
     uint8_t state_request = 0;
@@ -270,24 +272,37 @@ void main_control_task(void *pvParameters)
 	/*Initialize log parameters*/
 	nr_log_parameters = 0;
 	
-    toggle_pin(31);
+
+
+
+
+    toggle_pin(33);
     /*Initialize the IMU. A reset followed by a short delay is recommended
      * before starting the configuration.*/
-	mpu6050_reset(mpu6050);
+	//mpu6050_reset(mpu6050);
 	vTaskDelay(delay_1000_ms);
-	mpu6050_initialize(mpu6050);
+	//mpu6050_initialize(mpu6050);
     
     /*Calculate offsets for gyro. TODO calculate angle offset for accl.*/
-	mpu6050_calc_offset(mpu6050,offset);
+	//mpu6050_calc_offset(mpu6050,offset);
 
 
     /*Flight controller should allways be started in fc_disarmed mode to prevent
      * unintentional motor arming. */
     fc_mode = fc_disarmed;
     
-    toggle_pin(31);
+    toggle_pin(33);
 
 
+    // TODO read from memory
+    uint32_t nr_motors = 8;
+
+    int test1 = init_pwm_motor_control(nr_motors);
+    if(test1 != 0)
+    {
+    	toggle_pin(31);
+    }
+    pwm_enable();
     /*The main control loop*/
     unsigned portBASE_TYPE xLastWakeTime = xTaskGetTickCount();
 	for (;;)
@@ -322,11 +337,16 @@ void main_control_task(void *pvParameters)
 		else if (fc_mode == fc_armed_rate_mode)
 		{
 
-			mpu6050_read_motion(mpu6050, MPU6050_RA_ACCEL_XOUT_H, offset, imu_readings, 14);
-			translate_receiver_signal_rate(setpoint, local_receiver_buffer);
-			get_rate_gyro(state,imu_readings);
-			calc_control_signal_rate_pid(motors, NUMBER_OF_MOTORS, parameters_rate, ctrl_error_rate, state, setpoint, ctrl_signal);
-			mk_esc_write_setpoint_value(motors, NUMBER_OF_MOTORS);
+			//mpu6050_read_motion(mpu6050, MPU6050_RA_ACCEL_XOUT_H, offset, imu_readings, 14);
+			//translate_receiver_signal_rate(setpoint, local_receiver_buffer);
+			//get_rate_gyro(state, imu_readings);
+			//calc_control_signal_rate_pid(motors, NUMBER_OF_MOTORS, parameters_rate, ctrl_error_rate, state, setpoint, ctrl_signal);
+			//mk_esc_write_setpoint_value(motors, NUMBER_OF_MOTORS);
+			motor_setpoint[0] = 100;
+			motor_setpoint[1] = 200;
+			motor_setpoint[2] = 100;
+			motor_setpoint[3] = 400;
+			pwm_update_setpoint(motor_setpoint, nr_motors);
 		}
 
         /*---------------------------------------Configure mode--------------------------------------------
@@ -410,7 +430,6 @@ void main_control_task(void *pvParameters)
 			/* The code in this scope will execute once every 22 ms (the frequency of new data
 			 * from the receiver).
 			 */
-       
         }
         
 		/*--------------- If there is no connection to the receiver, put FC in disarmed mode-------------*/
@@ -418,6 +437,7 @@ void main_control_task(void *pvParameters)
         {
             fc_mode = fc_disarmed; /*Error - no connection, TODO do something!*/
             reset_integral_error = 1;
+            //pwm_dissable();
         }
 
      
@@ -429,11 +449,13 @@ void main_control_task(void *pvParameters)
 		{
     		fc_mode = fc_disarmed;
             reset_integral_error = 1;
+            //pwm_dissable();
 		}
 		if ((local_receiver_buffer->connection_ok) && (local_receiver_buffer->ch5 < SATELLITE_CH_CENTER) && 
 			(local_receiver_buffer->ch0 < 40) && (fc_mode != fc_armed_rate_mode) && (fc_mode != fc_configure))
 		{
     		fc_mode = fc_armed_rate_mode;
+    		pwm_enable();
 		}
         
 		/*------------------------------------------- Logging? ------------------------------------------ 
@@ -452,10 +474,19 @@ void main_control_task(void *pvParameters)
 				CommunicationSend(&(QSP_log_packet->frame), QSP_log_packet->frame_length);
 			}
 		}
+		toggle_pin(35);
+		motor_setpoint[0] = 100;
+		motor_setpoint[1] = 200;
+		motor_setpoint[2] = 100;
+		motor_setpoint[3] = 400;
+		uint8_t test = pwm_update_setpoint(motor_setpoint, nr_motors);
 
-        toggle_pin(31);
-        toggle_pin(33);
-        toggle_pin(35);
+		if(test != 0)
+		{
+			toggle_pin(31);
+		}
+
+
         vTaskDelayUntil(&xLastWakeTime,xPeriod);
         
         /*-------------------Heartbeat----------------------

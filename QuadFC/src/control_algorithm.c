@@ -24,7 +24,7 @@
 #include "control_algorithm.h"
 
 
-void calc_control_signal_angle_pid(mk_esc_motors_t *motors, uint8_t nr_motors, control_values_pid_t *parameters_pid, control_values_pid_t *ctrl_error, state_data_t *state, state_data_t *setpoint, control_signal_t *ctrl_signal)
+void calc_control_signal_angle_pid(int32_t motor_setpoint[], uint8_t nr_motors, control_values_pid_t *parameters_pid, control_values_pid_t *ctrl_error, state_data_t *state, state_data_t *setpoint, control_signal_t *ctrl_signal)
 {
     
      static control_signal_t error_d_last;
@@ -75,13 +75,13 @@ void calc_control_signal_angle_pid(mk_esc_motors_t *motors, uint8_t nr_motors, c
     }
     if (nr_motors == 4)
     {
-        control_allocation_quad_x(ctrl_signal, motors);
+        control_allocation_quad_x(ctrl_signal, motor_setpoint);
     }    
     
 }
 
 
-void calc_control_signal_rate_pid(mk_esc_motors_t *motors, uint8_t nr_motors, control_values_pid_t *parameters_pid, control_values_pid_t *ctrl_error, state_data_t *state, state_data_t *setpoint, control_signal_t *ctrl_signal)
+void calc_control_signal_rate_pid(int32_t motor_setpoint[], uint8_t nr_motors, control_values_pid_t *parameters_pid, control_values_pid_t *ctrl_error, state_data_t *state, state_data_t *setpoint, control_signal_t *ctrl_signal)
 {
     
     static control_signal_t error_d_last;
@@ -107,32 +107,32 @@ void calc_control_signal_rate_pid(mk_esc_motors_t *motors, uint8_t nr_motors, co
     ctrl_signal->torque_pitch = my_mult(parameters_pid->pitch_p, ctrl_error->pitch_p) + my_mult(parameters_pid->pitch_i, ctrl_error->pitch_i) + my_mult(parameters_pid->pitch_d, ctrl_error->pitch_d);
     ctrl_signal->torque_roll = my_mult(parameters_pid->roll_p, ctrl_error->roll_p) + my_mult(parameters_pid->roll_i, ctrl_error->roll_i) + my_mult(parameters_pid->roll_d, ctrl_error->roll_d);
     ctrl_signal->torque_yaw = my_mult(parameters_pid->yaw_p, ctrl_error->yaw_p + my_mult(parameters_pid->yaw_i, ctrl_error->yaw_i) + my_mult(parameters_pid->yaw_d, ctrl_error->yaw_d));
-    // No automatic altitude control yet. TODO
+    // TODO No automatic altitude control yet.
     ctrl_signal->thrust = my_mult(parameters_pid->altitude_p, setpoint->z_vel); 
     
 
     if (nr_motors == 4)
     {
-        control_allocation_quad_x(ctrl_signal, motors);
+        control_allocation_quad_x(ctrl_signal, motor_setpoint);
     }
     
     
 }
 
 
-void control_allocation_quad_x(control_signal_t *ctrl_signal, mk_esc_motors_t *motors)
+void control_allocation_quad_x(control_signal_t *ctrl_signal, int32_t motor_setpoint[])
 {
-    motors->motor[0].setpoint = ((int32_t)(ctrl_signal->thrust - ctrl_signal->torque_roll/4 - ctrl_signal->torque_pitch/4 + ctrl_signal->torque_yaw/4));
-    motors->motor[1].setpoint = ((int32_t)(ctrl_signal->thrust + ctrl_signal->torque_roll/4 - ctrl_signal->torque_pitch/4 - ctrl_signal->torque_yaw/4));
-    motors->motor[2].setpoint = ((int32_t)(ctrl_signal->thrust + ctrl_signal->torque_roll/4 + ctrl_signal->torque_pitch/4 + ctrl_signal->torque_yaw/4));
-    motors->motor[3].setpoint = ((int32_t)(ctrl_signal->thrust - ctrl_signal->torque_roll/4 + ctrl_signal->torque_pitch/4 - ctrl_signal->torque_yaw/4));
+	motor_setpoint[0] = ((int32_t)(ctrl_signal->thrust - ctrl_signal->torque_roll/4 - ctrl_signal->torque_pitch/4 + ctrl_signal->torque_yaw/4));
+	motor_setpoint[1] = ((int32_t)(ctrl_signal->thrust + ctrl_signal->torque_roll/4 - ctrl_signal->torque_pitch/4 - ctrl_signal->torque_yaw/4));
+	motor_setpoint[2] = ((int32_t)(ctrl_signal->thrust + ctrl_signal->torque_roll/4 + ctrl_signal->torque_pitch/4 + ctrl_signal->torque_yaw/4));
+	motor_setpoint[3] = ((int32_t)(ctrl_signal->thrust - ctrl_signal->torque_roll/4 + ctrl_signal->torque_pitch/4 - ctrl_signal->torque_yaw/4));
 
     int i;
     for (i = 0; i < 4; i++)
     {
-        if (motors->motor[i].setpoint < 20)
+        if (motor_setpoint[i] < 20)
         {
-            motors->motor[i].setpoint = 20;
+        	motor_setpoint[i] = 20;
         }
     }
 }

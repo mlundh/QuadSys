@@ -19,8 +19,8 @@
 
 
 
-void calc_control_signal_angle_pid(mk_esc_motors_t *motors, uint8_t nr_motors, control_values_pid_t *parameters_pid, control_values_pid_t *ctrl_error, state_data_t *state, state_data_t *setpoint, control_signal_t *ctrl_signal);
-void calc_control_signal_rate_pid(mk_esc_motors_t *motors, uint8_t nr_motors, control_values_pid_t *parameters_pid, control_values_pid_t *ctrl_error, state_data_t *state, state_data_t *setpoint, control_signal_t *ctrl_signal);
-void control_allocation_quad_x(control_signal_t *ctrl_signal, mk_esc_motors_t *motors);
+void calc_control_signal_angle_pid(int32_t motor_setpoint[], uint8_t nr_motors, control_values_pid_t *parameters_pid, control_values_pid_t *ctrl_error, state_data_t *state, state_data_t *setpoint, control_signal_t *ctrl_signal);
+void calc_control_signal_rate_pid(int32_t motor_setpoint[], uint8_t nr_motors, control_values_pid_t *parameters_pid, control_values_pid_t *ctrl_error, state_data_t *state, state_data_t *setpoint, control_signal_t *ctrl_signal);
+void control_allocation_quad_x(control_signal_t *ctrl_signal, int32_t motor_setpoint[]);
 void limit_value(int32_t *val, int32_t limit);
 #endif /* CONTROL_ALGORITHM_H_ */

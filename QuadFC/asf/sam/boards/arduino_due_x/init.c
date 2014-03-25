@@ -59,6 +59,10 @@ void board_init(void)
 	gpio_configure_pin(PIN_33_GPIO, PIN_33_FLAGS);
 	gpio_configure_pin(PIN_35_GPIO, PIN_35_FLAGS);
 
+#ifdef CONF_BOARD_PWM_PIN_6
+/* Configure PWM LED0 pin */
+	gpio_configure_pin(PIN_6_PWM_GPIO, PIN_6_PWM_FLAGS);
+#endif
 
 #ifdef CONF_BOARD_PWM_PIN_7
 /* Configure PWM LED0 pin */
@@ -74,6 +78,27 @@ void board_init(void)
 /* Configure PWM LED2 pin */
 	gpio_configure_pin(PIN_9_PWM_GPIO, PIN_9_PWM_FLAGS);
 #endif
+
+#ifdef CONF_BOARD_PWM_PIN_34
+/* Configure PWM LED0 pin */
+	gpio_configure_pin(PIN_34_PWM_GPIO, PIN_34_PWM_FLAGS);
+#endif
+
+#ifdef CONF_BOARD_PWM_PIN_36
+/* Configure PWM LED0 pin */
+	gpio_configure_pin(PIN_36_PWM_GPIO, PIN_36_PWM_FLAGS);
+#endif
+
+#ifdef CONF_BOARD_PWM_PIN_38
+/* Configure PWM LED0 pin */
+	gpio_configure_pin(PIN_38_PWM_GPIO, PIN_38_PWM_FLAGS);
+#endif
+
+#ifdef CONF_BOARD_PWM_PIN_40
+/* Configure PWM LED0 pin */
+	gpio_configure_pin(PIN_40_PWM_GPIO, PIN_40_PWM_FLAGS);
+#endif
+
 
 #ifdef CONF_BOARD_TWI0
 	gpio_configure_pin(TWI0_DATA_GPIO, TWI0_DATA_FLAGS);

@@ -190,20 +190,48 @@
 /* PWM                                                                      */
 /* ------------------------------------------------------------------------ */
 
-/*! PWM "PWM9" pin 9 definitions.*/
-#define PIN_9_PWM_GPIO    PIO_PC21_IDX
-#define PIN_9_PWM_FLAGS   (PIO_PERIPH_B | PIO_DEFAULT)
-#define PIN_9_PWM_CHANNEL PWM_CHANNEL_4
+/*! PWM "PWM6" pin definitions.*/
+#define PIN_6_PWM_GPIO    PIO_PC24_IDX
+#define PIN_6_PWM_FLAGS   (PIO_PERIPH_B | PIO_DEFAULT)
+#define PIN_6_PWM_CHANNEL PWM_CHANNEL_7
+
+/*! PWM "PWM7" pin definitions.*/
+#define PIN_7_PWM_GPIO    PIO_PC23_IDX
+#define PIN_7_PWM_FLAGS   (PIO_PERIPH_B | PIO_DEFAULT)
+#define PIN_7_PWM_CHANNEL PWM_CHANNEL_6
 
 /*! PWM "PWM8" pin definitions.*/
 #define PIN_8_PWM_GPIO    PIO_PC22_IDX
 #define PIN_8_PWM_FLAGS   (PIO_PERIPH_B | PIO_DEFAULT)
 #define PIN_8_PWM_CHANNEL PWM_CHANNEL_5
 
-/*! PWM "PWM7" pin definitions.*/
-#define PIN_7_PWM_GPIO    PIO_PC23_IDX
-#define PIN_7_PWM_FLAGS   (PIO_PERIPH_B | PIO_DEFAULT)
-#define PIN_7_PWM_CHANNEL PWM_CHANNEL_6
+/*! PWM "PWM9" pin 9 definitions.*/
+#define PIN_9_PWM_GPIO    PIO_PC21_IDX
+#define PIN_9_PWM_FLAGS   (PIO_PERIPH_B | PIO_DEFAULT)
+#define PIN_9_PWM_CHANNEL PWM_CHANNEL_4
+
+/*! PWM on pin 34 pin definitions.*/
+#define PIN_34_PWM_GPIO    PIO_PC2_IDX
+#define PIN_34_PWM_FLAGS   (PIO_PERIPH_B | PIO_DEFAULT)
+#define PIN_34_PWM_CHANNEL PWM_CHANNEL_0
+
+/*! PWM on pin 36 pin definitions.*/
+#define PIN_36_PWM_GPIO    PIO_PC4_IDX
+#define PIN_36_PWM_FLAGS   (PIO_PERIPH_B | PIO_DEFAULT)
+#define PIN_36_PWM_CHANNEL PWM_CHANNEL_1
+
+/*! PWM on pin 38 pin definitions.*/
+#define PIN_38_PWM_GPIO    PIO_PC6_IDX
+#define PIN_38_PWM_FLAGS   (PIO_PERIPH_B | PIO_DEFAULT)
+#define PIN_38_PWM_CHANNEL PWM_CHANNEL_2
+
+/*! PWM on pin 40 pin definitions.*/
+#define PIN_40_PWM_GPIO    PIO_PC8_IDX
+#define PIN_40_PWM_FLAGS   (PIO_PERIPH_B | PIO_DEFAULT)
+#define PIN_40_PWM_CHANNEL PWM_CHANNEL_3
+
+
+
 /**
  * \file
  * USART0
