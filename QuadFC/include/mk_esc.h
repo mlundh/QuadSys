@@ -10,6 +10,7 @@
 #define MKESC_H_
 
 #include "debug_macros.h"
+#include "main_control_task.h"
 /*
 * Struct describing key properties and parameters for the BL_CTRL.
 *
@@ -24,9 +25,6 @@
 #define BLOCK_TIME_TRANSMIT (2 / portTICK_RATE_ONE_THIRD_MS)// 1 tick timeout gives a timeout 
 															//between 0 and 1 tickperiods. Thus, 
 															//always use at least 2 ticks timeouts.
-#define TWI_BUS_0 TWI0
-#define TWI_BUS_1 TWI1
-#define NUMBER_OF_MOTORS 4
 
 typedef struct mk_esc_data {
     twi_package_t twi_data;         //twi package
@@ -36,11 +34,10 @@ typedef struct mk_esc_data {
     uint8_t  verified;              // != 0 if BL_CTRL is connected and responsive.
     uint8_t setpoint_transmitt[2];            // Setpoint value 11 bits for MK BL_CTRL v2.
     uint8_t runtime_data[3];        // data reported by BL_CTRL v2 in above order.
-    int32_t setpoint;
 } mk_esc_data_t;
 
 typedef struct mk_esc_motors {
-    mk_esc_data_t motor[NUMBER_OF_MOTORS];
+    mk_esc_data_t motor[MAX_MOTORS];
     } mk_esc_motors_t;
 
 #define BITCONF_REVERSE_ROTATION 0x01
@@ -67,7 +64,5 @@ typedef struct mk_esc_config
 }  __attribute__((packed)) mk_esc_config_t;
 
 void mk_esc_scale_11_bit_setpoint(int32_t data, uint8_t test[2]);
-int mk_esc_init(mk_esc_motors_t *motors, const uint8_t number_of_motors);
-int mk_esc_write_setpoint_value(mk_esc_motors_t *motors, const uint8_t number_of_motors);
 
 #endif /* MKESC_H_ */

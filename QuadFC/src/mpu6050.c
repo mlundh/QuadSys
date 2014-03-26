@@ -43,24 +43,41 @@ THE SOFTWARE.
 */ 
 
 #include "mpu6050.h"
-#include "assert.h"
-#include "FreeRTOS.h"
-#include "task.h"
-#include "queue.h"
+
+
+static imu_data_t offset = {    /*IMU data struct, used to store the GYRO offset values*/
+	.accl_x = 0,
+	.accl_y = 0,
+	.accl_z = 0,
+	.gyro_x = 0,
+	.gyro_y = 0,
+	.gyro_z = 0,
+	.mag_x = 0,
+	.mag_y = 0,
+	.mag_z = 0,
+	.temp = 0,
+	.barometer = 0
+};
+
+
+
+static mpu6050_data_t mpu6050_packet;
+
+
+
 
 // dev_addr Device address
 // reg_addr Register address
 // bit_nr First bit to read (0-7)
 // data Data to be written to previously defined bits
-uint8_t mpu6050_write_settings(mpu6050_data_t *mpu6050_packet, uint8_t reg_addr, uint8_t bit_nr, uint8_t nr_bits, uint8_t data, uint8_t nr_bytes)
+uint8_t mpu6050_write_settings(uint8_t reg_addr, uint8_t bit_nr, uint8_t nr_bits, uint8_t data, uint8_t nr_bytes)
 {
     
 
     status_code_t twi_status = 0;
     uint8_t current_reg_value = 0;
     
-    //mpu6050_read_settings(dev_addr, reg_addr, 7, 8, &current_reg_value,1);
-    mpu6050_read_byte(mpu6050_packet, reg_addr, &current_reg_value);
+    mpu6050_read_byte(reg_addr, &current_reg_value);
     
    
     
@@ -76,41 +93,46 @@ uint8_t mpu6050_write_settings(mpu6050_data_t *mpu6050_packet, uint8_t reg_addr,
 
      
     
-    mpu6050_packet->twi_data.addr[0] = reg_addr;                   // TWI slave memory address data
-    *mpu6050_packet->data = data;
-    mpu6050_packet->twi_data.length = 1;			               // transfer data size (bytes)
+    mpu6050_packet.twi_data.addr[0] = reg_addr;                   // TWI slave memory address data
+    *mpu6050_packet.data = data;
+    mpu6050_packet.twi_data.length = 1;			               // transfer data size (bytes)
 	
-    xSemaphoreTake(mpu6050_packet->twi_notification_semaphore,mpu6050_packet->xtransmit_block_time);
-    twi_status = freertos_twi_write_packet_async(mpu6050_packet->twi,
-                                    &mpu6050_packet->twi_data,
-                                    mpu6050_packet->xtransmit_block_time,
-                                    mpu6050_packet->twi_notification_semaphore);
-	xSemaphoreTake(mpu6050_packet->twi_notification_semaphore,mpu6050_packet->xtransmit_block_time);
-	xSemaphoreGive(mpu6050_packet->twi_notification_semaphore);                                    
+    xSemaphoreTake(mpu6050_packet.twi_notification_semaphore, mpu6050_packet.xtransmit_block_time);
+
+    twi_status = freertos_twi_write_packet_async(mpu6050_packet.twi,
+                                    &mpu6050_packet.twi_data,
+                                    mpu6050_packet.xtransmit_block_time,
+                                    mpu6050_packet.twi_notification_semaphore);
+    //Wait until the data is written.
+	xSemaphoreTake(mpu6050_packet.twi_notification_semaphore, mpu6050_packet.xtransmit_block_time);
+
+	xSemaphoreGive(mpu6050_packet.twi_notification_semaphore);
     
      
     return 0;
     
 }
 
-uint8_t mpu6050_read_settings(mpu6050_data_t *mpu6050_packet, uint8_t reg_addr, uint8_t bit_nr, uint8_t nr_bits, uint8_t *data, uint8_t nr_bytes)
+uint8_t mpu6050_read_settings(uint8_t reg_addr, uint8_t bit_nr, uint8_t nr_bits, uint8_t *data, uint8_t nr_bytes)
 {
 
 	status_code_t twi_status = 0;
-    mpu6050_packet->twi_data.addr[0] = reg_addr;                   // TWI slave memory address data
-    mpu6050_packet->twi_data.length = nr_bytes;			        // transfer data size (bytes)
+    mpu6050_packet.twi_data.addr[0] = reg_addr;                   // TWI slave memory address data
+    mpu6050_packet.twi_data.length = nr_bytes;			        // transfer data size (bytes)
 	
-    xSemaphoreTake(mpu6050_packet->twi_notification_semaphore,mpu6050_packet->xtransmit_block_time);
-    twi_status = freertos_twi_read_packet_async(mpu6050_packet->twi, 
-                                    &mpu6050_packet->twi_data, 
-                                    mpu6050_packet->xtransmit_block_time, 
-                                    mpu6050_packet->twi_notification_semaphore);
-	xSemaphoreTake(mpu6050_packet->twi_notification_semaphore,mpu6050_packet->xtransmit_block_time);
-	xSemaphoreGive(mpu6050_packet->twi_notification_semaphore);
+    xSemaphoreTake(mpu6050_packet.twi_notification_semaphore, mpu6050_packet.xtransmit_block_time);
+
+    twi_status = freertos_twi_read_packet_async(mpu6050_packet.twi,
+                                    &mpu6050_packet.twi_data,
+                                    mpu6050_packet.xtransmit_block_time,
+                                    mpu6050_packet.twi_notification_semaphore);
+    //Wait on completion.
+	xSemaphoreTake(mpu6050_packet.twi_notification_semaphore, mpu6050_packet.xtransmit_block_time);
+	xSemaphoreGive(mpu6050_packet.twi_notification_semaphore);
                                     
     
     
-    uint8_t w = *mpu6050_packet->data;
+    uint8_t w = *mpu6050_packet.data;
     uint8_t mask = ((1 << nr_bits) - 1) << (bit_nr - nr_bits + 1);
     w &= mask;
     w >>= (bit_nr - nr_bits + 1);
@@ -119,33 +141,35 @@ uint8_t mpu6050_read_settings(mpu6050_data_t *mpu6050_packet, uint8_t reg_addr, 
     return 0;
 }
 
-uint8_t mpu6050_read_motion(mpu6050_data_t *mpu6050_packet, uint8_t reg_addr, imu_data_t *offset, imu_data_t *data, uint8_t nr_bytes)
+uint8_t mpu6050_read_motion(imu_data_t *data)
  {
     status_code_t twi_status = 0;
-    mpu6050_packet->twi_data.addr[0] = reg_addr;                   // TWI slave memory address data
-    mpu6050_packet->twi_data.length = nr_bytes;			        // transfer data size (bytes)
+    mpu6050_packet.twi_data.addr[0] = MPU6050_RA_ACCEL_XOUT_H;                   // TWI slave memory address data
+    mpu6050_packet.twi_data.length = 14;			        // transfer data size (bytes)
 	
-	if (xSemaphoreTake(mpu6050_packet->twi_notification_semaphore,mpu6050_packet->xtransmit_block_time) == pdPASS)
+	if (xSemaphoreTake(mpu6050_packet.twi_notification_semaphore, mpu6050_packet.xtransmit_block_time) == pdPASS)
 	{
-		    twi_status = freertos_twi_read_packet_async(mpu6050_packet->twi,
-				&mpu6050_packet->twi_data,
-				mpu6050_packet->xtransmit_block_time,
-				mpu6050_packet->twi_notification_semaphore);
-		    if (xSemaphoreTake(mpu6050_packet->twi_notification_semaphore,mpu6050_packet->xtransmit_block_time) == pdPASS)
+		    twi_status = freertos_twi_read_packet_async(mpu6050_packet.twi,
+				&mpu6050_packet.twi_data,
+				mpu6050_packet.xtransmit_block_time,
+				mpu6050_packet.twi_notification_semaphore);
+
+		    //Wait on completion
+		    if (xSemaphoreTake(mpu6050_packet.twi_notification_semaphore,mpu6050_packet.xtransmit_block_time) == pdPASS)
 		    {
-		    	xSemaphoreGive(mpu6050_packet->twi_notification_semaphore);
+		    	xSemaphoreGive(mpu6050_packet.twi_notification_semaphore);
 				return 5;
 		    }
 		
-		    
+		    //TODO check validity of data!
 
-		    data->accl_x = (int16_t)(mpu6050_packet->data[0] << 8 | mpu6050_packet->data[1]);
-		    data->accl_y = (int16_t)(mpu6050_packet->data[2] << 8 | mpu6050_packet->data[3]);
-		    data->accl_z = (int16_t)(mpu6050_packet->data[4] << 8 | mpu6050_packet->data[5]);
-		    data->temp = (int16_t)(mpu6050_packet->data[6] << 8 | mpu6050_packet->data[7]);
-		    data->gyro_x = -((int16_t)(mpu6050_packet->data[8] << 8 | mpu6050_packet->data[9]))-offset->gyro_x;
-		    data->gyro_y = ((int16_t)(mpu6050_packet->data[10] << 8 | mpu6050_packet->data[11]))-offset->gyro_y;
-		    data->gyro_z = -((int16_t)(mpu6050_packet->data[12] << 8 | mpu6050_packet->data[13]))-offset->gyro_z;
+		    data->accl_x = (int16_t)(mpu6050_packet.data[0] << 8 | mpu6050_packet.data[1]);
+		    data->accl_y = (int16_t)(mpu6050_packet.data[2] << 8 | mpu6050_packet.data[3]);
+		    data->accl_z = (int16_t)(mpu6050_packet.data[4] << 8 | mpu6050_packet.data[5]);
+		    data->temp = (int16_t)(mpu6050_packet.data[6] << 8 | mpu6050_packet.data[7]);
+		    data->gyro_x = -((int16_t)(mpu6050_packet.data[8] << 8 | mpu6050_packet.data[9]))-offset.gyro_x;
+		    data->gyro_y = ((int16_t)(mpu6050_packet.data[10] << 8 | mpu6050_packet.data[11]))-offset.gyro_y;
+		    data->gyro_z = -((int16_t)(mpu6050_packet.data[12] << 8 | mpu6050_packet.data[13]))-offset.gyro_z;
 			return 0;
 	}
 	else
@@ -156,7 +180,7 @@ uint8_t mpu6050_read_motion(mpu6050_data_t *mpu6050_packet, uint8_t reg_addr, im
 }
 
 
-void mpu6050_calc_offset(mpu6050_data_t *mpu6050, imu_data_t *offset)
+void mpu6050_calc_offset()
 {	
 	const portTickType xPeriod = (30UL / portTICK_RATE_ONE_THIRD_MS);             /*Read new values at 1kHz*/
 	
@@ -166,7 +190,7 @@ void mpu6050_calc_offset(mpu6050_data_t *mpu6050, imu_data_t *offset)
     /*The first readings might be nonsense*/
     for (i = 0; i < 100; i++)
     {
-        mpu6050_read_motion(mpu6050, MPU6050_RA_ACCEL_XOUT_H, offset, &imu_readings, 14);
+        mpu6050_read_motion(&imu_readings);
         vTaskDelay(xPeriod);
     }
 	
@@ -180,35 +204,62 @@ void mpu6050_calc_offset(mpu6050_data_t *mpu6050, imu_data_t *offset)
 	
 	for (i = 0; i < 2000; i++)
 	{
-		mpu6050_read_motion(mpu6050, MPU6050_RA_ACCEL_XOUT_H, offset, &imu_readings, 14);
+		mpu6050_read_motion(&imu_readings);
 		temp_accl_x += (int64_t)imu_readings.accl_x;
 		temp_accl_y += (int64_t)imu_readings.accl_y;
 		temp_accl_z += (int64_t)imu_readings.accl_z;
 		temp_gyro_x += (int64_t)imu_readings.gyro_x;
 		temp_gyro_y += (int64_t)imu_readings.gyro_y;
 		temp_gyro_z += (int64_t)imu_readings.gyro_z;
-		// TODO write to display task! Delay reading! 
+		// TODO check validity of measurments!!
 		vTaskDelay(xPeriod);
 	}	
 
-	offset->accl_x = (int16_t)(temp_accl_x / 2000);
-	offset->accl_y = (int16_t)(temp_accl_y / 2000);
-	offset->accl_z = (int16_t)(temp_accl_z / 2000);
-	offset->gyro_x = (int16_t)(temp_gyro_x / 2000);
-	offset->gyro_y = (int16_t)(temp_gyro_y / 2000);
-	offset->gyro_z = (int16_t)(temp_gyro_z / 2000);
+	offset.accl_x = (int16_t)(temp_accl_x / 2000);
+	offset.accl_y = (int16_t)(temp_accl_y / 2000);
+	offset.accl_z = (int16_t)(temp_accl_z / 2000);
+	offset.gyro_x = (int16_t)(temp_gyro_x / 2000);
+	offset.gyro_y = (int16_t)(temp_gyro_y / 2000);
+	offset.gyro_z = (int16_t)(temp_gyro_z / 2000);
 }
 
 
 
 
-void mpu6050_initialize(mpu6050_data_t *mpu6050) 
+
+
+
+
+
+void mpu6050_initialize()
 {
-	mpu6050_setClockSource(mpu6050, MPU6050_CLOCK_PLL_XGYRO);
-	mpu6050_setFullScaleGyroRange(mpu6050, MPU6050_GYRO_FS_500);
-	mpu6050_setFullScaleAccelRange(mpu6050, MPU6050_ACCEL_FS_16);
-	mpu6050_setSleepEnabled(mpu6050, 0); // thanks to Jack Elston for pointing this one out!
-    mpu6050_setDLPFMode(mpu6050, MPU6050_DLPF_BW_42);
+	static portTickType delay_1000_ms = (3000UL / portTICK_RATE_ONE_THIRD_MS); /*delay of 1000ms*/
+
+	mpu6050_packet.twi = TWI0;
+	mpu6050_packet.twi_notification_semaphore = twi_0_notification_semaphore;
+	mpu6050_packet.xtransmit_block_time = BLOCK_TIME_IMU;
+	mpu6050_packet.twi_data.chip = MPU6050_ADDRESS_DORTEK;
+	mpu6050_packet.twi_data.addr_length = 1;
+	mpu6050_packet.twi_data.buffer = mpu6050_packet.data;
+
+
+
+	mpu6050_reset();
+	vTaskDelay(delay_1000_ms);
+
+
+	mpu6050_setClockSource(MPU6050_CLOCK_PLL_XGYRO);
+	mpu6050_setFullScaleGyroRange(MPU6050_GYRO_FS_500);
+	mpu6050_setFullScaleAccelRange(MPU6050_ACCEL_FS_16);
+	mpu6050_setSleepEnabled(0);
+    mpu6050_setDLPFMode(MPU6050_DLPF_BW_42);
+
+    vTaskDelay(delay_1000_ms);
+
+    /*Calculate offsets for gyro. TODO calculate angle offset for accl.*/
+    mpu6050_calc_offset();
+
+
 }
 
 /** Set clock source setting.
@@ -241,9 +292,9 @@ void mpu6050_initialize(mpu6050_data_t *mpu6050)
  * @see MPU6050_PWR1_CLKSEL_BIT
  * @see MPU6050_PWR1_CLKSEL_LENGTH
  */
-void mpu6050_setClockSource(mpu6050_data_t *mpu6050_packet, uint8_t source) 
+void mpu6050_setClockSource(uint8_t source)
 {
-	mpu6050_write_settings(mpu6050_packet, MPU6050_RA_PWR_MGMT_1, MPU6050_PWR1_CLKSEL_BIT, MPU6050_PWR1_CLKSEL_LENGTH, source, 1);
+	mpu6050_write_settings(MPU6050_RA_PWR_MGMT_1, MPU6050_PWR1_CLKSEL_BIT, MPU6050_PWR1_CLKSEL_LENGTH, source, 1);
 }
 
 
@@ -255,9 +306,9 @@ void mpu6050_setClockSource(mpu6050_data_t *mpu6050_packet, uint8_t source)
  * @see MPU6050_GCONFIG_FS_SEL_BIT
  * @see MPU6050_GCONFIG_FS_SEL_LENGTH
  */
-void mpu6050_setFullScaleGyroRange(mpu6050_data_t *mpu6050_packet, uint8_t range) 
+void mpu6050_setFullScaleGyroRange(uint8_t range)
 {
-    mpu6050_write_settings(mpu6050_packet, MPU6050_RA_GYRO_CONFIG, MPU6050_GCONFIG_FS_SEL_BIT, MPU6050_GCONFIG_FS_SEL_LENGTH, range,1);
+    mpu6050_write_settings(MPU6050_RA_GYRO_CONFIG, MPU6050_GCONFIG_FS_SEL_BIT, MPU6050_GCONFIG_FS_SEL_LENGTH, range,1);
 }
 
 /** Get full-scale accelerometer range.
@@ -277,9 +328,9 @@ void mpu6050_setFullScaleGyroRange(mpu6050_data_t *mpu6050_packet, uint8_t range
  * @see MPU6050_ACONFIG_AFS_SEL_BIT
  * @see MPU6050_ACONFIG_AFS_SEL_LENGTH
  */
-void mpu6050_getFullScaleAccelRange(mpu6050_data_t *mpu6050_packet, uint8_t *buffer) 
+void mpu6050_getFullScaleAccelRange(uint8_t *buffer)
 {
-    mpu6050_read_settings(mpu6050_packet, MPU6050_RA_ACCEL_CONFIG, MPU6050_ACONFIG_AFS_SEL_BIT, MPU6050_ACONFIG_AFS_SEL_LENGTH, buffer, 1);
+    mpu6050_read_settings(MPU6050_RA_ACCEL_CONFIG, MPU6050_ACONFIG_AFS_SEL_BIT, MPU6050_ACONFIG_AFS_SEL_LENGTH, buffer, 1);
 
 }
 
@@ -288,9 +339,9 @@ void mpu6050_getFullScaleAccelRange(mpu6050_data_t *mpu6050_packet, uint8_t *buf
  * @param range New full-scale accelerometer range setting
  * @see getFullScaleAccelRange()
  */
-void mpu6050_setFullScaleAccelRange(mpu6050_data_t *mpu6050_packet, uint8_t range) 
+void mpu6050_setFullScaleAccelRange(uint8_t range)
 {
-    mpu6050_write_settings(mpu6050_packet , MPU6050_RA_ACCEL_CONFIG, MPU6050_ACONFIG_AFS_SEL_BIT, MPU6050_ACONFIG_AFS_SEL_LENGTH, range, 1);
+    mpu6050_write_settings(MPU6050_RA_ACCEL_CONFIG, MPU6050_ACONFIG_AFS_SEL_BIT, MPU6050_ACONFIG_AFS_SEL_LENGTH, range, 1);
 }
 
 /** Get sleep mode status.
@@ -304,9 +355,9 @@ void mpu6050_setFullScaleAccelRange(mpu6050_data_t *mpu6050_packet, uint8_t rang
  * @see MPU6050_RA_PWR_MGMT_1
  * @see MPU6050_PWR1_SLEEP_BIT
  */
-void mpu6050_getSleepEnabled(mpu6050_data_t *mpu6050_packet, uint8_t *buffer) 
+void mpu6050_getSleepEnabled(uint8_t *buffer)
 {
-    mpu6050_read_bit(mpu6050_packet, MPU6050_RA_PWR_MGMT_1, MPU6050_PWR1_SLEEP_BIT, buffer);
+    mpu6050_read_bit(MPU6050_RA_PWR_MGMT_1, MPU6050_PWR1_SLEEP_BIT, buffer);
 }
 /** Set sleep mode status.
  * @param enabled New sleep mode enabled status
@@ -314,9 +365,9 @@ void mpu6050_getSleepEnabled(mpu6050_data_t *mpu6050_packet, uint8_t *buffer)
  * @see MPU6050_RA_PWR_MGMT_1
  * @see MPU6050_PWR1_SLEEP_BIT
  */
-void mpu6050_setSleepEnabled(mpu6050_data_t *mpu6050_packet, uint8_t enabled) 
+void mpu6050_setSleepEnabled(uint8_t enabled)
 {
-    mpu6050_write_bit(mpu6050_packet, MPU6050_RA_PWR_MGMT_1, MPU6050_PWR1_SLEEP_BIT, enabled);
+    mpu6050_write_bit(MPU6050_RA_PWR_MGMT_1, MPU6050_PWR1_SLEEP_BIT, enabled);
 }
 
 
@@ -348,8 +399,8 @@ void mpu6050_setSleepEnabled(mpu6050_data_t *mpu6050_packet, uint8_t enabled)
  * @see MPU6050_CFG_DLPF_CFG_BIT
  * @see MPU6050_CFG_DLPF_CFG_LENGTH
  */
-uint8_t mpu6050_getDLPFMode(mpu6050_data_t *mpu6050_packet, uint8_t *buffer) {
-    mpu6050_read_settings(mpu6050_packet, MPU6050_RA_CONFIG, MPU6050_CFG_DLPF_CFG_BIT, MPU6050_CFG_DLPF_CFG_LENGTH, buffer,1);
+uint8_t mpu6050_getDLPFMode(uint8_t *buffer) {
+    mpu6050_read_settings(MPU6050_RA_CONFIG, MPU6050_CFG_DLPF_CFG_BIT, MPU6050_CFG_DLPF_CFG_LENGTH, buffer,1);
     return buffer[0];
 }
 /** Set digital low-pass filter configuration.
@@ -360,8 +411,8 @@ uint8_t mpu6050_getDLPFMode(mpu6050_data_t *mpu6050_packet, uint8_t *buffer) {
  * @see MPU6050_CFG_DLPF_CFG_BIT
  * @see MPU6050_CFG_DLPF_CFG_LENGTH
  */
-void mpu6050_setDLPFMode(mpu6050_data_t *mpu6050_packet, uint8_t mode) {
-    mpu6050_write_settings(mpu6050_packet, MPU6050_RA_CONFIG, MPU6050_CFG_DLPF_CFG_BIT, MPU6050_CFG_DLPF_CFG_LENGTH, mode,1);
+void mpu6050_setDLPFMode(uint8_t mode) {
+    mpu6050_write_settings(MPU6050_RA_CONFIG, MPU6050_CFG_DLPF_CFG_BIT, MPU6050_CFG_DLPF_CFG_LENGTH, mode,1);
 }
 
 
@@ -374,7 +425,7 @@ void mpu6050_setDLPFMode(mpu6050_data_t *mpu6050_packet, uint8_t mode) {
  * @see MPU6050_RA_PWR_MGMT_1
  * @see MPU6050_PWR1_DEVICE_RESET_BIT
  */
-void mpu6050_reset(mpu6050_data_t *mpu6050_packet) 
+void mpu6050_reset()
 {
-    mpu6050_write_bit(mpu6050_packet, MPU6050_RA_PWR_MGMT_1, MPU6050_PWR1_DEVICE_RESET_BIT, 1);
+    mpu6050_write_bit(MPU6050_RA_PWR_MGMT_1, MPU6050_PWR1_DEVICE_RESET_BIT, 1);
 }

@@ -178,6 +178,10 @@ state_data_t *setpoint;
 control_signal_t *ctrl_signal;
 xSemaphoreHandle x_param_mutex;
 xSemaphoreHandle x_log_mutex;
+xSemaphoreHandle twi_0_notification_semaphore;
+xSemaphoreHandle twi_1_notification_semaphore;
+freertos_twi_if twi_0;
+freertos_twi_if twi_1;
 
 /*QuadFC states. The Quadcopter can only be in one of the following staes*/
 typedef enum quadfc_state {
@@ -258,6 +262,8 @@ uint8_t nr_log_parameters;
 uint32_t log_freq;
 int32_t time_main;
 
+/* A block time of 0 ticks simply means "don't block". */
+#define mainDONT_BLOCK                          (0)
 
 #define MAX_MOTORS (8)
 
@@ -266,5 +272,13 @@ void main_control_task(void *pvParameters);
 
 void reset_control_error(control_values_pid_t *ctrl_error);
 void do_logging(communicaion_packet_t *packet);
+void init_twi_main();
+
+#include "imu.h"
+#include "motor_control.h"
+#include "satellite_receiver_task.h"
+#include "communication_tasks.h"
+#include "imu_signal_processing.h"
+#include "control_algorithm.h"
 
 #endif /* MAIN_CONTROL_TASK_H_ */

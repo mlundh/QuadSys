@@ -22,8 +22,6 @@
  * THE SOFTWARE.
  */
 #include "imu_signal_processing.h"
-#include "mpu6050.h"
-#include "my_math.h"
 
 
 

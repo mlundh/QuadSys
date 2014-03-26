@@ -8,8 +8,9 @@
 #ifndef PWM_MOTOR_CONTROL_H_
 #define PWM_MOTOR_CONTROL_H_
 
+#include "asf.h"
 
- //TODO Wrong place!  Make parameters!
+ //TODO Make parameters!
     /** PWM frequency in Hz */
     #define PWM_FREQUENCY  400
     /** PWM period value */
@@ -28,12 +29,6 @@ typedef struct quad_pwm_parameters {
 	uint32_t pwm_channel;				/*< The channel of the pwm. */
 } quad_pwm_parameters_t;
 
-
-
- uint8_t pwm_update_setpoint(int32_t setpoint[], uint32_t nr_motors);
- void pwm_enable();
- void pwm_dissable();
- uint8_t init_pwm_motor_control(uint32_t nr_motors);
 
 
 #endif /* PWM_MOTOR_CONTROL_H_ */

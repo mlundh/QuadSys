@@ -26,17 +26,7 @@
 #include "main_control_task.h"
 #include "satellite_receiver_task.h"
 #include "communication_tasks.h"
-#include "communication_uilitys.h"
-#include "mk_esc.h"
-#include "control_algorithm.h"
-#include "mpu6050.h"
-#include "my_math.h"
-#include "imu_signal_processing.h"
-#include "prepare_output.h"
-#include "crc.h"
-#include "pwm_motor_control.h"
-/* A block time of 0 ticks simply means "don't block". */
-#define mainDONT_BLOCK                          (0)
+
 
 
 

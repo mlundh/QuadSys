@@ -17,7 +17,7 @@
 #define CRC_H_
 
 
-
+#include "main_control_task.h"
 /*
  * CRC16 standard from the list that follows.
  */

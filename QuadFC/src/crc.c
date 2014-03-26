@@ -15,7 +15,7 @@
  * expressed or implied by its publication or distribution.
  **********************************************************************/
  /*Modified by Martin Lundh to fit QuadFC*/
-#include "main.h"
+
 #include "crc.h"
 
 

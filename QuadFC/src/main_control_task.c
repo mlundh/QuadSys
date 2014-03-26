@@ -59,7 +59,7 @@
  * ----------------------------------------------------------------------------------------------------------
  */ 
 
-#include "main.h"
+#include "main_control_task.h"
 
 
 /*
@@ -81,10 +81,6 @@
 void create_main_control_task(void)
 {
 
-    mk_esc_motors_t *motors = pvPortMalloc(sizeof(mk_esc_motors_t));
-
-	mk_esc_init(motors, NUMBER_OF_MOTORS);
-
 
  
 	/*Create the task*/
@@ -92,7 +88,7 @@ void create_main_control_task(void)
 	create_result = xTaskCreate(    main_control_task,                          /* The function that implements the task.  */
 	                (const signed char *const) "Main_Ctrl",                     /* The name of the task. This is not used by the kernel, only aids in debugging*/
 	                1000,                                                        /* The stack size for the task*/
-	                (void *) motors,                                            /* The already configured motor data is passed as an input parameter*/
+	                NULL,                                            /* The already configured motor data is passed as an input parameter*/
 	                configMAX_PRIORITIES-1,                                     /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
 	                NULL);                                                      /* Handle to the task. Not used here and therefore NULL*/
 					
@@ -117,8 +113,8 @@ void main_control_task(void *pvParameters)
 {
 
 	
-	static const portTickType xPeriod = (3UL / portTICK_RATE_ONE_THIRD_MS); /*main_control_task execute at 500Hz*/
-    const portTickType delay_1000_ms = (3000UL / portTICK_RATE_ONE_THIRD_MS); /*delay of 500ms*/
+	static const portTickType xPeriod = (6UL / portTICK_RATE_ONE_THIRD_MS); /*main_control_task execute at 500Hz*/
+
 	
 	// declared as public in main_control_task.h
     parameters_angle = pvPortMalloc(sizeof(control_values_pid_t)); /*PID parameters used in angle mode*/
@@ -130,16 +126,11 @@ void main_control_task(void *pvParameters)
     
 	ctrl_signal = pvPortMalloc(sizeof(control_signal_t));
 	
-	
-    mpu6050_data_t *mpu6050 = pvPortMalloc(sizeof(mpu6050_data_t)); /*IMU properties and */
-    mpu6050->data = pvPortMalloc(sizeof(uint8_t)*16); /*IMU raw data storage buffer*/
-    
     state = pvPortMalloc(sizeof(state_data_t));   /*State information*/
     setpoint = pvPortMalloc(sizeof(state_data_t)); /*Setpoint information*/
     
     receiver_data_t *local_receiver_buffer = pvPortMalloc(sizeof(receiver_data_t)); /*Receiver information*/
     
-    imu_data_t *offset = pvPortMalloc(sizeof(imu_data_t)); /*IMU data struct, used to store the GYRO offset values*/
 	imu_data_t *imu_readings = pvPortMalloc(sizeof(imu_data_t)); /*IMU data struct containing the parsed IMU values.*/
     
 	communicaion_packet_t *QSP_log_packet = pvPortMalloc(sizeof(communicaion_packet_t));
@@ -160,9 +151,8 @@ void main_control_task(void *pvParameters)
     uint8_t state_request = 0;
     /*Ensure that all Mallocs returned valid pointers*/
     if(!parameters_angle || !parameters_rate || !ctrl_error_angle || 
-			!ctrl_error_rate || !ctrl_limit_rate ||  !state || !mpu6050 ||
-			!mpu6050->data || !setpoint || !local_receiver_buffer || 
-			!offset|| !imu_readings || !x_param_mutex || !ctrl_signal || !temp_frame_main)
+			!ctrl_error_rate || !ctrl_limit_rate ||  !state || !setpoint || !local_receiver_buffer
+			|| !imu_readings || !x_param_mutex || !ctrl_signal || !temp_frame_main)
     {
         for (;;)
         {
@@ -173,18 +163,9 @@ void main_control_task(void *pvParameters)
     quadfc_state_t fc_mode = fc_initializing;
     
     uint8_t reset_integral_error = 0; // 0 == false
-    
-	mk_esc_motors_t *motors;
-    motors = (mk_esc_motors_t *) pvParameters;
-     
      
     // TODO clean up I2C initialization
-    mpu6050->twi = TWI_BUS_0;
-    mpu6050->twi_notification_semaphore = motors->motor[1].twi_notification_semaphore; // WRONG! 
-    mpu6050->xtransmit_block_time = BLOCK_TIME_IMU;
-    mpu6050->twi_data.chip = MPU6050_ADDRESS_DORTEK;
-    mpu6050->twi_data.addr_length = 1;
-    mpu6050->twi_data.buffer = mpu6050->data;
+
 
 	/*Data received from RC receiver task */
 
@@ -272,22 +253,14 @@ void main_control_task(void *pvParameters)
 	/*Initialize log parameters*/
 	nr_log_parameters = 0;
 	
-
-
-
-
     toggle_pin(33);
+
     /*Initialize the IMU. A reset followed by a short delay is recommended
      * before starting the configuration.*/
-	//mpu6050_reset(mpu6050);
-	vTaskDelay(delay_1000_ms);
-	//mpu6050_initialize(mpu6050);
-    
-    /*Calculate offsets for gyro. TODO calculate angle offset for accl.*/
-	//mpu6050_calc_offset(mpu6050,offset);
+    init_twi_main();
+    mpu6050_initialize();
 
-
-    /*Flight controller should allways be started in fc_disarmed mode to prevent
+    /*Flight controller should always be started in fc_disarmed mode to prevent
      * unintentional motor arming. */
     fc_mode = fc_disarmed;
     
@@ -296,13 +269,12 @@ void main_control_task(void *pvParameters)
 
     // TODO read from memory
     uint32_t nr_motors = 8;
+    //TODO fcn pointers!
+    pwm_init_motor_control(nr_motors);
 
-    int test1 = init_pwm_motor_control(nr_motors);
-    if(test1 != 0)
-    {
-    	toggle_pin(31);
-    }
+    //TODO remove!
     pwm_enable();
+
     /*The main control loop*/
     unsigned portBASE_TYPE xLastWakeTime = xTaskGetTickCount();
 	for (;;)
@@ -324,7 +296,7 @@ void main_control_task(void *pvParameters)
 		 * the copter will try to self stabilize.*/
         if (fc_mode == fc_armed_angle_mode)
         {
-            //mpu6050_read_motion(mpu6050, MPU6050_RA_ACCEL_XOUT_H, offset, imu_readings, 14);
+            //mpu6050_read_motion(MPU6050_RA_ACCEL_XOUT_H, imu_readings, 14);
             //translate_receiver_signal_angle(setpoint, local_receiver_buffer);
             //calc_control_signal_angle_pid(motors, NUMBER_OF_MOTORS, parameters_angle, ctrl_error_angle, state, setpoint, ctrl_signal);
             //mk_esc_write_setpoint_value(motors, NUMBER_OF_MOTORS);
@@ -337,15 +309,11 @@ void main_control_task(void *pvParameters)
 		else if (fc_mode == fc_armed_rate_mode)
 		{
 
-			//mpu6050_read_motion(mpu6050, MPU6050_RA_ACCEL_XOUT_H, offset, imu_readings, 14);
-			//translate_receiver_signal_rate(setpoint, local_receiver_buffer);
-			//get_rate_gyro(state, imu_readings);
-			//calc_control_signal_rate_pid(motors, NUMBER_OF_MOTORS, parameters_rate, ctrl_error_rate, state, setpoint, ctrl_signal);
-			//mk_esc_write_setpoint_value(motors, NUMBER_OF_MOTORS);
-			motor_setpoint[0] = 100;
-			motor_setpoint[1] = 200;
-			motor_setpoint[2] = 100;
-			motor_setpoint[3] = 400;
+			mpu6050_read_motion(imu_readings);
+			translate_receiver_signal_rate(setpoint, local_receiver_buffer);
+			get_rate_gyro(state, imu_readings);
+			calc_control_signal_rate_pid(motor_setpoint, nr_motors, parameters_rate, ctrl_error_rate, state, setpoint, ctrl_signal);
+			//mk_esc_update_setpoint(motor_setpoint, nr_motors);
 			pwm_update_setpoint(motor_setpoint, nr_motors);
 		}
 
@@ -433,11 +401,11 @@ void main_control_task(void *pvParameters)
         }
         
 		/*--------------- If there is no connection to the receiver, put FC in disarmed mode-------------*/
-        if ((!local_receiver_buffer->connection_ok) && (fc_mode != fc_configure))
+        if ((!local_receiver_buffer->connection_ok) && (fc_mode != fc_configure) && (fc_mode != fc_disarmed))
         {
             fc_mode = fc_disarmed; /*Error - no connection, TODO do something!*/
             reset_integral_error = 1;
-            //pwm_dissable();
+            pwm_dissable();
         }
 
      
@@ -449,7 +417,7 @@ void main_control_task(void *pvParameters)
 		{
     		fc_mode = fc_disarmed;
             reset_integral_error = 1;
-            //pwm_dissable();
+            pwm_dissable();
 		}
 		if ((local_receiver_buffer->connection_ok) && (local_receiver_buffer->ch5 < SATELLITE_CH_CENTER) && 
 			(local_receiver_buffer->ch0 < 40) && (fc_mode != fc_armed_rate_mode) && (fc_mode != fc_configure))
@@ -474,17 +442,11 @@ void main_control_task(void *pvParameters)
 				CommunicationSend(&(QSP_log_packet->frame), QSP_log_packet->frame_length);
 			}
 		}
-		toggle_pin(35);
 		motor_setpoint[0] = 100;
 		motor_setpoint[1] = 200;
 		motor_setpoint[2] = 100;
 		motor_setpoint[3] = 400;
-		uint8_t test = pwm_update_setpoint(motor_setpoint, nr_motors);
-
-		if(test != 0)
-		{
-			toggle_pin(31);
-		}
+		pwm_update_setpoint(motor_setpoint, nr_motors);
 
 
         vTaskDelayUntil(&xLastWakeTime,xPeriod);
@@ -492,7 +454,7 @@ void main_control_task(void *pvParameters)
         /*-------------------Heartbeat----------------------
         * Toggle an led to indicate that the FC is operational.
         */
-		
+		toggle_pin(33);
         /*-------------------Heartbeat-----------------*/
 	}
 	/* The task should never escape the for-loop and therefore never return.*/
@@ -536,4 +498,41 @@ void do_logging(communicaion_packet_t *packet)
 	}
 	
 	
+}
+
+
+
+void init_twi_main()
+{
+    freertos_peripheral_options_t async_driver_options = {
+        NULL,											                        /* This peripheral does not need a receive buffer, so this parameter is just set to NULL. */
+        0,												                        /* There is no Rx buffer, so the rx buffer size is not used. */
+        (configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY + 1),	                        /* The priority used by the TWI interrupts. It is essential that the priority does not have a numerically lower value than configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY*/
+        TWI_I2C_MASTER,									                        /* TWI is configured as an I2C master. */
+        0,																		/* The asynchronous driver is used, so WAIT_TX_COMPLETE and WAIT_RX_COMPLETE are not set. */
+    };
+
+	freertos_peripheral_options_t async_driver_options1 = {
+		NULL,											                        /* This peripheral does not need a receive buffer, so this parameter is just set to NULL. */
+		0,												                        /* There is no Rx buffer, so the rx buffer size is not used. */
+		(configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY + 1),	                        /* The priority used by the TWI interrupts. It is essential that the priority does not have a numerically lower value than configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY*/
+		TWI_I2C_MASTER,									                        /* TWI is configured as an I2C master. */
+		0,																		/* The asynchronous driver is used, so WAIT_TX_COMPLETE and WAIT_RX_COMPLETE are not set. */
+	};
+
+
+    freertos_twi_if twi_0 = freertos_twi_master_init(TWI0, &async_driver_options);		/*Initialize twi bus 0, available at pin xx and xx on the Arduino due*/
+    freertos_twi_if twi_1 = freertos_twi_master_init(TWI1, &async_driver_options1);		/*Initialize twi bus 1, available at pin xx and xx on the Arduino due*/
+
+    if (twi_0 == NULL || twi_1 == NULL)
+    {
+        for (;;)
+        {
+            // ERROR, TODO set error flag and halt execution*/
+        }
+    }
+
+
+    twi_set_speed(TWI0, 400000, sysclk_get_cpu_hz());                       /*High speed TWI setting*/
+    twi_set_speed(TWI1, 400000, sysclk_get_cpu_hz());                       /*High speed TWI setting*/
 }

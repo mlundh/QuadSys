@@ -8,7 +8,8 @@
 
 #ifndef IMU_SIGNAL_PROCESSING_H_
 #define IMU_SIGNAL_PROCESSING_H_
-#include "main.h"
+#include "my_math.h"
+#include "main_control_task.h"
 
 /*
 *   IMU scaling factors computed. (max angle)/(max value) = angle/unit

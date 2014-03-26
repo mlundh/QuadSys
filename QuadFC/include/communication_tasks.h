@@ -9,17 +9,13 @@
 #ifndef COMMUNICATION_TASKS_H_
 #define COMMUNICATION_TASKS_H_
 
-/* Kernel includes. */
-#include "FreeRTOS.h"
-#include "task.h"
-#include "queue.h"
-#include "asf.h"
+
+
+#include "main_control_task.h"
 #include "debug_macros.h"
-
-
+#include "crc.h"
 /* Atmel library includes. */
 #include "freertos_uart_serial.h"
-
 /* Use USART1 (labeled RX2 17 and TX2 16)*/
 #define TERMINAL_USART USART1
 
@@ -34,6 +30,9 @@ void WriteControlValuesPid(uint8_t *raw_data, control_values_pid_t *pidValues);
 void HandleCommunication(communicaion_packet_t *packet, uint8_t* temp_frame);
 void SendAck(communicaion_packet_t *QSP_packet, uint8_t* temp_frame);
 void WriteLogParameters(uint8_t *raw_data);
+uint8_t decode_QSP_frame(communicaion_packet_t *packet, uint8_t* temp_frame);
+uint8_t encode_QSP_frame(communicaion_packet_t *packet, uint8_t* temp_frame);
+
 
 typedef enum QSP_control_octets{
 	frame_boundary_octet = 0x7E,

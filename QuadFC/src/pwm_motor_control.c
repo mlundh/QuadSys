@@ -22,7 +22,6 @@
  * THE SOFTWARE.
  */
  
-#include"main.h"
 #include "pwm_motor_control.h"
 
 static 	pwm_channel_t sync_channel = {
@@ -56,11 +55,13 @@ static const quad_pwm_parameters_t pwm_all_pwm_parameters[8] =
 		{PIN_36_PWM_GPIO, PIN_36_PWM_FLAGS, PIN_36_PWM_CHANNEL},
 		{PIN_38_PWM_GPIO, PIN_38_PWM_FLAGS, PIN_38_PWM_CHANNEL},
 		{PIN_40_PWM_GPIO, PIN_40_PWM_FLAGS, PIN_40_PWM_CHANNEL}
+
+
 };
 
 static uint32_t nr_init_motors = 0;
 
- uint8_t init_pwm_motor_control(uint32_t nr_motors)
+ uint8_t pwm_init_motor_control(uint32_t nr_motors)
  {
 	 /*make sure that the correct number of motors are used.*/
 	 if((nr_motors < 0) || (nr_motors > 8))

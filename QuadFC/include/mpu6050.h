@@ -371,33 +371,33 @@ typedef struct mpu6050_data {
     xSemaphoreHandle twi_notification_semaphore;    //Notification semaphore
     freertos_twi_if twi;                            // Initialized twi buss.
     portTickType xtransmit_block_time;              // block time
-    uint8_t *data;
+    uint8_t data[16];
 } mpu6050_data_t;
 
 
-#define  mpu6050_read_byte(mpu6050_packet, reg_addr, data) mpu6050_read_settings(mpu6050_packet, reg_addr, 7, 8, data, 1)
-#define  mpu6050_read_bit(mpu6050_packet, reg_addr, bit_nr, data) mpu6050_read_settings(mpu6050_packet, reg_addr, bit_nr, 1, data, 1)
-#define  mpu6050_write_byte(mpu6050_packet, reg_addr, data) mpu6050_write_settings(mpu6050_packet, reg_addr, 7, 8, data, 1)
-#define  mpu6050_write_bit(mpu6050_packet, reg_addr, bit_nr, data) mpu6050_write_settings(mpu6050_packet, reg_addr, bit_nr, 1, data, 1)
+#define  mpu6050_read_byte(reg_addr, data) mpu6050_read_settings(reg_addr, 7, 8, data, 1)
+#define  mpu6050_read_bit(reg_addr, bit_nr, data) mpu6050_read_settings(reg_addr, bit_nr, 1, data, 1)
+#define  mpu6050_write_byte(reg_addr, data) mpu6050_write_settings(reg_addr, 7, 8, data, 1)
+#define  mpu6050_write_bit(reg_addr, bit_nr, data) mpu6050_write_settings(reg_addr, bit_nr, 1, data, 1)
 
 
 
-uint8_t mpu6050_write_settings(mpu6050_data_t *mpu6050_packet, uint8_t reg_addr, uint8_t bit_nr, uint8_t nr_bits, uint8_t data, uint8_t nr_bytes);
-uint8_t mpu6050_read_settings(mpu6050_data_t *mpu6050_packet, uint8_t reg_addr, uint8_t bit_nr, uint8_t nr_bits, uint8_t *data, uint8_t nr_bytes);
+uint8_t mpu6050_write_settings(uint8_t reg_addr, uint8_t bit_nr, uint8_t nr_bits, uint8_t data, uint8_t nr_bytes);
+uint8_t mpu6050_read_settings(uint8_t reg_addr, uint8_t bit_nr, uint8_t nr_bits, uint8_t *data, uint8_t nr_bytes);
 
-uint8_t mpu6050_read_motion(mpu6050_data_t *mpu6050_packet, uint8_t reg_addr, imu_data_t *offset, imu_data_t *data, uint8_t nr_bytes);
-void mpu6050_calc_offset(mpu6050_data_t *mpu6050_packet, imu_data_t *offset);
-void mpu6050_initialize(mpu6050_data_t *mpu6050_packet);
-void mpu6050_setClockSource(mpu6050_data_t *mpu6050_packet, uint8_t source);
-void mpu6050_setFullScaleGyroRange(mpu6050_data_t *mpu6050_packet, uint8_t range);
-void mpu6050_getFullScaleAccelRange(mpu6050_data_t *mpu6050_packet, uint8_t *buffer);
-void mpu6050_setFullScaleAccelRange(mpu6050_data_t *mpu6050_packet, uint8_t range);
-void mpu6050_getSleepEnabled(mpu6050_data_t *mpu6050_packet, uint8_t *buffer);
-void mpu6050_setSleepEnabled(mpu6050_data_t *mpu6050_packet, uint8_t enabled);
-uint8_t mpu6050_getDLPFMode(mpu6050_data_t *mpu6050_packet, uint8_t *buffer);
-void mpu6050_setDLPFMode(mpu6050_data_t *mpu6050_packet, uint8_t mode);
+uint8_t mpu6050_read_motion(imu_data_t *data);
+void mpu6050_calc_offset();
+void mpu6050_initialize();
+void mpu6050_setClockSource(uint8_t source);
+void mpu6050_setFullScaleGyroRange(uint8_t range);
+void mpu6050_getFullScaleAccelRange(uint8_t *buffer);
+void mpu6050_setFullScaleAccelRange(uint8_t range);
+void mpu6050_getSleepEnabled(uint8_t *buffer);
+void mpu6050_setSleepEnabled(uint8_t enabled);
+uint8_t mpu6050_getDLPFMode(uint8_t *buffer);
+void mpu6050_setDLPFMode(uint8_t mode);
 
-void mpu6050_reset(mpu6050_data_t *mpu6050_packet);
+void mpu6050_reset();
 
 
 

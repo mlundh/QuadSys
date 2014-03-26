@@ -38,7 +38,6 @@
  * 
  *
  */ 
-#include "main.h"
 #include "satellite_receiver_task.h"
 
 void satellite_decode_signal(uint8_t data[], receiver_data_t *decoded_data); 

@@ -45,7 +45,10 @@ int main(void)
     xQueue_configure_req = xQueueCreate(CONFIGURE_REQ_QUEUE_LENGTH, CONFIGURE_REQ_QUEUE_ITEM_SIZE);
     x_param_mutex = xSemaphoreCreateMutex();
 	x_log_mutex = xSemaphoreCreateMutex();
-	if (!xQueue_receiver || !xQueue_display ||!xQueue_display_bytes_to_send || !x_param_mutex || !x_log_mutex )
+    vSemaphoreCreateBinary(twi_0_notification_semaphore);
+    vSemaphoreCreateBinary(twi_1_notification_semaphore);
+	if (!xQueue_receiver || !xQueue_display ||!xQueue_display_bytes_to_send || !x_param_mutex ||
+			!x_log_mutex || !twi_1_notification_semaphore || !twi_0_notification_semaphore)
 	{
  		/*If one of thee queues could not be created, do nothing, TODO error led*/
 		for (;;)
