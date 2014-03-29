@@ -14,9 +14,9 @@
     /** PWM frequency in Hz */
     #define PWM_FREQUENCY  400
     /** PWM period value */
-    #define PERIOD_VALUE   3100
+    #define PERIOD_VALUE   3000
     /** Initial duty cycle value */
-    #define INIT_DUTY_VALUE  1100
+    #define INIT_DUTY_VALUE  1400
     /** Initial dead time value */
     #define INIT_DEAD_TIME   0
     /** Maximum synchronous update period */

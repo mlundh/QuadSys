@@ -130,9 +130,9 @@ void control_allocation_quad_x(control_signal_t *ctrl_signal, int32_t motor_setp
     int i;
     for (i = 0; i < 4; i++)
     {
-        if (motor_setpoint[i] < 20)
+        if (motor_setpoint[i] < 0)
         {
-        	motor_setpoint[i] = 20;
+        	motor_setpoint[i] = 0;
         }
     }
 }

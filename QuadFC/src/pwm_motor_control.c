@@ -47,16 +47,14 @@ static 	pwm_channel_t sync_channel = {
 
 static const quad_pwm_parameters_t pwm_all_pwm_parameters[8] =
 {
-		{PIN_6_PWM_GPIO, PIN_6_PWM_FLAGS, PIN_6_PWM_CHANNEL},
-		{PIN_7_PWM_GPIO, PIN_7_PWM_FLAGS, PIN_7_PWM_CHANNEL},
-		{PIN_8_PWM_GPIO, PIN_8_PWM_FLAGS, PIN_8_PWM_CHANNEL},
-		{PIN_9_PWM_GPIO, PIN_9_PWM_FLAGS, PIN_9_PWM_CHANNEL},
 		{PIN_34_PWM_GPIO, PIN_34_PWM_FLAGS, PIN_34_PWM_CHANNEL},
 		{PIN_36_PWM_GPIO, PIN_36_PWM_FLAGS, PIN_36_PWM_CHANNEL},
 		{PIN_38_PWM_GPIO, PIN_38_PWM_FLAGS, PIN_38_PWM_CHANNEL},
-		{PIN_40_PWM_GPIO, PIN_40_PWM_FLAGS, PIN_40_PWM_CHANNEL}
-
-
+		{PIN_40_PWM_GPIO, PIN_40_PWM_FLAGS, PIN_40_PWM_CHANNEL},
+		{PIN_6_PWM_GPIO, PIN_6_PWM_FLAGS, PIN_6_PWM_CHANNEL},
+		{PIN_7_PWM_GPIO, PIN_7_PWM_FLAGS, PIN_7_PWM_CHANNEL},
+		{PIN_8_PWM_GPIO, PIN_8_PWM_FLAGS, PIN_8_PWM_CHANNEL},
+		{PIN_9_PWM_GPIO, PIN_9_PWM_FLAGS, PIN_9_PWM_CHANNEL}
 };
 
 static uint32_t nr_init_motors = 0;
@@ -66,7 +64,7 @@ static uint32_t nr_init_motors = 0;
 	 /*make sure that the correct number of motors are used.*/
 	 if((nr_motors < 0) || (nr_motors > 8))
 	 {
-		 return 1;
+		 return -1;
 	 }
 
 
@@ -80,7 +78,10 @@ static uint32_t nr_init_motors = 0;
 
 	for(int i = 0; i < nr_motors; i++)
 	{
-		pwm_channel_disable(PWM, pwm_all_pwm_parameters[i].pwm_channel);
+		if(pwm_all_pwm_parameters[i].pwm_channel != 0)
+		{
+			pwm_channel_disable(PWM, pwm_all_pwm_parameters[i].pwm_channel);
+		}
 	}
 
 	/*
@@ -109,8 +110,11 @@ static uint32_t nr_init_motors = 0;
 
 	for(int i = 0; i < nr_motors; i++)
 	{
-		sync_channel.channel = pwm_all_pwm_parameters[i].pwm_channel;
-		pwm_channel_init(PWM, &sync_channel);
+		if(pwm_all_pwm_parameters[i].pwm_channel != 0)
+		{
+			sync_channel.channel = pwm_all_pwm_parameters[i].pwm_channel;
+			pwm_channel_init(PWM, &sync_channel);
+		}
 	}
 
 	/*
@@ -141,8 +145,17 @@ static uint32_t nr_init_motors = 0;
  {
 	 if(nr_motors != nr_init_motors)
 	 {
-		 return 1;
+		 return -1;
 	 }
+	    int i;
+	    for (i = 0; i < nr_motors; i++)
+	    {
+	        if (setpoint[i] < 0)
+	        {
+	        	setpoint[i] = 0;
+	        }
+	    }
+
 	 for(int i = 0; i < nr_motors; i++)
 	 {
 		 sync_channel.channel = pwm_all_pwm_parameters[i].pwm_channel;

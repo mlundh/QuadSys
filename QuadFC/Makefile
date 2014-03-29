@@ -90,8 +90,9 @@ ENTRY_RTOSDemo=Reset_Handler
 
 
 	 
-.PHONY : Flash
-Flash:
-	C:\Program Files\Arduino\hardware\tools\bossac.exe -p, --port=COM11 -U false -e -w -v -b "C:\MLU\QuadFC\QuadFC\out\RTOSDemo.bin" -R
+.PHONY : flash
+flash:
+	python connect1200.py
+	bossac -p, --port=ttyACM0 -e -w -v -b "/home/martin/QuadFC/QuadFC/out/RTOSDemo.bin" -R
 
 

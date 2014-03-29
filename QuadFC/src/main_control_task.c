@@ -268,12 +268,9 @@ void main_control_task(void *pvParameters)
 
 
     // TODO read from memory
-    uint32_t nr_motors = 8;
+    uint32_t nr_motors = 4;
     //TODO fcn pointers!
     pwm_init_motor_control(nr_motors);
-
-    //TODO remove!
-    pwm_enable();
 
     /*The main control loop*/
     unsigned portBASE_TYPE xLastWakeTime = xTaskGetTickCount();
@@ -442,11 +439,9 @@ void main_control_task(void *pvParameters)
 				CommunicationSend(&(QSP_log_packet->frame), QSP_log_packet->frame_length);
 			}
 		}
-		motor_setpoint[0] = 100;
-		motor_setpoint[1] = 200;
-		motor_setpoint[2] = 100;
-		motor_setpoint[3] = 400;
-		pwm_update_setpoint(motor_setpoint, nr_motors);
+
+
+
 
 
         vTaskDelayUntil(&xLastWakeTime,xPeriod);

@@ -158,9 +158,8 @@ uint8_t mpu6050_read_motion(imu_data_t *data)
 		    if (xSemaphoreTake(mpu6050_packet.twi_notification_semaphore,mpu6050_packet.xtransmit_block_time) == pdPASS)
 		    {
 		    	xSemaphoreGive(mpu6050_packet.twi_notification_semaphore);
-				return 5;
 		    }
-		
+		    toggle_pin(31);
 		    //TODO check validity of data!
 
 		    data->accl_x = (int16_t)(mpu6050_packet.data[0] << 8 | mpu6050_packet.data[1]);
