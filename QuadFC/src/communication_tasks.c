@@ -85,7 +85,7 @@ void tx_task(void *pvParameters)
 {
 	
 	
-	portTickType max_block_time_ticks = 100UL / portTICK_RATE_ONE_THIRD_MS;
+	portTickType max_block_time_ticks = 1000UL / portTICK_RATE_ONE_THIRD_MS;
 	status_code_t result;
 	uint8_t *string_ptr;
     uint8_t nr_bytes_to_send;
@@ -387,7 +387,7 @@ void WriteLogParameters(uint8_t *raw_data)
 {
 	int i = 0;
 	uint32_t *raw_casted = (uint32_t *)raw_data;
-	if (raw_casted[0] & time)
+	if (raw_casted[0] & time_)
 	{
 		log_parameters[i++] = &time_main;
 	}

@@ -124,7 +124,7 @@ void mk_esc_scale_11_bit_setpoint(int32_t data, uint8_t test[2])
     }
 }
 
-void mk_esc_enable()
+void mk_esc_enable(uint32_t nr_motors)
 {
 	int foo = 0;
 }

@@ -195,15 +195,15 @@ void main_control_task(void *pvParameters)
        
 	/*Control parameter initialization for rate mode control.*/
     /*--------------------Initial parameters-------------------*/
-	parameters_rate->pitch_p = 40;
-	parameters_rate->pitch_i = 8;
-	parameters_rate->pitch_d = 180;
-	parameters_rate->roll_p = 40;
-	parameters_rate->roll_i = 8;
-	parameters_rate->roll_d = 180;
-	parameters_rate->yaw_p = 40;
-	parameters_rate->yaw_i = 15;
-	parameters_rate->yaw_d = 220;
+	parameters_rate->pitch_p = 120;
+	parameters_rate->pitch_i = 15;
+	parameters_rate->pitch_d = 200;
+	parameters_rate->roll_p = 120;
+	parameters_rate->roll_i = 15;
+	parameters_rate->roll_d = 200;
+	parameters_rate->yaw_p = 200;
+	parameters_rate->yaw_i = 30;
+	parameters_rate->yaw_d = 250;
 	parameters_rate->altitude_p = 1024;
 	parameters_rate->altitude_i = 0;
 	parameters_rate->altitude_d = 0;
@@ -253,7 +253,7 @@ void main_control_task(void *pvParameters)
 	/*Initialize log parameters*/
 	nr_log_parameters = 0;
 	
-    toggle_pin(33);
+    toggle_pin(13);
 
     /*Initialize the IMU. A reset followed by a short delay is recommended
      * before starting the configuration.*/
@@ -264,7 +264,7 @@ void main_control_task(void *pvParameters)
      * unintentional motor arming. */
     fc_mode = fc_disarmed;
     
-    toggle_pin(33);
+    toggle_pin(13);
 
 
     // TODO read from memory
@@ -272,6 +272,8 @@ void main_control_task(void *pvParameters)
     //TODO fcn pointers!
     pwm_init_motor_control(nr_motors);
 
+
+    uint32_t arming_counter = 0;
     /*The main control loop*/
     unsigned portBASE_TYPE xLastWakeTime = xTaskGetTickCount();
 	for (;;)
@@ -310,10 +312,21 @@ void main_control_task(void *pvParameters)
 			translate_receiver_signal_rate(setpoint, local_receiver_buffer);
 			get_rate_gyro(state, imu_readings);
 			calc_control_signal_rate_pid(motor_setpoint, nr_motors, parameters_rate, ctrl_error_rate, state, setpoint, ctrl_signal);
-			//mk_esc_update_setpoint(motor_setpoint, nr_motors);
 			pwm_update_setpoint(motor_setpoint, nr_motors);
 		}
-
+        /*If arming requested, delay to make sure all motors are armed.*/
+		else if (fc_mode == fc_arming)
+		{
+			if(arming_counter >= 1000)
+			{
+				fc_mode = fc_armed_rate_mode;
+				toggle_pin(13);
+			}
+			else
+			{
+				arming_counter++;
+			}
+		}
         /*---------------------------------------Configure mode--------------------------------------------
          * Configure mode is used to update parameters used in the control of the copter. The copter has to be
          * disarmed before entering configure mode. To enter a specific command has to be sent over USART.
@@ -409,6 +422,8 @@ void main_control_task(void *pvParameters)
 		/*-------------------------------------State change request from receiver?----------------------------
          * Check if a fc_state change is requested, if so, change state. State change is only allowed if the copter is landed. 
          */
+
+        /*Disarm requested*/
 		if ((local_receiver_buffer->connection_ok) && (local_receiver_buffer->ch5 > SATELLITE_CH_CENTER) && 
 			(local_receiver_buffer->ch0 < 40) && (fc_mode != fc_disarmed) && (fc_mode != fc_configure))
 		{
@@ -416,11 +431,14 @@ void main_control_task(void *pvParameters)
             reset_integral_error = 1;
             pwm_dissable();
 		}
+		/*Arming requested*/
 		if ((local_receiver_buffer->connection_ok) && (local_receiver_buffer->ch5 < SATELLITE_CH_CENTER) && 
-			(local_receiver_buffer->ch0 < 40) && (fc_mode != fc_armed_rate_mode) && (fc_mode != fc_configure))
+			(local_receiver_buffer->ch0 < 40) && (fc_mode != fc_armed_rate_mode) && (fc_mode != fc_configure) && (fc_mode != fc_arming))
 		{
-    		fc_mode = fc_armed_rate_mode;
-    		pwm_enable();
+    		fc_mode = fc_arming;
+    		arming_counter = 0;
+    		toggle_pin(13);
+    		pwm_enable(nr_motors);
 		}
         
 		/*------------------------------------------- Logging? ------------------------------------------ 

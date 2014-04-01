@@ -37,4 +37,8 @@ void toggle_pin_internally(int pin)
     {
         gpio_toggle_pin(PIN_35_GPIO);
     }
+    else if (pin ==13)
+    {
+        gpio_toggle_pin(LED0_GPIO);
+    }
 }    

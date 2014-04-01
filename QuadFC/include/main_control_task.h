@@ -191,6 +191,7 @@ typedef enum quadfc_state {
 	fc_config_error = 4,
 	fc_initializing = 5,
     fc_configure = 6,
+    fc_arming = 7,
 	} quadfc_state_t;
 
 /*each motor can be in one of the following modes*/
@@ -202,7 +203,7 @@ typedef enum esc_state {
 	}esc_state_t;
 
 typedef enum available_log_param1 {
-	time = 1 << 0,
+	time_ = 1 << 0,
 	pitch_ = 1 << 1,
 	roll_ = 1 << 2,
 	yaw_ = 1 << 3,

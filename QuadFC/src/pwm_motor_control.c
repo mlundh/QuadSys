@@ -24,6 +24,8 @@
  
 #include "pwm_motor_control.h"
 
+static uint32_t init_duty_value = INIT_DUTY_VALUE;
+
 static 	pwm_channel_t sync_channel = {
 			/* Use PWM clock A as source clock */
 			.ul_prescaler = PWM_CMR_CPRE_CLKA,
@@ -130,10 +132,26 @@ static uint32_t nr_init_motors = 0;
 	return 0;
  }
 
- void pwm_enable()
+ void pwm_enable(uint32_t nr_motors)
  {
+	 if(nr_motors != nr_init_motors)
+	 {
+		 //TODO error! ;
+	 }
+
 	/* Enable all synchronous channels by enabling channel 0 */
+
 	 pwm_channel_enable(PWM, 0);
+
+
+	 init_duty_value = INIT_DUTY_VALUE;
+	 for(int i = 0; i < nr_motors; i++)
+	 {
+		 sync_channel.channel = pwm_all_pwm_parameters[i].pwm_channel;
+		 pwm_channel_update_duty(PWM, &sync_channel, init_duty_value);
+	 }
+	 pwm_sync_unlock_update(PWM);
+	 init_duty_value += MIN_START_DUTY;
  }
 
  void pwm_dissable()
@@ -147,19 +165,25 @@ static uint32_t nr_init_motors = 0;
 	 {
 		 return -1;
 	 }
-	    int i;
-	    for (i = 0; i < nr_motors; i++)
-	    {
-	        if (setpoint[i] < 0)
-	        {
-	        	setpoint[i] = 0;
-	        }
-	    }
+	int i;
+	for (i = 0; i < nr_motors; i++)
+	{
+		/*Add initial duty value to make to propellers spin.*/
+		setpoint[i] += init_duty_value;
 
+		if (setpoint[i] < init_duty_value)
+		{
+			setpoint[i] = init_duty_value;
+		}
+		else if(setpoint[i] > MAX_SETPOINT)
+		{
+			setpoint[i] = MAX_SETPOINT;
+		}
+	}
 	 for(int i = 0; i < nr_motors; i++)
 	 {
 		 sync_channel.channel = pwm_all_pwm_parameters[i].pwm_channel;
-		 pwm_channel_update_duty(PWM, &sync_channel, (uint32_t)setpoint[i] + INIT_DUTY_VALUE);
+		 pwm_channel_update_duty(PWM, &sync_channel, (setpoint[i]));
 	 }
 	 pwm_sync_unlock_update(PWM);
 	 return 0;
