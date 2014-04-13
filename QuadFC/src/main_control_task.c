@@ -195,14 +195,14 @@ void main_control_task(void *pvParameters)
        
 	/*Control parameter initialization for rate mode control.*/
     /*--------------------Initial parameters-------------------*/
-	parameters_rate->pitch_p = 123000;
-	parameters_rate->pitch_i = 60;
+	parameters_rate->pitch_p = 180000;
+	parameters_rate->pitch_i = 700;
 	parameters_rate->pitch_d = 204800;
-	parameters_rate->roll_p = 123000;
-	parameters_rate->roll_i = 60;
+	parameters_rate->roll_p = 180000;
+	parameters_rate->roll_i = 700;
 	parameters_rate->roll_d = 204800;
 	parameters_rate->yaw_p = 210000;
-	parameters_rate->yaw_i = 468;
+	parameters_rate->yaw_i = 700;
 	parameters_rate->yaw_d = 256000;
 	parameters_rate->altitude_p = 1 << SHIFT_EXP;
 	parameters_rate->altitude_i = 0;
