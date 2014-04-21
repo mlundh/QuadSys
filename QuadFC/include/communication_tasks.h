@@ -12,7 +12,6 @@
 
 
 #include "main_control_task.h"
-#include "debug_macros.h"
 #include "crc.h"
 /* Atmel library includes. */
 #include "freertos_uart_serial.h"

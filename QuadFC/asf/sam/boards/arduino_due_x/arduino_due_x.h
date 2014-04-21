@@ -126,10 +126,10 @@
 /*! LED #0 "L" pin definition (ORANGE).*/
 #define LED_0_NAME      "Orange_LED"
 #define LED0_GPIO       (PIO_PB27_IDX)
-#define LED0_FLAGS      (PIO_TYPE_PIO_OUTPUT_1 | PIO_DEFAULT)
+#define LED0_FLAGS      (PIO_TYPE_PIO_OUTPUT_0 | PIO_DEFAULT)
 #define LED0_ACTIVE_LEVEL 0
 
-#define PIN_LED_0       {1 << 27, PIOB, ID_PIOB, PIO_OUTPUT_1, PIO_DEFAULT}
+#define PIN_LED_0       {1 << 27, PIOB, ID_PIOB, PIO_OUTPUT_0, PIO_DEFAULT}
 #define PIN_LED_0_MASK  (1 << 27)
 #define PIN_LED_0_PIO   PIOB
 #define PIN_LED_0_ID    ID_PIOB
@@ -138,10 +138,10 @@
 
 /*! PIN_31 pin definition */
 #define PIN_31_GPIO       (PIO_PA7_IDX)
-#define PIN_31_FLAGS      (PIO_TYPE_PIO_OUTPUT_1 | PIO_DEFAULT)
+#define PIN_31_FLAGS      (PIO_TYPE_PIO_OUTPUT_0 | PIO_DEFAULT)
 #define PIN_31_ACTIVE_LEVEL 1
 
-#define PIN_31       {1 << 7, PIOC, ID_PIOC, PIO_OUTPUT_1, PIO_DEFAULT}
+#define PIN_31       {1 << 7, PIOC, ID_PIOC, PIO_OUTPUT_0, PIO_DEFAULT}
 #define PIN_31_MASK  (1 << 7)
 #define PIN_31_PIO   PIOA
 #define PIN_31_ID    ID_PIOA
@@ -150,10 +150,10 @@
 
 /*! PIN_33 pin definition */
 #define PIN_33_GPIO       (PIO_PC1_IDX)
-#define PIN_33_FLAGS      (PIO_TYPE_PIO_OUTPUT_1 | PIO_DEFAULT)
+#define PIN_33_FLAGS      (PIO_TYPE_PIO_OUTPUT_0 | PIO_DEFAULT)
 #define PIN_33_ACTIVE_LEVEL 1
 
-#define PIN_33       {1 << 1, PIOC, ID_PIOC, PIO_OUTPUT_1, PIO_DEFAULT}
+#define PIN_33       {1 << 1, PIOC, ID_PIOC, PIO_OUTPUT_0, PIO_DEFAULT}
 #define PIN_33_MASK  (1 << 1)
 #define PIN_33_PIO   PIOC
 #define PIN_33_ID    ID_PIOC
@@ -162,15 +162,51 @@
 
 /*! PIN_35 pin definition */
 #define PIN_35_GPIO       (PIO_PC3_IDX)
-#define PIN_35_FLAGS      (PIO_TYPE_PIO_OUTPUT_1 | PIO_DEFAULT)
+#define PIN_35_FLAGS      (PIO_TYPE_PIO_OUTPUT_0 | PIO_DEFAULT)
 #define PIN_35_ACTIVE_LEVEL 1
 
-#define PIN_35	     {1 << 3, PIOC, ID_PIOC, PIO_OUTPUT_1, PIO_DEFAULT}
+#define PIN_35	     {1 << 3, PIOC, ID_PIOC, PIO_OUTPUT_0, PIO_DEFAULT}
 #define PIN_35_MASK  (1 << 3)
 #define PIN_35_PIO   PIOC
 #define PIN_35_ID    ID_PIOC
 #define PIN_35_TYPE  PIO_OUTPUT_1
 #define PIN_35_ATTR  PIO_DEFAULT
+
+/*! PIN_37 pin definition */
+#define PIN_37_GPIO       (PIO_PC5_IDX)
+#define PIN_37_FLAGS      (PIO_TYPE_PIO_OUTPUT_0 | PIO_DEFAULT)
+#define PIN_37_ACTIVE_LEVEL 1
+
+#define PIN_37	     {1 << 5, PIOC, ID_PIOC, PIO_OUTPUT_0, PIO_DEFAULT}
+#define PIN_37_MASK  (1 << 5)
+#define PIN_37_PIO   PIOC
+#define PIN_37_ID    ID_PIOC
+#define PIN_37_TYPE  PIO_OUTPUT_1
+#define PIN_37_ATTR  PIO_DEFAULT
+
+/*! PIN_35 pin definition */
+#define PIN_39_GPIO       (PIO_PC7_IDX)
+#define PIN_39_FLAGS      (PIO_TYPE_PIO_OUTPUT_0 | PIO_DEFAULT)
+#define PIN_39_ACTIVE_LEVEL 1
+
+#define PIN_39	     {1 << 7, PIOC, ID_PIOC, PIO_OUTPUT_0, PIO_DEFAULT}
+#define PIN_39_MASK  (1 << 7)
+#define PIN_39_PIO   PIOC
+#define PIN_39_ID    ID_PIOC
+#define PIN_39_TYPE  PIO_OUTPUT_1
+#define PIN_39_ATTR  PIO_DEFAULT
+
+/*! PIN_35 pin definition */
+#define PIN_41_GPIO       (PIO_PC9_IDX)
+#define PIN_41_FLAGS      (PIO_TYPE_PIO_OUTPUT_0 | PIO_DEFAULT)
+#define PIN_41_ACTIVE_LEVEL 1
+
+#define PIN_41	     {1 << 9, PIOC, ID_PIOC, PIO_OUTPUT_0, PIO_DEFAULT}
+#define PIN_41_MASK  (1 << 9)
+#define PIN_41_PIO   PIOC
+#define PIN_41_ID    ID_PIOC
+#define PIN_41_TYPE  PIO_OUTPUT_1
+#define PIN_41_ATTR  PIO_DEFAULT
 
 
 /**

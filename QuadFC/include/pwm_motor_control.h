@@ -24,7 +24,7 @@
     /** Maximum synchronous update period */
     #define MAX_SYNC_UPDATE_PERIOD  (0)
 	/** Minimum input over INIT_DUTY_VALUE for the propellers to start rotating */
-	#define MIN_START_DUTY (600)
+	#define MIN_START_DUTY (200)
 	/**  Max allowed setponit */
 	#define MAX_SETPOINT (5680)
 /* Contains identification information required for accessing a pwm channel. */

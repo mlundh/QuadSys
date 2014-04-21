@@ -562,7 +562,7 @@ static void local_twi_handler(const portBASE_TYPE twi_index)
 		Stop the transmission, disable interrupts used by the peripheral, and
 		ensure the peripheral access mutex is made available to tasks.  As this
 		peripheral is half duplex, only the Tx peripheral access mutex exits.*/
-		toggle_pin(33);
+
 		//twi_disable_interrupt(twi_port, TWI_IDR_ENDTX);
 		//twi_disable_interrupt(twi_port, TWI_IDR_ENDRX);
 		//twi_disable_interrupt(twi_port, TWI_IDR_TXCOMP);

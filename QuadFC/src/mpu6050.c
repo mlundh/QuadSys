@@ -43,7 +43,7 @@ THE SOFTWARE.
 */ 
 
 #include "mpu6050.h"
-
+#include "led_control_task.h"
 
 static imu_data_t offset = {    /*IMU data struct, used to store the GYRO offset values*/
 	.accl_x = 0,
@@ -122,13 +122,20 @@ uint8_t mpu6050_read_settings(uint8_t reg_addr, uint8_t bit_nr, uint8_t nr_bits,
 	
     xSemaphoreTake(mpu6050_packet.twi_notification_semaphore, mpu6050_packet.xtransmit_block_time);
 
-    twi_status = freertos_twi_read_packet_async(mpu6050_packet.twi,
+    freertos_twi_read_packet_async(mpu6050_packet.twi,
                                     &mpu6050_packet.twi_data,
                                     mpu6050_packet.xtransmit_block_time,
                                     mpu6050_packet.twi_notification_semaphore);
     //Wait on completion.
-	xSemaphoreTake(mpu6050_packet.twi_notification_semaphore, mpu6050_packet.xtransmit_block_time);
-	xSemaphoreGive(mpu6050_packet.twi_notification_semaphore);
+	if(xSemaphoreTake(mpu6050_packet.twi_notification_semaphore, mpu6050_packet.xtransmit_block_time) ==  pdPASS)
+	{
+		xSemaphoreGive(mpu6050_packet.twi_notification_semaphore);
+	}
+	else
+	{
+        uint8_t led_state = error_TWI_led;
+        xQueueSendToBack(xQueue_led, &led_state, mainDONT_BLOCK);
+	}
                                     
     
     
@@ -149,7 +156,7 @@ uint8_t mpu6050_read_motion(imu_data_t *data)
 	
 	if (xSemaphoreTake(mpu6050_packet.twi_notification_semaphore, mpu6050_packet.xtransmit_block_time) == pdPASS)
 	{
-		    twi_status = freertos_twi_read_packet_async(mpu6050_packet.twi,
+		    freertos_twi_read_packet_async(mpu6050_packet.twi,
 				&mpu6050_packet.twi_data,
 				mpu6050_packet.xtransmit_block_time,
 				mpu6050_packet.twi_notification_semaphore);
@@ -159,7 +166,11 @@ uint8_t mpu6050_read_motion(imu_data_t *data)
 		    {
 		    	xSemaphoreGive(mpu6050_packet.twi_notification_semaphore);
 		    }
-		    toggle_pin(31);
+		    else
+		    {
+	            uint8_t led_state = error_TWI_led;
+	            xQueueSendToBack(xQueue_led, &led_state, mainDONT_BLOCK);
+		    }
 		    //TODO check validity of data!
 
 		    data->accl_x = (int16_t)(mpu6050_packet.data[0] << 8 | mpu6050_packet.data[1]);

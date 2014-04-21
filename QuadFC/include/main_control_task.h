@@ -11,14 +11,14 @@
 /*
  * Fixed point scaling factor.
  */
-#define SHIFT_EXP 10
+#define SHIFT_EXP 6
 
 /* Kernel includes. */
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
 #include "asf.h"
-#include "debug_macros.h"
+
 
 
 /*-----------------------------------------------------------

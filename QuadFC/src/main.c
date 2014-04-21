@@ -1,5 +1,5 @@
 /*
- * prepare_output.c
+ * main.c
  *
  * Copyright (C) 2014  Martin Lundh
  *
@@ -35,7 +35,7 @@ int main(void)
 	
 	/* Prepare the hardware to run QuadFC. */
 	prvSetupHardware();
-    
+
 	/* Create the queue used for receiver communication*/
 	xQueue_receiver = xQueueCreate(RECEIVER_QUEUE_LENGTH, RECEIVER_QUEUE_ITEM_SIZE);
     
@@ -43,6 +43,9 @@ int main(void)
     xQueue_display = xQueueCreate(DISPLAY_QUEUE_LENGTH, DISPLAY_QUEUE_ITEM_SIZE);
     xQueue_display_bytes_to_send = xQueueCreate(DISPLAY_NR_BYTES_QUEUE_LENGTH, DISPLAY_NR_BYTES_QUEUE_ITEM_SIZE);
     xQueue_configure_req = xQueueCreate(CONFIGURE_REQ_QUEUE_LENGTH, CONFIGURE_REQ_QUEUE_ITEM_SIZE);
+
+    xQueue_led = xQueueCreate(LED_QUEUE_LENGTH, LED_QUEUE_ITEM_SIZE);
+
     x_param_mutex = xSemaphoreCreateMutex();
 	x_log_mutex = xSemaphoreCreateMutex();
     vSemaphoreCreateBinary(twi_0_notification_semaphore);
@@ -57,7 +60,7 @@ int main(void)
 	}
     /* Create all tasks used in the application.*/
     create_satellite_receiver_task();
-    
+    create_led_control_task();
     /*We only have access to four PDC channels and can therefore not use all serial ports. */
     create_communication_tasks();
     

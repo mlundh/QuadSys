@@ -84,7 +84,7 @@ void calc_control_signal_angle_pid(int32_t motor_setpoint[], uint32_t nr_motors,
 void calc_control_signal_rate_pid(int32_t motor_setpoint[], uint32_t nr_motors, control_values_pid_t *parameters_pid, control_values_pid_t *ctrl_error, state_data_t *state, state_data_t *setpoint, control_signal_t *ctrl_signal)
 {
     
-    static control_signal_t error_d_last;
+    static control_signal_t error_d_last = {};
     
     
     /*Update control error - Remember that the state and setpoint uses MULT_FACTOR*/
@@ -102,13 +102,13 @@ void calc_control_signal_rate_pid(int32_t motor_setpoint[], uint32_t nr_motors, 
     error_d_last.torque_pitch = ctrl_error->pitch_p;
     error_d_last.torque_roll = ctrl_error->roll_p;
     error_d_last.torque_yaw = ctrl_error->yaw_p;
-    
+
     /*Calculate control signal*/
     ctrl_signal->torque_pitch = (my_mult(parameters_pid->pitch_p, ctrl_error->pitch_p) + my_mult(parameters_pid->pitch_i, ctrl_error->pitch_i) + my_mult(parameters_pid->pitch_d, ctrl_error->pitch_d)) >> SHIFT_EXP;
     ctrl_signal->torque_roll = (my_mult(parameters_pid->roll_p, ctrl_error->roll_p) + my_mult(parameters_pid->roll_i, ctrl_error->roll_i) + my_mult(parameters_pid->roll_d, ctrl_error->roll_d)) >> SHIFT_EXP;
     ctrl_signal->torque_yaw = (my_mult(parameters_pid->yaw_p, ctrl_error->yaw_p) + my_mult(parameters_pid->yaw_i, ctrl_error->yaw_i) + my_mult(parameters_pid->yaw_d, ctrl_error->yaw_d)) >> SHIFT_EXP;
     // TODO No automatic altitude control yet.
-    ctrl_signal->thrust = my_mult(parameters_pid->altitude_p, setpoint->z_vel); 
+    ctrl_signal->thrust = my_mult(parameters_pid->altitude_p, setpoint->z_vel);
     
 
     if (nr_motors == 4)

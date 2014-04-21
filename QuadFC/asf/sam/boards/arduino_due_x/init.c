@@ -58,6 +58,9 @@ void board_init(void)
 	gpio_configure_pin(PIN_31_GPIO, PIN_31_FLAGS);
 	gpio_configure_pin(PIN_33_GPIO, PIN_33_FLAGS);
 	gpio_configure_pin(PIN_35_GPIO, PIN_35_FLAGS);
+	gpio_configure_pin(PIN_37_GPIO, PIN_37_FLAGS);
+	gpio_configure_pin(PIN_39_GPIO, PIN_39_FLAGS);
+	gpio_configure_pin(PIN_41_GPIO, PIN_41_FLAGS);
 
 #ifdef CONF_BOARD_PWM_PIN_6
 /* Configure PWM LED0 pin */

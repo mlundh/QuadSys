@@ -60,7 +60,7 @@
  */ 
 
 #include "main_control_task.h"
-
+#include "led_control_task.h"
 
 /*
  * void create_main_control_task(void)
@@ -195,19 +195,20 @@ void main_control_task(void *pvParameters)
        
 	/*Control parameter initialization for rate mode control.*/
     /*--------------------Initial parameters-------------------*/
-	parameters_rate->pitch_p = 180000;
-	parameters_rate->pitch_i = 700;
-	parameters_rate->pitch_d = 204800;
-	parameters_rate->roll_p = 180000;
-	parameters_rate->roll_i = 700;
-	parameters_rate->roll_d = 204800;
-	parameters_rate->yaw_p = 210000;
-	parameters_rate->yaw_i = 700;
-	parameters_rate->yaw_d = 256000;
+	parameters_rate->pitch_p = 2250;
+	parameters_rate->pitch_i = 30;
+	parameters_rate->pitch_d = 50;
+	parameters_rate->roll_p = 2250;
+	parameters_rate->roll_i = 30;
+	parameters_rate->roll_d = 50;
+	parameters_rate->yaw_p = 2500;
+	parameters_rate->yaw_i = 30;
+	parameters_rate->yaw_d = 50;
 	parameters_rate->altitude_p = 1 << SHIFT_EXP;
 	parameters_rate->altitude_i = 0;
 	parameters_rate->altitude_d = 0;
-    
+
+
     /*Initialization for control error in angle mode*/
     reset_control_error(ctrl_error_angle);
 
@@ -253,9 +254,11 @@ void main_control_task(void *pvParameters)
 	/*Initialize log parameters*/
 	nr_log_parameters = 0;
 	
-    toggle_pin(13);
 
-    /*Initialize the IMU. A reset followed by a short delay is recommended
+    uint8_t led_state = fc_initializing_led;
+	xQueueSendToBack(xQueue_led, &led_state, mainDONT_BLOCK);
+
+	/*Initialize the IMU. A reset followed by a short delay is recommended
      * before starting the configuration.*/
     init_twi_main();
     mpu6050_initialize();
@@ -263,8 +266,9 @@ void main_control_task(void *pvParameters)
     /*Flight controller should always be started in fc_disarmed mode to prevent
      * unintentional motor arming. */
     fc_mode = fc_disarmed;
-    
-    toggle_pin(13);
+    led_state = fc_disarmed_led;
+    xQueueSendToBack(xQueue_led, &led_state, mainDONT_BLOCK);
+    //toggle_pin(13);
 
 
     // TODO read from memory
@@ -272,9 +276,12 @@ void main_control_task(void *pvParameters)
     //TODO fcn pointers!
     pwm_init_motor_control(nr_motors);
 
-
     uint32_t arming_counter = 0;
+    uint32_t heartbeat_counter = 0;
+
+
     /*The main control loop*/
+
     unsigned portBASE_TYPE xLastWakeTime = xTaskGetTickCount();
 	for (;;)
 	{
@@ -320,7 +327,9 @@ void main_control_task(void *pvParameters)
 			if(arming_counter >= 1000)
 			{
 				fc_mode = fc_armed_rate_mode;
-				toggle_pin(13);
+
+	            led_state = fc_armed_rate_mode_led;
+	            xQueueSendToBack(xQueue_led, &led_state, mainDONT_BLOCK);
 			}
 			else
 			{
@@ -348,6 +357,10 @@ void main_control_task(void *pvParameters)
 					CommunicationSend(&(QSP_log_packet->frame), QSP_log_packet->frame_length);
 					xSemaphoreTake(x_param_mutex, portMAX_DELAY);
 					fc_mode = fc_disarmed;
+					/*Led control*/
+		            led_state = fc_disarmed_led;
+		            xQueueSendToBack(xQueue_led, &led_state, mainDONT_BLOCK);
+
 				} // Answer even if asked to change to current state
 				else if (state_request == fc_configure)
 				{
@@ -385,7 +398,11 @@ void main_control_task(void *pvParameters)
 					encode_QSP_frame(QSP_log_packet, temp_frame_main);
 					CommunicationSend(&(QSP_log_packet->frame), QSP_log_packet->frame_length);
 					xSemaphoreGive(x_param_mutex);
+
 					fc_mode = fc_configure;
+
+		            led_state = fc_configure_led;
+		            xQueueSendToBack(xQueue_led, &led_state, mainDONT_BLOCK);
 				}// Answer even if asked to switch to current state
 				else if (state_request == fc_disarmed)
 				{
@@ -408,12 +425,26 @@ void main_control_task(void *pvParameters)
 			/* The code in this scope will execute once every 22 ms (the frequency of new data
 			 * from the receiver).
 			 */
+        	static int first = 0;
+        	first++;
+        	if(first >= 300)
+        	{
+	            led_state = clear_error_led;
+	            xQueueSendToBack(xQueue_led, &led_state, mainDONT_BLOCK);
+	            first = 0;
+        	}
         }
         
 		/*--------------- If there is no connection to the receiver, put FC in disarmed mode-------------*/
         if ((!local_receiver_buffer->connection_ok) && (fc_mode != fc_configure) && (fc_mode != fc_disarmed))
         {
-            fc_mode = fc_disarmed; /*Error - no connection, TODO do something!*/
+            fc_mode = fc_disarmed; /*Error - no connection*/
+            /*Led control*/
+            led_state = error_rc_link_led;
+            xQueueSendToBack(xQueue_led, &led_state, mainDONT_BLOCK);
+            led_state = fc_disarmed_led;
+            xQueueSendToBack(xQueue_led, &led_state, mainDONT_BLOCK);
+
             reset_integral_error = 1;
             pwm_dissable();
         }
@@ -428,6 +459,10 @@ void main_control_task(void *pvParameters)
 			(local_receiver_buffer->ch0 < 40) && (fc_mode != fc_disarmed) && (fc_mode != fc_configure))
 		{
     		fc_mode = fc_disarmed;
+    		/*Led control*/
+            led_state = fc_disarmed_led;
+            xQueueSendToBack(xQueue_led, &led_state, mainDONT_BLOCK);
+            /**/
             reset_integral_error = 1;
             pwm_dissable();
 		}
@@ -435,9 +470,13 @@ void main_control_task(void *pvParameters)
 		if ((local_receiver_buffer->connection_ok) && (local_receiver_buffer->ch5 < SATELLITE_CH_CENTER) && 
 			(local_receiver_buffer->ch0 < 40) && (fc_mode != fc_armed_rate_mode) && (fc_mode != fc_configure) && (fc_mode != fc_arming))
 		{
+			/*Led control*/
+			led_state = fc_arming_led;
+			xQueueSendToBack(xQueue_led, &led_state, mainDONT_BLOCK);
     		fc_mode = fc_arming;
+
     		arming_counter = 0;
-    		toggle_pin(13);
+    		//toggle_pin(13);
     		pwm_enable(nr_motors);
 		}
         
@@ -467,7 +506,13 @@ void main_control_task(void *pvParameters)
         /*-------------------Heartbeat----------------------
         * Toggle an led to indicate that the FC is operational.
         */
-		toggle_pin(33);
+        heartbeat_counter++;
+        if(heartbeat_counter >= 500)
+        {
+        	gpio_toggle_pin(PIN_31_GPIO);
+        	heartbeat_counter = 0;
+        }
+
         /*-------------------Heartbeat-----------------*/
 	}
 	/* The task should never escape the for-loop and therefore never return.*/

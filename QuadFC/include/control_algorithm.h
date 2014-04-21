@@ -10,7 +10,6 @@
 #define CONTROL_ALGORITHM_H_
 
 #include "main_control_task.h"
-#include "debug_macros.h"
 #include "my_math.h"
 
 #define CTRL_P_LIMIT 1000

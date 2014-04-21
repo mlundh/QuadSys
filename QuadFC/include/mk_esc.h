@@ -9,7 +9,6 @@
 #ifndef MKESC_H_
 #define MKESC_H_
 
-#include "debug_macros.h"
 #include "main_control_task.h"
 /*
 * Struct describing key properties and parameters for the BL_CTRL.
@@ -19,7 +18,7 @@
 * [Current, max_pwm, temperature] in said order,
 * where Current is reported in 0.1 A steps, max_pwm is a status 
 * showing: less than 255 if BL_CTRL is in current limit, not running (250)
-* or starting(40), and temperature is reported in °C
+* or starting(40), and temperature is reported in ï¿½C
 */
 
 #define BLOCK_TIME_TRANSMIT (2 / portTICK_RATE_ONE_THIRD_MS)// 1 tick timeout gives a timeout 
@@ -57,7 +56,7 @@ typedef struct mk_esc_config
     uint8_t SetMask;                        // settings mask
     uint8_t PwmScaling;                     // maximum value of control pwm, acts like a thrust limit
     uint8_t CurrentLimit;                   // current limit in A
-    uint8_t TempLimit;                      // in °C
+    uint8_t TempLimit;                      // in ï¿½C
     uint8_t CurrentScaling;                 // scaling factor for current measurement
     uint8_t BitConfig;                      // see defines above
     uint8_t crc;                            // checksum
