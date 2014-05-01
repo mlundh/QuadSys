@@ -278,6 +278,7 @@ void main_control_task(void *pvParameters)
 
     uint32_t arming_counter = 0;
     uint32_t heartbeat_counter = 0;
+    uint32_t spectrum_receiver_error_counter = 0;
 
 
     /*The main control loop*/
@@ -425,21 +426,49 @@ void main_control_task(void *pvParameters)
 			/* The code in this scope will execute once every 22 ms (the frequency of new data
 			 * from the receiver).
 			 */
+
+        	/*If good signal decrease spectrum_receiver_error_counter*/
+        	if((local_receiver_buffer->connection_ok))
+        	{
+
+            	if(spectrum_receiver_error_counter > 0)
+            	{
+            		spectrum_receiver_error_counter--;
+            	}
+        	}
+        	/*If bad connection and fc in a flightmode increase spectrum_receiver_error_counter.*/
+        	else if ((fc_mode != fc_configure) && (fc_mode != fc_disarmed))
+            {
+            	/* Allow a low number of lost frames at a time. Increase counter 4 times as fast as it is decreased.
+            	 * This ensures that there is at least 4 good frames to each bad one.*/
+            	spectrum_receiver_error_counter += 4;
+            	/*If there has been to many errors, put the fc in disarmed mode.*/
+            	if(spectrum_receiver_error_counter >= (80))
+            	{
+    				fc_mode = fc_disarmed; /*Error - no connection*/
+    				/*Led control*/
+    				led_state = error_rc_link_led;
+    				xQueueSendToBack(xQueue_led, &led_state, mainDONT_BLOCK);
+    				led_state = fc_disarmed_led;
+    				xQueueSendToBack(xQueue_led, &led_state, mainDONT_BLOCK);
+
+    				reset_integral_error = 1;
+    				pwm_dissable();
+    				spectrum_receiver_error_counter = 0;
+            	}
+            }
+            else
+            {
+            	//Do nothing.
+            }
+
+
+
+
+
         }
         
 		/*--------------- If there is no connection to the receiver, put FC in disarmed mode-------------*/
-        if ((!local_receiver_buffer->connection_ok) && (fc_mode != fc_configure) && (fc_mode != fc_disarmed))
-        {
-            fc_mode = fc_disarmed; /*Error - no connection*/
-            /*Led control*/
-            led_state = error_rc_link_led;
-            xQueueSendToBack(xQueue_led, &led_state, mainDONT_BLOCK);
-            led_state = fc_disarmed_led;
-            xQueueSendToBack(xQueue_led, &led_state, mainDONT_BLOCK);
-
-            reset_integral_error = 1;
-            pwm_dissable();
-        }
 
      
 		/*-------------------------------------State change request from receiver?----------------------------
