@@ -91,8 +91,8 @@ void translate_receiver_signal_angle(state_data_t *setpoint, receiver_data_t *re
 void translate_receiver_signal_rate(state_data_t *setpoint, receiver_data_t *received_data)
 {
     setpoint->z_vel = (received_data->ch0);
-    setpoint->roll_rate = -((received_data->ch1 - SATELLITE_CH_CENTER) * (int32_t)CONVERT_RECEIVER_TO_IMU_UINTS);
-    setpoint->pitch_rate = -((received_data->ch2 - SATELLITE_CH_CENTER) * (int32_t)CONVERT_RECEIVER_TO_IMU_UINTS);
-    setpoint->yaw_rate = -((received_data->ch3 - SATELLITE_CH_CENTER) * (int32_t)CONVERT_RECEIVER_TO_IMU_UINTS);
+    setpoint->roll_rate = -((received_data->ch1 - SATELLITE_CH_CENTER) * (int32_t)CONVERT_RECEIVER_TO_IMU_UINTS) << 3;
+    setpoint->pitch_rate = -((received_data->ch2 - SATELLITE_CH_CENTER) * (int32_t)CONVERT_RECEIVER_TO_IMU_UINTS) << 3;
+    setpoint->yaw_rate = -((received_data->ch3 - SATELLITE_CH_CENTER) * (int32_t)CONVERT_RECEIVER_TO_IMU_UINTS) << 3;
     
 }

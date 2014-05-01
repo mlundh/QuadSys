@@ -195,15 +195,15 @@ void main_control_task(void *pvParameters)
        
 	/*Control parameter initialization for rate mode control.*/
     /*--------------------Initial parameters-------------------*/
-	parameters_rate->pitch_p = 2250;
-	parameters_rate->pitch_i = 30;
-	parameters_rate->pitch_d = 50;
-	parameters_rate->roll_p = 2250;
-	parameters_rate->roll_i = 30;
-	parameters_rate->roll_d = 50;
-	parameters_rate->yaw_p = 2500;
-	parameters_rate->yaw_i = 30;
-	parameters_rate->yaw_d = 50;
+	parameters_rate->pitch_p = 250;
+	parameters_rate->pitch_i = 3;
+	parameters_rate->pitch_d = 3;
+	parameters_rate->roll_p = 250;
+	parameters_rate->roll_i = 3;
+	parameters_rate->roll_d = 3;
+	parameters_rate->yaw_p = 250;
+	parameters_rate->yaw_i = 3;
+	parameters_rate->yaw_d = 3;
 	parameters_rate->altitude_p = 1 << SHIFT_EXP;
 	parameters_rate->altitude_i = 0;
 	parameters_rate->altitude_d = 0;
@@ -425,14 +425,6 @@ void main_control_task(void *pvParameters)
 			/* The code in this scope will execute once every 22 ms (the frequency of new data
 			 * from the receiver).
 			 */
-        	static int first = 0;
-        	first++;
-        	if(first >= 300)
-        	{
-	            led_state = clear_error_led;
-	            xQueueSendToBack(xQueue_led, &led_state, mainDONT_BLOCK);
-	            first = 0;
-        	}
         }
         
 		/*--------------- If there is no connection to the receiver, put FC in disarmed mode-------------*/
@@ -473,10 +465,13 @@ void main_control_task(void *pvParameters)
 			/*Led control*/
 			led_state = fc_arming_led;
 			xQueueSendToBack(xQueue_led, &led_state, mainDONT_BLOCK);
-    		fc_mode = fc_arming;
+
+    		led_state = clear_error_led;
+			xQueueSendToBack(xQueue_led, &led_state, mainDONT_BLOCK);
+
+			fc_mode = fc_arming;
 
     		arming_counter = 0;
-    		//toggle_pin(13);
     		pwm_enable(nr_motors);
 		}
         
@@ -551,7 +546,15 @@ void do_logging(communicaion_packet_t *packet)
 		for (int k = 0; k < 4; k++)
 		{
 			/*Deep copy the desired log data into the log packet.*/
-			packet->information[i*4 + k] = (current_log_param[k]);
+			uint32_t index = (i*4 + k);
+			if(index < MAX_DATA_LENGTH)
+			{
+				packet->information[i*4 + k] = (current_log_param[k]);
+			}
+			else
+			{
+				return;
+			}
 		}
 	}
 	

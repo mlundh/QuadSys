@@ -85,7 +85,7 @@ void led_control_task(void *pvParameters)
 		switch (ctrl)
 		{
 		case fc_disarmed_led:
-			mode_state_led_1 = led_off;
+			mode_state_led_1 = led_double_blink;
 			mode_state_led_2 = led_off;
 			break;
 
@@ -98,7 +98,7 @@ void led_control_task(void *pvParameters)
 			break;
 
 		case fc_armed_angle_mode_led:
-			mode_state_led_1 = led_double_blink;
+			mode_state_led_1 = 0;
 			break;
 
 		case fc_configure_led:
