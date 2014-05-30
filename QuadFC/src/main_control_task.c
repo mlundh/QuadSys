@@ -507,7 +507,7 @@ void main_control_task(void *pvParameters)
 		/*------------------------------------------- Logging? ------------------------------------------ 
 		 * If the FC is in a flight state and logging is requested, log data!
 		 */
-		if (nr_log_parameters && (fc_mode != fc_disarmed) && (fc_mode != fc_configure))
+		if (nr_log_parameters && (fc_mode != fc_configure)) // && (fc_mode != fc_disarmed)
 		{
 			if ((uxQueueMessagesWaiting(xQueue_display) < DISPLAY_QUEUE_LENGTH) && (xSemaphoreTake(x_log_mutex, 0) == pdPASS))
 			{

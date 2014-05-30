@@ -33,7 +33,7 @@
  
 
 
-#define TIME_STEP 0 // 0.002s * MULT_FACTOR
+#define TIME_STEP 1 // 0.002s << SHIFT_EXP
 #define FILTER_COEFFICENT_GYRO 8
 #define FILTER_COEFFICENT_ACCEL 2
 #define MY 0

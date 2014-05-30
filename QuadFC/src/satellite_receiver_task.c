@@ -107,7 +107,7 @@ void satellite_receiver_task(void *pvParameters)
    
     
     uint8_t satellite_receive_buffer[SATELLITE_MESSAGE_LENGTH];
-    const portBASE_TYPE satellite_block_time = 130UL / portTICK_RATE_ONE_THIRD_MS;	        // One frame each 22 ms. This causes an error message if no valid rc-signal is detected. 
+    const portBASE_TYPE satellite_block_time = 75UL / portTICK_RATE_ONE_THIRD_MS;	        // One frame each 22 ms. This causes an error message if no valid rc-signal is detected. 75/3 = 25ms between reads
     const portBASE_TYPE satellite_block_time_sync = 10UL / portTICK_RATE_ONE_THIRD_MS;		// One frame each 22 ms
 
 

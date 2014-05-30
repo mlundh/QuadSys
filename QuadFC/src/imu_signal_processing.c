@@ -50,9 +50,9 @@ void get_euler_angles_gyro(state_data_t *state, imu_data_t *measurments)
     * TODO
     * DO NOT USE UNTIL FIXED
     */
-	state->pitch += my_mult(my_mult(((int32_t)measurments->gyro_x), (int32_t)CONVERT_IMU_TO_RECEIVER_UNITS), TIME_STEP);
-	state->roll += my_mult(my_mult(((int32_t)measurments->gyro_y), (int32_t)CONVERT_IMU_TO_RECEIVER_UNITS), TIME_STEP);
-	state->yaw += my_mult(my_mult(((int32_t)measurments->gyro_z), (int32_t)CONVERT_IMU_TO_RECEIVER_UNITS), TIME_STEP);
+	state->pitch += my_mult(((int32_t)measurments->gyro_x * (int32_t)CONVERT_IMU_TO_RECEIVER_UNITS), TIME_STEP);
+	state->roll += my_mult(((int32_t)measurments->gyro_y * (int32_t)CONVERT_IMU_TO_RECEIVER_UNITS), TIME_STEP);
+	state->yaw += my_mult(((int32_t)measurments->gyro_z * (int32_t)CONVERT_IMU_TO_RECEIVER_UNITS), TIME_STEP);
 }
 
 void get_rate_gyro(state_data_t *state, imu_data_t *measurments)
@@ -91,8 +91,8 @@ void translate_receiver_signal_angle(state_data_t *setpoint, receiver_data_t *re
 void translate_receiver_signal_rate(state_data_t *setpoint, receiver_data_t *received_data)
 {
     setpoint->z_vel = (received_data->ch0);
-    setpoint->roll_rate = -((received_data->ch1 - SATELLITE_CH_CENTER) * (int32_t)CONVERT_RECEIVER_TO_IMU_UINTS) << 3;
-    setpoint->pitch_rate = -((received_data->ch2 - SATELLITE_CH_CENTER) * (int32_t)CONVERT_RECEIVER_TO_IMU_UINTS) << 3;
-    setpoint->yaw_rate = -((received_data->ch3 - SATELLITE_CH_CENTER) * (int32_t)CONVERT_RECEIVER_TO_IMU_UINTS) << 3;
+    setpoint->roll_rate = -((received_data->ch1 - SATELLITE_CH_CENTER) * (int32_t)CONVERT_RECEIVER_TO_IMU_UINTS) << 2;
+    setpoint->pitch_rate = -((received_data->ch2 - SATELLITE_CH_CENTER) * (int32_t)CONVERT_RECEIVER_TO_IMU_UINTS) << 2;
+    setpoint->yaw_rate = -((received_data->ch3 - SATELLITE_CH_CENTER) * (int32_t)CONVERT_RECEIVER_TO_IMU_UINTS) << 2;
     
 }
