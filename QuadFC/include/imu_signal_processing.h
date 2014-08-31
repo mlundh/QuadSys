@@ -3,18 +3,17 @@
  *
  * Created: 2013-07-08 17:48:55
  *  Author: martin.lundh
- */ 
-
+ */
 
 #ifndef IMU_SIGNAL_PROCESSING_H_
 #define IMU_SIGNAL_PROCESSING_H_
-#include "my_math.h"
-#include "main_control_task.h"
-
+#include "satellite_receiver_task.h"
+#include "control_types.h"
+#include "imu.h"
 /*
-*   IMU scaling factors computed. (max angle)/(max value) = angle/unit
-* 
-*/
+ *   IMU scaling factors computed. (max angle)/(max value) = angle/unit
+ *
+ */
 #define MPU6050_RAD_PER_SEC_LSB_500 0,0002663 //(500 deg/s in rad/s)/(2^15) = 0,0002663 rad/s/unit
 /* 
  * Receiver scaling factors computed. receiver has a 12 bit format and we want that to
@@ -30,20 +29,17 @@
  */
 #define CONVERT_IMU_TO_RECEIVER_UNITS 1 
 #define CONVERT_RECEIVER_TO_IMU_UINTS 6 // receiver * (IMU*5,76/receiver) = IMU
- 
-
 
 #define TIME_STEP 1 // 0.002s << SHIFT_EXP
 #define FILTER_COEFFICENT_GYRO 8
 #define FILTER_COEFFICENT_ACCEL 2
 #define MY 0
 
-
-void get_euler_angles_accel(state_data_t *state, imu_data_t *measurments);
-void get_euler_angles_gyro(state_data_t *state, imu_data_t *measurments);
-void get_rate_gyro(state_data_t *state, imu_data_t *measurments);
-void complemetary_filter(state_data_t *state_accel, state_data_t *state_gyro, state_data_t *state);
-void translate_receiver_signal_angle(state_data_t *setpoint, receiver_data_t *received_data);
-void translate_receiver_signal_rate(state_data_t *setpoint, receiver_data_t *received_data);
+void get_euler_angles_accel( state_data_t *state, imu_data_t *measurments );
+void get_euler_angles_gyro( state_data_t *state, imu_data_t *measurments );
+void get_rate_gyro( state_data_t *state, imu_data_t *measurments );
+void complemetary_filter( state_data_t *state_accel, state_data_t *state_gyro, state_data_t *state );
+void translate_receiver_signal_angle( state_data_t *setpoint, receiver_data_t *received_data );
+void translate_receiver_signal_rate( state_data_t *setpoint, receiver_data_t *received_data );
 #endif /* IMU_SIGNAL_PROCESSING_H_ */
 

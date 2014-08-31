@@ -54,7 +54,7 @@
 #include "freertos_twi_master.h"
 #include "freertos_peripheral_control_private.h"
 #include "asf.h"
-#include "main.h"
+
 
 /* Every bit in the interrupt mask. */
 #define MASK_ALL_INTERRUPTS     (0xffffffffUL)

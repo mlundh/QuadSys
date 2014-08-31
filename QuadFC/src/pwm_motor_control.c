@@ -21,170 +21,167 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
- 
+
 #include "pwm_motor_control.h"
+#include <pwm.h>
+#include <pio.h>
+#include <board.h>
+#include <sysclk.h>
 
 static uint32_t init_duty_value = INIT_DUTY_VALUE;
 
-static 	pwm_channel_t sync_channel = {
-			/* Use PWM clock A as source clock */
-			.ul_prescaler = PWM_CMR_CPRE_CLKA,
-			/* Period value of output waveform */
-			.ul_period = PERIOD_VALUE,
-			/* Duty cycle value of output waveform */
-			.ul_duty = INIT_DUTY_VALUE,
-			/* Set it as a synchronous channel */
-			.b_sync_ch = true,
-			/* Enable dead-time generator */
-			.b_deadtime_generator = false,
-			/* Dead-time value for PWMH output */
-			.us_deadtime_pwmh = INIT_DEAD_TIME,
-			/* Dead-time value for PWML output */
-			.us_deadtime_pwml = INIT_DEAD_TIME,
-			/* Disable override PWMH outputs */
-			.output_selection.b_override_pwmh = false,
-			/* Disable override PWML outputs */
-			.output_selection.b_override_pwml = false
-		};
+static pwm_channel_t sync_channel = {
+    /* Use PWM clock A as source clock */
+    .ul_prescaler = PWM_CMR_CPRE_CLKA,
+    /* Period value of output waveform */
+    .ul_period = PERIOD_VALUE,
+    /* Duty cycle value of output waveform */
+    .ul_duty = INIT_DUTY_VALUE,
+    /* Set it as a synchronous channel */
+    .b_sync_ch = true,
+    /* Enable dead-time generator */
+    .b_deadtime_generator = false,
+    /* Dead-time value for PWMH output */
+    .us_deadtime_pwmh = INIT_DEAD_TIME,
+    /* Dead-time value for PWML output */
+    .us_deadtime_pwml = INIT_DEAD_TIME,
+    /* Disable override PWMH outputs */
+    .output_selection.b_override_pwmh = false,
+    /* Disable override PWML outputs */
+    .output_selection.b_override_pwml = false
+};
 
 static const quad_pwm_parameters_t pwm_all_pwm_parameters[8] =
-{
-		{PIN_34_PWM_GPIO, PIN_34_PWM_FLAGS, PIN_34_PWM_CHANNEL},
-		{PIN_36_PWM_GPIO, PIN_36_PWM_FLAGS, PIN_36_PWM_CHANNEL},
-		{PIN_38_PWM_GPIO, PIN_38_PWM_FLAGS, PIN_38_PWM_CHANNEL},
-		{PIN_40_PWM_GPIO, PIN_40_PWM_FLAGS, PIN_40_PWM_CHANNEL},
-		{PIN_6_PWM_GPIO, PIN_6_PWM_FLAGS, PIN_6_PWM_CHANNEL},
-		{PIN_7_PWM_GPIO, PIN_7_PWM_FLAGS, PIN_7_PWM_CHANNEL},
-		{PIN_8_PWM_GPIO, PIN_8_PWM_FLAGS, PIN_8_PWM_CHANNEL},
-		{PIN_9_PWM_GPIO, PIN_9_PWM_FLAGS, PIN_9_PWM_CHANNEL}
-};
+    {
+        { PIN_34_PWM_GPIO, PIN_34_PWM_FLAGS, PIN_34_PWM_CHANNEL },
+        { PIN_36_PWM_GPIO, PIN_36_PWM_FLAGS, PIN_36_PWM_CHANNEL },
+        { PIN_38_PWM_GPIO, PIN_38_PWM_FLAGS, PIN_38_PWM_CHANNEL },
+        { PIN_40_PWM_GPIO, PIN_40_PWM_FLAGS, PIN_40_PWM_CHANNEL },
+        { PIN_6_PWM_GPIO, PIN_6_PWM_FLAGS, PIN_6_PWM_CHANNEL },
+        { PIN_7_PWM_GPIO, PIN_7_PWM_FLAGS, PIN_7_PWM_CHANNEL },
+        { PIN_8_PWM_GPIO, PIN_8_PWM_FLAGS, PIN_8_PWM_CHANNEL },
+        { PIN_9_PWM_GPIO, PIN_9_PWM_FLAGS, PIN_9_PWM_CHANNEL }
+    };
 
 static uint32_t nr_init_motors = 0;
 
- uint8_t pwm_init_motor_control(uint32_t nr_motors)
- {
-	 /*make sure that the correct number of motors are used.*/
-	 if((nr_motors < 0) || (nr_motors > 8))
-	 {
-		 return -1;
-	 }
+uint8_t pwm_init_motor_control( uint32_t nr_motors )
+{
+  /*make sure that the correct number of motors are used.*/
+  if ( (nr_motors < 0) || (nr_motors > 8) )
+  {
+    return -1;
+  }
 
+  //TODO read sync_channel parameters from flash.
 
+  /* Enable PWM peripheral clock */
 
-	 //TODO read sync_channel parameters from flash.
+  pmc_enable_periph_clk( ID_PWM );
 
+  for ( int i = 0; i < nr_motors; i++ )
+  {
+    if ( pwm_all_pwm_parameters[i].pwm_channel != 0 )
+    {
+      pwm_channel_disable( PWM, pwm_all_pwm_parameters[i].pwm_channel );
+    }
+  }
 
-	 /* Enable PWM peripheral clock */
+  /*
+   * In PWM synchronization mode the channel0 is used as reference channel,
+   * so it is necessary to disable, configure and enable it.
+   */
 
-    pmc_enable_periph_clk(ID_PWM);
+  pwm_channel_disable( PWM, 0 );
 
-	for(int i = 0; i < nr_motors; i++)
-	{
-		if(pwm_all_pwm_parameters[i].pwm_channel != 0)
-		{
-			pwm_channel_disable(PWM, pwm_all_pwm_parameters[i].pwm_channel);
-		}
-	}
+  /* Set PWM clock A as PWM_FREQUENCY*PERIOD_VALUE (clock B is not used) */
+  pwm_clock_t clock_setting = {
+      .ul_clka = PWM_FREQUENCY * PERIOD_VALUE,
+      .ul_clkb = 0,
+      .ul_mck = sysclk_get_cpu_hz()
+  };
+  pwm_init( PWM, &clock_setting );
 
-	/*
-	 * In PWM synchronization mode the channel0 is used as reference channel,
-	 * so it is necessary to disable, configure and enable it.
-	 */
+  /*
+   * In PWM synchronization mode the channel0 is used as reference channel,
+   * so it is necessary to disable, configure and enable it.
+   */
+  sync_channel.channel = 0;
+  pwm_channel_init( PWM, &sync_channel );
 
-	pwm_channel_disable(PWM, 0);
+  for ( int i = 0; i < nr_motors; i++ )
+  {
+    if ( pwm_all_pwm_parameters[i].pwm_channel != 0 )
+    {
+      sync_channel.channel = pwm_all_pwm_parameters[i].pwm_channel;
+      pwm_channel_init( PWM, &sync_channel );
+    }
+  }
 
+  /*
+   * Initialize PWM synchronous channels
+   * Synchronous Update Mode: manually update duty cycle value. The
+   * update occurs next pwm cycle (MODE 0).
+   *
+   * Synchronous Update Period = MAX_SYNC_UPDATE_PERIOD.
+   */
+  pwm_sync_init( PWM, PWM_SYNC_UPDATE_MODE_0, MAX_SYNC_UPDATE_PERIOD );
 
-	/* Set PWM clock A as PWM_FREQUENCY*PERIOD_VALUE (clock B is not used) */
-	pwm_clock_t clock_setting = {
-		.ul_clka = PWM_FREQUENCY * PERIOD_VALUE,
-		.ul_clkb = 0,
-		.ul_mck = sysclk_get_cpu_hz()
-	};
-	pwm_init(PWM, &clock_setting);
+  nr_init_motors = nr_motors;
+  return 0;
+}
 
-	/*
-	 * In PWM synchronization mode the channel0 is used as reference channel,
-	 * so it is necessary to disable, configure and enable it.
-	 */
-	sync_channel.channel = 0;
-	pwm_channel_init(PWM, &sync_channel);
+void pwm_enable( uint32_t nr_motors )
+{
+  if ( nr_motors != nr_init_motors )
+  {
+    //TODO error! ;
+  }
 
+  /* Enable all synchronous channels by enabling channel 0 */
 
-	for(int i = 0; i < nr_motors; i++)
-	{
-		if(pwm_all_pwm_parameters[i].pwm_channel != 0)
-		{
-			sync_channel.channel = pwm_all_pwm_parameters[i].pwm_channel;
-			pwm_channel_init(PWM, &sync_channel);
-		}
-	}
+  pwm_channel_enable( PWM, 0 );
 
-	/*
-	 * Initialize PWM synchronous channels
-	 * Synchronous Update Mode: manually update duty cycle value. The
-	 * update occurs next pwm cycle (MODE 0).
-	 *
-	 * Synchronous Update Period = MAX_SYNC_UPDATE_PERIOD.
-	 */
-	pwm_sync_init(PWM, PWM_SYNC_UPDATE_MODE_0, MAX_SYNC_UPDATE_PERIOD);
+  init_duty_value = INIT_DUTY_VALUE;
+  for ( int i = 0; i < nr_motors; i++ )
+  {
+    sync_channel.channel = pwm_all_pwm_parameters[i].pwm_channel;
+    pwm_channel_update_duty( PWM, &sync_channel, init_duty_value );
+  }
+  pwm_sync_unlock_update( PWM );
+  init_duty_value += MIN_START_DUTY;
+}
 
-	nr_init_motors = nr_motors;
-	return 0;
- }
+void pwm_dissable( )
+{
+  pwm_channel_disable( PWM, 0 );
+}
 
- void pwm_enable(uint32_t nr_motors)
- {
-	 if(nr_motors != nr_init_motors)
-	 {
-		 //TODO error! ;
-	 }
+uint8_t pwm_update_setpoint( int32_t setpoint[], uint32_t nr_motors )
+{
+  if ( nr_motors != nr_init_motors )
+  {
+    return -1;
+  }
+  for (int i = 0; i < nr_motors; i++ )
+  {
+    /*Add initial duty value to make to propellers spin.*/
+    setpoint[i] += init_duty_value;
 
-	/* Enable all synchronous channels by enabling channel 0 */
-
-	 pwm_channel_enable(PWM, 0);
-
-
-	 init_duty_value = INIT_DUTY_VALUE;
-	 for(int i = 0; i < nr_motors; i++)
-	 {
-		 sync_channel.channel = pwm_all_pwm_parameters[i].pwm_channel;
-		 pwm_channel_update_duty(PWM, &sync_channel, init_duty_value);
-	 }
-	 pwm_sync_unlock_update(PWM);
-	 init_duty_value += MIN_START_DUTY;
- }
-
- void pwm_dissable()
- {
-	 pwm_channel_disable(PWM, 0);
- }
-
- uint8_t pwm_update_setpoint(int32_t setpoint[], uint32_t nr_motors)
- {
-	 if(nr_motors != nr_init_motors)
-	 {
-		 return -1;
-	 }
-	int i;
-	for (i = 0; i < nr_motors; i++)
-	{
-		/*Add initial duty value to make to propellers spin.*/
-		setpoint[i] += init_duty_value;
-
-		if (setpoint[i] < init_duty_value)
-		{
-			setpoint[i] = init_duty_value;
-		}
-		else if(setpoint[i] > MAX_SETPOINT)
-		{
-			setpoint[i] = MAX_SETPOINT;
-		}
-	}
-	 for(int i = 0; i < nr_motors; i++)
-	 {
-		 sync_channel.channel = pwm_all_pwm_parameters[i].pwm_channel;
-		 pwm_channel_update_duty(PWM, &sync_channel, (setpoint[i]));
-	 }
-	 pwm_sync_unlock_update(PWM);
-	 return 0;
- }
+    if ( setpoint[i] < init_duty_value )
+    {
+      setpoint[i] = init_duty_value;
+    }
+    else if ( setpoint[i] > MAX_SETPOINT )
+    {
+      setpoint[i] = MAX_SETPOINT;
+    }
+  }
+  for ( int k = 0; k < nr_motors; k++ )
+  {
+    sync_channel.channel = pwm_all_pwm_parameters[k].pwm_channel;
+    pwm_channel_update_duty( PWM, &sync_channel, (setpoint[k]) );
+  }
+  pwm_sync_unlock_update( PWM );
+  return 0;
+}

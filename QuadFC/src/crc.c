@@ -14,19 +14,16 @@
  * notice must not be changed or removed and no warranty is either
  * expressed or implied by its publication or distribution.
  **********************************************************************/
- /*Modified by Martin Lundh to fit QuadFC*/
+/*Modified by Martin Lundh to fit QuadFC*/
 
 #include "crc.h"
-
-
+#include "compiler.h"
 /*
  * Derive parameters from the standard-specific parameters in crc.h.
  */
 #define WIDTH    (8 * sizeof(uint16_t))
 #define TOPBIT   (1 << (WIDTH - 1))
-
-
-
+uint16_t *crcTable = NULL;
 /*********************************************************************
  *
  * Function:    crcInit()
@@ -40,49 +37,47 @@
  * Returns:		None defined.
  *
  *********************************************************************/
-void crcInit(void)
+void crcInit( void )
 {
-    uint16_t	   remainder;
-	uint16_t	   dividend;
-	unsigned char  bit;
-    
+  uint16_t remainder;
+  uint16_t dividend;
+  unsigned char bit;
+
+  /*
+   * Compute the remainder of each possible dividend.
+   */
+  for ( dividend = 0; dividend < 256; ++dividend )
+  {
+    /*
+     * Start with the dividend followed by zeros.
+     */
+    remainder = dividend << (WIDTH - 8);
 
     /*
-     * Compute the remainder of each possible dividend.
+     * Perform modulo-2 division, a bit at a time.
      */
-    for (dividend = 0; dividend < 256; ++dividend)
+    for ( bit = 8; bit > 0; --bit )
     {
-        /*
-         * Start with the dividend followed by zeros.
-         */
-        remainder = dividend << (WIDTH - 8);
-
-        /*
-         * Perform modulo-2 division, a bit at a time.
-         */
-        for (bit = 8; bit > 0; --bit)
-        {
-            /*
-             * Try to divide the current data bit.
-             */			
-            if (remainder & TOPBIT)
-            {
-                remainder = (remainder << 1) ^ POLYNOMIAL;
-            }
-            else
-            {
-                remainder = (remainder << 1);
-            }
-        }
-
-        /*
-         * Store the result into the table.
-         */
-        crcTable[dividend] = remainder;
+      /*
+       * Try to divide the current data bit.
+       */
+      if ( remainder & TOPBIT )
+      {
+        remainder = (remainder << 1) ^ POLYNOMIAL;
+      }
+      else
+      {
+        remainder = (remainder << 1);
+      }
     }
 
-}   /* crcInit() */
+    /*
+     * Store the result into the table.
+     */
+    crcTable[dividend] = remainder;
+  }
 
+} /* crcInit() */
 
 /*********************************************************************
  *
@@ -95,25 +90,24 @@ void crcInit(void)
  * Returns:		The CRC of the message.
  *
  *********************************************************************/
-uint16_t crcFast(uint8_t const *message, int nBytes)
+uint16_t crcFast( uint8_t const *message, int nBytes )
 {
-    uint16_t		remainder = INITIAL_REMAINDER;
-    uint8_t			data;
-	int				i;
+  uint16_t remainder = INITIAL_REMAINDER;
+  uint8_t data;
+  int i;
 
+  /*
+   * Divide the message by the polynomial, a byte at a time.
+   */
+  for ( i = 0; i < nBytes; ++i )
+  {
+    data = (message[i]) ^ (remainder >> (WIDTH - 8));
+    remainder = crcTable[data] ^ (remainder << 8);
+  }
 
-    /*
-     * Divide the message by the polynomial, a byte at a time.
-     */
-    for (i = 0; i < nBytes; ++i)
-    {
-        data = (message[i]) ^ (remainder >> (WIDTH - 8));
-  		remainder = crcTable[data] ^ (remainder << 8);
-    }
+  /*
+   * The final remainder is the CRC.
+   */
+  return ((remainder) ^ FINAL_XOR_VALUE);
 
-    /*
-     * The final remainder is the CRC.
-     */
-    return ((remainder) ^ FINAL_XOR_VALUE);
-
-}   /* crcFast() */
+} /* crcFast() */

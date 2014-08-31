@@ -1,5 +1,6 @@
 /*
- * led_control_task.h
+ * range_meter.h  .gyro_x = 0,
+    .
  *
  * Copyright (C) 2014 martin
  *
@@ -21,53 +22,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
-#ifndef LED_CONTROL_TASK_H_
-#define LED_CONTROL_TASK_H_
+#ifndef RANGE_METER_H_
+#define RANGE_METER_H_
 
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
 #include "compiler.h"
 
-/*LED queue*/
-#define LED_QUEUE_LENGTH			(5)
-#define LED_QUEUE_ITEM_SIZE        (sizeof(uint8_t))
-extern xQueueHandle xQueue_led;
+#define RANGE_METER_MESSAGE_LENGTH (6)
+#define BAUD_RANGE_METER (9600)
+#define RANGE_USART USART3
 
-typedef enum LED_control
-{
+/*New range data available queue*/
+#define RANGER_QUEUE_LENGTH         (1)
+#define RANGER_QUEUE_ITEM_SIZE      (sizeof(int32_t))
+xQueueHandle xQueue_ranger;
 
-  fc_disarmed_led = 1,
-  fc_arming_led = 2,
-  fc_armed_rate_mode_led = 3,
-  fc_armed_angle_mode_led = 4,
-  fc_configure_led = 5,
+void create_range_meter_task( void );
+void range_meter_task( void *pvParameters );
 
-  fc_initializing_led = 10,
-
-  error_int_overflow_led = 20,
-  error_TWI_led = 21,
-  error_alloc_led = 22,
-  error_rc_link_led = 23,
-
-  warning_lost_com_message = 30,
-
-  clear_error_led = 40,
-} LED_control_t;
-
-typedef enum led_mode
-{
-  led_off = 0,
-  led_blink_fast = 1,
-  led_blink_slow = 2,
-  led_double_blink = 3,
-  led_const_on = 4,
-} led_mode_t;
-
-void create_led_control_task( void );
-void led_control_task( void *pvParameters );
-void led_handler( uint8_t mode, uint8_t pin, uint32_t *counter,
-    uint8_t *on_off );
-void toggle_led( uint8_t pin, uint8_t* on_off );
-#endif /* LED_CONTROL_TASK_H_ */
+#endif /* RANGE_METER_H_ */

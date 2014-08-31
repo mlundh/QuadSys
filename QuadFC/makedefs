@@ -67,7 +67,7 @@ AFLAGS=-mthumb         \
 # The flags passed to the compiler.
 #
 CFLAGS=-mthumb -mcpu=cortex-m3 -O1 -MD -MP -MF "$(@:%.o=%.d)" -MT "$(@:%.o=%.d)" -MT "$(@:%.o=%.o)"
-CFLAGS+= -fdata-sections -ffunction-sections -mlong-calls -Wall -c -std=gnu99
+CFLAGS+= -fdata-sections -ffunction-sections -mlong-calls -Wall -c -std=gnu99 -Wshadow
 #
 # The command for calling the library archiver.
 #

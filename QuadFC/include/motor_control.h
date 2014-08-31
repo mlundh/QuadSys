@@ -7,16 +7,15 @@
 
 #ifndef MOTOR_CONTROL_H_
 #define MOTOR_CONTROL_H_
+#include "compiler.h"
 
- uint8_t pwm_update_setpoint(int32_t setpoint[], uint32_t nr_motors);
- uint8_t pwm_init_motor_control(uint32_t nr_motors);
- void pwm_enable(uint32_t nr_motors);
- void pwm_dissable();
+#define MAX_MOTORS (8)
 
- uint8_t mk_esc_init_motor_control(uint32_t nr_motors);
- uint8_t mk_esc_update_setpoint(int32_t setpoint[], uint32_t nr_motors);
- void mk_esc_enable(uint32_t nr_motors);
- void mk_esc_dissable();
 
+
+uint8_t mk_esc_init_motor_control( uint32_t nr_motors );
+uint8_t mk_esc_update_setpoint( int32_t setpoint[], uint32_t nr_motors );
+void mk_esc_enable( uint32_t nr_motors );
+void mk_esc_dissable( );
 
 #endif /* MOTOR_CONTROL_H_ */
