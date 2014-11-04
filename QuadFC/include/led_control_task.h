@@ -54,6 +54,7 @@ typedef enum LED_control
   warning_lost_com_message = 30,
 
   clear_error_led = 40,
+  clear_error_led2 = 41,
 } LED_control_t;
 
 typedef enum led_mode

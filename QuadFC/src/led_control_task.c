@@ -123,11 +123,17 @@ void led_control_task( void *pvParameters )
       break;
 
     case warning_lost_com_message:
-
+      mode_error_led_2 = led_const_on;
       break;
+
     case clear_error_led:
       mode_error_led_1 = led_off;
       break;
+      
+    case clear_error_led2:
+      mode_error_led_2 = led_off;
+      break;
+
     default:
       break;
     }

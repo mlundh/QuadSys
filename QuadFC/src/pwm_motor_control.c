@@ -167,12 +167,35 @@ uint8_t pwm_update_setpoint( int32_t setpoint[], uint32_t nr_motors )
   {
     /*Add initial duty value to make to propellers spin.*/
     setpoint[i] += init_duty_value;
-
+    
     if ( setpoint[i] < init_duty_value )
     {
       setpoint[i] = init_duty_value;
     }
     else if ( setpoint[i] > MAX_SETPOINT )
+		{
+			setpoint[i] = MAX_SETPOINT;
+		}
+	}
+	 for(int i = 0; i < nr_motors; i++)
+	 {
+		 sync_channel.channel = pwm_all_pwm_parameters[i].pwm_channel;
+		 pwm_channel_update_duty(PWM, &sync_channel, (setpoint[i]));
+	 }
+	 pwm_sync_unlock_update(PWM);
+	 return 0;
+ }
+ 
+ uint8_t pwm_update_setpoint_unsafe(int32_t setpoint[], uint32_t nr_motors)
+ {
+	 if(nr_motors != nr_init_motors)
+	 {
+		 return -1;
+	 }
+	int i;
+	for (i = 0; i < nr_motors; i++)
+	{
+		if(setpoint[i] > MAX_SETPOINT)
     {
       setpoint[i] = MAX_SETPOINT;
     }
