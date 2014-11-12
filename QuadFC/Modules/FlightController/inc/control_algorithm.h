@@ -9,7 +9,7 @@
 #define CONTROL_ALGORITHM_H_
 
 #include "control_types.h"
-#include "compiler.h"
+#include "stdint.h"
 
 void calc_control_signal_angle_pid( int32_t motor_setpoint[], uint32_t nr_motors, control_values_pid_t *parameters_pid, control_values_pid_t *ctrl_error, state_data_t *state,
     state_data_t *setpoint, control_signal_t *ctrl_signal );

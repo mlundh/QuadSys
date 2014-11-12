@@ -18,7 +18,7 @@
 
 #include "crc.h"
 #include "control_algorithm.h"
-#include "compiler.h"
+#include "stdint.h"
 /* Atmel library includes. */
 #include "freertos_uart_serial.h"
 /* Use USART1 (labeled RX2 17 and TX2 16)*/

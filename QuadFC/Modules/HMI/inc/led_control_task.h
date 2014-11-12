@@ -28,7 +28,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
-#include "compiler.h"
+#include "stdint.h"
 
 /*LED queue*/
 #define LED_QUEUE_LENGTH			(5)

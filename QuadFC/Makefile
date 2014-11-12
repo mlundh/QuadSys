@@ -24,75 +24,81 @@
 #
 #******************************************************************************
 # Make does not offer a recursive wildcard function, so here's one:
-BUILD_DIR := out
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
-include makedefs
+BUILD_DIR := out
 
 
+
+
+ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 #Find all .c files in the project. All files are located in the folders (and subfolders of) asf and src
-SOURCE_ASF := $(call rwildcard,asf/,*.c)
-SOURCE_APP := $(call rwildcard,src/,*.c)
+SOURCE_Modules   := $(call rwildcard,Modules/,*.c)
+SOURCE_Utilities := $(call rwildcard,Utilities/,*.c)
+SOURCE_PortLayer := $(call rwildcard,PortLayer/,*.c)
 
-SOURCE := $(SOURCE_ASF) $(SOURCE_APP)
+SOURCE     := $(SOURCE_Modules) $(SOURCE_Utilities) $(SOURCE_PortLayer)
 SOURCE_DIR :=$(sort $(dir $(SOURCE)))
 
-INCLUDE_ASF := $(call rwildcard,asf/,*.h)
-INCLUDE_APP := $(wildcard include/*.h)
+INCLUDE_Modules   := $(call rwildcard,Modules/,*.h)
+INCLUDE_Utilities := $(call rwildcard,Utilities/,*.h)
+INCLUDE_PortLayer := $(call rwildcard,PortLayer/,*.h)
 
-INCLUDE := $(INCLUDE_ASF) $(INCLUDE_APP)
+INCLUDE     := $(INCLUDE_Modules) $(INCLUDE_Utilities) $(INCLUDE_PortLayer)
 # Get include directories from list of all included .h files.
 INCLUDE_DIR := $(sort $(dir $(INCLUDE)))
 
 
-
-
-
 OBJS := $(SOURCE:.c=.o)
+# all output should be in the "out" folder. 
 OBJS := $(notdir $(OBJS))
 OBJS := $(addprefix $(BUILD_DIR)/,$(OBJS))
 
-VPATH=src:include:$(SOURCE_DIR)
+VPATH :=$(SOURCE_DIR)
+
+include makedefs
 
 CFLAGS+= $(addprefix -I, $(INCLUDE_DIR)) -DBOARD=ARDUINO_DUE_X -DUDD_ENABLE -D__SAM3X8E__
+
+SCATTER_QuadFC:=PortLayer/asf/sam/utils/linker_scripts/sam3x/sam3x8/gcc/flash.ld
+ENTRY_QuadFC:=Reset_Handler
 
 #
 # The default rule, which causes init to be built.
 #
-all: ${BUILD_DIR} ${BUILD_DIR}/RTOSDemo.elf
-	 
+all: ${BUILD_DIR} ${BUILD_DIR}/QuadFC.elf
 #
 # The rule to clean out all the build products
+# Simple solution, remove the out dir...
 #
-
+.PHONY : clean
 clean:
-	rm -rf ${BUILD_DIR} ${wildcard *.bin}
-#	rm -rf ${OBJS} 
-#	rm -rf ${OBJS:.o=.d}
+	rm -rf ${BUILD_DIR}
+
+
 #
 # The rule to create the target directory
 #
 ${BUILD_DIR}:
 	@mkdir ${BUILD_DIR}
+	@echo "mkdir	${BUILD_DIR}"
 
-${BUILD_DIR}/RTOSDemo.elf:${OBJS}
+#
+#.objs has an implicit rule defined in makedefs
+#
 
-
-
-SCATTER_RTOSDemo=linker_scripts/sam3x/sam3x8/gcc/flash.ld
-ENTRY_RTOSDemo=Reset_Handler
-
+${BUILD_DIR}/QuadFC.elf:${OBJS}
 #
 #
 # Include the automatically generated dependency files.
 #
--include ${wildcard ${BUILD_DIR}/*.d} __dummy__
+-include ${wildcard ${BUILD_DIR}/*.d}
 
 
-	 
+
 .PHONY : flash
 flash:
 	python connect1200.py
-	bossac -p, --port=ttyACM0 -e -w -v -b "/home/martin/QuadFC/QuadFC/out/RTOSDemo.bin" -R
+	bossac -p, --port=ttyACM0 -e -w -v -b "$(ROOT_DIR)/${BUILD_DIR}/QuadFC.bin" -R
 
 

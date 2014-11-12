@@ -7,7 +7,7 @@
 
 #ifndef MOTOR_CONTROL_H_
 #define MOTOR_CONTROL_H_
-#include "compiler.h"
+#include "stdint.h"
 
 #define MAX_MOTORS (8)
 

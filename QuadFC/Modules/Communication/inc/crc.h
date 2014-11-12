@@ -15,7 +15,7 @@
 /*Modified by Martin Lundh to fit QuadFC*/
 #ifndef CRC_H_
 #define CRC_H_
-#include <compiler.h>
+#include <stdint.h>
 /*
  * CRC16 standard from the list that follows.
  */

@@ -66,6 +66,11 @@ AFLAGS=-mthumb         \
 #
 # The flags passed to the compiler.
 #
+# -MD generate dependency files as a side-effect
+# -MPadd a phony target for each dependency other than the main file. 
+# -MT change target of the rule emitted by dependency generation. 
+#
+
 CFLAGS=-mthumb -mcpu=cortex-m3 -O1 -MD -MP -MF "$(@:%.o=%.d)" -MT "$(@:%.o=%.d)" -MT "$(@:%.o=%.o)"
 CFLAGS+= -fdata-sections -ffunction-sections -mlong-calls -Wall -c -std=gnu99 -Wshadow
 #
@@ -81,7 +86,7 @@ LD=arm-none-eabi-ld
 #
 # The flags passed to the linker.
 #
-LDFLAGS= -mthumb -Wl,-Map,"$(BUILD_DIR)/out.map" -Wl,--start-group -lm  -Wl,--end-group -Wl,--gc-sections -mcpu=cortex-m3 -T asf/sam/utils/linker_scripts/sam3x/sam3x8/gcc/flash.ld -Wl,--cref -Wl,--entry=Reset_Handler -mthumb
+LDFLAGS= -mthumb -Wl,-Map,"$(BUILD_DIR)/out.map" -Wl,--start-group -lm  -Wl,--end-group -Wl,--gc-sections -mcpu=cortex-m3 -T $(SCATTER_QuadFC) -Wl,--cref -Wl,--entry=$(ENTRY_QuadFC) -mthumb
 
 #
 # Get the location of libgcc.a from the GCC front-end.
@@ -123,9 +128,6 @@ ${BUILD_DIR}/%.o: %.c
 	     echo ${CC} ${CFLAGS} -o ${@} -c ${<}; \
 	 fi
 	@${CC} ${CFLAGS} -o ${@} -c ${<}
-ifeq (${COMPILER}, rvds)
-	@mv -f ${notdir ${@:.o=.d}} ${COMPILER}
-endif
 
 #******************************************************************************
 #
@@ -139,14 +141,6 @@ ${BUILD_DIR}/%.o: %.S
 	 else                                                    \
 	     echo ${CC} ${AFLAGS} -D${COMPILER} -o ${@} -c ${<}; \
 	 fi
-ifeq (${COMPILER}, rvds)
-	@${CC} ${AFLAGS} -D${COMPILER} -E ${<} > ${@:.o=_.S}
-	@${CC} ${AFLAGS} -o ${@} -c ${@:.o=_.S}
-	@rm ${@:.o=_.S}
-	@${CC} ${AFLAGS} -D${COMPILER} --md -E ${<}
-	@sed 's,<stdout>,${@},g' ${notdir ${<:.S=.d}} > ${@:.o=.d}
-	@rm ${notdir ${<:.S=.d}}
-endif
 ifeq (${COMPILER}, gcc)
 	@${CC} ${AFLAGS} -D${COMPILER} -o ${@} -c ${<}
 endif
@@ -170,7 +164,7 @@ ${BUILD_DIR}/%.a:
 # The rule for linking the application.
 #
 #******************************************************************************
-${BUILD_DIR}/%.elf:
+${BUILD_DIR}/%.elf: 
 	@if [ 'x${VERBOSE}' = x ]; \
 	 then                      \
 	     echo "  LD    ${@}";  \

@@ -7,7 +7,7 @@
 
 #ifndef MY_MATH_H_
 #define MY_MATH_H_
-#include "compiler.h"
+#include "stdint.h"
 
 #define MY_PI 31416 // 3,1415 * MULT_FACTOR
 #define MY_PI_HALF 15708 // 3,1415/2 * MULT_FACTOR

@@ -8,7 +8,7 @@
 #ifndef PWM_MOTOR_CONTROL_H_
 #define PWM_MOTOR_CONTROL_H_
 
-#include "compiler.h"
+#include "stdint.h"
 
 //TODO Make parameters!
 /** Required resolution = 2000 usable steps. */

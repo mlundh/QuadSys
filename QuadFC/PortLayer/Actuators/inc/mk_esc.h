@@ -9,7 +9,8 @@
 #define MKESC_H_
 
 #include "motor_control.h"
-#include "compiler.h"
+#include "stdint.h"
+#include "stddef.h"
 #include "twi_master.h"
 #include "freertos_twi_master.h"
 
