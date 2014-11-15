@@ -23,16 +23,31 @@
  */
 
 #include "led_control_task.h"
-#include <gpio.h>
-#include <pio.h>
-#include "arduino_due_x.h"
+#include "led.h"
+#include "led_interface.h"
+#include "stdint.h"
 
-void create_led_control_task( void )
+#include "FreeRTOS.h"
+#include "task.h"
+#include "queue.h"
+
+/*LED queue*/
+#define LED_QUEUE_LENGTH      (5)
+#define LED_QUEUE_ITEM_SIZE        (sizeof(uint8_t))
+QueueHandle_t xQueue_led;
+
+
+void Led_CreateLedControlTask( void )
 {
 
   /*Create the task*/
+  xQueue_led = xQueueCreate( LED_QUEUE_LENGTH, LED_QUEUE_ITEM_SIZE );
+  if(!xQueue_led)
+  {
+    for(;;); //Error!
+  }
   portBASE_TYPE create_result;
-  create_result = xTaskCreate( led_control_task,  /* The function that implements the task.  */
+  create_result = xTaskCreate( Led_ControlTask,  /* The function that implements the task.  */
       (const char *const) "Led_Ctrl",      /* The name of the task. This is not used by the kernel, only aids in debugging*/
       500,                                        /* The stack size for the task*/
       NULL,                                       /* No input parameters*/
@@ -50,28 +65,28 @@ void create_led_control_task( void )
 
 }
 
-void led_control_task( void *pvParameters )
+void Led_ControlTask( void *pvParameters )
 {
   /*led_control_task execute at 10Hz*/
   static const TickType_t xPeriod = (20UL / portTICK_PERIOD_MS);
 
-  uint8_t ctrl = 0;
+  static uint8_t ctrl = 0;
 
-  uint8_t mode_state_led_1 = 0;
-  uint32_t counter_state_led_1 = 0;
-  uint8_t on_off_state_led_1 = 0;
+  static uint8_t mode_state_led_1 = 0;
+  static uint32_t counter_state_led_1 = 0;
+  static uint8_t on_off_state_led_1 = 0;
 
-  uint8_t mode_state_led_2 = 0;
-  uint32_t counter_state_led_2 = 0;
-  uint8_t on_off_state_led_2 = 0;
+  static uint8_t mode_state_led_2 = 0;
+  static uint32_t counter_state_led_2 = 0;
+  static uint8_t on_off_state_led_2 = 0;
 
-  uint8_t mode_error_led_1 = 0;
-  uint32_t counter_error_led_1 = 0;
-  uint8_t on_off_error_led_1 = 0;
+  static uint8_t mode_error_led_1 = 0;
+  static uint32_t counter_error_led_1 = 0;
+  static uint8_t on_off_error_led_1 = 0;
 
-  uint8_t mode_error_led_2 = 0;
-  uint32_t counter_error_led_2 = 0;
-  uint8_t on_off_error_led_2 = 0;
+  static uint8_t mode_error_led_2 = 0;
+  static uint32_t counter_error_led_2 = 0;
+  static uint8_t on_off_error_led_2 = 0;
 
   unsigned portBASE_TYPE xLastWakeTime = xTaskGetTickCount();
   for ( ;; )
@@ -81,56 +96,55 @@ void led_control_task( void *pvParameters )
 
     switch ( ctrl )
     {
-    case fc_disarmed_led:
+
+    case led_initializing:
+      mode_state_led_2 = led_blink_fast;
+      break;
+
+    case led_disarmed:
       mode_state_led_1 = led_double_blink;
       mode_state_led_2 = led_off;
       break;
 
-    case fc_arming_led:
-      mode_state_led_1 = led_blink_fast;
-      break;
-
-    case fc_armed_rate_mode_led:
-      mode_state_led_1 = led_blink_slow;
-      break;
-
-    case fc_armed_angle_mode_led:
-      mode_state_led_1 = 0;
-      break;
-
-    case fc_configure_led:
+    case led_configure:
       mode_state_led_1 = led_const_on;
       break;
 
-    case fc_initializing_led:
-      mode_state_led_2 = led_blink_fast;
+    case led_arming:
+      mode_state_led_1 = led_blink_fast;
       break;
 
-    case error_int_overflow_led:
+    case led_armed:
+      mode_state_led_1 = led_blink_slow;
+      break;
+
+    case led_fault:
+      mode_state_led_1 = led_const_on;
+      mode_state_led_2 = led_const_on;
+      break;
+
+    case led_error_int_overflow:
       mode_error_led_1 = led_blink_fast;
       break;
 
-    case error_alloc_led:
+    case led_error_alloc:
       mode_error_led_1 = led_double_blink;
       break;
 
-    case error_rc_link_led:
+    case led_error_rc_link:
       mode_error_led_1 = led_const_on;
       break;
 
-    case error_TWI_led:
+    case led_error_TWI:
       mode_error_led_2 = led_blink_slow;
       break;
 
-    case warning_lost_com_message:
+    case led_warning_lost_com_message:
       mode_error_led_2 = led_const_on;
       break;
 
-    case clear_error_led:
+    case led_clear_error:
       mode_error_led_1 = led_off;
-      break;
-      
-    case clear_error_led2:
       mode_error_led_2 = led_off;
       break;
 
@@ -150,90 +164,12 @@ void led_control_task( void *pvParameters )
 
 }
 
-void led_handler( uint8_t mode, uint8_t pin, uint32_t *counter, uint8_t *on_off )
+
+
+BaseType_t Led_Set(LED_control_t led_control)
 {
-  *counter = *counter + 1;
-  switch ( mode )
-  {
-  case led_off:
-    gpio_set_pin_low( pin );
-    *counter = 0;
-    break;
-  case led_const_on:
-    gpio_set_pin_high( pin );
-    *counter = 0;
-    break;
-  case led_blink_fast:
-    if ( *counter >= 2 )
-    {
-      toggle_led( pin, on_off );
-      *counter = 0;
-    }
-    break;
-  case led_blink_slow:
-
-    if ( *counter >= 10 )
-    {
-      toggle_led( pin, on_off );
-      *counter = 0;
-    }
-    break;
-  case led_double_blink:
-    if ( *on_off == 0 )
-    {
-      if ( *counter >= 20 )
-      {
-        gpio_set_pin_high( pin );
-        *counter = 0;
-        *on_off = 1;
-      }
-    }
-    else if ( *on_off == 1 )
-    {
-      if ( *counter >= 4 )
-      {
-        gpio_set_pin_low( pin );
-        *counter = 0;
-        *on_off = 2;
-      }
-    }
-    else if ( *on_off == 2 )
-    {
-      if ( *counter >= 2 )
-      {
-        gpio_set_pin_high( pin );
-        *counter = 0;
-        *on_off = 3;
-      }
-    }
-    else
-    {
-      if ( *counter >= 4 )
-      {
-        gpio_set_pin_low( pin );
-        *counter = 0;
-        *on_off = 0;
-      }
-    }
-    break;
-  default:
-    break;
-
-  }
+  return xQueueSendToBack( xQueue_led, &led_control, 0 );
+  //TODO force send if not successful?
 }
 
-void toggle_led( uint8_t pin, uint8_t* on_off )
-{
-
-  if ( *on_off != 0 )
-  {
-    gpio_set_pin_high( pin );
-    *on_off = 0;
-  }
-  else
-  {
-    gpio_set_pin_low( pin );
-    *on_off = 1;
-  }
-}
 

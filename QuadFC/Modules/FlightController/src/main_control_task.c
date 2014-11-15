@@ -74,6 +74,7 @@
 #include "communication_tasks.h"
 #include "satellite_receiver_task.h"
 #include "range_meter.h"
+#include "state_handler.h"
 
 #include "control_algorithm.h"
 #include "imu.h"
@@ -87,22 +88,13 @@
 
 void main_control_task( void *pvParameters );
 void reset_control_error( control_values_pid_t *ctrl_error );
-void do_logging( communicaion_packet_t *packet );
 void init_twi_main( );
 
 /*global parameters*/
 control_values_pid_t *parameters_rate = NULL;
-control_values_pid_t *parameters_angle = NULL;
 state_data_t *state = NULL;
 state_data_t *setpoint = NULL;
 control_signal_t *ctrl_signal = NULL;
-
-
-// Global log parameters
-int32_t **log_parameters = NULL;
-uint8_t nr_log_parameters = 0;
-uint32_t log_freq = 0;
-int32_t time_main = 0;
 
 /*
  * void create_main_control_task(void)
@@ -147,19 +139,14 @@ void create_main_control_task( void )
 void main_control_task( void *pvParameters )
 {
   /*main_control_task execute at 500Hz*/
-  static const TickType_t xPeriod = (2UL / portTICK_PERIOD_MS );
+  static const TickType_t xPeriodTicks = (2UL / portTICK_PERIOD_MS );
 
   /* declared as public in main_control_task.h, variables need to be modified by the RX task to set params.*/
-  parameters_angle = pvPortMalloc(
-      sizeof(control_values_pid_t) ); /*PID parameters used in angle mode*/
+
   parameters_rate = pvPortMalloc(
       sizeof(control_values_pid_t) ); /*PID parameters used in rate mode*/
 
-  control_values_pid_t *ctrl_error_angle = pvPortMalloc(
-      sizeof(control_values_pid_t) ); /*control error signal used in angle mode*/
   control_values_pid_t *ctrl_error_rate = pvPortMalloc(
-      sizeof(control_values_pid_t) ); /*control error signal used in rate mode*/
-  control_values_pid_t *ctrl_limit_rate = pvPortMalloc(
       sizeof(control_values_pid_t) ); /*control error signal used in rate mode*/
 
   ctrl_signal = pvPortMalloc( sizeof(control_signal_t) );
@@ -173,33 +160,18 @@ void main_control_task( void *pvParameters )
 
   imu_data_t *imu_readings = pvPortMalloc( sizeof(imu_data_t) ); /*IMU data, parsed IMU values.*/
 
-  communicaion_packet_t *QSP_log_packet = pvPortMalloc(
-      sizeof(communicaion_packet_t) );
-  QSP_log_packet->information = pvPortMalloc(
-      sizeof(uint8_t) * MAX_DATA_LENGTH );
-  QSP_log_packet->crc = pvPortMalloc( sizeof(uint8_t) * 2 );
-  QSP_log_packet->frame = pvPortMalloc(
-      sizeof(uint8_t) * DISPLAY_STRING_LENGTH_MAX );
-  uint8_t *temp_frame_main = pvPortMalloc(
-      sizeof(uint8_t) * DISPLAY_STRING_LENGTH_MAX );
-
-  log_parameters = pvPortMalloc( sizeof(int32_t*) * 64 );
-  for ( int i = 0; i < 64; i++ )
-  {
-    log_parameters[i] = NULL;
-  }
 
   int32_t motor_setpoint[MAX_MOTORS] = { 0 };
 
   xSemaphoreTake( x_param_mutex, portMAX_DELAY );
 
-  uint8_t state_request = 0;
+
 
   /*Ensure that all mallocs returned valid pointers*/
-  if ( !parameters_angle || !parameters_rate || !ctrl_error_angle
-      || !ctrl_error_rate || !ctrl_limit_rate || !state || !setpoint
+  if (  !parameters_rate
+      || !ctrl_error_rate || !state || !setpoint
       || !local_receiver_buffer || !imu_readings || !x_param_mutex
-      || !ctrl_signal || !temp_frame_main )
+      || !ctrl_signal )
   {
     for ( ;; )
     {
@@ -207,7 +179,6 @@ void main_control_task( void *pvParameters )
     }
   }
 
-  quadfc_state_t fc_mode = fc_initializing;
 
   uint8_t reset_integral_error = 0; // 0 == false
 
@@ -222,20 +193,6 @@ void main_control_task( void *pvParameters )
   local_receiver_buffer->ch6 = SATELLITE_CH_CENTER;
   local_receiver_buffer->sync = 0;
   local_receiver_buffer->connection_ok = 0;
-
-  /*Control parameter initialization for angle mode control.*/
-  parameters_angle->pitch_p = 0;
-  parameters_angle->pitch_i = 0;
-  parameters_angle->pitch_d = 0;
-  parameters_angle->roll_p = 0;
-  parameters_angle->roll_i = 0;
-  parameters_angle->roll_d = 0;
-  parameters_angle->yaw_p = 0;
-  parameters_angle->yaw_i = 0;
-  parameters_angle->yaw_d = 0;
-  parameters_angle->altitude_p = 0;
-  parameters_angle->altitude_i = 0;
-  parameters_angle->altitude_d = 0;
 
   /*Control parameter initialization for rate mode control.*/
   /*--------------------Initial parameters-------------------*/
@@ -252,25 +209,11 @@ void main_control_task( void *pvParameters )
   parameters_rate->altitude_i = 0;
   parameters_rate->altitude_d = 0;
 
-  /*Initialization for control error in angle mode*/
-  reset_control_error( ctrl_error_angle );
 
   /*Initialization for control error in rate mode.*/
   reset_control_error( ctrl_error_rate );
 
-  /*Initialization for control error limit in rate mode*/
-  ctrl_limit_rate->pitch_p = 1000;
-  ctrl_limit_rate->pitch_i = 1000;
-  ctrl_limit_rate->pitch_d = 300;
-  ctrl_limit_rate->roll_p = 1000;
-  ctrl_limit_rate->roll_i = 1000;
-  ctrl_limit_rate->roll_d = 300;
-  ctrl_limit_rate->yaw_p = 1000;
-  ctrl_limit_rate->yaw_i = 2000;
-  ctrl_limit_rate->yaw_d = 300;
-  ctrl_limit_rate->altitude_p = 0;
-  ctrl_limit_rate->altitude_i = 0;
-  ctrl_limit_rate->altitude_d = 0;
+
 
   /*State initialization.*/
   state->pitch = 0;
@@ -295,8 +238,12 @@ void main_control_task( void *pvParameters )
   /*Rang data container*/
   int32_t ranger_data = 0;
 
-  uint8_t led_state = fc_initializing_led;
-  xQueueSendToBack( xQueue_led, &led_state, mainDONT_BLOCK );
+  State_InitStateHandler();
+   if(pdTRUE != State_Change(state_init))
+   {
+     State_Fault();
+   }
+
 
   /*Initialize the IMU. A reset followed by a short delay is recommended
    * before starting the configuration.*/
@@ -305,16 +252,18 @@ void main_control_task( void *pvParameters )
 
   /*Flight controller should always be started in fc_disarmed mode to prevent
    * unintentional motor arming. */
-  fc_mode = fc_disarmed;
-  led_state = fc_disarmed_led;
-  xQueueSendToBack( xQueue_led, &led_state, mainDONT_BLOCK );
+  if(pdTRUE != State_Change(state_disarmed))
+  {
+    State_Fault();
+  }
+
 
   // TODO read from memory
   uint32_t nr_motors = 4;
 
   pwm_init_motor_control( nr_motors );
 
-  uint32_t arming_counter = 0;
+  TickType_t arming_counter = 0;
   uint32_t heartbeat_counter = 0;
   uint32_t spectrum_receiver_error_counter = 0;
 
@@ -336,20 +285,15 @@ void main_control_task( void *pvParameters )
      * setpoint is an angle compared to earth gravity and is stored in setpoint-> pitch/roll/yaw.  if the copter
      * deviates from the requested angle then the controller tries to compensate for it. If all setpoints are zero
      * the copter will try to self stabilize.*/
-    if ( fc_mode == fc_armed_angle_mode )
-    {
-      //mpu6050_read_motion(MPU6050_RA_ACCEL_XOUT_H, imu_readings, 14);
-      //translate_receiver_signal_angle(setpoint, local_receiver_buffer);
-      //calc_control_signal_angle_pid(motors, NUMBER_OF_MOTORS, parameters_angle, ctrl_error_angle, state, setpoint, ctrl_signal);
-      //mk_esc_write_setpoint_value(motors, NUMBER_OF_MOTORS);
-    }
+
+    /*TODO should be implemented*/
 
     /*-----------------------------------------Rate mode-------------------------------------------------------
      * Rate mode uses only the gyro to stabilize the copter. Only the angular rate is compensated for and the copter
      * will not self stabilize, rather this control strategy slows the dynamics of the copter down to a level where
      * a pilot can control them. The setpoint is an angular rate and is stored in setpoint->pitch_rate/roll_rate/yaw_rate.
      */
-    else if ( fc_mode == fc_armed_rate_mode )
+    if ( state_armed == State_GetCurrent() )
     {
 
       mpu6050_read_motion( imu_readings );
@@ -362,14 +306,14 @@ void main_control_task( void *pvParameters )
     /*-----------------------------------------arming mode-------------------------------------------------------
      * When switching to fc_armed_rate_mode the fc can pass throuth an arming state to ensure that all motors
      * are armed according to the need of the motor/esc combination.*/
-    else if ( fc_mode == fc_arming )
+    else if ( state_arming == State_GetCurrent() )
     {
-      if ( arming_counter >= 1000 )
+      if ( arming_counter >= ( 1000 / xPeriodTicks ) ) // Be in arming state for 1s.
       {
-        fc_mode = fc_armed_rate_mode;
-
-        led_state = fc_armed_rate_mode_led;
-        xQueueSendToBack( xQueue_led, &led_state, mainDONT_BLOCK );
+        if( !State_Change(state_armed) )
+        {
+          State_Fault();
+        }
       }
       else
       {
@@ -383,39 +327,9 @@ void main_control_task( void *pvParameters )
      * Configure mode can be exited by either restarting the FC or
      * by sending a specific command over the USART communication channel.
      */
-    else if ( fc_mode == fc_configure )
+    else if ( state_config == State_GetCurrent() )
     {
-
-      /* if a switch back to disarmed mode i requested then switch"*/
-      if ( xQueueReceive(xQueue_configure_req, &state_request,
-          mainDONT_BLOCK) == pdPASS )
-      {
-        if ( state_request == fc_disarmed )
-        { // TODO is it ok to send here? Possible resource mutex required?
-          QSP_log_packet->address = 2;
-          QSP_log_packet->control = ctrl_state_fc_disarmed;
-          QSP_log_packet->length = 0;
-          encode_QSP_frame( QSP_log_packet, temp_frame_main );
-          CommunicationSend( &(QSP_log_packet->frame),
-              QSP_log_packet->frame_length );
-          xSemaphoreTake( x_param_mutex, portMAX_DELAY );
-          fc_mode = fc_disarmed;
-          /*Led control*/
-          led_state = fc_disarmed_led;
-          xQueueSendToBack( xQueue_led, &led_state, mainDONT_BLOCK );
-
-        } // Answer even if asked to change to current state
-        else if ( state_request == fc_configure )
-        {
-          QSP_log_packet->address = 2;
-          QSP_log_packet->control = ctrl_state_fc_configure;
-          QSP_log_packet->length = 0;
-          encode_QSP_frame( QSP_log_packet, temp_frame_main );
-          CommunicationSend( &(QSP_log_packet->frame),
-              QSP_log_packet->frame_length );
-        }
-
-      }
+      //Do nothing!
     }
 
     /*---------------------------------------Disarmed mode--------------------------------------------
@@ -424,44 +338,13 @@ void main_control_task( void *pvParameters )
      * It is only allowed to go into fc_configure mode if the copter is already in fc_disarmed mode.
      */
 
-    else if ( fc_mode == fc_disarmed )
+    else if ( state_disarmed == State_GetCurrent() )
     {
       if ( reset_integral_error )
       {
         reset_control_error( ctrl_error_rate );
-        reset_control_error( ctrl_error_angle );
         reset_integral_error = 0;
       }
-      /*If a request into fc_configure is sent, switch! */
-      if ( xQueueReceive(xQueue_configure_req, &state_request,
-          mainDONT_BLOCK) == pdPASS )
-      {
-        if ( state_request == fc_configure )
-        { // TODO is it ok to send here? Possible resource mutex required?
-          QSP_log_packet->address = 2;
-          QSP_log_packet->control = ctrl_state_fc_configure;
-          QSP_log_packet->length = 0;
-          encode_QSP_frame( QSP_log_packet, temp_frame_main );
-          CommunicationSend( &(QSP_log_packet->frame),
-              QSP_log_packet->frame_length );
-          xSemaphoreGive( x_param_mutex );
-
-          fc_mode = fc_configure;
-
-          led_state = fc_configure_led;
-          xQueueSendToBack( xQueue_led, &led_state, mainDONT_BLOCK );
-        } // Answer even if asked to switch to current state
-        else if ( state_request == fc_disarmed )
-        {
-          QSP_log_packet->address = 2;
-          QSP_log_packet->control = ctrl_state_fc_disarmed;
-          QSP_log_packet->length = 0;
-          encode_QSP_frame( QSP_log_packet, temp_frame_main );
-          CommunicationSend( &(QSP_log_packet->frame),
-              QSP_log_packet->frame_length );
-        }
-      }
-
     }
 
     /*------------------------------------read receiver -----------------------------------------------
@@ -485,7 +368,7 @@ void main_control_task( void *pvParameters )
         }
       }
       /*If bad connection and fc in a flightmode increase spectrum_receiver_error_counter.*/
-      else if ( (fc_mode != fc_configure) && (fc_mode != fc_disarmed) )
+      else if ( (State_GetCurrent() == state_armed) )
       {
         /* Allow a low number of lost frames at a time. Increase counter 4 times as fast as it is decreased.
          * This ensures that there is at least 4 good frames to each bad one.*/
@@ -493,12 +376,7 @@ void main_control_task( void *pvParameters )
         /*If there has been to many errors, put the FC in disarmed mode.*/
         if ( spectrum_receiver_error_counter >= (80) )
         {
-          fc_mode = fc_disarmed; /*Error - no connection*/
-          /*Led control*/
-          led_state = error_rc_link_led;
-          xQueueSendToBack( xQueue_led, &led_state, mainDONT_BLOCK );
-          led_state = fc_disarmed_led;
-          xQueueSendToBack( xQueue_led, &led_state, mainDONT_BLOCK );
+          State_Fault();
           reset_integral_error = 1;
           pwm_dissable();
           spectrum_receiver_error_counter = 0;
@@ -533,56 +411,38 @@ void main_control_task( void *pvParameters )
     /*Disarm requested*/
     if ( (local_receiver_buffer->connection_ok)
         && (local_receiver_buffer->ch5 > SATELLITE_CH_CENTER)
-        && (local_receiver_buffer->ch0 < 40) && (fc_mode != fc_disarmed)
-        && (fc_mode != fc_configure) )
+        && (local_receiver_buffer->ch0 < 40))
     {
-      fc_mode = fc_disarmed;
-      /*Led control*/
-      led_state = fc_disarmed_led;
-      xQueueSendToBack( xQueue_led, &led_state, mainDONT_BLOCK );
-      reset_integral_error = 1;
-      pwm_dissable();
+      if(pdTRUE == State_Change(state_disarmed))
+      {
+        reset_integral_error = 1;
+        pwm_dissable();
+      }
+      else
+      {
+        //Not allowed to change state.
+      }
+
     }
 
     /*Arming requested*/
     if ( (local_receiver_buffer->connection_ok)
         && (local_receiver_buffer->ch5 < SATELLITE_CH_CENTER)
-        && (local_receiver_buffer->ch0 < 40) && (fc_mode != fc_armed_rate_mode)
-        && (fc_mode != fc_configure) && (fc_mode != fc_arming) )
+        && (local_receiver_buffer->ch0 < 40))
     {
-      /*Led control*/
-      led_state = fc_arming_led;
-      xQueueSendToBack( xQueue_led, &led_state, mainDONT_BLOCK );
-
-      led_state = clear_error_led;
-      xQueueSendToBack( xQueue_led, &led_state, mainDONT_BLOCK );
-
-      fc_mode = fc_arming;
-
-      arming_counter = 0;
-      pwm_enable( nr_motors );
-    }
-
-    /*------------------------------------------- Logging? ------------------------------------------
-     * If the FC is in a flight state and logging is requested, log data! TODO Check log mutex!
-     */
-    if ( nr_log_parameters && (fc_mode != fc_configure) )
-    {
-      if ( (uxQueueMessagesWaiting( xQueue_display ) < DISPLAY_QUEUE_LENGTH)
-          && (xSemaphoreTake(x_log_mutex, 0) == pdPASS) )
+      if(pdTRUE == State_Change(state_arming))
       {
-        time_main = xTaskGetTickCount();
-        do_logging( QSP_log_packet );
-        QSP_log_packet->address = 2;
-        QSP_log_packet->control = data_log;
-        QSP_log_packet->length = nr_log_parameters * sizeof(uint32_t);
-        encode_QSP_frame( QSP_log_packet, temp_frame_main );
-        CommunicationSend( &(QSP_log_packet->frame),
-            QSP_log_packet->frame_length );
+        arming_counter = 0;
+        pwm_enable( nr_motors );
+      }
+      else
+      {
+        //Not allowed to change state.
       }
     }
 
-    vTaskDelayUntil( &xLastWakeTime, xPeriod );
+
+    vTaskDelayUntil( &xLastWakeTime, xPeriodTicks );
 
     /*-------------------Heartbeat----------------------
      * Toggle an led to indicate that the FC is operational.
@@ -614,33 +474,6 @@ void reset_control_error( control_values_pid_t *ctrl_error )
   ctrl_error->altitude_d = 0;
 }
 
-/* Collects data for logging. Logging must be setup by a call to WriteLogParameters().*/
-void do_logging( communicaion_packet_t *packet )
-{
-  uint8_t *current_log_param;
-  for ( int i = 0; i < nr_log_parameters; i++ )
-  {
-    /* log_parameters is a pointer to pointers to int32_t,
-     * the following code casts, in turn, each of those pointers
-     * to a uint8_t pointer. This pointer is used to do a deep copy
-     * of the desired raw data into the packet.*/
-    current_log_param = (uint8_t *) (log_parameters[i]);
-    for ( int k = 0; k < 4; k++ )
-    {
-      /*Deep copy the desired log data into the log packet.*/
-      uint32_t index = (i * 4 + k);
-      if ( index < MAX_DATA_LENGTH )
-      {
-        packet->information[i * 4 + k] = (current_log_param[k]);
-      }
-      else
-      {
-        return;
-      }
-    }
-  }
-
-}
 
 void init_twi_main( )
 {

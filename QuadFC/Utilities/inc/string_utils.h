@@ -8,11 +8,10 @@
 #ifndef PREPARE_OUTPUT_H_
 #define PREPARE_OUTPUT_H_
 
-#include "compiler.h"
+#include "stdint.h"
+#include "stddef.h"
 
-uint8_t my_itoa( int32_t val, uint8_t **out_str );
+uint8_t my_itoa( int32_t val, uint8_t *out_str );
 int32_t my_atoi( uint8_t *, uint8_t );
-
-uint8_t end_string_print( uint8_t **str );
 
 #endif /* PREPARE_OUTPUT_H_ */

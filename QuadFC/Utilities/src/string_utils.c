@@ -29,31 +29,30 @@ void reverse( uint8_t *str, int32_t length );
  * The function assumes that the uint8_t pointer has enough
  * space allocated to represent the whole representation.
  */
-uint8_t my_itoa( int32_t val, uint8_t **out_str )
+uint8_t my_itoa( int32_t val, uint8_t *out_str )
 {
   // if negative, need 1 byte for the sign
-  int sign = val < 0 ? 1 : 0;
-  uint8_t i = 0;
+  int sign = val < 0? 1: 0;
+    int i = 0;
 
-  //if the number is 0 then return '0'
-  if ( val == 0 )
-  {
-    *(*out_str + i++) = '0';
+  // if the number is 0 then return '0'
+  if (val == 0) {
+    out_str[i++] = '0';
   }
-  else if ( val < 0 )
-  {
-    *(*out_str + i++) = '-';
-    val = -val;
-  }
-  while ( val > 0 )
-  {
-    *(*out_str + i++) = '0' + val % 10;
+    else if (val < 0)
+    {
+        out_str[i++] = '-';
+        val = -val;
+    }
+  while (val > 0) {
+    out_str[i++] = '0' + val % 10;
     val /= 10;
   }
+  // null terminate the string
+  out_str[i] = '\0';
 
   // reverse order on all digits, sign is already in the right place.
-  reverse( *out_str + sign, i - sign );
-  *out_str = (*out_str + i);
+  reverse(out_str + sign, i - sign );
   return i;
 }
 
@@ -69,16 +68,6 @@ void reverse( uint8_t *str, int32_t length )
     i++;
     j--;
   }
-}
-
-uint8_t end_string_print( uint8_t **str )
-{
-  uint8_t i = 0;
-  *(*str + i++) = '\r';
-  *(*str + i++) = '\n';
-  *(*str + i++) = '\0';
-  *str = *str + i;
-  return i;
 }
 
 /* Non standard atoi function, takes a buffer and a length.

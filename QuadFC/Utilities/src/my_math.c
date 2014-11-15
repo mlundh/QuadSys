@@ -151,8 +151,7 @@ int32_t my_mult( int32_t operand1, int32_t operand2 )
   if ( (temp >> (31 - SHIFT_EXP)) != (temp >> (32 - SHIFT_EXP)) )
   {
     //ERROR!
-    static uint8_t led_state = error_int_overflow_led;
-    xQueueSendToBack( xQueue_led, &led_state, mainDONT_BLOCK );
+    Led_Set(led_error_int_overflow);
   }
 
   return (int32_t) (temp >> SHIFT_EXP);

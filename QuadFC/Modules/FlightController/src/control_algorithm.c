@@ -27,10 +27,6 @@
 
 void limit_value( int32_t *val, int32_t limit );
 
-#define CTRL_P_LIMIT 1000
-#define CTRL_I_LIMIT 9000
-#define CTRL_I_LIMIT_YAW 15000
-#define CTRL_D_LIMIT 300
 
 void calc_control_signal_angle_pid( int32_t motor_setpoint[], uint32_t nr_motors, control_values_pid_t *parameters_pid, control_values_pid_t *ctrl_error, state_data_t *state,
     state_data_t *setpoint, control_signal_t *ctrl_signal )
@@ -51,18 +47,6 @@ void calc_control_signal_angle_pid( int32_t motor_setpoint[], uint32_t nr_motors
   ctrl_error->yaw_i += (setpoint->yaw_rate - state->yaw_rate);
   ctrl_error->yaw_d = ((setpoint->yaw_rate - state->yaw_rate) - error_d_last.torque_yaw);
   // TODO no altitude control yet.
-
-  limit_value( &ctrl_error->pitch_p, CTRL_P_LIMIT );
-  limit_value( &ctrl_error->roll_p, CTRL_P_LIMIT );
-  limit_value( &ctrl_error->yaw_p, CTRL_P_LIMIT );
-
-  limit_value( &ctrl_error->pitch_i, CTRL_I_LIMIT );
-  limit_value( &ctrl_error->roll_i, CTRL_I_LIMIT );
-  limit_value( &ctrl_error->yaw_i, CTRL_I_LIMIT );
-
-  limit_value( &ctrl_error->pitch_d, CTRL_D_LIMIT );
-  limit_value( &ctrl_error->roll_d, CTRL_D_LIMIT );
-  limit_value( &ctrl_error->yaw_d, CTRL_D_LIMIT );
 
   error_d_last.torque_pitch = ctrl_error->pitch_p;
   error_d_last.torque_roll = ctrl_error->roll_p;

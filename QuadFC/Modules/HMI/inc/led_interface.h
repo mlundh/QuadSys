@@ -1,7 +1,7 @@
 /*
- * led_control_task.h
+ * led_interface.h
  *
- * Copyright (C) 2014 martin
+ * Copyright (C) 2015 martin
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,37 +21,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+#ifndef LED_INTERFACE_H_
+#define LED_INTERFACE_H_
 
-#ifndef LED_CONTROL_TASK_H_
-#define LED_CONTROL_TASK_H_
-
-#include "FreeRTOS.h"
-
-typedef enum LED_control
+typedef enum led_mode
 {
+  led_off = 0,
+  led_blink_fast = 1,
+  led_blink_slow = 2,
+  led_double_blink = 3,
+  led_const_on = 4,
+} led_mode_t;
 
-  led_initializing = 0,
-  led_disarmed = 1,
-  led_configure = 2,
-  led_arming = 3,
-  led_armed = 4,
-  led_fault = 5,
-  led_state_not_available = 6,
-
-  led_error_int_overflow = 20,
-  led_error_TWI = 21,
-  led_error_alloc = 22,
-  led_error_rc_link = 23,
-
-
-  led_warning_lost_com_message = 30,
-
-  led_clear_error = 40,
-} LED_control_t;
-
-
-void Led_CreateLedControlTask( void );
-void Led_ControlTask( void *pvParameters );
-BaseType_t Led_Set(LED_control_t led_control);
-
-#endif /* LED_CONTROL_TASK_H_ */
+#endif /* LED_INTERFACE_H_ */

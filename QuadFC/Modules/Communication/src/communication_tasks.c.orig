@@ -53,15 +53,25 @@ void Com_CreateCommunicationTasks( void )
   freertos_usart = freertos_usart_serial_init( TERMINAL_USART, &usart_settings,
       &driver_options );
 
-  xTaskCreate( Com_TxTask,                              /* The task that implements the test. */
+<<<<<<< HEAD
+  xTaskCreate( tx_task,                              /* The task that implements the test. */
       (const char *const) "UARTTX",                /* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
+=======
+  xTaskCreate( Com_TxTask,                              /* The task that implements the test. */
+      (const int8_t *const) "UARTTX",                /* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
+>>>>>>> unstable, new structure in com module
       500,                                           /* The size of the stack allocated to the task. */
       (void *) freertos_usart,                       /* The parameter is used to pass the already configured USART port into the task. */
       configMAX_PRIORITIES-3,                        /* The priority allocated to the task. */
       NULL );                                        /* Used to store the handle to the created task - in this case the handle is not required. */
 
-  xTaskCreate( Com_RxTask,                              /* The task that implements the test. */
+<<<<<<< HEAD
+  xTaskCreate( rx_task,                              /* The task that implements the test. */
       (const char *const) "UARTRX",                /* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
+=======
+  xTaskCreate( Com_RxTask,                              /* The task that implements the test. */
+      (const int8_t *const) "UARTRX",                /* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
+>>>>>>> unstable, new structure in com module
       500,                                           /* The size of the stack allocated to the task. */
       (void *) freertos_usart,                       /* The parameter is used to pass the already configured USART port into the task. */
       configMAX_PRIORITIES-3,                        /* The priority allocated to the task. */
@@ -123,6 +133,8 @@ void Com_RxTask( void *pvParameters )
 {
 
   int k = 0;
+  uint32_t bytes_received;
+  static const portTickType xBlockTime = (30UL / portTICK_RATE_ONE_THIRD_MS); /*Wait for semaphore max 10ms*/
 
   uint8_t *receive_buffer = pvPortMalloc(sizeof(uint8_t) * DISPLAY_STRING_LENGTH_MAX );
 
@@ -145,6 +157,10 @@ void Com_RxTask( void *pvParameters )
       // Error!
     }
   }
+<<<<<<< HEAD
+  static const TickType_t xBlockTime = (10UL / portTICK_PERIOD_MS); /*Wait for semaphore max 10ms*/
+=======
+>>>>>>> unstable, new structure in com module
   crcInit();
   /*The already open usart port is passed through the task parameters*/
   freertos_usart_if xbee_usart = (freertos_usart_if) pvParameters;
@@ -155,11 +171,14 @@ void Com_RxTask( void *pvParameters )
     /*--------------------------Receive the frame---------------------
      * The frame length can vary, one has to listen to start and stop flags.*/
 
+
     uint32_t nr_bytes_received;
     nr_bytes_received = freertos_usart_serial_read_packet( xbee_usart,  /* The USART port*/
         receive_buffer,                                           /* Pointer to the buffer into which received data is to be copied.*/
         1,                                                        /* The number of bytes to copy. */
         portMAX_DELAY );                                          /* Block time*/
+
+
 
     if ( nr_bytes_received >= 1 )
     {

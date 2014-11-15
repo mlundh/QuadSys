@@ -24,7 +24,7 @@
 #ifndef CONTROL_TYPES_H_
 #define CONTROL_TYPES_H_
 
-#include "compiler.h"
+#include "stdint.h"
 
 
 
@@ -95,60 +95,5 @@ typedef enum quadfc_state
   fc_arming = 7,
 } quadfc_state_t;
 
-typedef enum available_log_param1
-{
-  time_ =             1 << 0,
-  pitch_ =            1 << 1,
-  roll_ =             1 << 2,
-  yaw_ =              1 << 3,
-  pitch_rate_ =       1 << 4,
-  roll_rate_ =        1 << 5,
-  yaw_rate_ =         1 << 6,
-  x_pos_ =            1 << 7,
-  y_pos_ =            1 << 8,
-  z_pos_ =            1 << 9,
-  x_vel_ =            1 << 10,
-  y_vel_ =            1 << 11,
-  z_vel_ =            1 << 12,
-  ctrl_torque_pitch = 1 << 13,
-  ctrl_torque_roll =  1 << 14,
-  ctrl_torque_yaw =   1 << 15,
-  ctrl_thrust =       1 << 16,
-//ctrl_roll_rate =    1 << 17,
-//ctrl_yaw_rate =     1 << 18,
-//ctrl_x_pos =        1 << 19,
-//ctrl_y_pos =        1 << 20,
-//ctrl_z_pos =        1 << 21,
-//ctrl_x_vel =        1 << 22,
-//ctrl_y_vel =        1 << 23,
-//ctrl_z_vel =        1 << 24,
-} available_log_param1_t;
 
-typedef enum available_log_param2
-{
-  ctrl_error_pitch =        1 << 0,
-  ctrl_error_roll =         1 << 1,
-  ctrl_error_yaw =          1 << 2,
-  ctrl_error_pitch_rate =   1 << 3,
-  ctrl_error_roll_rate =    1 << 4,
-  ctrl_error_yaw_rate =     1 << 5,
-  ctrl_error_x_pos =        1 << 6,
-  ctrl_error_y_pos =        1 << 7,
-  ctrl_error_z_pos =        1 << 8,
-  ctrl_error_x_vel =        1 << 9,
-  ctrl_error_y_vel =        1 << 10,
-  ctrl_error_z_vel =        1 << 11,
-  setpoint_pitch =          1 << 12,
-  setpoint_roll =           1 << 13,
-  setpoint_yaw =            1 << 14,
-  setpoint_pitch_rate =     1 << 15,
-  setpoint_roll_rate =      1 << 16,
-  setpoint_yaw_rate =       1 << 17,
-  setpoint_x_pos =          1 << 18,
-  setpoint_y_pos =          1 << 19,
-  setpoint_z_pos =          1 << 20,
-  setpoint_x_vel =          1 << 21,
-  setpoint_y_vel =          1 << 22,
-  setpoint_z_vel =          1 << 23,
-} available_log_param2_t;
 #endif /* CONTROL_TYPES_H_ */

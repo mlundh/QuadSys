@@ -98,8 +98,7 @@ uint8_t mpu6050_write_settings( uint8_t reg_addr, uint8_t bit_nr, uint8_t nr_bit
   }
   else
   {
-    uint8_t led_state = error_TWI_led;
-    xQueueSendToBack( xQueue_led, &led_state, mainDONT_BLOCK );
+    Led_Set(led_error_TWI);
   }
   return 0;
 }
@@ -124,8 +123,7 @@ uint8_t mpu6050_read_settings( uint8_t reg_addr, uint8_t bit_nr, uint8_t nr_bits
   }
   else
   {
-    uint8_t led_state = error_TWI_led;
-    xQueueSendToBack( xQueue_led, &led_state, mainDONT_BLOCK );
+    Led_Set(led_error_TWI);
   }
 
   uint8_t w = *mpu6050_packet.data;
@@ -157,8 +155,7 @@ uint8_t mpu6050_read_motion( imu_data_t *data )
     }
     else
     {
-      uint8_t led_state = error_TWI_led;
-      xQueueSendToBack( xQueue_led, &led_state, mainDONT_BLOCK );
+      Led_Set(led_error_TWI);
     }
     //TODO check validity of data!
 

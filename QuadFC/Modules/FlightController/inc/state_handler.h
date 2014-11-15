@@ -1,7 +1,7 @@
 /*
- * led_control_task.h
+ * state_handler.h
  *
- * Copyright (C) 2014 martin
+ * Copyright (C) 2015 martin
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,37 +21,30 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+#ifndef STATE_HANDLER_H_
+#define STATE_HANDLER_H_
 
-#ifndef LED_CONTROL_TASK_H_
-#define LED_CONTROL_TASK_H_
-
+#include "stdint.h"
 #include "FreeRTOS.h"
+#include "queue.h"
+#include "semphr.h"
 
-typedef enum LED_control
-{
+typedef enum state{
+  state_init = 1,      // FC is initializing.
+  state_disarmed = 2,  // Disarmed state, no action except changing to another state.
+  state_config = 3,    // Configuration state. FC can be configured.
+  state_arming = 4,    // Motors are arming. No action other than change to error, disarmed or armed state.
+  state_armed = 5,     // Armed state, FC is flight ready.
+  state_fault = 6,     // FC has encountered a serious problem and has halted.
+  state_not_available = 7, // state information not available.
+}state_t;
 
-  led_initializing = 0,
-  led_disarmed = 1,
-  led_configure = 2,
-  led_arming = 3,
-  led_armed = 4,
-  led_fault = 5,
-  led_state_not_available = 6,
-
-  led_error_int_overflow = 20,
-  led_error_TWI = 21,
-  led_error_alloc = 22,
-  led_error_rc_link = 23,
-
-
-  led_warning_lost_com_message = 30,
-
-  led_clear_error = 40,
-} LED_control_t;
+void State_InitStateHandler();
+state_t State_GetCurrent();
+BaseType_t State_Lock();
+BaseType_t State_Unlock();
+BaseType_t State_Fault();
+BaseType_t State_Change(state_t state_req);
 
 
-void Led_CreateLedControlTask( void );
-void Led_ControlTask( void *pvParameters );
-BaseType_t Led_Set(LED_control_t led_control);
-
-#endif /* LED_CONTROL_TASK_H_ */
+#endif /* STATE_HANDLER_H_ */

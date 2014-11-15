@@ -11,7 +11,6 @@
 
 
 extern control_values_pid_t *parameters_rate;
-extern control_values_pid_t *parameters_angle;
 extern state_data_t *state;
 extern state_data_t *setpoint;
 extern control_signal_t *ctrl_signal;

@@ -1,7 +1,7 @@
 /*
- * led_control_task.h
+ * slip_utils.h
  *
- * Copyright (C) 2014 martin
+ * Copyright (C) 2015 martin
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,37 +21,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+#ifndef SLIP_UTILS_H_
+#define SLIP_UTILS_H_
 
-#ifndef LED_CONTROL_TASK_H_
-#define LED_CONTROL_TASK_H_
+#include "stdint.h"
 
-#include "FreeRTOS.h"
-
-typedef enum LED_control
+enum Slip_Control_Octets
 {
-
-  led_initializing = 0,
-  led_disarmed = 1,
-  led_configure = 2,
-  led_arming = 3,
-  led_armed = 4,
-  led_fault = 5,
-  led_state_not_available = 6,
-
-  led_error_int_overflow = 20,
-  led_error_TWI = 21,
-  led_error_alloc = 22,
-  led_error_rc_link = 23,
+  frame_boundary_octet = 0x7E,
+  frame_boundary_octet_replacement = 0x5E,
+  control_escape_octet = 0x7D,
+  control_escape_octet_replacement = 0x5D
+};
 
 
-  led_warning_lost_com_message = 30,
+uint8_t Slip_Enocode(uint8_t* frame_buffer, uint8_t* serialized_data, uint8_t length);
 
-  led_clear_error = 40,
-} LED_control_t;
+uint8_t Slip_Decode(uint8_t* frame_buffer, uint8_t* serialized_data, uint8_t length);
 
 
-void Led_CreateLedControlTask( void );
-void Led_ControlTask( void *pvParameters );
-BaseType_t Led_Set(LED_control_t led_control);
 
-#endif /* LED_CONTROL_TASK_H_ */
+#endif /* SLIP_UTILS_H_ */
