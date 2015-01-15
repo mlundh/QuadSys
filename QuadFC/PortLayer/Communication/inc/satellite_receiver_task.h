@@ -29,7 +29,7 @@
 #define RECEIVER_QUEUE_ITEM_SIZE        (sizeof(receiver_data_t))
 
 /*Global rtos variable */
-extern xQueueHandle xQueue_receiver;
+extern  QueueHandle_t xQueue_receiver;
 
 /*
  * Struct containing the data from an RC receiver.

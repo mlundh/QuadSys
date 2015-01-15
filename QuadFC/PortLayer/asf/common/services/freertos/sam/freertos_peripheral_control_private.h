@@ -50,16 +50,16 @@ typedef struct freertos_pdc_rx_control {
 	uint32_t rx_buffer_start_address;		/*< The start of the buffer used to store received bytes. */
 	uint32_t past_rx_buffer_end_address;	/*< One byte past the end of the valid Rx buffer region. */
 	pdc_packet_t rx_pdc_parameters;			/*< Defines the section of the receive buffer currently being used by the PDC. */
-	xSemaphoreHandle rx_event_semaphore;	/*< Used to indicate the possible presence of unread data in the Rx buffer. */
-	xSemaphoreHandle rx_access_mutex;		/*< Used for mutual exclusion to the Rx buffer.  Optional. */
+	SemaphoreHandle_t rx_event_semaphore;	/*< Used to indicate the possible presence of unread data in the Rx buffer. */
+	SemaphoreHandle_t rx_access_mutex;		/*< Used for mutual exclusion to the Rx buffer.  Optional. */
 	uint8_t *next_byte_to_read;				/*< Pointer to the next byte that will be read out of the Rx buffer. */
 } freertos_pdc_rx_control_t;
 
 /* Contains the information needed to interface a PDC controlled zero copy
 transmit function with a multi-tasking application. */
 typedef struct freertos_dma_tx_control {
-	xSemaphoreHandle transaction_complete_notification_semaphore;	/*< Used to indicate the end of a DMA controlled transaction. */
-	xSemaphoreHandle peripheral_access_mutex;						/*< Used for mutual exclusion to the DMA.  Optional. */
+	SemaphoreHandle_t transaction_complete_notification_semaphore;	/*< Used to indicate the end of a DMA controlled transaction. */
+	SemaphoreHandle_t peripheral_access_mutex;						/*< Used for mutual exclusion to the DMA.  Optional. */
 } freertos_dma_event_control_t;
 
 /* Contains identification information required for accessing a peripheral. */
@@ -78,7 +78,7 @@ they are implemented. */
 void freertos_start_pdc_transfer(
 		freertos_dma_event_control_t *dma_event_control,
 		const uint8_t *data, size_t len, void *pdc_base_address,
-		xSemaphoreHandle notification_semaphore,
+		SemaphoreHandle_t notification_semaphore,
 		bool is_transmitting);
 portBASE_TYPE get_pdc_peripheral_details(
 		const freertos_pdc_peripheral_parameters_t peripheral_array[],
@@ -93,11 +93,11 @@ uint32_t freertos_copy_bytes_from_pdc_circular_buffer(
 		uint32_t bytes_to_read);
 status_code_t freertos_obtain_peripheral_access_mutex(
 		freertos_dma_event_control_t *dma_event_control,
-		portTickType *max_block_time_ticks);
+		TickType_t *max_block_time_ticks);
 status_code_t freertos_optionally_wait_transfer_completion(
 		freertos_dma_event_control_t *dma_event_control,
-		xSemaphoreHandle notification_semaphore,
-		portTickType max_block_time_ticks);
+		SemaphoreHandle_t notification_semaphore,
+		TickType_t max_block_time_ticks);
 void create_peripheral_control_semaphores(const uint8_t options_flags,
 		freertos_dma_event_control_t *tx_dma_control,
 		freertos_dma_event_control_t *rx_dma_control);

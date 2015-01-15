@@ -27,10 +27,10 @@
 #include "freertos_twi_master.h"
 #include "queue.h"
 
-extern xSemaphoreHandle x_param_mutex;
-extern xSemaphoreHandle x_log_mutex;
-extern xSemaphoreHandle twi_0_notification_semaphore;
-extern xSemaphoreHandle twi_1_notification_semaphore;
+extern SemaphoreHandle_t x_param_mutex;
+extern SemaphoreHandle_t x_log_mutex;
+extern SemaphoreHandle_t twi_0_notification_semaphore;
+extern SemaphoreHandle_t twi_1_notification_semaphore;
 extern freertos_twi_if twi_0;
 extern freertos_twi_if twi_1;
 

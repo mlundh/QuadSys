@@ -180,7 +180,7 @@ uint8_t mpu6050_read_motion( imu_data_t *data )
 
 void mpu6050_calc_offset( )
 {
-  const portTickType xPeriod = (30UL / portTICK_RATE_ONE_THIRD_MS); /*Read new values at 1kHz*/
+  const TickType_t xPeriod = (10UL / portTICK_PERIOD_MS); /*Read new values at 100Hz*/
 
   imu_data_t imu_readings;
   int i = 0;
@@ -221,7 +221,7 @@ void mpu6050_calc_offset( )
 
 void mpu6050_initialize( )
 {
-  static portTickType delay_1000_ms = (3000UL / portTICK_RATE_ONE_THIRD_MS); /*delay of 1000ms*/
+  static TickType_t delay_1000_ms = (1000UL / portTICK_PERIOD_MS); /*delay of 1000ms*/
 
   mpu6050_packet.twi = TWI0;
   mpu6050_packet.twi_notification_semaphore = twi_0_notification_semaphore;

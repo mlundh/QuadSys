@@ -95,7 +95,7 @@ void create_range_meter_task( void )
  */
 void range_meter_task( void *pvParameters )
 {
-  const portBASE_TYPE range_block_time = 600UL / portTICK_RATE_ONE_THIRD_MS;
+  const portBASE_TYPE range_block_time = 200UL / portTICK_PERIOD_MS;
 
   uint8_t ranger_receive_buffer[RANGE_METER_MESSAGE_LENGTH];
   uint8_t bytes_read = 0;

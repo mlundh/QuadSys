@@ -267,10 +267,10 @@ uint32_t freertos_copy_bytes_from_pdc_circular_buffer(
  */
 status_code_t freertos_obtain_peripheral_access_mutex(
 		freertos_dma_event_control_t *dma_event_control,
-		portTickType *max_block_time_ticks)
+		TickType_t *max_block_time_ticks)
 {
 	status_code_t return_value = STATUS_OK;
-	xTimeOutType time_out_definition;
+	TimeOut_t time_out_definition;
 
 	if (dma_event_control->peripheral_access_mutex != NULL) {
 		/* Remember the time on entry. */
@@ -308,7 +308,7 @@ status_code_t freertos_obtain_peripheral_access_mutex(
 void freertos_start_pdc_transfer(
 		freertos_dma_event_control_t *dma_event_control,
 		const uint8_t *data, size_t len, void *pdc_base_address,
-		xSemaphoreHandle notification_semaphore, bool is_transmitting)
+		SemaphoreHandle_t notification_semaphore, bool is_transmitting)
 {
 	pdc_packet_t pdc_packet;
 
@@ -361,8 +361,8 @@ void freertos_start_pdc_transfer(
  */
 status_code_t freertos_optionally_wait_transfer_completion(
 		freertos_dma_event_control_t *dma_event_control,
-		xSemaphoreHandle notification_semaphore,
-		portTickType max_block_time_ticks)
+		SemaphoreHandle_t notification_semaphore,
+		TickType_t max_block_time_ticks)
 {
 	status_code_t return_value = STATUS_OK;
 

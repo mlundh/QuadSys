@@ -395,8 +395,8 @@ freertos_usart_if freertos_usart_serial_init(Usart *p_usart,
  *     operation.
  */
 status_code_t freertos_usart_write_packet_async(freertos_usart_if p_usart,
-		const uint8_t *data, size_t len, portTickType block_time_ticks,
-		xSemaphoreHandle notification_semaphore)
+		const uint8_t *data, size_t len, TickType_t block_time_ticks,
+		SemaphoreHandle_t notification_semaphore)
 {
 	status_code_t return_value;
 	portBASE_TYPE usart_index;
@@ -489,11 +489,11 @@ status_code_t freertos_usart_write_packet_async(freertos_usart_if p_usart,
  *     less than the requested number of bytes if a time out occurred.
  */
 uint32_t freertos_usart_serial_read_packet(freertos_usart_if p_usart,
-		uint8_t *data, uint32_t len, portTickType block_time_ticks)
+		uint8_t *data, uint32_t len, TickType_t block_time_ticks)
 {
 	portBASE_TYPE usart_index, attempt_read;
 	Usart *usart_base;
-	xTimeOutType time_out_definition;
+	TimeOut_t time_out_definition;
 	uint32_t bytes_read = 0;
 
 	usart_base = (Usart *) p_usart;

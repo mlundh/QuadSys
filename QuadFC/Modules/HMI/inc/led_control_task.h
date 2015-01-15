@@ -33,7 +33,7 @@
 /*LED queue*/
 #define LED_QUEUE_LENGTH			(5)
 #define LED_QUEUE_ITEM_SIZE        (sizeof(uint8_t))
-extern xQueueHandle xQueue_led;
+extern  QueueHandle_t xQueue_led;
 
 typedef enum LED_control
 {

@@ -53,14 +53,14 @@ void create_communication_tasks( void )
       &driver_options );
 
   xTaskCreate( tx_task,                              /* The task that implements the test. */
-      (const int8_t *const) "UARTTX",                /* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
+      (const char *const) "UARTTX",                /* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
       500,                                           /* The size of the stack allocated to the task. */
       (void *) freertos_usart,                       /* The parameter is used to pass the already configured USART port into the task. */
       configMAX_PRIORITIES-3,                        /* The priority allocated to the task. */
       NULL );                                        /* Used to store the handle to the created task - in this case the handle is not required. */
 
   xTaskCreate( rx_task,                              /* The task that implements the test. */
-      (const int8_t *const) "UARTRX",                /* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
+      (const char *const) "UARTRX",                /* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
       500,                                           /* The size of the stack allocated to the task. */
       (void *) freertos_usart,                       /* The parameter is used to pass the already configured USART port into the task. */
       configMAX_PRIORITIES-3,                        /* The priority allocated to the task. */
@@ -74,7 +74,7 @@ void create_communication_tasks( void )
 void tx_task( void *pvParameters )
 {
 
-  portTickType max_block_time_ticks = 1000UL / portTICK_RATE_ONE_THIRD_MS;
+  TickType_t max_block_time_ticks = 333UL / portTICK_PERIOD_MS;
   status_code_t result;
   uint8_t *string_ptr;
   uint8_t nr_bytes_to_send;
@@ -142,7 +142,7 @@ void rx_task( void *pvParameters )
       // Error!
     }
   }
-  static const portTickType xBlockTime = (30UL / portTICK_RATE_ONE_THIRD_MS); /*Wait for semaphore max 10ms*/
+  static const TickType_t xBlockTime = (10UL / portTICK_PERIOD_MS); /*Wait for semaphore max 10ms*/
   crcInit();
   /*The already open usart port is passed through the task parameters*/
   freertos_usart_if xbee_usart = (freertos_usart_if) pvParameters;

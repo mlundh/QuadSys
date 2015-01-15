@@ -42,20 +42,20 @@
  */
 void vApplicationMallocFailedHook( void );
 void vApplicationIdleHook( void );
-void vApplicationStackOverflowHook( xTaskHandle pxTask,
+void vApplicationStackOverflowHook( TaskHandle_t pxTask,
     signed char *pcTaskName );
 void vApplicationTickHook( void );
 
-xQueueHandle xQueue_display = NULL;
-xQueueHandle xQueue_receiver = NULL;
-xQueueHandle xQueue_display_bytes_to_send = NULL;
-xQueueHandle xQueue_configure_req = NULL;
-xQueueHandle xQueue_ranger = NULL;
-xQueueHandle xQueue_led = NULL;
-xSemaphoreHandle x_param_mutex = NULL;
-xSemaphoreHandle x_log_mutex = NULL;
-xSemaphoreHandle twi_0_notification_semaphore = NULL;
-xSemaphoreHandle twi_1_notification_semaphore = NULL;
+ QueueHandle_t xQueue_display = NULL;
+ QueueHandle_t xQueue_receiver = NULL;
+ QueueHandle_t xQueue_display_bytes_to_send = NULL;
+ QueueHandle_t xQueue_configure_req = NULL;
+ QueueHandle_t xQueue_ranger = NULL;
+ QueueHandle_t xQueue_led = NULL;
+SemaphoreHandle_t x_param_mutex = NULL;
+SemaphoreHandle_t x_log_mutex = NULL;
+SemaphoreHandle_t twi_0_notification_semaphore = NULL;
+SemaphoreHandle_t twi_1_notification_semaphore = NULL;
 freertos_twi_if twi_0 = NULL;
 freertos_twi_if twi_1 = NULL;
 /*
@@ -176,7 +176,7 @@ void vApplicationIdleHook( void )
 
 /*-----------------------------------------------------------*/
 
-void vApplicationStackOverflowHook( xTaskHandle pxTask,
+void vApplicationStackOverflowHook( TaskHandle_t pxTask,
     signed char *pcTaskName )
 {
   (void) pcTaskName;

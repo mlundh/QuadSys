@@ -300,8 +300,8 @@ freertos_twi_if freertos_twi_master_init(Twi *p_twi,
  *     the PDC was successfully configured to perform the TWI write operation.
  */
 status_code_t freertos_twi_write_packet_async(freertos_twi_if p_twi,
-		twi_packet_t *p_packet, portTickType block_time_ticks,
-		xSemaphoreHandle notification_semaphore)
+		twi_packet_t *p_packet, TickType_t block_time_ticks,
+		SemaphoreHandle_t notification_semaphore)
 {
 	status_code_t return_value;
 	portBASE_TYPE twi_index;
@@ -428,8 +428,8 @@ status_code_t freertos_twi_write_packet_async(freertos_twi_if p_twi,
  *     the PDC was successfully configured to perform the TWI read operation.
  */
 status_code_t freertos_twi_read_packet_async(freertos_twi_if p_twi,
-		twi_packet_t *p_packet, portTickType block_time_ticks,
-		xSemaphoreHandle notification_semaphore)
+		twi_packet_t *p_packet, TickType_t block_time_ticks,
+		SemaphoreHandle_t notification_semaphore)
 {
 	status_code_t return_value;
 	portBASE_TYPE twi_index;

@@ -37,7 +37,7 @@
 /*New range data available queue*/
 #define RANGER_QUEUE_LENGTH         (1)
 #define RANGER_QUEUE_ITEM_SIZE      (sizeof(int32_t))
-xQueueHandle xQueue_ranger;
+ QueueHandle_t xQueue_ranger;
 
 void create_range_meter_task( void );
 void range_meter_task( void *pvParameters );

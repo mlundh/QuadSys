@@ -33,7 +33,7 @@ void create_led_control_task( void )
   /*Create the task*/
   portBASE_TYPE create_result;
   create_result = xTaskCreate( led_control_task,  /* The function that implements the task.  */
-      (const signed char *const) "Led_Ctrl",      /* The name of the task. This is not used by the kernel, only aids in debugging*/
+      (const char *const) "Led_Ctrl",      /* The name of the task. This is not used by the kernel, only aids in debugging*/
       500,                                        /* The stack size for the task*/
       NULL,                                       /* No input parameters*/
       configMAX_PRIORITIES-4,                     /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
@@ -53,7 +53,7 @@ void create_led_control_task( void )
 void led_control_task( void *pvParameters )
 {
   /*led_control_task execute at 10Hz*/
-  static const portTickType xPeriod = (60UL / portTICK_RATE_ONE_THIRD_MS);
+  static const TickType_t xPeriod = (20UL / portTICK_PERIOD_MS);
 
   uint8_t ctrl = 0;
 

@@ -28,16 +28,16 @@
  * or starting(40), and temperature is reported in �C
  */
 
-#define BLOCK_TIME_TRANSMIT (2 / portTICK_RATE_ONE_THIRD_MS)// 1 tick timeout gives a timeout 
+#define BLOCK_TIME_TRANSMIT ( 1 / portTICK_PERIOD_MS)// 1 tick timeout gives a timeout
 //between 0 and 1 tickperiods. Thus,
 //always use at least 2 ticks timeouts.
 
 typedef struct mk_esc_data
 {
   twi_package_t twi_data;         //twi package
-  xSemaphoreHandle twi_notification_semaphore;    //Notification semaphore
+  SemaphoreHandle_t twi_notification_semaphore;    //Notification semaphore
   freertos_twi_if twi;            // Initialized twi buss.
-  portTickType xtransmit_block_time;              // block time
+  TickType_t xtransmit_block_time;              // block time
   uint8_t verified;              // != 0 if BL_CTRL is connected and responsive.
   uint8_t setpoint_transmitt[2];            // Setpoint value 11 bits for MK BL_CTRL v2.
   uint8_t runtime_data[3];        // data reported by BL_CTRL v2 in above order.

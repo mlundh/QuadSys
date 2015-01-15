@@ -12,7 +12,7 @@
 #include "imu.h"
 #include "portmacro.h"
 
-#define BLOCK_TIME_IMU (2UL / portTICK_RATE_ONE_THIRD_MS)
+#define BLOCK_TIME_IMU (2UL / portTICK_PERIOD_MS)
 
 
 #define MPU6050_ADDRESS_AD0_LOW     0x68 // address pin low (GND), default for InvenSense evaluation board
@@ -373,9 +373,9 @@
 typedef struct mpu6050_data
 {
   twi_package_t twi_data;                         //twi package
-  xSemaphoreHandle twi_notification_semaphore;    //Notification semaphore
+  SemaphoreHandle_t twi_notification_semaphore;    //Notification semaphore
   freertos_twi_if twi;                            // Initialized twi buss.
-  portTickType xtransmit_block_time;              // block time
+  TickType_t xtransmit_block_time;              // block time
   uint8_t data[16];
 } mpu6050_data_t;
 

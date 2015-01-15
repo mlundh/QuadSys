@@ -123,7 +123,7 @@ void create_main_control_task( void )
   /*Create the task*/
   portBASE_TYPE create_result;
   create_result = xTaskCreate( main_control_task,   /* The function that implements the task.  */
-      (const signed char *const) "Main_Ctrl",       /* The name of the task. This is not used by the kernel, only aids in debugging*/
+      (const char *const) "Main_Ctrl",       /* The name of the task. This is not used by the kernel, only aids in debugging*/
       1000,                                         /* The stack size for the task*/
       NULL,                                         /* The already configured motor data is passed as an input parameter*/
       configMAX_PRIORITIES-1,                       /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
@@ -147,7 +147,7 @@ void create_main_control_task( void )
 void main_control_task( void *pvParameters )
 {
   /*main_control_task execute at 500Hz*/
-  static const portTickType xPeriod = (6UL / portTICK_RATE_ONE_THIRD_MS);
+  static const TickType_t xPeriod = (2UL / portTICK_PERIOD_MS );
 
   /* declared as public in main_control_task.h, variables need to be modified by the RX task to set params.*/
   parameters_angle = pvPortMalloc(

@@ -112,19 +112,19 @@ typedef enum QSP_control
 /*Req configure queue*/
 #define CONFIGURE_REQ_QUEUE_LENGTH      (1)
 #define CONFIGURE_REQ_QUEUE_ITEM_SIZE        (sizeof(uint8_t))
-extern xQueueHandle xQueue_configure_req;
+extern  QueueHandle_t xQueue_configure_req;
 
 /*Display queue*/
 #define DISPLAY_QUEUE_LENGTH      (1)
 #define DISPLAY_QUEUE_ITEM_SIZE         (sizeof(uint8_t *))
 #define DISPLAY_STRING_LENGTH_MAX       128
-extern xQueueHandle xQueue_display;
+extern  QueueHandle_t xQueue_display;
 
 /*Display queue*/
 #define DISPLAY_NR_BYTES_QUEUE_LENGTH     (1)
 #define DISPLAY_NR_BYTES_QUEUE_ITEM_SIZE         (sizeof(uint8_t))
 #define DISPLAY_NR_BYTES_STRING_LENGTH_MAX       128
-extern xQueueHandle xQueue_display_bytes_to_send;
+extern  QueueHandle_t xQueue_display_bytes_to_send;
 
 
 void create_communication_tasks( void );

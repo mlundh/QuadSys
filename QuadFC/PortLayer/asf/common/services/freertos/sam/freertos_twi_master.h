@@ -82,12 +82,12 @@ freertos_twi_if freertos_twi_master_init(Twi *p_twi,
 		const freertos_peripheral_options_t *const freertos_driver_parameters);
 
 status_code_t freertos_twi_write_packet_async(freertos_twi_if p_twi,
-		twi_packet_t *p_packet, portTickType block_time_ticks,
-		xSemaphoreHandle notification_semaphore);
+		twi_packet_t *p_packet, TickType_t block_time_ticks,
+		SemaphoreHandle_t notification_semaphore);
 
 status_code_t freertos_twi_read_packet_async(freertos_twi_if p_twi,
-		twi_packet_t *p_packet, portTickType block_time_ticks,
-		xSemaphoreHandle notification_semaphore);
+		twi_packet_t *p_packet, TickType_t block_time_ticks,
+		SemaphoreHandle_t notification_semaphore);
 
 /**
  * \ingroup freertos_twi_peripheral_control_group
@@ -418,7 +418,7 @@ status_code_t freertos_twi_read_packet_async(freertos_twi_if p_twi,
  *  {
  *  twi_packet_t write_parameters;
  *  uint16_t calculated_address;
- *  const portTickType max_block_time_ticks = 200UL / portTICK_RATE_MS;
+ *  const TickType_t max_block_time_ticks = 200UL / portTICK_RATE_MS;
  *
  *      // Calculate the address being written to
  *      calculated_address = page * PAGE_SIZE;
@@ -474,11 +474,11 @@ status_code_t freertos_twi_read_packet_async(freertos_twi_if p_twi,
  *  // function.
  *
  *  static void write_page_to_eeprom(freertos_twi_if freertos_twi,
- *                      uint16_t page, xSemaphoreHandle notification_semaphore)
+ *                      uint16_t page, SemaphoreHandle_t notification_semaphore)
  *  {
  *  twi_packet_t write_parameters;
  *  uint16_t calculated_address;
- *  const portTickType max_block_time_ticks = 200UL / portTICK_RATE_MS;
+ *  const TickType_t max_block_time_ticks = 200UL / portTICK_RATE_MS;
  *
  *      // Calculate the address being written to
  *      calculated_address = page * PAGE_SIZE;
@@ -551,7 +551,7 @@ status_code_t freertos_twi_read_packet_async(freertos_twi_if p_twi,
  *  {
  *  twi_packet_t read_parameters;
  *  uint16_t calculated_address;
- *  const portTickType max_block_time_ticks = 200UL / portTICK_RATE_MS;
+ *  const TickType_t max_block_time_ticks = 200UL / portTICK_RATE_MS;
  *
  *      // Calculate the address being read from.
  *      calculated_address = page * PAGE_SIZE;
@@ -618,10 +618,10 @@ status_code_t freertos_twi_read_packet_async(freertos_twi_if p_twi,
  *  {
  *  // The buffers into which the data is placed are too large to be declared on
  *  // the task stack, so are instead declared static (making this function
- *  // non-reentrant – meaning it can only be called by a single task at a time,
+ *  // non-reentrant ï¿½ meaning it can only be called by a single task at a time,
  *  // otherwise multiple tasks would use the same buffers).
  *  static uint8_t first_receive_buffer[BUFFER_SIZE], second_receive_buffer[BUFFER_SIZE];
- *  xSemaphoreHandle notification_semaphore = NULL;
+ *  SemaphoreHandle_t notification_semaphore = NULL;
  *  const max_block_time_500ms = 500 / portTICK_RATE_MS;
  *	twi_packet_t read_parameters;
  *	uint16_t calculated_address;

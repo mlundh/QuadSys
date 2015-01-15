@@ -84,11 +84,11 @@ freertos_usart_if freertos_usart_serial_init(Usart *p_usart,
 		const freertos_peripheral_options_t *const freertos_driver_parameters);
 
 status_code_t freertos_usart_write_packet_async(freertos_usart_if p_usart,
-		const uint8_t *data, size_t len, portTickType block_time_ticks,
-		xSemaphoreHandle notification_semaphore);
+		const uint8_t *data, size_t len, TickType_t block_time_ticks,
+		SemaphoreHandle_t notification_semaphore);
 
 uint32_t freertos_usart_serial_read_packet(freertos_usart_if p_usart,
-		uint8_t *data, uint32_t len, portTickType block_time_ticks);
+		uint8_t *data, uint32_t len, TickType_t block_time_ticks);
 
 /**
  * \ingroup freertos_usart_peripheral_control_group
@@ -441,12 +441,12 @@ uint32_t freertos_usart_serial_read_packet(freertos_usart_if p_usart,
  * 	// call to freertos_usart_serial_init(), and that freertos_usart_serial_init()
  * 	// configured the FreeRTOS ASF driver for standard mode operation.
  *
- * 	// xSemaphoreHandle is a FreeRTOS type used to store a handle to a semaphore.
+ * 	// SemaphoreHandle_t is a FreeRTOS type used to store a handle to a semaphore.
  * 	// In this example, the semaphore has already been created using a call to
  * 	// the FreeRTOS vSemaphoreCreateBinary() API function, and is being passed in
  * 	// as a function parameter.
  *  status_code_t write_two_strings(freertos_usart_if freertos_usart,
- *                                   xSemaphoreHandle notification_semaphore){
+ *                                   SemaphoreHandle_t notification_semaphore){
  *      uint8_t write_buffer[5];
  *      status_code_t result;
  *
@@ -519,7 +519,7 @@ uint32_t freertos_usart_serial_read_packet(freertos_usart_if p_usart,
  *  {
  *  uint8_t receive_buffer[20];
  *  uint32_t bytes_received;
- *  portTickType max_wait_20ms = 20 / portTICK_RATE_MS;
+ *  TickType_t max_wait_20ms = 20 / portTICK_RATE_MS;
  *
  *      // Attempt to read 20 bytes from freertos_usart.  If fewer than 20 bytes are
  *      // available, then wait a maximum of 20ms for the rest to arrive.
