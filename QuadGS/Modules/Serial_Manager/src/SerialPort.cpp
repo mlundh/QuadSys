@@ -8,6 +8,7 @@
 #include "SerialPort.h"
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
+#include <string>
 namespace QuadGS {
 
 Serial_Port::Serial_Port(  boost::asio::io_service &io_service ) :
@@ -61,7 +62,7 @@ void Serial_Port::open( std::string port_name )
         }
         else if( ec )
         {
-            BOOST_LOG_SEV(slg, severity_level::normal) << "error opening port" << ec.message();
+            //BOOST_LOG_SEV(slg, severity_level::normal) << "error opening port" << ec.message();
         }
         mSerialPort.set_option( b_a_sp::baud_rate( mBaudRate ), ec );
         mSerialPort.set_option( b_a_sp::flow_control( mFlowControl ), ec );
@@ -69,24 +70,25 @@ void Serial_Port::open( std::string port_name )
         mSerialPort.set_option( b_a_sp::stop_bits( mStopBits ), ec );
         if( ec )
         {
-            BOOST_LOG_SEV(slg, severity_level::error) << "Error detected: " << ec.message();
+
+            QuadLog(severity_level::error, "Error detected: " + ec.message());
             return;
         }
-        BOOST_LOG_SEV(slg, severity_level::normal) << "Serial Port " << port_name << " opened.";
+        QuadLog(severity_level::info, "Serial Port " + port_name + " opened.");
     }
     else
     {
-        BOOST_LOG_SEV(slg, severity_level::warning) << "Serial Port already open";
+        QuadLog(severity_level::warning, "Serial Port already open");
     }
 }
 
 /*Close the serial port*/
 void Serial_Port::do_close( const boost::system::error_code& error )
 {
-    BOOST_LOG_SEV(slg, severity_level::normal) <<  "..Do_close called";
+    //BOOST_LOG_SEV(slg, severity_level::normal) <<  "..Do_close called";
     if( error )
     {
-        BOOST_LOG_SEV(slg, severity_level::error) <<  ".. ..Error detected: " << error.message();
+        QuadLog(severity_level::error,  ".. ..Error detected: " + error.message() );
     }
     if( error == boost::asio::error::operation_aborted )
     {
@@ -95,13 +97,13 @@ void Serial_Port::do_close( const boost::system::error_code& error )
     mTimeoutRead.cancel();
     mTimeoutWrite.cancel();
     mSerialPort.close();
-    BOOST_LOG_SEV(slg, severity_level::normal) <<  "Serial Port closed";
+    QuadLog(severity_level::info, "Serial Port closed");
     return;
 }
 /*Start an async write operation.*/
 void Serial_Port::do_write( unsigned char *buffer )
 {
-    BOOST_LOG_SEV(slg, severity_level::normal) <<  "..Do_write called.";
+    QuadLog(severity_level::info, "Write called.");
 
     /* First set the timers, otherwise the async_read callback might be called
      * before the timer is started. The timer will then be started afterwards and
@@ -122,7 +124,7 @@ void Serial_Port::do_write( unsigned char *buffer )
 /*Start an async read operation.*/
 void Serial_Port::do_read()
 {
-    BOOST_LOG_SEV(slg, severity_level::normal) <<  "..Do_read called.";
+    QuadLog(severity_level::info, "Read called.");
 
     /* First set the timers, otherwise the async_read callback might be called
      * before the timer is started. The timer will then be started afterwards and
@@ -146,46 +148,41 @@ void Serial_Port::do_read()
 void Serial_Port::write_callback( const boost::system::error_code& error,
         std::size_t bytes_transferred )
 {
-    BOOST_LOG_SEV(slg, severity_level::normal) <<  "..Write_callback called.";
+    QuadLog(severity_level::info, "Write_callback called.");
     if( error )
     {
-        BOOST_LOG_SEV(slg, severity_level::error) <<  ".. ..Read_callback called with an error: "
-                  << error.message();
+        QuadLog(severity_level::error, "Read_callback called with an error: " + error.message() );
         do_close( error );
         return;
     }
-    BOOST_LOG_SEV(slg, severity_level::normal) <<  ".. ..Bytes transferred: " << bytes_transferred << " bytes.";
-    BOOST_LOG_SEV(slg, severity_level::normal)  << ".. ..Canceled: " << mTimeoutWrite.cancel() << " operations";
+    QuadLog(severity_level::info, "Bytes transferred: " + std::to_string(bytes_transferred) +  " bytes.");
+    mTimeoutWrite.cancel();
 }
 
 /*Callback from read operation.*/
 void Serial_Port::read_callback( const boost::system::error_code& error,
         std::size_t bytes_transferred )
 {
-    BOOST_LOG_SEV(slg, severity_level::normal) << "..Read_callback called.";
+    QuadLog(severity_level::error, "Read_callback called.");
     if( error )
     {
-        BOOST_LOG_SEV(slg, severity_level::error) <<  ".. ..Read_callback called with an error: "
-                  << error.message();
+        //BOOST_LOG_SEV(slg, severity_level::error) <<  ".. ..Read_callback called with an error: "
+        //          << error.message();
         do_close( error );
         return;
     }
 
-    BOOST_LOG_SEV(slg, severity_level::normal) <<  ".. ..Bytes transferred: " << bytes_transferred << " bytes.";
-    BOOST_LOG_SEV(slg, severity_level::normal) <<  ".. ..Message: " << ( int )mBufferRead[ 0 ]
-              << ( int )mBufferRead[ 1 ] << ( int )mBufferRead[ 2 ]
-              << ( int )mBufferRead[ 3 ] << ( int )mBufferRead[ 4 ]
-              << ( int )mBufferRead[ 5 ];
-    BOOST_LOG_SEV(slg, severity_level::normal) <<  ".. ..Canceled: " << mTimeoutRead.cancel() << " operations";
+    QuadLog(severity_level::info, "Bytes transferred: " + std::to_string(bytes_transferred) + " bytes.");
+    mTimeoutRead.cancel();
 }
 
 /* Called when the write timer's deadline expire */
 void Serial_Port::timer_write_callback( const boost::system::error_code& error )
 {
-    BOOST_LOG_SEV(slg, severity_level::normal) <<  "..timer_write_callback called.";
+    //BOOST_LOG_SEV(slg, severity_level::normal) <<  "..timer_write_callback called.";
     if( error )
     {
-        BOOST_LOG_SEV(slg, severity_level::normal) <<  ".. ..Timeout cancelled.";
+        //BOOST_LOG_SEV(slg, severity_level::normal) <<  ".. ..Timeout cancelled.";
 
         /*If the timer was called with the operation_aborted error code then
          * the timer was canceled and did not fire. Everything else is an error*/
@@ -194,19 +191,19 @@ void Serial_Port::timer_write_callback( const boost::system::error_code& error )
         return;
     }
 
-    BOOST_LOG_SEV(slg, severity_level::normal) << ".. ..Timeout fired.";
+    //BOOST_LOG_SEV(slg, severity_level::normal) << ".. ..Timeout fired.";
     mSerialPort.cancel(); // Close all asynchronous operation with serial port. will cause read_callback to fire with an error
-    BOOST_LOG_SEV(slg, severity_level::normal) <<  ".. ..All operations on serial port cancelled.\n";
+    //BOOST_LOG_SEV(slg, severity_level::normal) <<  ".. ..All operations on serial port cancelled.\n";
     return;
 }
 
 /* Called when the read timer's deadline expire */
 void Serial_Port::timer_read_callback( const boost::system::error_code& error )
 {
-    BOOST_LOG_SEV(slg, severity_level::normal) <<  "..timer_read_callback called.";
+    //BOOST_LOG_SEV(slg, severity_level::normal) <<  "..timer_read_callback called.";
     if( error )
     {
-        BOOST_LOG_SEV(slg, severity_level::normal) <<  ".. ..Timeout cancelled.";
+        //BOOST_LOG_SEV(slg, severity_level::normal) <<  ".. ..Timeout cancelled.";
 
         /*If the timer was called with the operation_aborted error code then
          * the timer was canceled and did not fire. Everything else is an error*/
@@ -217,24 +214,24 @@ void Serial_Port::timer_read_callback( const boost::system::error_code& error )
         return;
     }
 
-    BOOST_LOG_SEV(slg, severity_level::normal) <<  ".. ..Timeout fired.";
+    //BOOST_LOG_SEV(slg, severity_level::normal) <<  ".. ..Timeout fired.";
     mSerialPort.cancel(); // Close all asynchronous operation with serial port. will cause read_callback to fire with an error
-    BOOST_LOG_SEV(slg, severity_level::normal) << ".. ..All operations on serial port cancelled.";
+    //BOOST_LOG_SEV(slg, severity_level::normal) << ".. ..All operations on serial port cancelled.";
     return;
 }
 
 Serial_Port::~Serial_Port()
 {
-    BOOST_LOG_SEV(slg, severity_level::normal) <<  "Destructor of serial port: ";
+    //BOOST_LOG_SEV(slg, severity_level::normal) <<  "Destructor of serial port: ";
     boost::system::error_code error;
     mSerialPort.cancel( error );
     mSerialPort.close( error );
     if( error )
     {
-        BOOST_LOG_SEV(slg, severity_level::error) <<  ".. ..error: " << error.message();
+        //BOOST_LOG_SEV(slg, severity_level::error) <<  ".. ..error: " << error.message();
         return;
     }
-    BOOST_LOG_SEV(slg, severity_level::normal) << "  .. finished without error: " ;
+    //BOOST_LOG_SEV(slg, severity_level::normal) << "  .. finished without error: " ;
 }
 
 } /* namespace QuadGS */

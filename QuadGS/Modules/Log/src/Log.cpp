@@ -21,17 +21,28 @@ Log::~Log()
     // TODO Auto-generated destructor stub
 }
 
+void Log::QuadLog(QuadGS::severity_level svl, std::string msg)
+{
+    logging::record rec = slg.open_record(keywords::severity = svl);
+    if (rec)
+    {
+        logging::record_ostream strm(rec);
+        strm << msg;
+        strm.flush();
+        slg.push_record(boost::move(rec));
+    }
+}
 
 // The operator puts a human-friendly representation of the severity level to the stream
 std::ostream& operator<< (std::ostream& strm, QuadGS::severity_level level)
 {
     static const char* strings[] =
     {
-        "normal",
-        "notification",
+        "info",
         "warning",
         "error",
-        "critical"
+        "debug",
+        "message_trace"
     };
 
     if (static_cast< std::size_t >(level) < sizeof(strings) / sizeof(*strings))
@@ -68,21 +79,21 @@ void Log::Init( std::string FilenameAppLog, std::string FilenameMsgLog )
     shared_ptr< text_sink > pSink = boost::make_shared< text_sink >();
     // Add a file stream to the sink.
     pSink->locked_backend()->add_stream(
-            boost::make_shared< std::ofstream >(FilenameAppLog));
+            boost::make_shared< std::ofstream >(FilenameAppLog + ".log"));
     // Set formatter of the sink.
     pSink->set_formatter(fmt);
     // Add the sink to the core.
     logging::core::get()->add_sink(pSink);
 
-    // Create a text file sink
+    // Create a text file sink for the message trace.
     pSink = boost::make_shared< text_sink >();
     // Add a file stream to the sink.
     pSink->locked_backend()->add_stream(
-        boost::make_shared< std::ofstream >(FilenameMsgLog));
+        boost::make_shared< std::ofstream >(FilenameMsgLog + ".log"));
     // Set the formatter of the sink.
     pSink->set_formatter(fmt);
     // Set the filter of the stream.
-    pSink->set_filter(expr::attr< severity_level >("Severity").or_default(normal) >= warning || (expr::has_attr("tag") ) );
+    pSink->set_filter(expr::attr< severity_level >("Severity") == message_trace );
     // Add the stream to the core.
     logging::core::get()->add_sink(pSink);
 

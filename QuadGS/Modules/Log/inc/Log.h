@@ -19,9 +19,12 @@
 #include <boost/log/attributes.hpp>
 #include <boost/log/sinks.hpp>
 #include <boost/log/sources/logger.hpp>
+#include <boost/log/sources/severity_feature.hpp>
+#include <boost/log/sources/severity_logger.hpp>
 #include <boost/log/utility/manipulators/add_value.hpp>
 #include <boost/log/attributes/scoped_attribute.hpp>
 #include <boost/log/support/date_time.hpp>
+
 
 namespace QuadGS {
 
@@ -37,11 +40,11 @@ using boost::shared_ptr;
 // Here we define our application severity levels.
 enum severity_level
 {
-    normal,
-    notification,
+    info,
     warning,
     error,
-    critical
+    debug,
+    message_trace
 };
 
 std::ostream& operator<<( std::ostream& strm, QuadGS::severity_level level);
@@ -53,8 +56,9 @@ public:
     virtual ~Log();
     static void Init( std::string FilenameAppLog, std::string FilenameMsgLog );
 
+    void QuadLog(QuadGS::severity_level svl, std::string msg);
 protected:
-    src::severity_logger< QuadGS::severity_level > slg;
+    src::severity_logger<QuadGS::severity_level> slg;
 };
 
 } /* namespace QuadGS */
