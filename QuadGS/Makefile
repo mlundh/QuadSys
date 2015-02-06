@@ -99,7 +99,12 @@ CXXFLAGS += -g
 
 
 CXXFLAGS+= $(addprefix -I, $(INCLUDE_DIR)) 
+ifeq ($(OS), mac)
+export LD_LIBRARY_PATH += $(BOOST_LIB_ROOT)
+LDFLAGS := -L$(BOOST_LIB_ROOT) -lboost_thread -lboost_program_options  -lboost_system -lboost_log -lboost_log_setup -pthread
+else
 LDFLAGS := -L$(BOOST_LIB_ROOT) -static -lboost_thread -lboost_program_options  -lboost_system -pthread -lboost_log -lboost_log_setup 
+endif
 #
 # The default rule, which causes init to be built.
 #
@@ -108,6 +113,7 @@ all: ${BUILD_DIR} ${BUILD_DIR}/QuadGS
 print: 
 	@echo "Source Files: "${SOURCE} "\n"
 	@echo "Include Dir: "${INCLUDE_DIR}
+	@echo $(BOOST_LIB_ROOT)
 #
 # The rule to clean out all the build products
 # Simple solution, remove the out dir...
