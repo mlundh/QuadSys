@@ -163,7 +163,7 @@ void Serial_Port::write_callback( const boost::system::error_code& error,
 void Serial_Port::read_callback( const boost::system::error_code& error,
         std::size_t bytes_transferred )
 {
-    QuadLog(severity_level::error, "Read_callback called.");
+    QuadLog(severity_level::info, "Read_callback called.");
     if( error )
     {
         //BOOST_LOG_SEV(slg, severity_level::error) <<  ".. ..Read_callback called with an error: "

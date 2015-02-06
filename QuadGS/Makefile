@@ -57,7 +57,8 @@ $(call check_defined, BOOST_ROOT, boost root dir)
 $(call check_defined, BOOST_LIB_ROOT, boost compiled libs)
 
 INCLUDE_boost := $(BOOST_ROOT)
-INCLUDE     := $(INCLUDE_Modules) $(INCLUDE_lib) $(INCLUDE_boost)
+INCLUDE     := $(INCLUDE_Modules) $(INCLUDE_lib)
+# $(INCLUDE_boost)
 # Get include directories from list of all included .h files.
 INCLUDE_DIR := $(sort $(dir $(INCLUDE)))
 
@@ -97,8 +98,8 @@ CXXFLAGS += -g
 #endif
 
 
-
-CXXFLAGS+= $(addprefix -I, $(INCLUDE_DIR)) 
+# include boost as -isystem since we can not fix the warnings in the lib.
+CXXFLAGS+= $(addprefix -I, $(INCLUDE_DIR) ) -isystem $(INCLUDE_boost)
 ifeq ($(OS), mac)
 export LD_LIBRARY_PATH += $(BOOST_LIB_ROOT)
 LDFLAGS := -L$(BOOST_LIB_ROOT) -lboost_thread -lboost_program_options  -lboost_system -lboost_log -lboost_log_setup -pthread
