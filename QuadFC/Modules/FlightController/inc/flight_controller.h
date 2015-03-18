@@ -37,11 +37,5 @@
 void create_main_control_task( void );
 
 
-fc_error_code_t log_state(uint8_t **buffer, uint8_t *index, uint8_t length);
-fc_error_code_t log_control_signal(uint8_t **buffer, uint8_t *index, uint8_t length);
-fc_error_code_t log_time(uint8_t **buffer, uint8_t *index, uint8_t length);
-fc_error_code_t log_fc_state(uint8_t **buffer, uint8_t *index, uint8_t length);
-
-
 
 #endif /* FLIGHT_CONTROLLER_H_ */

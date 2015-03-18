@@ -46,9 +46,7 @@ void vApplicationStackOverflowHook( TaskHandle_t pxTask,
     signed char *pcTaskName );
 void vApplicationTickHook( void );
 
- QueueHandle_t xQueue_display = NULL;
  QueueHandle_t xQueue_receiver = NULL;
- QueueHandle_t xQueue_display_bytes_to_send = NULL;
  QueueHandle_t xQueue_ranger = NULL;
 SemaphoreHandle_t x_param_mutex = NULL;
 SemaphoreHandle_t x_log_mutex = NULL;
@@ -71,13 +69,6 @@ int main( void )
   xQueue_receiver = xQueueCreate( RECEIVER_QUEUE_LENGTH,
       RECEIVER_QUEUE_ITEM_SIZE );
 
-  /* Create the queue used to pass things to the display task*/
-  xQueue_display = xQueueCreate( DISPLAY_QUEUE_LENGTH,
-      DISPLAY_QUEUE_ITEM_SIZE );
-  xQueue_display_bytes_to_send = xQueueCreate( DISPLAY_NR_BYTES_QUEUE_LENGTH,
-      DISPLAY_NR_BYTES_QUEUE_ITEM_SIZE );
-
-
   /*Create the queue used to pass new range data to the main task*/
   xQueue_ranger = xQueueCreate( RANGER_QUEUE_LENGTH, RANGER_QUEUE_ITEM_SIZE );
   /* Create the queue used to set the LED status*/
@@ -91,8 +82,7 @@ int main( void )
   vSemaphoreCreateBinary(twi_0_notification_semaphore);
   vSemaphoreCreateBinary(twi_1_notification_semaphore);
 
-  if ( !xQueue_receiver || !xQueue_display || !xQueue_display_bytes_to_send
-      || !x_param_mutex || !x_log_mutex || !twi_1_notification_semaphore
+  if ( !xQueue_receiver || !x_param_mutex || !x_log_mutex || !twi_1_notification_semaphore
       || !twi_0_notification_semaphore || !xQueue_ranger)
   {
     /*If one of thee queues could not be created, do nothing*/
@@ -103,7 +93,7 @@ int main( void )
   /* Create all tasks used in the application.*/
   create_satellite_receiver_task();
   Led_CreateLedControlTask();
-  Com_CreateCommunicationTasks(); // Creates two tasks, RX and TX.
+  Com_CreateTasks(); // Creates two tasks, RX and TX.
   create_range_meter_task();
   create_main_control_task();
   /* Start the RTOS scheduler. */

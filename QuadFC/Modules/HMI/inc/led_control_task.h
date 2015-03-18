@@ -27,31 +27,45 @@
 
 #include "FreeRTOS.h"
 
+/**
+ * Available led states.
+ */
 typedef enum LED_control
 {
 
-  led_initializing = 0,
-  led_disarmed = 1,
-  led_configure = 2,
-  led_arming = 3,
-  led_armed = 4,
-  led_fault = 5,
-  led_state_not_available = 6,
+  led_initializing = 0,             //!< led_initializing
+  led_disarmed = 1,                 //!< led_disarmed
+  led_configure = 2,                //!< led_configure
+  led_arming = 3,                   //!< led_arming
+  led_armed = 4,                    //!< led_armed
+  led_fault = 5,                    //!< led_fault
+  led_state_not_available = 6,      //!< led_state_not_available
 
-  led_error_int_overflow = 20,
-  led_error_TWI = 21,
-  led_error_alloc = 22,
-  led_error_rc_link = 23,
+  led_error_int_overflow = 20,      //!< led_error_int_overflow
+  led_error_TWI = 21,               //!< led_error_TWI
+  led_error_alloc = 22,             //!< led_error_alloc
+  led_error_rc_link = 23,           //!< led_error_rc_link
 
+  led_warning_lost_com_message = 30,//!< led_warning_lost_com_message
 
-  led_warning_lost_com_message = 30,
-
-  led_clear_error = 40,
+  led_clear_error = 40,             //!< led_clear_error
 } LED_control_t;
 
-
+/**
+ * Create the led control task. This is used in the "main" function only.
+ */
 void Led_CreateLedControlTask( void );
-void Led_ControlTask( void *pvParameters );
+
+/**
+ * Request that the leds should indicate a specific state.
+ *
+ * Some states might be mutual exclusive, then the last state will be
+ * showm.
+ *
+ *
+ * @param led_control New led state to be set.
+ * @return            pdTrue if successful.
+ */
 BaseType_t Led_Set(LED_control_t led_control);
 
 #endif /* LED_CONTROL_TASK_H_ */

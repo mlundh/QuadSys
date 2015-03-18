@@ -27,7 +27,6 @@
 #include "led_interface.h"
 #include "stdint.h"
 
-#include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
 
@@ -36,6 +35,11 @@
 #define LED_QUEUE_ITEM_SIZE        (sizeof(uint8_t))
 QueueHandle_t xQueue_led;
 
+/**
+ * The control task.
+ * @param pvParameters
+ */
+void Led_ControlTask( void *pvParameters );
 
 void Led_CreateLedControlTask( void )
 {

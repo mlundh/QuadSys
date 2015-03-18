@@ -39,11 +39,53 @@ typedef enum state{
   state_not_available = 7, // state information not available.
 }state_t;
 
+/**
+ * Initialize the state handler. This will create queues used
+ * in the implementation, and unlock the handler.
+ */
 void State_InitStateHandler();
+
+/**
+ * Get the current state. Returns state_not_availible if it is not
+ * possible to acces the state.
+ *
+ * @return Current state. State_not_availible if fail.
+ */
 state_t State_GetCurrent();
+
+/**
+ * Lock the state, do not allow change.
+ * @return pdTrue if success.
+ */
 BaseType_t State_Lock();
+
+/**
+ * Unlock state, allow a state transition.
+ * @return pdTrue if success.
+ */
 BaseType_t State_Unlock();
+
+/**
+ * Set state to fault. Use this in case of a serious problem
+ * requiring the flight controller to immediately stop the motors
+ * and all control.
+ *
+ * If the vehicle is airborne at the time of call to State_Fault,
+ * the vehicle will crash.
+ *
+ * @return
+ */
 BaseType_t State_Fault();
+
+/**
+ * @brief Request a state change.
+ *
+ * Request that the flight controller changes state. Will fail if
+ * state transition is not allowed.
+ *
+ * @param state_req   New state beeing requested.
+ * @return            pdTrue if ok, pdFalse otherwise.
+ */
 BaseType_t State_Change(state_t state_req);
 
 

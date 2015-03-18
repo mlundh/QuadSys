@@ -27,16 +27,25 @@
 /*Semaphore for access control.*/
 SemaphoreHandle_t xMutex;
 
-/*Req configure queue*/
+/**
+ * Queue holding current state. Implemented
+ * as a queue to ensure thread safety.
+ */
 #define STATE_CURRENT_QUEUE_LENGTH      (1)
 #define STATE_CURRENT_QUEUE_ITEM_SIZE        (sizeof(state_t))
 static  QueueHandle_t State_current_queue;
 
-/*Req configure queue*/
+/**
+ * State lock queue. Use this to prevent state changes.
+ * Implemented as a queue to ensure thread safety.
+ */
 #define STATE_LOCK_QUEUE_LENGTH      (1)
 #define STATE_LOCK_QUEUE_ITEM_SIZE        (sizeof(uint8_t))
 static  QueueHandle_t State_lock_queue;
 
+/**
+ * Internal current state variable. TODO move to init?
+ */
 static state_t current_state = state_disarmed;
 
 static BaseType_t State_ChangeAllowed(state_t state_req);

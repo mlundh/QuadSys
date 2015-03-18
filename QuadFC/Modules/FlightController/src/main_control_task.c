@@ -81,6 +81,7 @@
 #include "imu_signal_processing.h"
 #include "motor_control.h"
 #include "pwm_motor_control.h"
+#include "parameters.h"
 
 #include "globals.h"
 
@@ -194,22 +195,36 @@ void main_control_task( void *pvParameters )
   local_receiver_buffer->sync = 0;
   local_receiver_buffer->connection_ok = 0;
 
-  /*Control parameter initialization for rate mode control.*/
+  /*Control parameter initialization for rate mode control. TODO move to PID functions.*/
   /*--------------------Initial parameters-------------------*/
-  parameters_rate->pitch_p = 250;
+  parameters_rate->pitch_p = 220;
   parameters_rate->pitch_i = 3;
-  parameters_rate->pitch_d = 3;
-  parameters_rate->roll_p = 250;
+  parameters_rate->pitch_d = 0;
+  parameters_rate->roll_p = 220;
   parameters_rate->roll_i = 3;
-  parameters_rate->roll_d = 3;
-  parameters_rate->yaw_p = 250;
+  parameters_rate->roll_d = 0;
+  parameters_rate->yaw_p = 220;
   parameters_rate->yaw_i = 3;
-  parameters_rate->yaw_d = 3;
+  parameters_rate->yaw_d = 0;
   parameters_rate->altitude_p = 1 << SHIFT_EXP;
   parameters_rate->altitude_i = 0;
   parameters_rate->altitude_d = 0;
 
+  SemaphoreHandle_t xMutexParam = xSemaphoreCreateMutex();
 
+  param_obj_t * tmp = Param_CreateObj(10, NoType, NULL, "PID_R", Param_GetRoot(), NULL);
+
+  Param_CreateObj(0, int32_variable_type, &parameters_rate->pitch_p, "pitch_p", tmp, xMutexParam);
+  Param_CreateObj(0, int32_variable_type, &parameters_rate->pitch_i, "pitch_i", tmp, xMutexParam);
+  Param_CreateObj(0, int32_variable_type, &parameters_rate->pitch_d, "pitch_d", tmp, xMutexParam);
+
+  Param_CreateObj(0, int32_variable_type, &parameters_rate->roll_p, "roll_p", tmp, xMutexParam);
+  Param_CreateObj(0, int32_variable_type, &parameters_rate->roll_i, "roll_i", tmp, xMutexParam);
+  Param_CreateObj(0, int32_variable_type, &parameters_rate->roll_d, "roll_d", tmp, xMutexParam);
+
+  Param_CreateObj(0, int32_variable_type, &parameters_rate->yaw_p, "yaw_p", tmp, xMutexParam);
+  Param_CreateObj(0, int32_variable_type, &parameters_rate->yaw_i, "yaw_i", tmp, xMutexParam);
+  Param_CreateObj(0, int32_variable_type, &parameters_rate->yaw_d, "yaw_d", tmp, xMutexParam);
   /*Initialization for control error in rate mode.*/
   reset_control_error( ctrl_error_rate );
 

@@ -21,21 +21,71 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+#include "string.h"
+
 #include "communication_tasks.h"
+#include "parameters.h"
+
 #include "led_control_task.h"
 #include "globals.h"
-#include "main_control_task.h"
 #include "crc.h"
-#include "slip_utils.h"
+#include "slip_packet.h"
+#include "freertos_uart_serial.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "semphr.h"
 
-void Com_CreateCommunicationTasks( void )
+
+
+#include <gpio.h>
+#include <pio.h>
+
+/* Use USART1 (labeled RX2 17 and TX2 16)*/
+#define TERMINAL_USART USART1
+
+/*Display queue*/
+#define COM_QUEUE_LENGTH      (1)
+#define COM_QUEUE_ITEM_SIZE         (sizeof(QSP_t*))
+static QueueHandle_t xQueue_Com;
+#define COM_PACKET_LENGTH_MAX       512
+
+static void Com_TxTask( void *pvParameters );
+static void Com_RxTask( void *pvParameters );
+
+
+/**
+ * Initialize the communication module.
+ * @return
+ */
+uint8_t Com_Init()
+{
+  /* Create the queue used to pass things to the display task*/
+  xQueue_Com = xQueueCreate( COM_QUEUE_LENGTH, COM_QUEUE_ITEM_SIZE );
+  crcTable = pvPortMalloc( sizeof(uint16_t) * 256 );
+  if( !xQueue_Com ||  !crcTable )
+  {
+    return 0;
+  }
+  crcInit();
+  return 1;
+}
+
+void Com_CreateTasks( void )
 {
 
+
+  //TODO move all init of peripheral to board init.
+  if(!Com_Init())
+  {
+    for ( ;; );
+  }
   uint8_t* receive_buffer_driver = pvPortMalloc(
-      sizeof(uint8_t) * DISPLAY_STRING_LENGTH_MAX );
+      sizeof(uint8_t) * COM_PACKET_LENGTH_MAX );
+
   freertos_usart_if freertos_usart;
+
   freertos_peripheral_options_t driver_options = { receive_buffer_driver,   /* The buffer used internally by the USART driver to store incoming characters. */
-      DISPLAY_STRING_LENGTH_MAX,                                            /* The size of the buffer provided to the USART driver to store incoming characters. */
+      COM_PACKET_LENGTH_MAX,                                                /* The size of the buffer provided to the USART driver to store incoming characters. */
       (configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY + 4),                   /* The priority used by the USART interrupts. */
       USART_RS232,                                                          /* Configure the USART for RS232 operation. */
       (WAIT_TX_COMPLETE)                                                    /* Wait for a Tx to complete before returning from send functions. */
@@ -49,72 +99,86 @@ void Com_CreateCommunicationTasks( void )
       0                                                                     /* Only used in IrDA mode. */
   };
 
-  /* Initialize the USART interface. */
+  /* Initialize the USART interface. TODO move this. */
   freertos_usart = freertos_usart_serial_init( TERMINAL_USART, &usart_settings,
       &driver_options );
 
-  xTaskCreate( Com_TxTask,                              /* The task that implements the test. */
-      (const char *const) "UARTTX",                /* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
-      500,                                           /* The size of the stack allocated to the task. */
-      (void *) freertos_usart,                       /* The parameter is used to pass the already configured USART port into the task. */
-      configMAX_PRIORITIES-3,                        /* The priority allocated to the task. */
-      NULL );                                        /* Used to store the handle to the created task - in this case the handle is not required. */
 
-  xTaskCreate( Com_RxTask,                              /* The task that implements the test. */
-      (const char *const) "UARTRX",                /* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
+ /**
+  * Create the freeRTOS tasks responsible for
+  */
+  xTaskCreate( Com_TxTask,                           /* The task that implements the transmission of messages. */
+      (const char *const) "UARTTX",                  /* Name, debugging only.*/
       500,                                           /* The size of the stack allocated to the task. */
-      (void *) freertos_usart,                       /* The parameter is used to pass the already configured USART port into the task. */
+      (void *) freertos_usart,                       /* Pass the already configured USART port into the task. */
       configMAX_PRIORITIES-3,                        /* The priority allocated to the task. */
-      NULL );                                        /* Used to store the handle to the created task - in this case the handle is not required. */
+      NULL );                                        /* No handle required. */
+
+  xTaskCreate( Com_RxTask,                           /* The task that implements the receiveing of messages. */
+      (const char *const) "UARTRX",                  /* Name, debugging only. */
+      500,                                           /* The size of the stack allocated to the task. */
+      (void *) freertos_usart,                       /* Pass the already configured USART port into the task. */
+      configMAX_PRIORITIES-3,                        /* The priority allocated to the task. */
+      NULL );                                        /* No handle required. */
 }
 
-/*
- * Task writing whatever is in the queue to the a serial port. The serial port is
- * passed as an argument to the task.
+/**
+ *
+ * @param pvParameters
  */
 void Com_TxTask( void *pvParameters )
 {
+  TickType_t max_block_time_ticks = 333UL / portTICK_PERIOD_MS; //!< Max block time for transmission of messages.
 
-  TickType_t max_block_time_ticks = 333UL / portTICK_PERIOD_MS;
   status_code_t result;
-  uint8_t *string_ptr;
-  uint8_t nr_bytes_to_send;
-  /*The already open usart port is passed through the task parameters*/
+
+  QSP_t *txPacket;                                      //!< Handle for a QSP packet, used for receiving from queue.
+  SLIP_t *txSLIP = Slip_Create(COM_PACKET_LENGTH_MAX);  //!< Handle for SLIP packet, frame that will be transmitted.
+
+  /**
+   * The already open usart port is passed through the task parameters TODO fix peripherals.
+   */
   freertos_usart_if xbee_usart = (freertos_usart_if) pvParameters;
 
   for ( ;; )
   {
 
-    /*Wait blocking for items in the queue and transmit the data
-     *as soon as the data arrives*/
-
-    xQueuePeek( xQueue_display, &string_ptr, portMAX_DELAY );
-    xQueuePeek( xQueue_display_bytes_to_send, &nr_bytes_to_send,portMAX_DELAY );
-
-    if ( nr_bytes_to_send < DISPLAY_STRING_LENGTH_MAX )
+    /**
+     * Wait blocking for items in the queue and transmit the data
+     * as soon as it arrives. Pack into a crc protected slip frame.
+     */
+    if (xQueueReceive(xQueue_Com, &txPacket, portMAX_DELAY) != pdPASS )
     {
+      continue; //FrameError.
+    }
+
+    /**
+     * We have a packet, calculate and append crc. Packetize.
+     */
+    Com_AddCRC(txPacket);
+    if(!Slip_Packetize(QSP_GetPacketPtr(txPacket), QSP_GetPayloadSize(txPacket) + QSP_GetHeaderdSize(txPacket) + 2, txSLIP))
+    {
+      continue; // skip this, packet not valid.
+    }
+    if ( txSLIP->packetSize < COM_PACKET_LENGTH_MAX )
+    {
+
       // TX is blocking
       result = freertos_usart_write_packet( xbee_usart,
-        (string_ptr),
-        nr_bytes_to_send,
-        max_block_time_ticks );
+          txSLIP->payload,
+          txSLIP->packetSize,
+          max_block_time_ticks );
+
       if ( result != STATUS_OK )
       {
-        //error vtasksuspend?
+        //TODO error led?
       }
 
     }
     else
     {
-      //error!
+      //TODO LED? error!
     }
-
-    if ( xQueueReceive( xQueue_display_bytes_to_send, &nr_bytes_to_send, 0 )
-        != pdPASS || xQueueReceive(xQueue_display, &string_ptr, 0) != pdPASS )
-    {
-      /*Error, should never come here, if Peek is successful then receive should always work.*/
-    }
-
   }
 
 }
@@ -124,64 +188,68 @@ void Com_RxTask( void *pvParameters )
 
   int k = 0;
 
-  uint8_t *receive_buffer = pvPortMalloc(sizeof(uint8_t) * DISPLAY_STRING_LENGTH_MAX );
+  uint8_t *receive_buffer = pvPortMalloc(sizeof(uint8_t) * 2 );
 
-  communicaion_packet_t *QSP_packet = pvPortMalloc(sizeof(communicaion_packet_t) );
-  QSP_packet->information = pvPortMalloc( sizeof(uint8_t) * MAX_DATA_LENGTH );
-  QSP_packet->crc = pvPortMalloc( sizeof(uint8_t) * 2 );
-  QSP_packet->serialized_frame = pvPortMalloc(sizeof(uint8_t) * DISPLAY_STRING_LENGTH_MAX );
+  QSP_t *rxPacket = QSP_Create(QSP_MAX_PACKET_SIZE);      //!< RxTask owns QSP package.
+  QSP_t *rxRespPacket = QSP_Create(QSP_MAX_PACKET_SIZE);      //!< RxTask creates the response QSP package. Gives ownership to tx.
+  SLIP_t *rxSLIP = Slip_Create(COM_PACKET_LENGTH_MAX);    //!< RxTask owns SLIP package.
 
-  uint8_t *slip_frame = pvPortMalloc(sizeof(uint8_t) * DISPLAY_STRING_LENGTH_MAX );
-  uint8_t slip_frame_length = 0;
-
-  crcTable = pvPortMalloc( sizeof(uint16_t) * 256 );
-
-
-  if ( !QSP_packet || !QSP_packet || !QSP_packet->information
-      || !QSP_packet->crc || !QSP_packet->serialized_frame || !crcTable )
+  if(!rxPacket || !rxSLIP)
   {
-    for ( ;; )
-    {
-      // Error!
-    }
+    //ERROR! TODO
+    for ( ;; );
   }
-  crcInit();
+
   /*The already open usart port is passed through the task parameters*/
   freertos_usart_if xbee_usart = (freertos_usart_if) pvParameters;
 
   for ( ;; )
   {
 
-    /*--------------------------Receive the frame---------------------
-     * The frame length can vary, one has to listen to start and stop flags.*/
+    /*--------------------------Receive the packet---------------------*/
 
     uint32_t nr_bytes_received;
     nr_bytes_received = freertos_usart_serial_read_packet( xbee_usart,  /* The USART port*/
-        receive_buffer,                                           /* Pointer to the buffer into which received data is to be copied.*/
-        1,                                                        /* The number of bytes to copy. */
-        portMAX_DELAY );                                          /* Block time*/
+        receive_buffer,                                                 /* Pointer to the buffer into which received data is to be copied.*/
+        1,                                                              /* The number of bytes to copy. */
+        portMAX_DELAY );                                                /* Block time*/
 
     if ( nr_bytes_received >= 1 )
     {
-
       for ( int i = 0; i < nr_bytes_received; i++, k++ )
       {
-        slip_frame[k] = receive_buffer[i];
-        if ( slip_frame[k] == frame_boundary_octet )
+        rxSLIP->payload[k] = receive_buffer[i];
+        if ( rxSLIP->payload[k] == frame_boundary_octet )
         {
           if ( k > 4 ) // Last boundary of frame. Frame minimum length = 4
           {
-            slip_frame_length = k;
+            rxSLIP->packetSize = k;
             k = 0;
             /*handle communication*/
-            Slip_Decode(slip_frame, QSP_packet->serialized_frame, slip_frame_length);
-            Com_DeserializeQSPFrame(QSP_packet);
-            Com_HandleCommunication(QSP_packet);
+            Slip_DePacketize(QSP_GetPacketPtr(rxPacket), QSP_GetAvailibleSize(rxPacket), rxSLIP);
+
+            uint8_t result = Com_CheckCRC(rxPacket);
+            if(result)
+            {
+              result = Com_HandleQSP(rxPacket, rxRespPacket);
+              if(result) // ok to send resp.
+              {
+                Com_SendQSP(rxRespPacket);
+              }
+            }
+            else // CRC errpr.
+            {
+              QSP_ClearPayload(rxRespPacket);
+              QSP_SetAddress(rxRespPacket, QSP_Status);
+              QSP_SetControl(rxRespPacket, QSP_StatusCrcError);
+              Com_SendQSP(rxRespPacket);
+            }
+
           }
           else // First boundary of frame.
           {
             k = 0;
-            slip_frame[0] = receive_buffer[i];
+            rxSLIP->payload[k] = receive_buffer[i];
 
           }
         }
@@ -191,103 +259,129 @@ void Com_RxTask( void *pvParameters )
 }
 
 
-
-void Com_SendAck( communicaion_packet_t *QSP_packet)
+uint8_t Com_HandleQSP( QSP_t *QSP_packet, QSP_t *QSP_RspPacket)
 {
-  QSP_packet->address = 2;
-  QSP_packet->control = ctrl_ack;
-  QSP_packet->length = 0;
-  Com_SerializeQSPFrame( QSP_packet);
-  Com_CommunicationSend( &(QSP_packet->serialized_frame), QSP_packet->serialized_frame_length );
-}
-
-void Com_HandleCommunication( communicaion_packet_t *QSP_packet)
-{
-  // If the packet contains a request to change flight mode, try doing so.
-  switch ( QSP_packet->address )
+  uint8_t result = 0;
+  switch ( QSP_GetAddress(QSP_packet) )
   {
-  // notify module.
-
+  case QSP_Parameters:
+    result = Com_HandleParameters(QSP_packet, QSP_RspPacket);
     break;
-  case 1:
-    break;
-  case 2:
+  case QSP_Status:
+    result = Com_HandleStatus(QSP_packet, QSP_RspPacket);
     break;
   default:
     break;
   }
 
-
+  return result;
 }
 
-void Com_CommunicationSend( const void * const pvItemToQueue, uint8_t bytesToSend )
+uint8_t Com_HandleStatus(QSP_t *QSP_packet, QSP_t *QSP_RspPacket)
+{
+  uint8_t result = 0;
+  switch ( QSP_GetControl(QSP_packet) )
+  {
+  case QSP_StatusAck:
+    break;
+  case QSP_StatusCrcError:
+    break;
+  case QSP_StatusNack:
+    break;
+  case QSP_StatusNotAllowed:
+    break;
+  case QSP_StatusNotImplemented:
+    break;
+  default:
+    break;
+  }
+
+  return result;
+}
+uint8_t Com_HandleParameters(QSP_t *QSP_packet, QSP_t *QSP_RspPacket)
+{
+  QSP_ClearPayload(QSP_RspPacket);
+  uint8_t result = 0;
+  switch ( QSP_GetControl(QSP_packet) )
+  {
+  case QSP_ParamGetTree:
+    result = Param_DumpFromRoot(Param_GetRoot(), QSP_GetPayloadPtr(QSP_RspPacket), QSP_GetAvailibleSize(QSP_RspPacket) - QSP_GetHeaderdSize());
+    if(result)
+    {
+      QSP_SetPayloadSize(QSP_RspPacket, strlen((char *)QSP_GetPayloadPtr(QSP_RspPacket)));
+      QSP_SetAddress(QSP_RspPacket, QSP_Parameters);
+      QSP_SetControl(QSP_RspPacket, QSP_ParamSetTree);
+    }
+    else
+    {
+      QSP_ClearPayload(QSP_RspPacket);
+      QSP_SetAddress(QSP_RspPacket, QSP_Status);
+      QSP_SetControl(QSP_RspPacket, QSP_StatusNack);
+    }
+    break;
+  case QSP_ParamSetTree:
+    result = Param_SetFromRoot(Param_GetRoot(), QSP_GetPayloadPtr(QSP_packet), QSP_GetPayloadSize(QSP_packet));
+    QSP_SetAddress(QSP_RspPacket, QSP_Status);
+    if(result)
+    {
+      QSP_SetControl(QSP_RspPacket, QSP_StatusAck);
+    }
+    else
+    {
+      QSP_SetControl(QSP_RspPacket, QSP_StatusNack);
+    }
+    break;
+  default:
+    break;
+  }
+
+  return result;
+}
+
+
+uint8_t Com_SendQSP( QSP_t *packet )
 {
   //TODO add check to make sure sending was successful.
-  xQueueSendToBack( xQueue_display, pvItemToQueue, mainDONT_BLOCK );
-  xQueueSendToBack( xQueue_display_bytes_to_send, &bytesToSend,
-      mainDONT_BLOCK );
-
+  QSP_GiveOwnership(packet);
+  status_code_t result = xQueueSendToBack( xQueue_Com, &packet, mainDONT_BLOCK );
+  if(result != STATUS_OK)
+  {
+    return 0;
+  }
+  return 1;
 }
 
 
-/*
- *
- * Packet format:
- * [address][control][length][data (0-MAX_DATA_LENGTH bytes)][crc]
- *
- *
- *
- *
- */
-uint8_t Com_SerializeQSPFrame( communicaion_packet_t *packet)
+uint8_t Com_AddCRC( QSP_t *packet)
 {
-  packet->serialized_frame[0] = packet->address;
-  packet->serialized_frame[1] = packet->control;
-  packet->serialized_frame[2] = packet->length;
-  int i;
-  for ( i = 0; i < packet->length; i++ )
-  {
-    packet->serialized_frame[3 + i] = packet->information[i];
-  }
+
   //Calculate and append CRC16 checksum.
-  uint16_t crc_check;
-  crc_check = crcFast( packet->serialized_frame, packet->length + 3 );
-  packet->crc[0] = (uint8_t) ((crc_check >> 0) & 0Xff);
-  packet->crc[1] = (uint8_t) ((crc_check >> 8) & 0Xff);
-
-  packet->serialized_frame[3 + i++] = packet->crc[0];
-  packet->serialized_frame[3 + i] = packet->crc[1];
-
-  uint8_t length = 0; //Slip_encode(); //TODO
-  packet->serialized_frame_length = length ;
+  uint16_t crcCalc;
+  crcCalc = crcFast( QSP_GetPacketPtr(packet), (QSP_GetPayloadSize(packet) + QSP_GetHeaderdSize()));
+  uint8_t tmp[2];
+  tmp[0] = (uint8_t) ((crcCalc >> 8) & 0Xff);
+  tmp[1] = (uint8_t) ((crcCalc) & 0Xff);
+  if(!QSP_SetAfterPayload(packet, tmp, 2))
+  {
+    return 1;
+  }
   return 0;
 }
 
-uint8_t Com_DeserializeQSPFrame( communicaion_packet_t *packet)
+uint8_t Com_CheckCRC( QSP_t *packet) // TODO
 {
+  uint16_t payloadSize = QSP_GetPayloadSize(packet);
 
-
-  packet->address = packet->serialized_frame[0];
-  packet->control = packet->serialized_frame[1];
-  packet->length = packet->serialized_frame[2];
-
-  packet->crc[0] = packet->serialized_frame[3 + packet->length];
-  packet->crc[1] = packet->serialized_frame[3 + packet->length + 1];
-  for ( int i = 0; i < packet->length; i++ )
-  {
-    packet->information[i] = packet->serialized_frame[3 + i];
-  }
   //Calculate and compare CRC16 checksum.
-  uint16_t crc_check;
-  uint8_t crc[2];
+  uint16_t crcCalc;
+  uint16_t crcMsg = 0;
+  crcCalc = crcFast( QSP_GetPacketPtr(packet), (payloadSize + QSP_GetHeaderdSize()));
 
-  crc_check = crcFast( packet->serialized_frame, packet->length + 3 );
-  crc[0] = (uint8_t) ((crc_check >> 0) & 0Xff);
-  crc[1] = (uint8_t) ((crc_check >> 8) & 0Xff);
-  if ( (packet->crc[0] != crc[0]) || (packet->crc[1] != crc[1]) )
+  crcMsg |= (uint16_t) ((QSP_GetPayloadPtr(packet)[payloadSize + QSP_GetHeaderdSize()] << 8) & 0Xff00);
+  crcMsg |= (uint16_t) ((QSP_GetPayloadPtr(packet)[payloadSize + QSP_GetHeaderdSize() + 1]) & 0Xff);
+  if ( crcCalc != crcMsg )
   {
-    packet->control = ctrl_crc_error;
-    return -1;
+    return 1;
   }
   return 0;
 }
