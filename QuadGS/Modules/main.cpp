@@ -19,10 +19,20 @@
 #include <boost/bind.hpp>
 namespace po = boost::program_options;
 
-#include "Serial_Manager/inc/SerialPort.h"
+#include "SerialPort.h"
+#include "QuadCLI.h"
+#include "SlipPacket.h"
+#include "CommandBase.h"
+#include "CommandValue.h"
+
+
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <iterator>
+#include <vector>
+#include <memory>
+#include <boost/iterator/transform_iterator.hpp>
 using namespace std;
 typedef boost::asio::serial_port b_a_sp;
 
@@ -33,64 +43,90 @@ ostream& operator<<(ostream& os, const vector<T>& v)
     copy(v.begin(), v.end(), ostream_iterator<T>(os, " "));
     return os;
 }
-
-
-boost::asio::io_service io_service;
-auto_ptr<boost::asio::io_service::work> work(new boost::asio::io_service::work(io_service));
-unsigned char mBufferWrite[6] = {0,1,2,5,4,5};
-void run()
+const char *convert_to_cstr(const std::string & s)
 {
-  io_service.run();
+   return s.c_str();
 }
+
+namespace QuadGS
+{
+struct program_args
+{
+  program_args():
+  open(false)
+  {}
+    std::string port_name;
+    bool open;
+};
+}
+
+void handle_program_args(int ac, char* av[], QuadGS::program_args& args);
+//bool execute_next_command(std::istream& input_stream, std::ostream& output_stream);
+
 
 
 int main(int ac, char* av[])
 {
+    QuadGS::Log::Init("app_log", "msg_log");
+    QuadGS::program_args args;
     try {
-        QuadGS::Log::Init("first", "second");
-        // Declare a group of options that will be
-        // allowed only on command line
-        po::options_description generic("Generic options");
-        generic.add_options()
-            ("help,h", "produce help message");
-
-        po::options_description cmdline_options;
-        cmdline_options.add(generic);
-
-        po::variables_map vm;
-        po::store(po::parse_command_line(ac, av, generic), vm);
-
-        if (vm.count("help")) {
-            cout << generic << "\n";
-            return 0;
-        }
-
-        if (vm.count("version")) {
-            cout << "Multiple sources example, version 1.0\n";
-            return 0;
-        }
+        handle_program_args(ac, av, args);
     }
     catch(exception& e)
     {
-    	cout << e.what() << "\n";
-    	return 1;
+        std::cerr << "Error: " << e.what() << "\n";
+        return 1;
     }
-    try {
-    	QuadGS::Serial_Port::pointer port = QuadGS::Serial_Port::create(io_service);
-    	boost::thread thread_io(run);
+
+    QuadGS::CommandBase* testCommand = new QuadGS::CommandBase("Parameter");
+    testCommand->Register("Group1<1>/value1");
+    testCommand->Register("Group1/value2<3>");
+    testCommand->Register("Group1/value3/test1");
+    testCommand->Register("Group3");
+    testCommand->Register("Group4");
 
 
-    	port->open("/dev/ttyUSB0");
-    	port->do_write(mBufferWrite);
-    	port->do_read();
-    }
-    catch(exception& e)
-    {
-    	cout << e.what() << "\n";
-       // return 1;
-    }
-    cout << "Press any key to exit..."<<endl;
-       cin.get();
-    work.reset();
+    testCommand->SetValue("Group1/value1", "23");
+    std::string value;
+    testCommand->GetValue("Group1/value1", value);
+
+    cout << "Group1/value1 has value: " << value << std::endl;
+    // Read input.
+    QuadGS::QuadCLI::InitCLI();
+    while(QuadGS::QuadCLI::ExecuteNextCommand());
+
     return 0;
 }
+
+//Handles program args. Throws if not successful.
+void handle_program_args(int ac, char* av[], QuadGS::program_args& args)
+{
+
+    // Parse program options.
+    po::options_description generic("Generic options");
+    generic.add_options()
+                    ("help,h", "produce help message")
+                    ("version,v", "print version string")
+                    ("gui,g", "Gui mode")
+                    ("port,p", po::value< std::string >(&args.port_name)->default_value("/dev/ttyUSB0"),
+                            "Port used for communication.")
+                    ("open,o", po::value< bool >(&args.open)->default_value(false));
+    po::variables_map opts;
+    po::store(po::parse_command_line(ac, av, generic), opts);
+    po::notify(opts);
+    if (opts.count("help")) {
+        cout << generic << "\n";
+        return;
+    }
+    if (opts.count("version")) {
+        cout << "QuadGS, unofficial version\n";
+        return;
+    }
+    if (opts.count("gui")) {
+        cout << "gui mode not yet supported\n";
+        //TODO add support for gui mode.
+        return;
+    }
+}
+
+

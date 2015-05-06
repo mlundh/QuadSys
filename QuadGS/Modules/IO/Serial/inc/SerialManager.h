@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include "SerialPort.h"
 #include <boost/asio.hpp>
-#include <boost/thread.hpp>
+#include <thread>
 #include <boost/bind.hpp>
 
 
@@ -25,9 +25,14 @@ public:
 
 	virtual ~Serial_Manager();
 
+private:
+    void RunThread();
 
 
-
+	QuadGS::Serial_Port::pointer mPort;
+	boost::asio::io_service mIo_service;
+	std::unique_ptr<boost::asio::io_service::work> mWork;
+	std::thread *mThread_io;
 };
 
 } /* namespace QuadGS */

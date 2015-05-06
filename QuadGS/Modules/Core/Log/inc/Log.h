@@ -34,7 +34,6 @@ namespace sinks = boost::log::sinks;
 namespace attrs = boost::log::attributes;
 namespace src = boost::log::sources;
 namespace keywords = boost::log::keywords;
-
 using boost::shared_ptr;
 
 // Here we define our application severity levels.
@@ -53,6 +52,7 @@ class Log
 {
 public:
     Log();
+    Log(std::string tag);
     virtual ~Log();
     static void Init( std::string FilenameAppLog, std::string FilenameMsgLog );
 

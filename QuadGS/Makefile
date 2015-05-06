@@ -52,12 +52,13 @@ SOURCE_DIR :=$(sort $(dir $(SOURCE)))
 
 INCLUDE_Modules   := $(call rwildcard,Modules/,*.h) $(call rwildcard,Modules/,*.hpp)
 INCLUDE_lib := $(call rwildcard,lib/,*.h) $(call rwildcard,lib/,*.hpp)
+INCLUDE_lib_usr := /usr/lib64/
 
 $(call check_defined, BOOST_ROOT, boost root dir)
 $(call check_defined, BOOST_LIB_ROOT, boost compiled libs)
 
 INCLUDE_boost := $(BOOST_ROOT)
-INCLUDE     := $(INCLUDE_Modules) $(INCLUDE_lib)
+INCLUDE     := $(INCLUDE_Modules) $(INCLUDE_lib) $(INCLUDE_lib_usr)
 # $(INCLUDE_boost)
 # Get include directories from list of all included .h files.
 INCLUDE_DIR := $(sort $(dir $(INCLUDE)))
@@ -94,18 +95,16 @@ CXXFLAGS=-MD -MP -MF "$(@:%.o=%.d)" -MT "$(@:%.o=%.d)" -MT "$(@:%.o=%.o)" -Wall 
 #
 #******************************************************************************
 #ifdef DEBUG
-CXXFLAGS += -g
+CXXFLAGS += -g 
 #endif
 
 
 # include boost as -isystem since we can not fix the warnings in the lib.
-CXXFLAGS+= $(addprefix -I, $(INCLUDE_DIR) ) -isystem $(INCLUDE_boost)
-ifeq ($(OS), mac)
-export LD_LIBRARY_PATH += $(BOOST_LIB_ROOT)
-LDFLAGS := -L$(BOOST_LIB_ROOT) -lboost_thread -lboost_program_options  -lboost_system -lboost_log -lboost_log_setup -pthread
-else
-LDFLAGS := -L$(BOOST_LIB_ROOT) -static -lboost_thread -lboost_program_options  -lboost_system -pthread -lboost_log -lboost_log_setup 
-endif
+CXXFLAGS+= $(addprefix -I, $(INCLUDE_DIR) ) -isystem $(INCLUDE_boost) 
+CXXFLAGS += -DBOOST_LOG_DYN_LINK
+#export LD_LIBRARY_PATH += $(BOOST_LIB_ROOT)
+LDFLAGS :=-L$(BOOST_LIB_ROOT) -lboost_thread -lboost_program_options  -lboost_system -pthread -lboost_log -lboost_log_setup  -lreadline
+
 #
 # The default rule, which causes init to be built.
 #

@@ -16,6 +16,11 @@ Log::Log()
 
 }
 
+Log::Log(std::string tag)
+{
+  slg.add_attribute("Tag", attrs::constant< std::string >(tag));
+}
+
 Log::~Log()
 {
     // TODO Auto-generated destructor stub
@@ -68,44 +73,38 @@ void Log::Init( std::string FilenameAppLog, std::string FilenameMsgLog )
              << expr::if_(expr::has_attr("Tag"))
                 [
                     expr::stream << "[" << expr::attr< std::string >("Tag")
-                     << "]" // yet another delimiter
+                     << "] " // yet another delimiter
                 ]
              << expr::smessage; // here goes the log record text
 
-    // Create a text file sink
+
     typedef sinks::synchronous_sink< sinks::text_ostream_backend > text_sink;
 
-    // Create a text file sink
+
+    // The file sink that will be used to log app messages.
     shared_ptr< text_sink > pSink = boost::make_shared< text_sink >();
-    // Add a file stream to the sink.
     pSink->locked_backend()->add_stream(
             boost::make_shared< std::ofstream >(FilenameAppLog + ".log"));
-    // Set formatter of the sink.
+    // The same formatter is used for all log entries.
     pSink->set_formatter(fmt);
-    // Add the sink to the core.
     logging::core::get()->add_sink(pSink);
 
-    // Create a text file sink for the message trace.
+    // Create the sink for message traces.
     pSink = boost::make_shared< text_sink >();
-    // Add a file stream to the sink.
     pSink->locked_backend()->add_stream(
         boost::make_shared< std::ofstream >(FilenameMsgLog + ".log"));
-    // Set the formatter of the sink.
     pSink->set_formatter(fmt);
-    // Set the filter of the stream.
+    // The message trase sink should only log messages of type message_trace.
     pSink->set_filter(expr::attr< severity_level >("Severity") == message_trace );
-    // Add the stream to the core.
     logging::core::get()->add_sink(pSink);
 
-    // Create a text file sink
+    // Create a text file sink used for outputing to std::clog. This sink is used to log everything.
     pSink = boost::make_shared< text_sink >();
-    // Add a file stream to the sink.
-    // We have to provide an empty deleter to avoid destroying the global stream object
     boost::shared_ptr< std::ostream > stream(&std::clog, boost::null_deleter());
     pSink->locked_backend()->add_stream(stream);
-    // Set the formatter of the sink.
     pSink->set_formatter(fmt);
-    // Add the stream to the core.
+    // TODO the sink outputing to clog should have a settable severity level
+    pSink->set_filter(expr::attr< severity_level >("Severity") <= error );
     logging::core::get()->add_sink(pSink);
 
 

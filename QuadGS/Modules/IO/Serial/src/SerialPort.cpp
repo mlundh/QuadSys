@@ -8,11 +8,14 @@
 #include "SerialPort.h"
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
-#include <string>
+
+#include "QspPayloadRaw.h"
+#include "SlipPacket.h"
 namespace QuadGS {
 
 Serial_Port::Serial_Port(  boost::asio::io_service &io_service ) :
-          mName( "unnamed" )
+          Log("Serial_Port")
+        , mName( "unnamed" )
         , mBaudRate( 57600 )
         , mFlowControl( b_a_sp::flow_control::none )
         , mParity( b_a_sp::parity::none )
@@ -21,6 +24,8 @@ Serial_Port::Serial_Port(  boost::asio::io_service &io_service ) :
         , mSerialPort( io_service )
         , mTimeoutRead( io_service )
         , mTimeoutWrite( io_service )
+        , mMessageHandler()
+        , mErrorHandler()
 {
     if( mSerialPort.is_open() )
     {
@@ -49,7 +54,7 @@ void Serial_Port::close()
                     boost::system::error_code() ) );
 }
 
-void Serial_Port::open( std::string port_name )
+bool Serial_Port::open( std::string port_name )
 {
     boost::system::error_code ec;
     if( ! mSerialPort.is_open() )
@@ -62,7 +67,8 @@ void Serial_Port::open( std::string port_name )
         }
         else if( ec )
         {
-            //BOOST_LOG_SEV(slg, severity_level::normal) << "error opening port" << ec.message();
+          QuadLog(severity_level::error, ec.message());
+          return false;
         }
         mSerialPort.set_option( b_a_sp::baud_rate( mBaudRate ), ec );
         mSerialPort.set_option( b_a_sp::flow_control( mFlowControl ), ec );
@@ -71,24 +77,35 @@ void Serial_Port::open( std::string port_name )
         if( ec )
         {
 
-            QuadLog(severity_level::error, "Error detected: " + ec.message());
-            return;
+            QuadLog(severity_level::error, ec.message());
+            return false;
         }
         QuadLog(severity_level::info, "Serial Port " + port_name + " opened.");
     }
     else
     {
         QuadLog(severity_level::warning, "Serial Port already open");
+        return true;
     }
+    return true;
+}
+
+bool Serial_Port::set_read_callback(  )
+{
+    if(1)
+    {
+        //mMessageHandler;
+        return true;
+    }
+    return false;
 }
 
 /*Close the serial port*/
 void Serial_Port::do_close( const boost::system::error_code& error )
 {
-    //BOOST_LOG_SEV(slg, severity_level::normal) <<  "..Do_close called";
-    if( error )
+  if( error )
     {
-        QuadLog(severity_level::error,  ".. ..Error detected: " + error.message() );
+        QuadLog(severity_level::error, "Close: "+ error.message() );
     }
     if( error == boost::asio::error::operation_aborted )
     {
@@ -100,11 +117,43 @@ void Serial_Port::do_close( const boost::system::error_code& error )
     QuadLog(severity_level::info, "Serial Port closed");
     return;
 }
-/*Start an async write operation.*/
-void Serial_Port::do_write( unsigned char *buffer )
+void Serial_Port::do_write( QspPayloadRaw::Ptr ptr)
 {
-    QuadLog(severity_level::info, "Write called.");
+  if( ! mSerialPort.is_open() )
+  {
+    return;
+  }
+  if(mPayloadWrite.use_count() != 0)
+  {
+      //error
+      QuadLog(severity_level::error, "Write called during ongoing write operation." );
+      return;
+  }
+    mPayloadWrite = ptr;
+    mTimeoutWrite.expires_from_now( boost::posix_time::milliseconds( 10000 ) );
+    mTimeoutWrite.async_wait(
+            boost::bind( & Serial_Port::timer_write_callback,
+                    shared_from_this(),
+                    boost::asio::placeholders::error ) );
 
+    boost::asio::async_write( mSerialPort, boost::asio::buffer( mPayloadWrite->getPayload(), mPayloadWrite->getPayloadLength() ),
+            transfer_until(0x7E, mPayloadWrite->getPayload()),
+            boost::bind( & Serial_Port::write_callback, shared_from_this(),
+                    boost::asio::placeholders::error,
+                    boost::asio::placeholders::bytes_transferred ) );
+}
+
+
+/*Start an async write operation.*/
+void Serial_Port::do_write( unsigned char *buffer , uint8_t buffer_length)
+{
+  if( ! mSerialPort.is_open() )
+  {
+    return;
+  }
+    QuadLog(severity_level::debug, "Write called.");
+    std::string myString(buffer, buffer + buffer_length);
+    QuadLog(severity_level::info, myString);
     /* First set the timers, otherwise the async_read callback might be called
      * before the timer is started. The timer will then be started afterwards and
      * thus not being canceled by the async_read callback.*/
@@ -114,8 +163,8 @@ void Serial_Port::do_write( unsigned char *buffer )
                     shared_from_this(),
                     boost::asio::placeholders::error ) );
 
-    boost::asio::async_write( mSerialPort, boost::asio::buffer( buffer, 6 ),
-            boost::asio::transfer_at_least( 6 ),
+    boost::asio::async_write( mSerialPort, boost::asio::buffer( buffer, buffer_length ),
+            boost::asio::transfer_at_least( buffer_length ),
             boost::bind( & Serial_Port::write_callback, shared_from_this(),
                     boost::asio::placeholders::error,
                     boost::asio::placeholders::bytes_transferred ) );
@@ -124,8 +173,18 @@ void Serial_Port::do_write( unsigned char *buffer )
 /*Start an async read operation.*/
 void Serial_Port::do_read()
 {
-    QuadLog(severity_level::info, "Read called.");
-
+    if( ! mSerialPort.is_open() )
+    {
+        return;
+    }
+    if(mPayloadRead.use_count() != 0)
+    {
+        //error
+        QuadLog(severity_level::error, "Read called during read operation." );
+        return;
+    }
+    QuadLog(severity_level::debug, "Read called.");
+    mPayloadRead = QspPayloadRaw::Create(255);
     /* First set the timers, otherwise the async_read callback might be called
      * before the timer is started. The timer will then be started afterwards and
      * thus not being canceled by the async_read callback.*/
@@ -136,8 +195,8 @@ void Serial_Port::do_read()
                     boost::asio::placeholders::error ) );
 
     boost::asio::async_read( mSerialPort,
-            boost::asio::buffer( mBufferRead, 6 ),
-            boost::asio::transfer_at_least( 6 ),
+            boost::asio::buffer( mPayloadRead->getPayload(), mPayloadRead->getPayloadLength() ),
+            transfer_until(0x7E, mPayloadRead->getPayload()),
             boost::bind( & Serial_Port::read_callback, shared_from_this(),
                     boost::asio::placeholders::error,
                     boost::asio::placeholders::bytes_transferred ) );
@@ -148,14 +207,14 @@ void Serial_Port::do_read()
 void Serial_Port::write_callback( const boost::system::error_code& error,
         std::size_t bytes_transferred )
 {
-    QuadLog(severity_level::info, "Write_callback called.");
+    mPayloadWrite.reset();
     if( error )
     {
         QuadLog(severity_level::error, "Read_callback called with an error: " + error.message() );
         do_close( error );
         return;
     }
-    QuadLog(severity_level::info, "Bytes transferred: " + std::to_string(bytes_transferred) +  " bytes.");
+    QuadLog(severity_level::debug, "Bytes written: " + std::to_string(bytes_transferred) +  " bytes.");
     mTimeoutWrite.cancel();
 }
 
@@ -163,75 +222,77 @@ void Serial_Port::write_callback( const boost::system::error_code& error,
 void Serial_Port::read_callback( const boost::system::error_code& error,
         std::size_t bytes_transferred )
 {
-    QuadLog(severity_level::info, "Read_callback called.");
     if( error )
     {
-        //BOOST_LOG_SEV(slg, severity_level::error) <<  ".. ..Read_callback called with an error: "
-        //          << error.message();
+        QuadLog(severity_level::error,  " Read_callback called with an error: " + error.message());
         do_close( error );
         return;
     }
-
-    QuadLog(severity_level::info, "Bytes transferred: " + std::to_string(bytes_transferred) + " bytes.");
+    QspPayloadRaw::Ptr ptr = mPayloadRead;
+    ptr->setPayloadLength(bytes_transferred);
+    mPayloadRead.reset();
+    if( mMessageHandler )
+    {
+        mMessageHandler( );// mPayloadWrite );
+    }
     mTimeoutRead.cancel();
+
+    do_read();
 }
 
 /* Called when the write timer's deadline expire */
 void Serial_Port::timer_write_callback( const boost::system::error_code& error )
 {
-    //BOOST_LOG_SEV(slg, severity_level::normal) <<  "..timer_write_callback called.";
+    mPayloadWrite.reset();
     if( error )
     {
-        //BOOST_LOG_SEV(slg, severity_level::normal) <<  ".. ..Timeout cancelled.";
-
-        /*If the timer was called with the operation_aborted error code then
-         * the timer was canceled and did not fire. Everything else is an error*/
-        if( error != boost::asio::error::operation_aborted )
-            do_close( error );
-        return;
-    }
-
-    //BOOST_LOG_SEV(slg, severity_level::normal) << ".. ..Timeout fired.";
-    mSerialPort.cancel(); // Close all asynchronous operation with serial port. will cause read_callback to fire with an error
-    //BOOST_LOG_SEV(slg, severity_level::normal) <<  ".. ..All operations on serial port cancelled.\n";
-    return;
-}
-
-/* Called when the read timer's deadline expire */
-void Serial_Port::timer_read_callback( const boost::system::error_code& error )
-{
-    //BOOST_LOG_SEV(slg, severity_level::normal) <<  "..timer_read_callback called.";
-    if( error )
-    {
-        //BOOST_LOG_SEV(slg, severity_level::normal) <<  ".. ..Timeout cancelled.";
-
         /*If the timer was called with the operation_aborted error code then
          * the timer was canceled and did not fire. Everything else is an error*/
         if( error != boost::asio::error::operation_aborted )
         {
+            QuadLog(severity_level::error, "Write timer callback: " + error.message());
             do_close( error );
         }
         return;
     }
 
-    //BOOST_LOG_SEV(slg, severity_level::normal) <<  ".. ..Timeout fired.";
-    mSerialPort.cancel(); // Close all asynchronous operation with serial port. will cause read_callback to fire with an error
-    //BOOST_LOG_SEV(slg, severity_level::normal) << ".. ..All operations on serial port cancelled.";
+    QuadLog(severity_level::warning, "Write timeout fired.");
+    mSerialPort.cancel(); // Close all asynchronous operation with serial port. 
+                          //will cause read_callback to fire with an error
+    return;
+}
+
+/* Called when the read timer's deadline expire */
+void Serial_Port::timer_read_callback( const boost::system::error_code& error )
+{  if( error )
+    {
+        /*If the timer was called with the operation_aborted error code then
+         * the timer was canceled and did not fire. Everything else is an error*/
+        if( error != boost::asio::error::operation_aborted )
+        {
+          QuadLog(severity_level::error, "Read timer callback: " + error.message());
+          do_close( error );
+        }
+        return;
+    }
+
+    QuadLog(severity_level::warning, " Read timeout fired.");
+    mSerialPort.cancel(); // Close all asynchronous operation with serial port. 
+                          // will cause read_callback to fire with an error
     return;
 }
 
 Serial_Port::~Serial_Port()
 {
-    //BOOST_LOG_SEV(slg, severity_level::normal) <<  "Destructor of serial port: ";
-    boost::system::error_code error;
+    QuadLog(severity_level::debug, "In destructor");
+  boost::system::error_code error;
     mSerialPort.cancel( error );
     mSerialPort.close( error );
     if( error )
     {
-        //BOOST_LOG_SEV(slg, severity_level::error) <<  ".. ..error: " << error.message();
+         QuadLog(severity_level::error, "In destructor: " + error.message());
         return;
     }
-    //BOOST_LOG_SEV(slg, severity_level::normal) << "  .. finished without error: " ;
 }
 
 } /* namespace QuadGS */
