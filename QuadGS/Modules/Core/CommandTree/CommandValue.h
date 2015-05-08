@@ -151,7 +151,7 @@ private:
             vec.push_back(mUint32_t);
             return true;
         }
-        return NULL;
+        return false;
     }
 
     bool SerializeUint16(std::vector<uint8_t>& vec)
@@ -162,7 +162,7 @@ private:
             vec.push_back(mUint16_t);
             return true;
         }
-        return NULL;
+        return false;
     }
 
     bool SerializeUint8(std::vector<uint8_t>& vec)

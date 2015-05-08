@@ -48,6 +48,7 @@ void InitCLI()
     mPromptBase = "QuadGS";
     commands.push_back( new Command("quit", (Command::fcn)NULL, "Quit the application."));
     commands.push_back( new Command("set", (Command::fcn)NULL, "Set the value in the tree."));
+    commands.push_back( new Command("get", (Command::fcn)NULL, "Set the value in the tree."));
 }
 void BuildPrompt()
 {

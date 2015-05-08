@@ -59,7 +59,7 @@ QspPayloadRaw::Ptr QuadSerialPacket::GetPayload()
     return  mPayload;
 }
 
-bool QuadSerialPacket::SerializeInt8(int8_t value, uint start)
+bool QuadSerialPacket::SerializeInt8(int8_t value, uint32_t start)
 {
     if((start) >= mPayload->getPayloadLength())
     {
@@ -69,7 +69,7 @@ bool QuadSerialPacket::SerializeInt8(int8_t value, uint start)
     return true;
 }
 
-bool QuadSerialPacket::SerializeInt16(int16_t value, uint start)
+bool QuadSerialPacket::SerializeInt16(int16_t value, uint32_t start)
 {
     if((start + 2) >= mPayload->getPayloadLength())
     {
@@ -80,7 +80,7 @@ bool QuadSerialPacket::SerializeInt16(int16_t value, uint start)
     return true;
 }
 
-bool QuadSerialPacket::SerializeInt32(int32_t value, uint start)
+bool QuadSerialPacket::SerializeInt32(int32_t value, uint32_t start)
 {
     if((start + 4) >= mPayload->getPayloadLength())
     {
@@ -94,7 +94,7 @@ bool QuadSerialPacket::SerializeInt32(int32_t value, uint start)
 }
 
 
-uint8_t QuadSerialPacket::DeserializeInt8(uint start)
+uint8_t QuadSerialPacket::DeserializeInt8(uint32_t start)
 {
     if((start) >= mPayload->getPayloadLength())
     {
@@ -105,7 +105,7 @@ uint8_t QuadSerialPacket::DeserializeInt8(uint start)
     return value;
 }
 
-uint16_t QuadSerialPacket::DeserializeInt16(uint start)
+uint16_t QuadSerialPacket::DeserializeInt16(uint32_t start)
 {
     if((start + 2) >= mPayload->getPayloadLength())
     {
@@ -117,7 +117,7 @@ uint16_t QuadSerialPacket::DeserializeInt16(uint start)
     return value;
 }
 
-uint32_t QuadSerialPacket::DeserializeInt32(uint start)
+uint32_t QuadSerialPacket::DeserializeInt32(uint32_t start)
 {
   if((start + 4) >= mPayload->getPayloadLength())
   {
