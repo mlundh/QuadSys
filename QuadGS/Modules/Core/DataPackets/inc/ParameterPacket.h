@@ -9,7 +9,6 @@
 #define QUADGS_MODULES_CORE_DATAPACKETS_PARAMETERPACKET_H_
 
 #include "QuadSerialPacket.h"
-#include "QSPValueGroup.h"
 #include <vector>
 
 namespace QuadGS {
@@ -42,7 +41,6 @@ public:
     virtual ~ParameterPacket();
 
 
-    std::vector< QuadGS::QSPValueGroup > mGroups;
 };
 
 } /* namespace QuadGS */

@@ -19,11 +19,11 @@
 #include <boost/bind.hpp>
 namespace po = boost::program_options;
 
-#include "SerialPort.h"
+#include "SerialManager.h"
 #include "QuadCLI.h"
 #include "SlipPacket.h"
-#include "CommandBase.h"
-#include "CommandValue.h"
+#include "Core/CommandTree/QuadGSTree.h"
+#include "Core/CommandTree/QuadGSTreeValue.h"
 
 
 #include <iostream>
@@ -78,23 +78,24 @@ int main(int ac, char* av[])
         return 1;
     }
 
-    QuadGS::CommandBase* testCommand = new QuadGS::CommandBase("Parameter");
-    testCommand->Register("Group1<1>/value1");
-    testCommand->Register("Group1/value2<3>");
-    testCommand->Register("Group1/value3/test1");
-    testCommand->Register("Group3");
-    testCommand->Register("Group4");
 
+    QuadGS::IoBase* mIO = new QuadGS::Serial_Manager();
+    QuadGS::QuadCLI* mUI = new QuadGS::QuadCLI();
+    QuadGS::Core::ptr mCore = QuadGS::Core::create();
 
-    testCommand->SetValue("Group1/value1", "23");
-    std::string value;
-    testCommand->GetValue("Group1/value1", value);
+    mUI->registerCommands(mCore->getCommands());
+    mUI->registerTree(mCore->getTree());
+    if(args.open)
+    {
+//      mIO.mPort->open(args.port_name);
+//      mIO.read();
+    }
 
-    cout << "Group1/value1 has value: " << value << std::endl;
-    // Read input.
-    QuadGS::QuadCLI::InitCLI();
-    while(QuadGS::QuadCLI::ExecuteNextCommand());
+    // Read input."
+    while(mUI->ExecuteNextCommand());
 
+    delete mIO;
+    delete mUI;
     return 0;
 }
 

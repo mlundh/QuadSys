@@ -60,7 +60,7 @@ std::ostream& operator<< (std::ostream& strm, QuadGS::severity_level level)
 
 void Log::Init( std::string FilenameAppLog, std::string FilenameMsgLog )
 {
-    // Create the common formatter for all sinks.
+    // Create the formatter for all file sinks.
     logging::formatter fmt = expr::stream
              << "[" << expr::attr< unsigned int >("RecordID") // First an attribute "RecordID" is written to the log
              << "] [" << expr::format_date_time< boost::posix_time::ptime >("TimeStamp", "%H:%M:%S.%f")
@@ -77,6 +77,20 @@ void Log::Init( std::string FilenameAppLog, std::string FilenameMsgLog )
                 ]
              << expr::smessage; // here goes the log record text
 
+    // Create the formatter for the clog sink.
+    logging::formatter fmt_clog = expr::stream
+             << expr::if_(expr::has_attr("Severity"))
+                   [
+                    expr::stream << "["
+                    << expr::attr< QuadGS::severity_level >("Severity")
+                   ]
+             << "] " // then this delimiter separates it from the rest of the line
+             << expr::if_(expr::has_attr("Tag"))
+                [
+                    expr::stream << "[" << expr::attr< std::string >("Tag")
+                     << "] " // yet another delimiter
+                ]
+             << expr::smessage; // here goes the log record text
 
     typedef sinks::synchronous_sink< sinks::text_ostream_backend > text_sink;
 
@@ -102,9 +116,9 @@ void Log::Init( std::string FilenameAppLog, std::string FilenameMsgLog )
     pSink = boost::make_shared< text_sink >();
     boost::shared_ptr< std::ostream > stream(&std::clog, boost::null_deleter());
     pSink->locked_backend()->add_stream(stream);
-    pSink->set_formatter(fmt);
+    pSink->set_formatter(fmt_clog);
     // TODO the sink outputing to clog should have a settable severity level
-    pSink->set_filter(expr::attr< severity_level >("Severity") <= error );
+    pSink->set_filter(expr::attr< severity_level >("Severity") <= debug );
     logging::core::get()->add_sink(pSink);
 
 

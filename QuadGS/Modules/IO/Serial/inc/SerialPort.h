@@ -67,7 +67,7 @@ public:
     /**
      * @brief pointer type to the serial port.
      */
-    typedef boost::shared_ptr< Serial_Port > pointer;
+    typedef std::unique_ptr< Serial_Port > pointer;
 
 public:
     /**

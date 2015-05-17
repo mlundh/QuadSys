@@ -5,8 +5,8 @@
  *      Author: martin
  */
 
-#ifndef QUADGS_MODULES_CORE_COMMANDTREE_COMMANDVALUE_H_
-#define QUADGS_MODULES_CORE_COMMANDTREE_COMMANDVALUE_H_
+#ifndef QUADGS_MODULES_CORE_COMMANDTREE_QUADGSTREEVALUE_H_
+#define QUADGS_MODULES_CORE_COMMANDTREE_QUADGSTREEVALUE_H_
 
 #include <string>
 #include <memory>
@@ -18,22 +18,23 @@ namespace QuadGS {
 
 
 
-class CommandValue
+class QuadGSTreeValue
 {
 public:
 
     typedef enum NodeType
     {
-        NoType               =                 0,
-        uint8_variable_type  =            1 << 0,
-        uint16_variable_type =            1 << 1,
-        uint32_variable_type =            1 << 2,
-        int8_variable_type   =            1 << 3,
-        int16_variable_type  =            1 << 4,
-        int32_variable_type  =            1 << 5,
+        NoType               =            0,
+        uint8_variable_type  =            1,
+        uint16_variable_type =            2,
+        uint32_variable_type =            3,
+        int8_variable_type   =            4,
+        int16_variable_type  =            5,
+        int32_variable_type  =            6,
+        last_variable_type  =             7,
     }NodeType_t;
 
-    CommandValue(NodeType_t type):
+    QuadGSTreeValue(NodeType_t type):
         mNodeType(type),
         mUint8_t(0),
         mUint16_t(0),
@@ -42,65 +43,65 @@ public:
         mInt16_t(0),
         mInt32_t(0)
     {
-
+        if(mNodeType >= last_variable_type)
+        {
+            throw std::invalid_argument("No such type.");
+        }
     }
-    virtual ~CommandValue()
+    virtual ~QuadGSTreeValue()
     {
 
     }
 
-    bool SetValue(std::string value)
+    std::string SetValue(std::string value)
     {
         try
         {
-            int tmp = 0;
+            int tmp = std::stoi(value);;
             switch (mNodeType)
             {
             case NodeType_t::int32_variable_type:
-                tmp = std::stoi(value);
                 mInt32_t = static_cast<int32_t>(tmp);
                 break;
             case NodeType_t::int16_variable_type:
-                tmp = std::stoi(value);
                 mInt16_t = static_cast<int16_t>(tmp);
                 break;
             case NodeType_t::int8_variable_type:
-                tmp = std::stoi(value);
                 mInt8_t = static_cast<int8_t>(tmp);
                 break;
             case NodeType_t::uint32_variable_type:
-                tmp = std::stoi(value);
                 mUint32_t = static_cast<uint32_t>(tmp);
                 break;
             case NodeType_t::uint16_variable_type:
-                tmp = std::stoi(value);
                 mUint16_t = static_cast<uint16_t>(tmp);
                 break;
             case NodeType_t::uint8_variable_type:
-                tmp = std::stoi(value);
                 mUint8_t = static_cast<uint8_t>(tmp);
                 break;
             case NodeType_t::NoType:
-                return false;
+                throw std::runtime_error("Node has no value.");
             default:
+                throw std::runtime_error("Node has no value.");
                 break;
             }
         }
-        catch (std::invalid_argument& e)
+        catch (const std::invalid_argument& e)
         {
-            return false;
+            throw e;
         }
-        catch (std::out_of_range& e)
+        catch (const std::out_of_range& e)
         {
-            return false;
+            throw e;
         }
-        return true;
+        return "";
     }
 
-    bool GetValue(std::string &value)
+    std::string GetValue()
     {
+        std::string value;
         try
         {
+
             switch (mNodeType)
             {
             case NodeType_t::int32_variable_type:
@@ -122,20 +123,21 @@ public:
                  value = std::to_string(mUint8_t);
                 break;
             case NodeType_t::NoType:
-                return false;
+                throw std::runtime_error("Node has no value.");
             default:
+                throw std::runtime_error("Node has no value.");
                 break;
             }
         }
         catch (std::invalid_argument& e)
         {
-            return false;
+            throw e;
         }
         catch (std::out_of_range& e)
         {
-            return false;
+            throw e;
         }
-        return true;
+        return value;
     }
 
 
@@ -235,7 +237,7 @@ private:
 
 } /* namespace QuadGS */
 
-#endif /* QUADGS_MODULES_CORE_COMMANDTREE_COMMANDVALUE_H_ */
+#endif /* QUADGS_MODULES_CORE_COMMANDTREE_QUADGSTREEVALUE_H_ */
 
 
 

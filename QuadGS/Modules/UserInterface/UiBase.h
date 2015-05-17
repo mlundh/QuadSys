@@ -13,9 +13,11 @@ namespace QuadGS {
 class UiBase
 {
 public:
-    typedef std::shared_ptr<UiBase> ptr;
-    UiBase();
-    virtual ~UiBase();
+    typedef std::unique_ptr<UiBase> ptr;
+    UiBase(){}
+    virtual ~UiBase(){}
+    virtual bool RunUI() = 0;
+    
 };
 
 } /* namespace QuadGS */

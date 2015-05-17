@@ -79,7 +79,7 @@ protected:
      * @param start Start position in mPayload.
      * @return true is successful, false otherwise.
      */
-    bool SerializeInt8(int8_t value, uint start);
+    bool SerializeInt8(int8_t value, uint32_t start);
 
 
     /**
@@ -88,7 +88,7 @@ protected:
      * @param start Start position in mPayload.
      * @return true is successful, false otherwise.
      */
-    bool SerializeInt16(int16_t value, uint start);
+    bool SerializeInt16(int16_t value, uint32_t start);
 
     /**
      * Serialize an int16, value, and put it in the buffer.
@@ -96,7 +96,7 @@ protected:
      * @param start Start position in mPayload.
      * @return true is successful, false otherwise.
      */
-    bool SerializeInt32(int32_t value, uint start);
+    bool SerializeInt32(int32_t value, uint32_t start);
 
     /**
      * @brief Deserialize an int8 located at byte start in mPayload.
@@ -104,7 +104,7 @@ protected:
      *        value is located.
      * @return The deserialized value.
      */
-    uint8_t DeserializeInt8(uint start);
+    uint8_t DeserializeInt8(uint32_t start);
 
     /**
      * @brief Deserialize an int16 located at byte start in mPayload.
@@ -112,7 +112,7 @@ protected:
      *        value is located.
      * @return The deserialized value.
      */
-    uint16_t DeserializeInt16(uint start);
+    uint16_t DeserializeInt16(uint32_t start);
 
     /**
      * @brief Deserialize an int32 located at byte start in mPayload.
@@ -120,7 +120,7 @@ protected:
      *        value is located.
      * @return The deserialized value.
      *      */
-    uint32_t DeserializeInt32(uint start);
+    uint32_t DeserializeInt32(uint32_t start);
 
 
 
