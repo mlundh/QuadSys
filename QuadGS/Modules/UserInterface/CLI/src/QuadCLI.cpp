@@ -19,7 +19,15 @@
 namespace QuadGS {
 
 std::vector<std::shared_ptr < Command > > QuadCLI::mCommands;
-QuadGSTree::ptr QuadCLI::mTree;
+Core::ptr QuadCLI::mCore;
+char QuadCLI::WordBreakPath[] = " \t\n\"\\'`@$><=;|&{(/";
+char QuadCLI::WordBreak[] = " \t\n\"\\'`@$><=;|&{(";
+
+QuadCLI::ptr QuadCLI::create()
+{
+    ptr tmp = ptr(new QuadCLI);
+    return tmp;
+}
 
 QuadCLI::QuadCLI():
          Log("CLI"),
@@ -28,16 +36,18 @@ QuadCLI::QuadCLI():
          mPrompt(),
          mContinue(true)
 {
-    rl_attempted_completion_function = completion;
-    //rl_completion_entry_function = command_generator;
-
+    rl_attempted_completion_function = completion;    
+    read_history(NULL);
     mCommands.push_back( std::make_shared<Command> ("quit",
             std::bind(&QuadCLI::Stop, this, std::placeholders::_1 ),
-            "Quit the application."));
+            "Quit the application.", Command::ActOn::NoAction));
 }
 
 QuadCLI::~QuadCLI()
-{}
+{
+  write_history(NULL);
+  history_truncate_file(NULL, 100);
+}
 
 void QuadCLI::registerCommands(std::vector< Command::ptr > commands)
 {
@@ -49,43 +59,48 @@ void QuadCLI::registerCommands(std::vector< Command::ptr > commands)
 
 }
 
-void QuadCLI::registerTree(QuadGSTree::ptr tree)
+size_t QuadCLI::FindCommand(std::string& line)
 {
-    mTree = tree;
+  if(line.empty())
+  {
+      throw std::runtime_error("Empty line.");
+  }
+
+  std::istringstream iss(line);
+  std::string fcn;
+  iss >> fcn;
+  line.erase(line.begin(), line.begin() + fcn.size());
+  boost::trim(line);
+
+  for(size_t i = 0; i < mCommands.size(); i++)
+  {
+      if(!mCommands[i]->mName.compare(fcn))
+      {
+        return i;
+      }
+  }
+  throw std::runtime_error("No such command.");
 }
 
 std::string QuadCLI::ExecuteLine(std::string line)
 {
-    if(line.empty())
-    {
-        throw std::runtime_error("Empty line.");
-    }
-
-    std::istringstream iss(line);
-    std::string fcn;
-    iss >> fcn;
-    line.erase(line.begin(), line.begin() + fcn.size());
-    boost::trim(line);
-
-    for(size_t i = 0; i < mCommands.size(); i++)
-    {
-        if(!mCommands[i]->mName.compare(fcn))
-        {
-
-            if(mCommands[i]->mFunc)
-            {
-                return (mCommands[i]->mFunc(line));
-            }
-            else
-            {
-                throw std::invalid_argument("Command not valid.");
-            }
-
-        }
-    }
-    return "No such command";
+ 
+  size_t i = FindCommand(line);
+  if(mCommands[i]->mFunc)
+  {
+      return (mCommands[i]->mFunc(line));
+  }
+  else
+  {
+      throw std::invalid_argument("Command not valid.");
+  }
+  return "";
 }
 
+void QuadCLI::SetCore(Core::ptr ptr)
+{
+  mCore = ptr;
+}
 
 void QuadCLI::BuildPrompt()
 {
@@ -119,10 +134,10 @@ bool QuadCLI::ExecuteNextCommand()
             return true;
 
         add_history (line.c_str());
-        std::string response = ExecuteLine(line);
-        if(!response.empty())
+        std::string resp = ExecuteLine(line);
+        if(!resp.empty())
         {
-            std::cout << response << std::endl;
+          std::cout << resp << std::endl;
         }
 
     }
@@ -155,7 +170,7 @@ bool QuadCLI::ExecuteNextCommand()
    or NULL if there aren't any. */
 char ** QuadCLI::completion (const char *text, int start, int)
 {
-    rl_attempted_completion_over = 1;
+    
     char **matches;
 
     matches = (char **)NULL;
@@ -164,11 +179,38 @@ char ** QuadCLI::completion (const char *text, int start, int)
      to complete.  Otherwise it is a path in the tree. */
     if (start == 0)
     {
-        matches = rl_completion_matches (text, command_generator);
+      rl_completer_word_break_characters = WordBreak;
+      matches = rl_completion_matches (text, command_generator);
     }
     else
     {
-        matches = rl_completion_matches (text, path_generator);
+      std::string tmpLine(rl_line_buffer);
+      size_t i = FindCommand(tmpLine);
+      switch (mCommands[i]->mActOn)
+      {
+        case Command::ActOn::Core:
+          rl_completer_word_break_characters = WordBreakPath; 
+          rl_attempted_completion_over = 1;
+          //temporarily change branch for the completion function.
+          mCore->SaveBranch(); 
+          mCore->ChangeBranch(tmpLine, false); 
+          matches = rl_completion_matches (text, path_generator);
+          // Restore the current branch.
+          mCore->RestoreBranch();
+          break;
+        case Command::ActOn::IO:
+          rl_attempted_completion_over = 1;
+          break; 
+        case Command::ActOn::UI:
+          rl_attempted_completion_over = 1;
+          break;
+        case  Command::ActOn::File:
+          rl_completer_word_break_characters = WordBreak;
+          break;
+        default:
+          break;
+      }
+
     }
     return (matches);
 }
@@ -208,8 +250,7 @@ char * QuadCLI::command_generator (const char *text, int state)
    we have to  malloc the c_str.*/
 char * QuadCLI::path_generator (const char *text, int state)
 {
-    rl_special_prefixes = "/";
-    rl_completion_suppress_append = 1;
+    rl_completion_append_character = '/';
     static unsigned int list_index;
     static std::vector<std::string> vec;
 
@@ -222,12 +263,11 @@ char * QuadCLI::path_generator (const char *text, int state)
         list_index = 0;
         vec.clear();
         std::string text_s(text);
-        std::string parent_name;
-        mTree->FindPartial(text_s, parent_name, vec);
+        mCore->FindPartial(text_s, vec);
     }
-
     std::string text_s(text);
     boost::trim(text_s);
+    
     /* Return the next name which partially matches from the command list. */
     if(!vec.empty())
     {

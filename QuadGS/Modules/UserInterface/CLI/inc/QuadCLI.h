@@ -17,23 +17,27 @@ namespace QuadGS {
 class QuadCLI : public Log
 {
 public:
-  QuadCLI();
+  typedef std::shared_ptr<QuadCLI> ptr;
+  
+  static ptr create();
+  
   ~QuadCLI();
   
   bool ExecuteNextCommand();
 
   void registerCommands(std::vector< Command::ptr > commands);
-
-  void registerTree(QuadGSTree::ptr tree);
-
+  
+  void SetCore(Core::ptr ptr);
 
 private:
 
+  QuadCLI();
+
   void SetPrompt(std::string prompt);
 
-  std::string ExecuteLine(std::string line);
+  static size_t FindCommand(std::string& line);
 
-  void InitCLI();
+  std::string ExecuteLine(std::string line);
 
   void BuildPrompt();
 
@@ -51,11 +55,15 @@ private:
 
 public:
   static std::vector< Command::ptr > mCommands;
-  static QuadGSTree::ptr mTree;
+  static Core::ptr mCore;
   std::string mPromptStatus;
   std::string mPromptBase;
   std::string mPrompt;
   bool mContinue;
+  static char WordBreakPath[];
+  static char WordBreak[];
+  
+
 
 };
 } /* namespace QuadGS */

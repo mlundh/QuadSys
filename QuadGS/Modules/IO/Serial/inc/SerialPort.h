@@ -8,13 +8,14 @@
 #ifndef SERIALPORT_H_
 #define SERIALPORT_H_
 #include <boost/asio.hpp>
-#include <boost/enable_shared_from_this.hpp>
 #include <iostream>
 #include <string>
 #include <cstddef>
+#include <memory>
 
 #include "QspPayloadRaw.h"
 #include "Log.h"
+#include "IoBase.h"
 
 typedef boost::asio::serial_port b_a_sp;
 
@@ -36,7 +37,7 @@ public:
   template <typename Error>
   std::size_t operator()(const Error& err, std::size_t bytes_transferred)
   {
-      if((bytes_transferred >= 4) && (mBuffer[ bytes_transferred-1 ] == mDelimiter) && (!err))
+      if((bytes_transferred >= 4) && (mBuffer[ bytes_transferred - 1 ] == mDelimiter) && (!err))
       {
           return 0;
       }
@@ -53,21 +54,17 @@ private:
  * in this program.
  */
 class Serial_Port
-        : public boost::enable_shared_from_this< Serial_Port >
+        : public std::enable_shared_from_this< Serial_Port >
         , public Log
 {
 public:
-    /**
-     * @brief Callback typedefs.
-     */
-    typedef std::function< void() > ErrorHandlerFcn;
 
 
 
     /**
      * @brief pointer type to the serial port.
      */
-    typedef std::unique_ptr< Serial_Port > pointer;
+    typedef std::shared_ptr< Serial_Port > pointer;
 
 public:
     /**
@@ -103,6 +100,8 @@ public:
      */
     void do_write( QspPayloadRaw::Ptr ptr);
 
+   void start_read_timer(int timeout = 1000);
+
     /**
      * @brief Close the serial port.
      */
@@ -114,7 +113,7 @@ public:
      *                  "/dev/ttyusb1"
      * @return true if success.
      */
-    bool open( std::string port_name );
+    void open( std::string port_name );
 
     /**
      * @brief Set the options of the serial port.
@@ -124,13 +123,17 @@ public:
      * @param parity
      * @param stop_bits
      */
-    void set_optins( std::string port_name
-            , unsigned int baud_rate
-            , b_a_sp::flow_control::type flow_control
-            , b_a_sp::parity::type parity
-            , b_a_sp::stop_bits::type stop_bits );
+    void set_name( std::string port_name );
 
-    bool set_read_callback( );
+    void set_baud_rate( unsigned int baud_rate );
+
+    void set_flow_control(  b_a_sp::flow_control::type flow_control );
+
+    void set_parity( b_a_sp::parity::type parity );
+    
+    void set_stop_bits( b_a_sp::stop_bits::type stop_bits );
+    
+    void set_read_callback(  IoBase::MessageHandlerFcn fcn  );
 
 private:
     /**
@@ -177,21 +180,18 @@ private:
 
 
     std::string mName;
-    const unsigned int mBaudRate;
-    const enum b_a_sp::flow_control::type mFlowControl;
-    const enum b_a_sp::parity::type mParity;
-    const enum b_a_sp::stop_bits::type mStopBits;
+    unsigned int mBaudRate;
+    enum b_a_sp::flow_control::type mFlowControl;
+    enum b_a_sp::parity::type mParity;
+    enum b_a_sp::stop_bits::type mStopBits;
     boost::asio::io_service& mIoService;
     boost::asio::serial_port mSerialPort;
     boost::system::error_code mError;
-    unsigned char mBufferRead[ 256 ];
-    unsigned char mBufferWrite[ 256 ];
     boost::asio::deadline_timer mTimeoutRead;
     boost::asio::deadline_timer mTimeoutWrite;
     QspPayloadRaw::Ptr mPayloadWrite;
     QspPayloadRaw::Ptr mPayloadRead;
-    std::function<void()> mMessageHandler;
-    ErrorHandlerFcn mErrorHandler;
+    IoBase::MessageHandlerFcn mMessageHandler;
 };
 
 } /* namespace QuadGS */

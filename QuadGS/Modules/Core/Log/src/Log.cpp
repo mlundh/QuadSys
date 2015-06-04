@@ -12,7 +12,6 @@ namespace QuadGS {
 
 Log::Log()
 {
-    // TODO Auto-generated constructor stub
 
 }
 
@@ -23,7 +22,7 @@ Log::Log(std::string tag)
 
 Log::~Log()
 {
-    // TODO Auto-generated destructor stub
+
 }
 
 void Log::QuadLog(QuadGS::severity_level svl, std::string msg)
@@ -43,9 +42,9 @@ std::ostream& operator<< (std::ostream& strm, QuadGS::severity_level level)
 {
     static const char* strings[] =
     {
-        "info",
-        "warning",
         "error",
+        "warning",
+        "info",
         "debug",
         "message_trace"
     };
@@ -58,7 +57,8 @@ std::ostream& operator<< (std::ostream& strm, QuadGS::severity_level level)
     return strm;
 }
 
-void Log::Init( std::string FilenameAppLog, std::string FilenameMsgLog )
+
+void Log::Init( std::string FilenameAppLog, std::string FilenameMsgLog, std::ostream& outstream, severity_level svl )
 {
     // Create the formatter for all file sinks.
     logging::formatter fmt = expr::stream
@@ -83,12 +83,12 @@ void Log::Init( std::string FilenameAppLog, std::string FilenameMsgLog )
                    [
                     expr::stream << "["
                     << expr::attr< QuadGS::severity_level >("Severity")
+                    << "] "
                    ]
-             << "] " // then this delimiter separates it from the rest of the line
              << expr::if_(expr::has_attr("Tag"))
                 [
                     expr::stream << "[" << expr::attr< std::string >("Tag")
-                     << "] " // yet another delimiter
+                     << "] "
                 ]
              << expr::smessage; // here goes the log record text
 
@@ -112,13 +112,11 @@ void Log::Init( std::string FilenameAppLog, std::string FilenameMsgLog )
     pSink->set_filter(expr::attr< severity_level >("Severity") == message_trace );
     logging::core::get()->add_sink(pSink);
 
-    // Create a text file sink used for outputing to std::clog. This sink is used to log everything.
     pSink = boost::make_shared< text_sink >();
-    boost::shared_ptr< std::ostream > stream(&std::clog, boost::null_deleter());
+    boost::shared_ptr< std::ostream > stream(&outstream, boost::null_deleter());
     pSink->locked_backend()->add_stream(stream);
     pSink->set_formatter(fmt_clog);
-    // TODO the sink outputing to clog should have a settable severity level
-    pSink->set_filter(expr::attr< severity_level >("Severity") <= debug );
+    pSink->set_filter(expr::attr< severity_level >("Severity") <= svl );
     logging::core::get()->add_sink(pSink);
 
 

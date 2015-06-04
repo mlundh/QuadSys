@@ -6,59 +6,96 @@
  */
 
 #include "SlipPacket.h"
+#include <iostream>
+#include <sstream>
+#include <string>
+
+extern "C"
+{
+  #include "crc.h"
+}
 
 namespace QuadGS {
 
+bool SlipPacket::mCrcInit(false);
 
-SlipPacket::SlipPacket(QspPayloadRaw::Ptr Payload):
-        mPayload(Payload)
+SlipPacket::SlipPacket(QspPayloadRaw::Ptr data, bool isPayload)
 {
+  initCrc();
+  if(isPayload)
+  {
+    mPayload = data;
     mPacket = QspPayloadRaw::Create(255);
     Encode();
-}
-
-SlipPacket::SlipPacket(uint8_t* Payload, uint8_t PayloadLength)
-
-{
-    mPacket  = QspPayloadRaw::Create(Payload, PayloadLength);
+  }
+  else
+  {
+    mPacket = data;
     mPayload = QspPayloadRaw::Create(255);
     Decode();
+  }
+
+}
+
+SlipPacket::SlipPacket(const uint8_t* data, uint8_t dataLength, bool isPayload)
+
+{
+  initCrc();
+  if(isPayload)
+  {
+    mPayload  = QspPayloadRaw::Create(data, dataLength);
+    mPacket = QspPayloadRaw::Create(255);
+    Encode();
+  }
+  else
+  {
+    mPacket  = QspPayloadRaw::Create(data, dataLength);
+    mPayload = QspPayloadRaw::Create(255);
+    Decode();
+  }
 }
 
 SlipPacket::~SlipPacket()
 {
 }
 
-SlipPacket::SlipPacketPtr SlipPacket::Create(uint8_t* Payload, uint8_t PayloadLength)
+
+void SlipPacket::initCrc()
 {
-    if((!Payload) && !(PayloadLength > 0) && !(PayloadLength < 255))
+  if(!mCrcInit)
+  {
+    crcInit();
+    mCrcInit = true;
+  }
+}
+SlipPacket::SlipPacketPtr SlipPacket::Create(const uint8_t* data, uint8_t dataLength, bool isPayload)
+{
+    if((!data) && !(dataLength > 0) && !(dataLength < 255))
     {
-        return SlipPacket::SlipPacketPtr();
+        throw std::runtime_error("Payload length out of reach.");
     }
-    if((Payload[0] == frame_boundary_octet) && (Payload[PayloadLength - 1] == frame_boundary_octet))
+    if((data[0] == frame_boundary_octet) && (data[dataLength - 1] == frame_boundary_octet))
     {
         //ensure it is a valid SLIP packet and then create a new object.
-        SlipPacketPtr p( new SlipPacket( Payload, PayloadLength )  );
+        SlipPacketPtr p( new SlipPacket( data, dataLength, isPayload )  );
         return p;
 
     }
     else
     {
-        return SlipPacket::SlipPacketPtr();
+        throw std::runtime_error("Not a valid slip packet.");
     }
 }
-SlipPacket::SlipPacketPtr SlipPacket::Create(QspPayloadRaw::Ptr Payload)
+SlipPacket::SlipPacketPtr SlipPacket::Create(QspPayloadRaw::Ptr data, bool isPayload)
 {
-    if(Payload)
+    if(data)
     {
-        //ensure it is a valid SLIP packet and then create a new object.
-        SlipPacketPtr p( new SlipPacket( Payload ) );
-        return p;
-
+      SlipPacketPtr p( new SlipPacket( data, isPayload ) );
+      return p;
     }
     else
     {
-        return SlipPacket::SlipPacketPtr();
+      throw std::runtime_error("Trying to create empty slip packet.");
     }
 }
 
@@ -74,9 +111,11 @@ QspPayloadRaw::Ptr SlipPacket::GetPacket()
 // TODO check and add control!
 bool SlipPacket::Encode()
 {
-    (*mPacket)[0] = SlipControlOctets::frame_boundary_octet;
+  
+  addChecksumToPayload();
+  (*mPacket)[0] = SlipControlOctets::frame_boundary_octet;
 
-    std::size_t k;
+  std::size_t k;
   std::size_t i;
   int nrEscapeOctets = 0;
   for ( i = 0, k = 1; i < (mPayload->getPayloadLength()); i++, k++ )
@@ -98,18 +137,19 @@ bool SlipPacket::Encode()
         (*mPacket)[k] = (*mPayload)[i];
     }
   }
-  (*mPacket)[k] = frame_boundary_octet;
-  mPacket->setPayloadLength(++k);
+  (*mPacket)[k++] = frame_boundary_octet;
+  
+  mPacket->setPayloadLength(k);
   return true;
 }
 
 bool SlipPacket::Decode()
 {
-    std::size_t k;
+  std::size_t k;
   std::size_t i;
   if((*mPacket)[0] != SlipControlOctets::frame_boundary_octet)
   {
-    return false; // Todo, error!
+    throw std::runtime_error("Not a valid Slip Packet");
   }
   for ( i = 0, k = 1; k < (mPacket->getPayloadLength() - 1); i++, k++ )
   {
@@ -126,7 +166,7 @@ bool SlipPacket::Decode()
       }
       else
       {
-        return false; //Todo, error!
+        throw std::runtime_error("Not a valid Slip Packet");
       }
     }
     else
@@ -134,10 +174,35 @@ bool SlipPacket::Decode()
         (*mPayload)[i] = (*mPacket)[k];
     }
   }
-  mPayload->setPayloadLength(++i);
+  mPayload->setPayloadLength(i);
+  verifyChecksum();
   return true;
 }
 
-
+void SlipPacket::addChecksumToPayload()
+{
+  // Add CRC16 checksum to the payload.
+  std::size_t plLength = mPayload->getPayloadLength();
+  uint16_t msg_crc = crcFast(mPayload->getPayload(), plLength);
+  (*mPayload)[plLength++] = (msg_crc >> 8);
+  (*mPayload)[plLength++] = (msg_crc);
+  mPayload->setPayloadLength(plLength);
+}
+void SlipPacket::verifyChecksum()
+{
+  std::size_t plLength = mPayload->getPayloadLength();
+  uint16_t calc_crc = crcFast(mPayload->getPayload(), plLength - 2 );
+  
+  uint16_t msg_crc = 0;
+  msg_crc |= (*mPayload)[plLength - 2] << 8;
+  msg_crc |=  (*mPayload)[plLength - 1];
+  mPayload->setPayloadLength(plLength - 2); // remove CRC, it is not a part of the QSP.
+  if(msg_crc != calc_crc)
+  {
+    std::stringstream ss;
+    ss <<  "calc crc: " << std::hex << calc_crc << ", msg crc: " << std::hex << msg_crc << ".";
+    throw std::runtime_error(ss.str());
+  }
+}
 
 } /* namespace QuadGS */

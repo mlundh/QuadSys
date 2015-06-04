@@ -19,24 +19,32 @@ namespace QuadGS {
 
 
 
-class Command : public Log
+class Command
 {
 public:
+  enum ActOn
+  {
+    NoAction,
+    Core,
+    IO,
+    UI,
+    File
+  };
     typedef std::shared_ptr < Command > ptr;
     typedef std::function<std::string(std::string)> fcn;
-    Command(std::string name, Command::fcn func, std::string doc):
-        Log("Command")
-        ,mName(name)
+    Command(std::string name, Command::fcn func, std::string doc, ActOn acton):
+         mName(name)
         ,mFunc(func)
         ,mDoc(doc)
+        ,mActOn(acton)
 {}
     virtual ~Command()
     {
-        QuadLog(severity_level::debug, "Destructor of Command " + mName + " called" );
     }
   std::string mName;           /* User printable name of the function. */
   fcn mFunc;                   /* Function to call to do the job. */
   std::string mDoc;            /* Documentation for this function.  */
+  ActOn mActOn;
 };
 
 
@@ -49,17 +57,28 @@ public:
     typedef std::shared_ptr<Core> ptr;
     virtual ~Core();
     static ptr create();
+    void UpdateTmp(std::string& path, bool findFull = true);
+    void SaveBranch();
+    void RestoreBranch();
+    std::string ChangeBranch(std::string& path, bool findFull);
+    std::string ChangeBranchCmd(std::string path);
+    std::string PrintCurrentPath(std::string path);
+    std::string list(std::string path);
     std::string get(std::string path);
     std::string set(std::string path);
     std::string Register(std::string path);
     std::string dump(std::string path);
     std::vector<Command::ptr> getCommands();
-    QuadGSTree::ptr getTree();
-
+    ptr getThis();
+    void FindPartial(std::string& name, std::vector<std::string>& vec);
+    
 private:
     Core();
-
-    QuadGSTree::ptr mTree = QuadGSTree::ptr(new QuadGS::QuadGSTree("QuadFC"));
+    
+    QuadGSTree::ptr mTmpBranch;
+    QuadGSTree::ptr mCurrentBranch;
+    QuadGSTree::ptr mSavedBranch;
+    QuadGSTree::ptr mTree;
 };
 
 } /* namespace QuadGS */

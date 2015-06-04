@@ -21,9 +21,10 @@ namespace po = boost::program_options;
 
 #include "SerialManager.h"
 #include "QuadCLI.h"
+#include "QspPayloadRaw.h"
 #include "SlipPacket.h"
-#include "Core/CommandTree/QuadGSTree.h"
-#include "Core/CommandTree/QuadGSTreeValue.h"
+#include "QuadGSTree.h"
+#include "QuadGSTreeValue.h"
 
 
 #include <iostream>
@@ -53,23 +54,26 @@ namespace QuadGS
 struct program_args
 {
   program_args():
-  open(false)
+  logLevel()
   {}
-    std::string port_name;
-    bool open;
+    string logLevel;
+    severity_level lvl;
 };
 }
 
 void handle_program_args(int ac, char* av[], QuadGS::program_args& args);
-//bool execute_next_command(std::istream& input_stream, std::ostream& output_stream);
 
-
+void msgHandler(QuadGS::QspPayloadRaw::Ptr ptr)
+{
+  cout << std::endl << "message received in main: " << std::endl << *ptr << std::endl << std::flush;
+}
 
 int main(int ac, char* av[])
 {
-    QuadGS::Log::Init("app_log", "msg_log");
+
     QuadGS::program_args args;
-    try {
+    try 
+    {
         handle_program_args(ac, av, args);
     }
     catch(exception& e)
@@ -77,25 +81,21 @@ int main(int ac, char* av[])
         std::cerr << "Error: " << e.what() << "\n";
         return 1;
     }
+    
+    QuadGS::Log::Init("app_log", "msg_log", std::clog, args.lvl);
 
-
-    QuadGS::IoBase* mIO = new QuadGS::Serial_Manager();
-    QuadGS::QuadCLI* mUI = new QuadGS::QuadCLI();
+    QuadGS::IoBase::ptr mIO = QuadGS::Serial_Manager::create();
+    QuadGS::QuadCLI::ptr mUI = QuadGS::QuadCLI::create();
     QuadGS::Core::ptr mCore = QuadGS::Core::create();
 
+    mUI->registerCommands(mIO->getCommands());
     mUI->registerCommands(mCore->getCommands());
-    mUI->registerTree(mCore->getTree());
-    if(args.open)
-    {
-//      mIO.mPort->open(args.port_name);
-//      mIO.read();
-    }
-
-    // Read input."
+    mUI->SetCore(mCore->getThis());
+    mIO->set_read_callback(std::bind(msgHandler, std::placeholders::_1));
+    
+    
+    // Read input.
     while(mUI->ExecuteNextCommand());
-
-    delete mIO;
-    delete mUI;
     return 0;
 }
 
@@ -109,14 +109,13 @@ void handle_program_args(int ac, char* av[], QuadGS::program_args& args)
                     ("help,h", "produce help message")
                     ("version,v", "print version string")
                     ("gui,g", "Gui mode")
-                    ("port,p", po::value< std::string >(&args.port_name)->default_value("/dev/ttyUSB0"),
-                            "Port used for communication.")
-                    ("open,o", po::value< bool >(&args.open)->default_value(false));
+                    ("LogLevel,l", po::value< std::string >(&args.logLevel)->default_value("error"),
+                            "Log level for outputing to screen.");
     po::variables_map opts;
     po::store(po::parse_command_line(ac, av, generic), opts);
     po::notify(opts);
     if (opts.count("help")) {
-        cout << generic << "\n";
+        cout << generic << std::endl;
         return;
     }
     if (opts.count("version")) {
@@ -126,6 +125,29 @@ void handle_program_args(int ac, char* av[], QuadGS::program_args& args)
     if (opts.count("gui")) {
         cout << "gui mode not yet supported\n";
         //TODO add support for gui mode.
+        return;
+    }
+    if (opts.count("LogLevel")) {
+      if(!args.logLevel.compare("error"))
+      {
+        args.lvl = QuadGS::severity_level::error;
+      }
+      else if(!args.logLevel.compare("warning"))
+      {
+        args.lvl = QuadGS::severity_level::warning;
+      }
+      else if(!args.logLevel.compare("info"))
+      {
+        args.lvl = QuadGS::severity_level::info;
+      }
+      else if(!args.logLevel.compare("debug"))
+      {
+        args.lvl = QuadGS::severity_level::debug;
+      }
+      else
+      {
+        cout <<  "Invalid log level, using default: error." << std::endl;
+      }
         return;
     }
 }

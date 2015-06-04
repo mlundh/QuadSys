@@ -10,14 +10,18 @@
 #include <iomanip>
 
 namespace QuadGS {
+  
+  std::string const QuadGSTree::mBranchDelimiter("/");
+  std::string const QuadGSTree::mParentDelimiter("..");
+  std::string const QuadGSTree::mValueTypeDelimiterFront("<");
+  std::string const QuadGSTree::mValueTypeDelimiterBack(">");
+  std::string const QuadGSTree::mValueDelimiterFront("[");
+  std::string const QuadGSTree::mValueDelimiterBack("]");
 
 
 QuadGSTree::QuadGSTree(std::string name, QuadGSTreeValue::NodeType_t type):
     mName(name),
     mParent(NULL),
-    mDelimiter("/"),
-    mValueDelimiterFront("<"),
-    mValueDelimiterBack(">"),
     mValue(type)
 
 {
@@ -29,39 +33,40 @@ QuadGSTree::~QuadGSTree()
 
 }
 
-void QuadGSTree::Register(std::string name)
+std::string QuadGSTree::Register(std::string name)
 {
     std::string token = GetModuleString(name);
-    std::string valueType = GetValueString(token);
-
+    std::string valueType = GetValueTypeString(token);
+    std::string value = GetValueString(token);
+    
+    if(token.empty())
+    {
+      return "";
+    }
+    // Make sure the node does not exist.
+    for(unsigned int i = 0; i < mChildren.size(); i++)
+    {
+        std::string tmp = mChildren[i]->GetName();
+        if(token.compare(tmp) == 0)
+        {
+            throw std::runtime_error("Branch already exist.");
+        }
+    }    
     QuadGSTreeValue::NodeType_t type = mValue.mNodeType;
     if(!valueType.empty())
     {
         // Might throw
-        int value = std::stoi(valueType);
-        type = static_cast<QuadGSTreeValue::NodeType_t>(value);
+        int valueTypeI = std::stoi(valueType);
+        type = static_cast<QuadGSTreeValue::NodeType_t>(valueTypeI);
     }
-
-    int index = Find(token);
-    if(index == -1)
+    ptr tmpPtr(new QuadGSTree(token, type));
+    tmpPtr->SetParent(this);
+    if(!value.empty())
     {
-        mChildren.push_back(std::unique_ptr<QuadGSTree>(new QuadGSTree(token, type)));
+      tmpPtr->SetValue(value);
     }
-    if(name.empty())
-    {
-        return;
-    }
-    index = Find(token);
-    if(index != -1)
-    {
-        mChildren[index]->SetParent(this);
-        mChildren[index]->Register(name);
-    }
-    else
-    {
-        throw std::runtime_error("Unable to register command:" + token);
-    }
-
+    mChildren.push_back(tmpPtr);
+    return token;
 }
 
 std::string QuadGSTree::GetName()
@@ -83,94 +88,69 @@ QuadGSTree* QuadGSTree::GetParent()
     return mParent;
 }
 
-std::string QuadGSTree::SetValue(std::string path, std::string value)
+std::string QuadGSTree::SetValue( std::string value)
 {
-    if(path.empty())
-    {
-        return mValue.SetValue(value);
-    }
-    std::string token = GetModuleString(path);
-    int index = Find(token);
-    if(index == -1)
-    {
-        throw std::invalid_argument("Error: No such value (" + token + ")");
-    }
-    else
-    {
-        return(mChildren[index]->SetValue(path, value));
-    }
+    return mValue.SetValue(value);
 }
 
-std::string QuadGSTree::GetValue(std::string path)
+std::string QuadGSTree::GetValue()
 {
-    if(path.empty())
-    {
-        return mValue.GetValue();
-    }
-    std::string token = GetModuleString(path);
-    int index = Find(token);
-    if(index == -1)
-    {
-        throw std::invalid_argument("Error: No such value (" + token + ")");
-    }
-    else
-    {
-        return mChildren[index]->GetValue(path);
-    }
+    return mValue.GetValue();
 }
 
-
-int QuadGSTree::Find(std::string name)
+QuadGSTree::ptr QuadGSTree::GetSelf()
 {
+  return shared_from_this();
+}
+
+QuadGSTree::ptr QuadGSTree::Find(std::string& path, bool findFull)
+{
+    std::string path_cpy = path;
+    std::string name = GetModuleString(path_cpy);
+    std::string valueType = GetValueTypeString(name);
+    std::string value = GetValueString(name);
+    if(name.compare(mParentDelimiter) == 0)
+    {
+      if(mParent)
+      {
+        //If found, update path and return ptr to found.
+        path = path_cpy;        
+        return mParent->GetSelf();
+      }
+      throw std::runtime_error("Branch has no parent.");
+    }
     for(unsigned int i = 0; i < mChildren.size(); i++)
     {
 
         std::string tmp = mChildren[i]->GetName();
         if(name.compare(tmp) == 0)
         {
-            return i;
+          //If found, update path and return ptr to found.
+          path = path_cpy;          
+          return mChildren[i];
         }
     }
-    return -1;
+    //If name is non empty and was not found and we wanted to find full path then throw.
+    if(!name.empty() && findFull)
+    {
+      throw std::runtime_error("Path does not exist: " + name + ".");
+    }
+    //If not found and we did not want to find full, or name is empty (last level) return self, but do not update path.
+    return GetSelf();
 }
 
-void QuadGSTree::FindPartial(std::string& name, std::string& parent_name, std::vector<std::string>& vec)
+
+void QuadGSTree::FindPartial(std::string& name, std::vector<std::string>& vec)
 {
+  std::string token = GetModuleString(name);
 
-    bool followPath = FollowPath(name);
-    std::string token = GetModuleString(name);
-
-    // Remove value type.
-    GetValueString(token);
-
-    if(followPath)
-    {
-        int index = Find(token);
-        if(index != -1) // Found complete token, continue search in childrens list.
-        {
-            parent_name += token + mDelimiter;
-            mChildren[index]->FindPartial(name, parent_name, vec);
-            return;
-        }
-    }
-    else // List at current level
-    {
-        for(size_t i = 0; i < mChildren.size(); i++)
-        {
-            if(mChildren[i]->GetName().find(token) == 0)
-            {
-                if(0 != mChildren[i]->getNrChildren())
-                {
-                    vec.push_back( parent_name + mChildren[i]->GetName() + mDelimiter);
-                }
-                else
-                {
-                    vec.push_back( parent_name + mChildren[i]->GetName());
-                }
-
-            }
-        }
-    }
+  for(size_t i = 0; i < mChildren.size(); i++)
+  {
+      if(mChildren[i]->GetName().find(token) == 0)
+      {
+          vec.push_back( mChildren[i]->GetName() );
+      }
+  }
 }
 
 size_t QuadGSTree::getNrChildren()
@@ -178,19 +158,24 @@ size_t QuadGSTree::getNrChildren()
     return mChildren.size();
 }
 
-std::string QuadGSTree::DumpTree(std::string path, size_t depth)
+
+std::string QuadGSTree::ListChildren()
 {
-     std::string token = GetModuleString(path);
-     // Remove value type.
-     GetValueString(token);
+    std::stringstream ss;
+    ss.flags(std::ios::left);
+    
+    for(size_t i = 0; i < mChildren.size(); i++)
+    {
+        ss << std::setw(20) << mChildren[i]->GetName() + 
+          "<" + std::to_string(mValue.mNodeType) + ">" << std::endl;
+    }
+    std::string tmp = ss.str();
+    return tmp;
+}
 
-     int index = Find(token);
-     if(index != -1) // Found complete token, do not dump self.
-     {
-         return mChildren[index]->DumpTree(path, depth);
-     }
-     // Dump self and children
 
+std::string QuadGSTree::DumpTree(size_t depth)
+{
     std::stringstream ss;
     ss.flags(std::ios::left);
 
@@ -198,7 +183,7 @@ std::string QuadGSTree::DumpTree(std::string path, size_t depth)
     ss << std::setw(20) << (GetName() + "<" + std::to_string(mValue.mNodeType) + ">");
     if(QuadGSTreeValue::NodeType_t::NoType != mValue.mNodeType)
     {
-        ss << std::setw(10) << mValue.GetValue() << std::endl;
+        ss << std::setw(10) << "[" + mValue.GetValue() + "]" << std::endl;
     }
     else
     {
@@ -208,7 +193,7 @@ std::string QuadGSTree::DumpTree(std::string path, size_t depth)
     std::string tmp = ss.str();
     for(size_t i = 0; i < mChildren.size(); i++)
     {
-        tmp += mChildren[i]->DumpTree(path, depth + 1);
+        tmp += mChildren[i]->DumpTree( depth + 1);
     }
     return tmp;
 }
@@ -217,15 +202,31 @@ std::string QuadGSTree::GetModuleString(std::string& s)
 {
     size_t pos = 0;
     std::string token;
-    if ((pos = s.find(mDelimiter)) != std::string::npos)
+    if ((pos = s.find(mBranchDelimiter)) != std::string::npos)
     {
         token = s.substr(0, pos);
-        s.erase(0, pos + mDelimiter.length());
+        s.erase(0, pos + mBranchDelimiter.length());
     }
     else
     {
         token = s;
         s.erase();
+    }
+    return token;
+}
+
+std::string QuadGSTree::GetValueTypeString(std::string& s)
+{
+    size_t pos_front = 0;
+    size_t pos_back = 0;
+    std::string token;
+    pos_front = s.find(mValueTypeDelimiterFront);
+    pos_back = s.find(mValueTypeDelimiterBack);
+    if ((pos_front != std::string::npos)&&(pos_back != std::string::npos))
+    {
+
+        token = s.substr(pos_front + mValueTypeDelimiterFront.length(), (pos_back - pos_front - mValueTypeDelimiterBack.length()));
+        s.erase(pos_front,  (pos_back - pos_front) + mValueTypeDelimiterBack.length());
     }
     return token;
 }
@@ -241,20 +242,11 @@ std::string QuadGSTree::GetValueString(std::string& s)
     {
 
         token = s.substr(pos_front + mValueDelimiterFront.length(), (pos_back - pos_front - mValueDelimiterBack.length()));
-        s.erase(pos_front,  pos_back + mValueDelimiterBack.length());
+        s.erase(pos_front,  (pos_back - pos_front) + mValueDelimiterBack.length());
     }
     return token;
 }
 
-bool QuadGSTree::FollowPath(const std::string& s)
-{
-    size_t pos = 0;
-    if ((pos = s.find(mDelimiter)) != std::string::npos)
-    {
-        return true;
-    }
-    return false;
-}
 
 } /* namespace QuadGS */
 

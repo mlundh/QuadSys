@@ -9,6 +9,7 @@
 #define QUADGS_MODULES_SERIAL_MANAGER_SRC_QSPPAYLOADBASE_H_
 #include <memory>
 #include <string.h>
+#include <ostream>
 
 
 namespace QuadGS {
@@ -35,7 +36,7 @@ public:
      * @param PayloadLength Length of the array.
      * @return Shared pointer to the created instance.
      */
-    static Ptr Create(uint8_t* Payload, uint8_t PayloadLength);
+    static Ptr Create(const uint8_t* Payload, uint8_t PayloadLength);
 
     /**
      * Create an instance with length PayloadLength. The data
@@ -49,13 +50,13 @@ public:
      * Get the array containing the payload.
      * @return pointer to the first element in the array.
      */
-    uint8_t* getPayload();
+    uint8_t* getPayload() const;
 
     /**
      * Get the length of the payload array.
      * @return Length of the payload.
      */
-    std::size_t getPayloadLength();
+    std::size_t getPayloadLength() const;
 
     /**
      * Set the payload length, used when the payload has been
@@ -69,13 +70,13 @@ public:
      */
     uint8_t& operator[](std::size_t idx);
     uint8_t operator[](std::size_t idx) const ;
-
+    friend std::ostream& operator<< (std::ostream& stream, const QspPayloadRaw& pl);
     virtual ~QspPayloadRaw();
 protected:  
     /**
      * Private constructors, use Create methods instead.
      */
-    QspPayloadRaw(uint8_t* Payload, uint8_t PayloadLength);
+    QspPayloadRaw( const uint8_t* Payload, uint8_t PayloadLength);
     QspPayloadRaw(std::size_t PayloadLength);
 
     uint8_t* mPayload;

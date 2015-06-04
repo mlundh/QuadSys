@@ -57,7 +57,7 @@ public:
     {
         try
         {
-            int tmp = std::stoi(value);;
+            int tmp = std::stoi(value);
             switch (mNodeType)
             {
             case NodeType_t::int32_variable_type:
@@ -224,9 +224,9 @@ private:
     uint8_t mUint8_t;
     uint16_t mUint16_t;
     uint32_t mUint32_t;
-    uint8_t mInt8_t;
-    uint16_t mInt16_t;
-    uint32_t mInt32_t;
+    int8_t mInt8_t;
+    int16_t mInt16_t;
+    int32_t mInt32_t;
 };
 
 

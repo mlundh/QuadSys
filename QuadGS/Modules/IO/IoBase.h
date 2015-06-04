@@ -15,13 +15,19 @@ namespace QuadGS {
 class IoBase
 {
 public:
-    IoBase(){}
-    virtual ~IoBase(){}
-    virtual void write( QspPayloadRaw::Ptr ptr) = 0;
-    virtual void startRead( void ) = 0;
-    virtual bool set_read_callback( ) = 0;
-    virtual std::vector< Command::ptr > getCommands( ) = 0;
-    virtual std::string getStatus( ) = 0;
+  /**
+  * @brief Callback typedefs.
+  */
+  typedef std::function<void(QspPayloadRaw::Ptr)> MessageHandlerFcn;
+
+  typedef std::shared_ptr<IoBase> ptr;
+  IoBase(){}
+  virtual ~IoBase(){}
+  virtual void write( QspPayloadRaw::Ptr ptr) = 0;
+  virtual void startRead( void ) = 0;
+  virtual void set_read_callback( MessageHandlerFcn ) = 0;
+  virtual std::vector< Command::ptr > getCommands( ) = 0;
+  virtual std::string getStatus( ) = 0;
 };
 
 } /* namespace QuadGS */

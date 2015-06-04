@@ -18,9 +18,16 @@
 
 namespace QuadGS {
 
-class QuadGSTree
+class QuadGSTree : public std::enable_shared_from_this<QuadGSTree>
 {
 public:
+
+  static const std::string mBranchDelimiter;
+  static const std::string mParentDelimiter;
+  static const std::string mValueTypeDelimiterFront;
+  static const std::string mValueTypeDelimiterBack;
+  static const std::string mValueDelimiterFront;
+  static const std::string mValueDelimiterBack;
 
     typedef std::shared_ptr<QuadGSTree> ptr;
 
@@ -28,7 +35,7 @@ public:
 
     virtual ~QuadGSTree();
 
-    void Register(std::string name);
+    std::string Register(std::string name);
 
     std::string GetName();
 
@@ -36,32 +43,33 @@ public:
 
     QuadGSTree* GetParent();
 
-    virtual std::string SetValue(std::string path, std::string value);
+    virtual std::string SetValue(std::string value);
 
-    virtual std::string GetValue(std::string path);
+    virtual std::string GetValue();
+    
+    QuadGSTree::ptr GetSelf();
 
-    int Find(std::string name);
+    QuadGSTree::ptr Find(std::string& name, bool findFull = true);
 
-    void FindPartial(std::string& name, std::string& parent_name, std::vector<std::string>& vec);
+    void FindPartial(std::string& name, std::vector<std::string>& vec);
 
     size_t getNrChildren();
+    
+    std::string ListChildren();
 
-    std::string DumpTree(std::string path, size_t depth);
+    std::string DumpTree( size_t depth);
 
 
 protected:
 
     std::string mName;
     QuadGSTree* mParent;
-    const std::string mDelimiter;
-    const std::string mValueDelimiterFront;
-    const std::string mValueDelimiterBack;
     std::vector< QuadGSTree::ptr > mChildren;
     QuadGSTreeValue mValue;
 
     std::string GetModuleString(std::string& s);
+    std::string GetValueTypeString(std::string& s);
     std::string GetValueString(std::string& s);
-    bool FollowPath(const std::string& s);
 };
 
 

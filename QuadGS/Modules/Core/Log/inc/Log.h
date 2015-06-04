@@ -39,11 +39,11 @@ using boost::shared_ptr;
 // Here we define our application severity levels.
 enum severity_level
 {
-    info,
-    warning,
-    error,
-    debug,
-    message_trace
+    error = 0,
+    warning = 1,
+    info = 2,
+    debug = 3,
+    message_trace = 4
 };
 
 std::ostream& operator<<( std::ostream& strm, QuadGS::severity_level level);
@@ -54,8 +54,7 @@ public:
     Log();
     Log(std::string tag);
     virtual ~Log();
-    static void Init( std::string FilenameAppLog, std::string FilenameMsgLog );
-
+    static void Init( std::string FilenameAppLog, std::string FilenameMsgLog, std::ostream& outstream, severity_level svl);
     void QuadLog(QuadGS::severity_level svl, std::string msg);
 protected:
     src::severity_logger<QuadGS::severity_level> slg;

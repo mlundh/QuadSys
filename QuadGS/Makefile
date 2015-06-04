@@ -43,50 +43,49 @@ __check_defined = \
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 #Find all .c files in the project. All files are located in the folders (and subfolders of) asf and src
+SOURCE_Modules_C := $(call rwildcard,Modules/,*.c)
 SOURCE_Modules   := $(call rwildcard,Modules/,*.cpp)
-SOURCE_lib := $(call rwildcard,lib/,*.cpp)
+SOURCE_lib := $(call rwildcard,lib/,*.cpp) 
 
+SOURCE_C := $(SOURCE_Modules_C)
+SOURCE_DIR_C := $(sort $(dir $(SOURCE_Modules_C)))
 
-SOURCE     := $(SOURCE_Modules) $(SOURCE_lib)
+SOURCE     := $(SOURCE_Modules) $(SOURCE_lib) 
 SOURCE_DIR :=$(sort $(dir $(SOURCE)))
 
-INCLUDE_Modules   := $(call rwildcard,Modules/,*.h) $(call rwildcard,Modules/,*.hpp)
+VPATH :=$(SOURCE_DIR) $(SOURCE_DIR_C)
+
+INCLUDE_Modules := $(call rwildcard,Modules/,*.h) $(call rwildcard,Modules/,*.hpp)
+
 INCLUDE_lib := $(call rwildcard,lib/,*.h) $(call rwildcard,lib/,*.hpp)
-INCLUDE_lib_usr := /usr/lib64/
 
 $(call check_defined, BOOST_ROOT, boost root dir)
 $(call check_defined, BOOST_LIB_ROOT, boost compiled libs)
 
 INCLUDE_boost := $(BOOST_ROOT)
-INCLUDE     := $(INCLUDE_Modules) $(INCLUDE_lib) $(INCLUDE_lib_usr)
+INCLUDE     := $(INCLUDE_Modules) $(INCLUDE_lib) 
 # $(INCLUDE_boost)
 # Get include directories from list of all included .h files.
 INCLUDE_DIR := $(sort $(dir $(INCLUDE)))
 
-
+OBJS_C := $(SOURCE_Modules_C:.c=.o) 
 OBJS := $(SOURCE:.cpp=.o)
 # all output should be in the "out" folder. 
 OBJS := $(notdir $(OBJS))
 OBJS := $(addprefix $(BUILD_DIR)/,$(OBJS))
 
-VPATH :=$(SOURCE_DIR)
+OBJS_C := $(notdir $(OBJS_C))
+OBJS_C := $(addprefix $(BUILD_DIR)/,$(OBJS_C))
+
+
 
 
 #
 # The command for calling the compiler.
 #
-CXX=g++
+#CXX=g++
+COMPILER_C=gcc
 COMPILER=g++
-#
-# The flags passed to the compiler.
-#
-# -MD generate dependency files as a side-effect
-# -MP add a phony target for each dependency other than the main file. 
-# -MT change target of the rule emitted by dependency generation. 
-#
-
-CXXFLAGS=-MD -MP -MF "$(@:%.o=%.d)" -MT "$(@:%.o=%.d)" -MT "$(@:%.o=%.o)" -Wall -Wextra -pedantic -std=c++11
-
 
 #******************************************************************************
 #
@@ -95,15 +94,31 @@ CXXFLAGS=-MD -MP -MF "$(@:%.o=%.d)" -MT "$(@:%.o=%.d)" -MT "$(@:%.o=%.o)" -Wall 
 #
 #******************************************************************************
 #ifdef DEBUG
-CXXFLAGS += -g 
+COMPILER_FLAGS = -g 
 #endif
 
+#
+# The flags passed to the compiler.
+#
+# -MD generate dependency files as a side-effect
+# -MP add a phony target for each dependency other than the main file. 
+# -MT change target of the rule emitted by dependency generation. 
+#
+COMPILER_FLAGS += -MD -MP -MF "$(@:%.o=%.d)" -MT "$(@:%.o=%.d)" -MT "$(@:%.o=%.o)" -Wall -Wextra -pedantic 
+COMPILER_FLAGS += $(addprefix -I, $(INCLUDE_DIR) ) 
 
 # include boost as -isystem since we can not fix the warnings in the lib.
-CXXFLAGS+= $(addprefix -I, $(INCLUDE_DIR) ) -isystem $(INCLUDE_boost) 
-CXXFLAGS += -DBOOST_LOG_DYN_LINK
-#export LD_LIBRARY_PATH += $(BOOST_LIB_ROOT)
-LDFLAGS :=-L$(BOOST_LIB_ROOT) -lboost_thread -lboost_program_options  -lboost_system -pthread -lboost_log -lboost_log_setup  -lreadline
+CXXFLAGS+= -isystem $(INCLUDE_boost) -DBOOST_LOG_DYN_LINK
+
+CXXFLAGS += $(COMPILER_FLAGS) -std=c++11
+CFLAGS += $(COMPILER_FLAGS) -std=c11
+
+
+
+ifdef AUX_LIB
+LDFLAGS += -L$(AUX_LIB)
+endif
+LDFLAGS +=-L$(BOOST_LIB_ROOT) -lboost_thread -lboost_program_options  -lboost_system -pthread -lboost_log -lboost_log_setup  -lreadline
 
 #
 # The default rule, which causes init to be built.
@@ -111,9 +126,11 @@ LDFLAGS :=-L$(BOOST_LIB_ROOT) -lboost_thread -lboost_program_options  -lboost_sy
 all: ${BUILD_DIR} ${BUILD_DIR}/QuadGS
 
 print: 
-	@echo "Source Files: "${SOURCE} "\n"
+	@echo "Source Files: "${SOURCE}
 	@echo "Include Dir: "${INCLUDE_DIR}
-	@echo $(BOOST_LIB_ROOT)
+	@echo "Obj_c files: "${OBJS_C}
+	@echo "Obj files: "${OBJS}
+
 #
 # The rule to clean out all the build products
 # Simple solution, remove the out dir...
@@ -135,28 +152,42 @@ ${BUILD_DIR}:
 # The rule for linking the application.
 #
 #******************************************************************************
-${BUILD_DIR}/QuadGS:$(OBJS)
+${BUILD_DIR}/QuadGS:$(OBJS) $(OBJS_C) 
 	@if [ 'x${VERBOSE}' = x ];                              \
 	then                                                 \
-		echo "  CXX    ${<}";                            \
+		echo "  C++    ${<}";                            \
 	else                                                 \
-		echo ${CXX} -o $(@) $(OBJS) $(LDFLAGS); 		 \
+		echo ${COMPILER} -o $(@) $(OBJS) $(OBJS_C)  $(LDFLAGS); 		 \
 	fi
-	@${CXX} -o $(@) $(OBJS) $(LDFLAGS)
+	@${COMPILER} -o $(@) $(OBJS) $(OBJS_C) $(LDFLAGS)
+
+#******************************************************************************
+#
+# The rule for building the object file from each C++ source file.
+#
+#******************************************************************************
+${BUILD_DIR}/%.o: %.cpp
+	@if [ 'x${VERBOSE}' = x ];                              \
+	then                                                    \
+		echo "  C++    ${<}";                               \
+	else                                                    \
+		echo ${COMPILER} ${CXXFLAGS} -o ${@} -c ${<}; \
+	fi
+	@${COMPILER} ${CXXFLAGS} -o ${@} -c ${<}
 
 #******************************************************************************
 #
 # The rule for building the object file from each C source file.
 #
 #******************************************************************************
-${BUILD_DIR}/%.o: %.cpp
+${BUILD_DIR}/%.o: %.c
 	@if [ 'x${VERBOSE}' = x ];                              \
 	then                                                    \
-		echo "  CXX    ${<}";                               \
+		echo "  C    ${<}";                               \
 	else                                                    \
-		echo ${CXX} ${CXXFLAGS} -o ${@} -c ${<}; \
+		echo ${COMPILER_C} ${CFLAGS} -o ${@} -c ${<}; \
 	fi
-	@${CXX} ${CXXFLAGS} -o ${@} -c ${<}
+	@${COMPILER_C} ${CFLAGS} -o ${@} -c ${<}
 
 
 #
