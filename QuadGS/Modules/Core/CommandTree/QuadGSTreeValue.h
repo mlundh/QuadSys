@@ -61,27 +61,51 @@ public:
             switch (mNodeType)
             {
             case NodeType_t::int32_variable_type:
+                if(tmp > INT32_MAX)
+                {
+                    throw std::runtime_error("Set: Overflow. Value not set.");
+                }
                 mInt32_t = static_cast<int32_t>(tmp);
                 break;
             case NodeType_t::int16_variable_type:
+                if(tmp > INT16_MAX)
+                {
+                    throw std::runtime_error("Set: Overflow. Value not set.");
+                }
                 mInt16_t = static_cast<int16_t>(tmp);
                 break;
             case NodeType_t::int8_variable_type:
+                if(tmp > INT8_MAX)
+                {
+                    throw std::runtime_error("Set: Overflow. Value not set.");
+                }
                 mInt8_t = static_cast<int8_t>(tmp);
                 break;
             case NodeType_t::uint32_variable_type:
+                if(tmp > UINT32_MAX)
+                {
+                    throw std::runtime_error("Set: Overflow. Value not set.");
+                }
                 mUint32_t = static_cast<uint32_t>(tmp);
                 break;
             case NodeType_t::uint16_variable_type:
+                if(tmp > UINT16_MAX)
+                {
+                    throw std::runtime_error("Set: Overflow. Value not set.");
+                }
                 mUint16_t = static_cast<uint16_t>(tmp);
                 break;
             case NodeType_t::uint8_variable_type:
+                if(tmp > UINT8_MAX)
+                {
+                    throw std::runtime_error("Set: Overflow. Value not set.");
+                }
                 mUint8_t = static_cast<uint8_t>(tmp);
                 break;
             case NodeType_t::NoType:
-                throw std::runtime_error("Node has no value.");
+                throw std::runtime_error("Set: Node has no value type.");
             default:
-                throw std::runtime_error("Node has no value.");
+                throw std::runtime_error("Set: Node has no value type.");
                 break;
             }
         }
@@ -123,9 +147,9 @@ public:
                  value = std::to_string(mUint8_t);
                 break;
             case NodeType_t::NoType:
-                throw std::runtime_error("Node has no value.");
+                throw std::runtime_error("Get: Node has no value type.");
             default:
-                throw std::runtime_error("Node has no value.");
+                throw std::runtime_error("Get: Node has no value.");
                 break;
             }
         }

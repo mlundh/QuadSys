@@ -10,24 +10,27 @@
 #include <string>
 #include <vector>
 #include "Core.h"
+#include "UiBase.h"
 #include "QuadGSTree.h"
 #include "Log.h"
 namespace QuadGS {
   
-class QuadCLI : public Log
+class QuadCLI : public Log, public UiBase
 {
 public:
   typedef std::shared_ptr<QuadCLI> ptr;
   
   static ptr create();
   
-  ~QuadCLI();
+  virtual ~QuadCLI();
   
-  bool ExecuteNextCommand();
+  virtual bool RunUI();
 
-  void registerCommands(std::vector< Command::ptr > commands);
+  virtual void bind(std::shared_ptr<IoBase> IoPtr);
+
+  virtual void registerCommands(std::vector< Command::ptr > commands);
   
-  void SetCore(Core::ptr ptr);
+  virtual void SetCore(Core::ptr ptr);
 
 private:
 

@@ -84,8 +84,7 @@ OBJS_C := $(addprefix $(BUILD_DIR)/,$(OBJS_C))
 # The command for calling the compiler.
 #
 #CXX=g++
-COMPILER_C=gcc
-COMPILER=g++
+#CC=gcc
 
 #******************************************************************************
 #
@@ -157,9 +156,9 @@ ${BUILD_DIR}/QuadGS:$(OBJS) $(OBJS_C)
 	then                                                 \
 		echo "  C++    ${<}";                            \
 	else                                                 \
-		echo ${COMPILER} -o $(@) $(OBJS) $(OBJS_C)  $(LDFLAGS); 		 \
+		echo ${CXX} -o $(@) $(OBJS) $(OBJS_C)  $(LDFLAGS); 		 \
 	fi
-	@${COMPILER} -o $(@) $(OBJS) $(OBJS_C) $(LDFLAGS)
+	@${CXX} -o $(@) $(OBJS) $(OBJS_C) $(LDFLAGS)
 
 #******************************************************************************
 #
@@ -171,9 +170,9 @@ ${BUILD_DIR}/%.o: %.cpp
 	then                                                    \
 		echo "  C++    ${<}";                               \
 	else                                                    \
-		echo ${COMPILER} ${CXXFLAGS} -o ${@} -c ${<}; \
+		echo ${CXX} ${CXXFLAGS} -o ${@} -c ${<}; \
 	fi
-	@${COMPILER} ${CXXFLAGS} -o ${@} -c ${<}
+	@${CXX} ${CXXFLAGS} -o ${@} -c ${<}
 
 #******************************************************************************
 #
@@ -185,9 +184,9 @@ ${BUILD_DIR}/%.o: %.c
 	then                                                    \
 		echo "  C    ${<}";                               \
 	else                                                    \
-		echo ${COMPILER_C} ${CFLAGS} -o ${@} -c ${<}; \
+		echo ${CC} ${CFLAGS} -o ${@} -c ${<}; \
 	fi
-	@${COMPILER_C} ${CFLAGS} -o ${@} -c ${<}
+	@${CC} ${CFLAGS} -o ${@} -c ${<}
 
 
 #

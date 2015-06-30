@@ -7,6 +7,8 @@
 
 #include "SerialManager.h"
 #include "SlipPacket.h"
+#include "QuadSerialPacket.h"
+#include <boost/algorithm/string.hpp>
 
 namespace QuadGS {
 Serial_Manager::Serial_Manager():
@@ -18,7 +20,7 @@ Serial_Manager::Serial_Manager():
 void Serial_Manager::Start()
 {
   mThread_io = new std::thread(std::bind(&Serial_Manager::RunThread, this));
-  mPort = QuadGS::Serial_Port::create(mIo_service);
+  mPort = QuadGS::SerialPort::create(mIo_service);
 }
 
 
@@ -31,68 +33,57 @@ Serial_Manager::ptr Serial_Manager::create()
 
 void Serial_Manager::startRead()
 {
-  mPort->do_read();
+  mPort->doRead();
 }
 
 void Serial_Manager::write( QspPayloadRaw::Ptr ptr)
 {
-  mPort->do_write( ptr );
+  mPort->doWrite( ptr );
 }
 
-void Serial_Manager::set_read_callback(  IoBase::MessageHandlerFcn fcn )
+void Serial_Manager::setReadCallback(  IoBase::MessageHandlerFcn fcn )
 {
-  mPort->set_read_callback( fcn );
+  mPort->setReadCallback( fcn );
 }
 
 std::string Serial_Manager::openCmd(std::string path)
 {
     mPort->open( path );
+    startRead();
     return "";
 }
 
 std::string Serial_Manager::setNameCmd( std::string port_name )
 {
-  mPort->set_name(port_name);
+  mPort->setName(port_name);
   return "";
 }
 
 std::string Serial_Manager::setBaudRateCmd( std::string baud )
 {
   int baudInt = std::stoi(baud);
-  mPort->set_baud_rate(baudInt);
+  mPort->setBaudRate(baudInt);
   return "";
 }
 
 std::string Serial_Manager::setFlowControlCmd(  std::string flow_ctrl )
 {
   int flowCtrl = std::stoi(flow_ctrl);
-  mPort->set_flow_control(static_cast<b_a_sp::flow_control::type>(flowCtrl));
+  mPort->setFlowControl(static_cast<b_a_sp::flow_control::type>(flowCtrl));
   return "";
 }
 
 std::string Serial_Manager::setParityCmd( std::string parity )
 {
   int par = std::stoi(parity);
-  mPort->set_parity(static_cast<b_a_sp::parity::type>(par));
+  mPort->setParity(static_cast<b_a_sp::parity::type>(par));
   return "";
 }
 
 std::string Serial_Manager::setStopBitsCmd( std::string stop_bits )
 {
   int stopBits = std::stoi(stop_bits);
-  mPort->set_stop_bits(static_cast<b_a_sp::stop_bits::type>(stopBits));
-  return "";
-}
-
-std::string Serial_Manager::writeCmd(std::string data)
-{
-  return "";
-}
-
-std::string Serial_Manager::writeRawCmd(std::string data)
-{
-  QspPayloadRaw::Ptr tmpRaw = QspPayloadRaw::Create(reinterpret_cast<const uint8_t*>(data.c_str()), data.length() );
-  mPort->do_write( tmpRaw );
+  mPort->setStopBits(static_cast<b_a_sp::stop_bits::type>(stopBits));
   return "";
 }
 
@@ -123,12 +114,6 @@ std::vector<Command::ptr> Serial_Manager::getCommands( )
   Commands.push_back(std::make_shared<Command> ("openPort",
           std::bind(&Serial_Manager::openCmd, shared_from_this(), std::placeholders::_1),
           "Open the serial port.", Command::ActOn::File));
-  Commands.push_back(std::make_shared<Command> ("writePort",
-          std::bind(&Serial_Manager::writeCmd, shared_from_this(), std::placeholders::_1),
-          "Write to the serial port.", Command::ActOn::IO));
-  Commands.push_back(std::make_shared<Command> ("writePortRawData",
-          std::bind(&Serial_Manager::writeRawCmd, shared_from_this(), std::placeholders::_1),
-          "Write raw data to the serial port. Data will be interpereted as ascii.", Command::ActOn::IO));
   Commands.push_back(std::make_shared<Command> ("startReadPort",
           std::bind(&Serial_Manager::startReadCmd, shared_from_this(), std::placeholders::_1),
           "Start the read operation.", Command::ActOn::IO));

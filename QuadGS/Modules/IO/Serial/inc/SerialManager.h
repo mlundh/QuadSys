@@ -33,9 +33,9 @@ public:
   void Start();
   
   static ptr create();
-  void write( QspPayloadRaw::Ptr ptr);
+  virtual void write( QspPayloadRaw::Ptr ptr);
   virtual void startRead( void );
-  virtual void set_read_callback( IoBase::MessageHandlerFcn fcn );
+  virtual void setReadCallback( IoBase::MessageHandlerFcn fcn );
   
   virtual std::vector<Command::ptr> getCommands( );
 
@@ -46,8 +46,6 @@ public:
   std::string setFlowControlCmd(  std::string flow_ctrl );
   std::string setParityCmd( std::string parity );
   std::string setStopBitsCmd( std::string stop_bits );
-  std::string writeCmd(std::string data);
-  std::string writeRawCmd(std::string data);
   std::string startReadCmd(std::string);
 
 
@@ -55,7 +53,7 @@ private:
   Serial_Manager();
   void RunThread();
     
-	QuadGS::Serial_Port::pointer mPort;
+	QuadGS::SerialPort::ptr mPort;
 	boost::asio::io_service mIo_service;
 	std::unique_ptr<boost::asio::io_service::work> mWork;
 	std::thread *mThread_io;

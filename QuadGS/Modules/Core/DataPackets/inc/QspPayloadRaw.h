@@ -30,14 +30,25 @@ public:
      */
     Ptr Copy();
 
-    /**
-     * Create an instance from a uint8_t array. Data is copied.
-     * @param Payload Pointer to the array.
-     * @param PayloadLength Length of the array.
-     * @return Shared pointer to the created instance.
-     */
-    static Ptr Create(const uint8_t* Payload, uint8_t PayloadLength);
+   /**
+    * Create an instance from a uint8_t array. Data is copied.
+    * @param Payload Pointer to the array.
+    * @param PayloadLength Length of the array.
+    * @param offset.
+    * @return Shared pointer to the created instance.
+    */
+   static Ptr Create(const uint8_t* Payload, uint16_t PayloadLength, uint16_t offset);
 
+
+  /**
+   * Create an instance from a uint8_t array. Data is copied.
+   * @param Payload Pointer to the array.
+   * @param PayloadLength Length of the array.
+   * @param offset.
+   * @return Shared pointer to the created instance.
+   */
+  static Ptr Create(const uint8_t* Payload, uint16_t PayloadLength);
+  
     /**
      * Create an instance with length PayloadLength. The data
      * is allocated, but not assigned.
@@ -66,6 +77,12 @@ public:
     bool setPayloadLength(std::size_t size);
 
     /**
+     * Get the payload represented as a string.
+     * @return Payload represented as string.
+     */
+    std::string toString();
+
+    /**
      * Overloaded array index operators.
      */
     uint8_t& operator[](std::size_t idx);
@@ -76,14 +93,14 @@ protected:
     /**
      * Private constructors, use Create methods instead.
      */
-    QspPayloadRaw( const uint8_t* Payload, uint8_t PayloadLength);
+    QspPayloadRaw( const uint8_t* Payload, uint16_t PayloadLength, uint16_t offset = 0);
     QspPayloadRaw(std::size_t PayloadLength);
 
+    const static size_t mArrayLength;
     uint8_t* mPayload;
     std::size_t mPayloadLength;
 
 private:
-    uint8_t mArrayLength;
 };
 
 } /* namespace QuadGS */

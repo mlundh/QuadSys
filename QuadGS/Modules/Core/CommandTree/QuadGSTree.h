@@ -13,6 +13,7 @@
 #include <vector>
 #include <memory>
 #include <iostream>
+#include "Log.h"
 
 #include "QuadGSTreeValue.h"
 
@@ -24,6 +25,7 @@ public:
 
   static const std::string mBranchDelimiter;
   static const std::string mParentDelimiter;
+  static const std::string mSelfDelimiter;
   static const std::string mValueTypeDelimiterFront;
   static const std::string mValueTypeDelimiterBack;
   static const std::string mValueDelimiterFront;
@@ -31,11 +33,13 @@ public:
 
     typedef std::shared_ptr<QuadGSTree> ptr;
 
-    QuadGSTree(std::string name, QuadGSTreeValue::NodeType_t type = QuadGSTreeValue::NodeType_t::NoType);
+    QuadGSTree(std::string name, QuadGSTreeValue::NodeType_t type);
+
+    QuadGSTree(std::string path);
 
     virtual ~QuadGSTree();
 
-    std::string Register(std::string name);
+    std::string Register(const std::string path);
 
     std::string GetName();
 
@@ -43,22 +47,30 @@ public:
 
     QuadGSTree* GetParent();
 
-    virtual std::string SetValue(std::string value);
+    virtual std::string SetValue(const std::string value);
 
     virtual std::string GetValue();
     
     QuadGSTree::ptr GetSelf();
 
-    QuadGSTree::ptr Find(std::string& name, bool findFull = true);
+    QuadGSTree::ptr Find(const std::string& name, bool findFull = true);
 
-    void FindPartial(std::string& name, std::vector<std::string>& vec);
+    bool NeedUpdate(const std::string& path);
+
+    void FindPartial(const std::string& name, std::vector<std::string>& vec);
 
     size_t getNrChildren();
     
     std::string ListChildren();
 
-    std::string DumpTree( size_t depth);
+    std::string GetNodeString();
 
+    std::string DumpTree();
+
+    std::string DumpTreeFormatted( size_t depth);
+
+
+    static std::string RemoveModuleString(std::string& s);
 
 protected:
 
@@ -66,10 +78,12 @@ protected:
     QuadGSTree* mParent;
     std::vector< QuadGSTree::ptr > mChildren;
     QuadGSTreeValue mValue;
+    Log mLogger;
+    static std::string GetModuleName(const std::string& s);
+    static std::string GetModuleString(const std::string& s);
+    static std::string GetValueTypeString(const std::string& s);
+    static std::string GetValueString(const std::string& s);
 
-    std::string GetModuleString(std::string& s);
-    std::string GetValueTypeString(std::string& s);
-    std::string GetValueString(std::string& s);
 };
 
 

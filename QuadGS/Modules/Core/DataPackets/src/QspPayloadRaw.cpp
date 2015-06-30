@@ -6,22 +6,21 @@
  */
 
 #include <string.h>
-
+#include <sstream>
 #include "QspPayloadRaw.h"
 namespace QuadGS {
 
+const size_t QspPayloadRaw::mArrayLength(512);
 
-QspPayloadRaw::QspPayloadRaw(const uint8_t* Payload, uint8_t PayloadLength):
-    mPayloadLength(PayloadLength)
-    , mArrayLength(255)
+QspPayloadRaw::QspPayloadRaw(const uint8_t* Payload, uint16_t PayloadLength, uint16_t offset):
+    mPayloadLength(PayloadLength + offset)
 {
     mPayload = new uint8_t[mArrayLength];
-    memcpy(mPayload, Payload, PayloadLength * sizeof(uint8_t));
+    memcpy((mPayload + offset), Payload, PayloadLength * sizeof(uint8_t));
 }
 
 QspPayloadRaw::QspPayloadRaw(std::size_t PayloadLength):
     mPayloadLength(PayloadLength)
-    , mArrayLength(255)
 {
     mPayload = new uint8_t[mArrayLength];
 }
@@ -71,11 +70,16 @@ std::ostream& operator <<(std::ostream& stream, const QspPayloadRaw& pl)
   return stream;
 }
 
-
-
-QspPayloadRaw::Ptr QspPayloadRaw::Create(const uint8_t* Payload, uint8_t PayloadLength)
+QspPayloadRaw::Ptr QspPayloadRaw::Create(const uint8_t* Payload, uint16_t PayloadLength, uint16_t offset)
 {
-    Ptr p(new QspPayloadRaw(Payload, PayloadLength) );
+  Ptr p(new QspPayloadRaw(Payload, PayloadLength, offset) );
+  return p;
+}
+
+
+QspPayloadRaw::Ptr QspPayloadRaw::Create(const uint8_t* Payload, uint16_t PayloadLength)
+{
+    Ptr p(new QspPayloadRaw(Payload, PayloadLength, 0) );
     return p;
 }
 
@@ -104,6 +108,12 @@ bool QspPayloadRaw::setPayloadLength(std::size_t size)
     }
     mPayloadLength = size;
     return true;
+}
+
+std::string QspPayloadRaw::toString()
+{
+    std::string str(mPayload, mPayload + getPayloadLength());
+    return str;
 }
 
 

@@ -4,8 +4,7 @@
  *  Created on: Jan 25, 2015
  *      Author: martin
  */
-#include "QuadCLI.h"
-#include "Core.h"
+
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <iostream>
@@ -13,7 +12,10 @@
 #include <stdlib.h>
 #include <cstdlib>
 #include <cstring>
-
+#include "QuadCLI.h"
+#include "Core.h"
+#include "IoBase.h"
+#include "UiBase.h"
 #include <boost/algorithm/string.hpp>
 
 namespace QuadGS {
@@ -47,6 +49,11 @@ QuadCLI::~QuadCLI()
 {
   write_history(NULL);
   history_truncate_file(NULL, 100);
+}
+
+void QuadCLI::bind(std::shared_ptr<IoBase> IoPtr)
+{
+    registerCommands(IoPtr->getCommands());
 }
 
 void QuadCLI::registerCommands(std::vector< Command::ptr > commands)
@@ -119,7 +126,7 @@ std::string QuadCLI::Stop(std::string)
     mContinue = false;
     return "";
 }
-bool QuadCLI::ExecuteNextCommand()
+bool QuadCLI::RunUI()
 {
     try
     {

@@ -21,6 +21,8 @@ namespace po = boost::program_options;
 
 #include "SerialManager.h"
 #include "QuadCLI.h"
+#include "UiBase.h"
+#include "IoBase.h"
 #include "QspPayloadRaw.h"
 #include "SlipPacket.h"
 #include "QuadGSTree.h"
@@ -63,14 +65,9 @@ struct program_args
 
 void handle_program_args(int ac, char* av[], QuadGS::program_args& args);
 
-void msgHandler(QuadGS::QspPayloadRaw::Ptr ptr)
-{
-  cout << std::endl << "message received in main: " << std::endl << *ptr << std::endl << std::flush;
-}
-
 int main(int ac, char* av[])
 {
-
+    // Handle program options.
     QuadGS::program_args args;
     try 
     {
@@ -83,19 +80,17 @@ int main(int ac, char* av[])
     }
     
     QuadGS::Log::Init("app_log", "msg_log", std::clog, args.lvl);
-
-    QuadGS::IoBase::ptr mIO = QuadGS::Serial_Manager::create();
-    QuadGS::QuadCLI::ptr mUI = QuadGS::QuadCLI::create();
+    // Create the modules.
+    QuadGS::IoBase::ptr mIO = std::static_pointer_cast<QuadGS::IoBase>(QuadGS::Serial_Manager::create());
+    QuadGS::UiBase::ptr mUI = std::static_pointer_cast<QuadGS::UiBase>(QuadGS::QuadCLI::create());
     QuadGS::Core::ptr mCore = QuadGS::Core::create();
 
-    mUI->registerCommands(mIO->getCommands());
-    mUI->registerCommands(mCore->getCommands());
-    mUI->SetCore(mCore->getThis());
-    mIO->set_read_callback(std::bind(msgHandler, std::placeholders::_1));
-    
+    mCore->bind(mUI);
+    mCore->bind(mIO);
+    mUI->bind(mIO);
     
     // Read input.
-    while(mUI->ExecuteNextCommand());
+    while(mUI->RunUI());
     return 0;
 }
 

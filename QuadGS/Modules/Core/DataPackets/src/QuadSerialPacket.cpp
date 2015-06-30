@@ -9,15 +9,18 @@
 #include <stdlib.h>
 namespace QuadGS {
 
-QuadSerialPacket::QuadSerialPacket(uint8_t* data, uint8_t length)
+const uint8_t QuadSerialPacket::mHeaderSize(4);
+
+QuadSerialPacket::Ptr QuadSerialPacket::Create(const uint8_t* data, uint8_t length)
 {
-    mPayload = QspPayloadRaw::Create(data, length);
+    Ptr p(new QuadSerialPacket(data, length) );
+    return p;
 }
+QuadSerialPacket::Ptr QuadSerialPacket::Create(const QspPayloadRaw::Ptr packet)
 
-QuadSerialPacket::QuadSerialPacket(const QspPayloadRaw::Ptr packet):
-            mPayload(packet)
 {
-
+    Ptr p(new QuadSerialPacket(packet) );
+    return p;
 }
 
 QuadSerialPacket::~QuadSerialPacket()
@@ -26,38 +29,57 @@ QuadSerialPacket::~QuadSerialPacket()
 
 uint8_t QuadSerialPacket::GetAddress()
 {
-    return (*mPayload)[0];
+    return DeserializeInt8(0);
 }
 void QuadSerialPacket::SetAddress(uint8_t address)
 {
-    (*mPayload)[0] = address;
+    SerializeInt8(address, 0);
 }
 
 uint8_t QuadSerialPacket::GetControl()
 {
-    return (*mPayload)[1];
+    return DeserializeInt8(1);
 }
 void QuadSerialPacket::SetControl(uint8_t control)
 {
-    (*mPayload)[1] = control;
+    SerializeInt8(control, 1);
 }
-bool QuadSerialPacket::SetPayload(QspPayloadRaw::Ptr pl)
+
+uint16_t QuadSerialPacket::GetPayloadLength()
 {
-    if(!mPayload && pl)
-        {
-            mPayload = pl;
-        }
-    else
-    {
-        return false;
-    }
-    return true;
+    return DeserializeInt16(2);
 }
 
 QspPayloadRaw::Ptr QuadSerialPacket::GetPayload()
 {
+    // Copy payload to new QspPayloadRaw object.
+    return QspPayloadRaw::Create(mPayload->getPayload() + (sizeof(uint8_t)*mHeaderSize), GetPayloadLength());
+
+}
+
+QspPayloadRaw::Ptr QuadSerialPacket::GetRawData()
+{
     return  mPayload;
 }
+
+QuadSerialPacket::QuadSerialPacket(const uint8_t* data, uint16_t length)
+{
+    //Assumes data is payload.
+    mPayload = QspPayloadRaw::Create(data, length, mHeaderSize);
+    SetPayloadLength(length);
+}
+
+QuadSerialPacket::QuadSerialPacket(const QspPayloadRaw::Ptr packet):
+            mPayload(packet)
+{
+
+}
+
+void QuadSerialPacket::SetPayloadLength(uint16_t length)
+{
+    SerializeInt16(static_cast<int32_t>(length), 2);
+}
+
 
 bool QuadSerialPacket::SerializeInt8(int8_t value, uint32_t start)
 {
@@ -94,7 +116,7 @@ bool QuadSerialPacket::SerializeInt32(int32_t value, uint32_t start)
 }
 
 
-uint8_t QuadSerialPacket::DeserializeInt8(uint32_t start)
+int8_t QuadSerialPacket::DeserializeInt8(uint32_t start)
 {
     if((start) >= mPayload->getPayloadLength())
     {
@@ -105,7 +127,7 @@ uint8_t QuadSerialPacket::DeserializeInt8(uint32_t start)
     return value;
 }
 
-uint16_t QuadSerialPacket::DeserializeInt16(uint32_t start)
+int16_t QuadSerialPacket::DeserializeInt16(uint32_t start)
 {
     if((start + 2) >= mPayload->getPayloadLength())
     {
@@ -117,7 +139,7 @@ uint16_t QuadSerialPacket::DeserializeInt16(uint32_t start)
     return value;
 }
 
-uint32_t QuadSerialPacket::DeserializeInt32(uint32_t start)
+int32_t QuadSerialPacket::DeserializeInt32(uint32_t start)
 {
   if((start + 4) >= mPayload->getPayloadLength())
   {
@@ -131,9 +153,6 @@ uint32_t QuadSerialPacket::DeserializeInt32(uint32_t start)
   value |= (*mPayload)[start + 3] ;
     return value;
 }
-
-
-
 
 
 

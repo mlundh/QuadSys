@@ -15,7 +15,7 @@
 
 namespace QuadGS {
 
-Serial_Port::Serial_Port(  boost::asio::io_service &io_service ) :
+SerialPort::SerialPort(  boost::asio::io_service &io_service ) :
           Log("Serial_Port")
         , mName( "unnamed" )
         , mBaudRate( 57600 )
@@ -38,19 +38,19 @@ Serial_Port::Serial_Port(  boost::asio::io_service &io_service ) :
 }
 
 
-Serial_Port::pointer Serial_Port::create( boost::asio::io_service &io_service )
+SerialPort::ptr SerialPort::create( boost::asio::io_service &io_service )
 {
-    return Serial_Port::pointer( new Serial_Port( io_service ) );
+    return SerialPort::ptr( new SerialPort( io_service ) );
 }
 
-void Serial_Port::close()
+void SerialPort::close()
 {
     mIoService.post(
-            boost::bind( & Serial_Port::do_close, this,
+            boost::bind( & SerialPort::doClose, this,
                     boost::system::error_code() ) );
 }
 
-void Serial_Port::open( std::string port_name )
+void SerialPort::open( std::string port_name )
 {
   boost::trim(port_name);
   if(port_name.empty())
@@ -86,40 +86,40 @@ void Serial_Port::open( std::string port_name )
   return;
 }
 
-void Serial_Port::set_name( std::string port_name )
+void SerialPort::setName( std::string port_name )
 {
   mName = port_name;
 }
 
-void Serial_Port::set_baud_rate( unsigned int baud_rate )
+void SerialPort::setBaudRate( unsigned int baud_rate )
 {
   mBaudRate = baud_rate;
 }
 
-void Serial_Port::set_flow_control(  b_a_sp::flow_control::type flow_control )
+void SerialPort::setFlowControl(  b_a_sp::flow_control::type flow_control )
 {
   mFlowControl = flow_control;
 }
 
-void Serial_Port::set_parity( b_a_sp::parity::type parity )
+void SerialPort::setParity( b_a_sp::parity::type parity )
 {
   mParity = parity;
 }
 
-void Serial_Port::set_stop_bits( b_a_sp::stop_bits::type stop_bits )
+void SerialPort::setStopBits( b_a_sp::stop_bits::type stop_bits )
 {
   mStopBits = stop_bits;
 }
 
 
-void Serial_Port::set_read_callback( IoBase::MessageHandlerFcn fcn  )
+void SerialPort::setReadCallback( IoBase::MessageHandlerFcn fcn  )
 {
   mMessageHandler = fcn;
     return;
 }
 
 /*Close the serial port*/
-void Serial_Port::do_close( const boost::system::error_code& error )
+void SerialPort::doClose( const boost::system::error_code& error )
 {
   if( error )
     {
@@ -136,11 +136,11 @@ void Serial_Port::do_close( const boost::system::error_code& error )
     QuadLog(severity_level::info, "Serial Port closed");
     return;
 }
-void Serial_Port::do_write( QspPayloadRaw::Ptr ptr)
+void SerialPort::doWrite( QspPayloadRaw::Ptr ptr)
 {
   if( ! mSerialPort.is_open() )
   {
-    return;
+      throw std::runtime_error("Port is not open.");
   }
   if(mPayloadWrite.use_count() != 0)
   {
@@ -154,20 +154,20 @@ void Serial_Port::do_write( QspPayloadRaw::Ptr ptr)
   
   mTimeoutWrite.expires_from_now( boost::posix_time::milliseconds( 10000 ) );
   mTimeoutWrite.async_wait(
-          boost::bind( & Serial_Port::timer_write_callback,
+          boost::bind( & SerialPort::timerWriteCallback,
                   shared_from_this(),
                   boost::asio::placeholders::error ) );
 
   boost::asio::async_write( mSerialPort, boost::asio::buffer( mPayloadWrite->getPayload(), mPayloadWrite->getPayloadLength() ),
-          transfer_until(SlipPacket::SlipControlOctets::frame_boundary_octet, mPayloadWrite->getPayload()),
-          boost::bind( & Serial_Port::write_callback, shared_from_this(),
+          transferUntil(SlipPacket::SlipControlOctets::frame_boundary_octet, mPayloadWrite->getPayload()),
+          boost::bind( & SerialPort::writeCallback, shared_from_this(),
                   boost::asio::placeholders::error,
                   boost::asio::placeholders::bytes_transferred ) );
 }
 
 
 /*Start an async write operation.*/
-void Serial_Port::do_write( unsigned char *buffer , uint8_t buffer_length)
+void SerialPort::doWrite( unsigned char *buffer , uint8_t buffer_length)
 {
   if( ! mSerialPort.is_open() )
   {
@@ -188,29 +188,29 @@ void Serial_Port::do_write( unsigned char *buffer , uint8_t buffer_length)
   
     mTimeoutWrite.expires_from_now( boost::posix_time::milliseconds( 10000 ) );
     mTimeoutWrite.async_wait(
-            boost::bind( & Serial_Port::timer_write_callback,
+            boost::bind( & SerialPort::timerWriteCallback,
                     shared_from_this(),
                     boost::asio::placeholders::error ) );
 
     boost::asio::async_write( mSerialPort, boost::asio::buffer( mPayloadWrite->getPayload(), mPayloadWrite->getPayloadLength() ),
-            transfer_until(SlipPacket::SlipControlOctets::frame_boundary_octet, mPayloadWrite->getPayload()),
-            boost::bind( & Serial_Port::write_callback, shared_from_this(),
+            transferUntil(SlipPacket::SlipControlOctets::frame_boundary_octet, mPayloadWrite->getPayload()),
+            boost::bind( & SerialPort::writeCallback, shared_from_this(),
                     boost::asio::placeholders::error,
                     boost::asio::placeholders::bytes_transferred ) );
   }
 
 
-void Serial_Port::start_read_timer(int timeout)
+void SerialPort::startReadTimer(int timeout)
 {
   mTimeoutRead.expires_from_now( boost::posix_time::milliseconds( timeout ) );
   mTimeoutRead.async_wait(
-          boost::bind( & Serial_Port::timer_read_callback,
+          boost::bind( & SerialPort::timerReadCallback,
                   shared_from_this(),
                   boost::asio::placeholders::error ) );
 }
 
 /*Start an async read operation.*/
-void Serial_Port::do_read()
+void SerialPort::doRead()
 {
     if( ! mSerialPort.is_open() )
     {
@@ -227,15 +227,15 @@ void Serial_Port::do_read()
 
     boost::asio::async_read( mSerialPort,
             boost::asio::buffer( mPayloadRead->getPayload(), mPayloadRead->getPayloadLength() ),
-            transfer_until(SlipPacket::SlipControlOctets::frame_boundary_octet, mPayloadRead->getPayload()),
-            boost::bind( & Serial_Port::read_callback, shared_from_this(),
+            transferUntil(SlipPacket::SlipControlOctets::frame_boundary_octet, mPayloadRead->getPayload()),
+            boost::bind( & SerialPort::readCallback, shared_from_this(),
                     boost::asio::placeholders::error,
                     boost::asio::placeholders::bytes_transferred ) );
 
 }
 
 /*Callback from write operation.*/
-void Serial_Port::write_callback( const boost::system::error_code& error,
+void SerialPort::writeCallback( const boost::system::error_code& error,
         std::size_t bytes_transferred )
 {
   try
@@ -244,7 +244,7 @@ void Serial_Port::write_callback( const boost::system::error_code& error,
     if( error )
     {
         QuadLog(severity_level::error, "Read_callback called with an error: " + error.message() );
-        do_close( error );
+        doClose( error );
     }
     QuadLog(severity_level::debug, "Bytes written: " + std::to_string(bytes_transferred) +  " bytes.");
     mTimeoutWrite.cancel();
@@ -256,7 +256,7 @@ void Serial_Port::write_callback( const boost::system::error_code& error,
 }
 
 /*Callback from read operation.*/
-void Serial_Port::read_callback( const boost::system::error_code& error,
+void SerialPort::readCallback( const boost::system::error_code& error,
         std::size_t bytes_transferred )
 {
   try
@@ -264,7 +264,7 @@ void Serial_Port::read_callback( const boost::system::error_code& error,
     if( error )
     {
         QuadLog(severity_level::error,  " Read_callback called with an error: " + error.message());
-        do_close( error );
+        doClose( error );
     }
     QuadLog(severity_level::debug, "Bytes read: " + std::to_string(bytes_transferred) +  " bytes.");
     
@@ -281,7 +281,7 @@ void Serial_Port::read_callback( const boost::system::error_code& error,
     }
     mTimeoutRead.cancel();
 
-    do_read();
+    doRead();
   }
   catch (const std::runtime_error& e)
   {
@@ -290,7 +290,7 @@ void Serial_Port::read_callback( const boost::system::error_code& error,
 }
 
 /* Called when the write timer's deadline expire */
-void Serial_Port::timer_write_callback( const boost::system::error_code& error )
+void SerialPort::timerWriteCallback( const boost::system::error_code& error )
 {
     mPayloadWrite.reset();
     if( error )
@@ -300,7 +300,7 @@ void Serial_Port::timer_write_callback( const boost::system::error_code& error )
         if( error != boost::asio::error::operation_aborted )
         {
             QuadLog(severity_level::error, "Write timer callback: " + error.message());
-            do_close( error );
+            doClose( error );
             throw std::runtime_error(error.message());
         }
         return;
@@ -313,7 +313,7 @@ void Serial_Port::timer_write_callback( const boost::system::error_code& error )
 }
 
 /* Called when the read timer's deadline expire */
-void Serial_Port::timer_read_callback( const boost::system::error_code& error )
+void SerialPort::timerReadCallback( const boost::system::error_code& error )
 { 
   mPayloadRead.reset(); 
   if( error )
@@ -323,7 +323,7 @@ void Serial_Port::timer_read_callback( const boost::system::error_code& error )
         if( error != boost::asio::error::operation_aborted )
         {
           QuadLog(severity_level::error, "Read timer callback: " + error.message());
-          do_close( error );
+          doClose( error );
           throw std::runtime_error(error.message());
         }
         return;
@@ -334,7 +334,7 @@ void Serial_Port::timer_read_callback( const boost::system::error_code& error )
     return;
 }
 
-Serial_Port::~Serial_Port()
+SerialPort::~SerialPort()
 {
     boost::system::error_code error;
     mSerialPort.cancel( error );
