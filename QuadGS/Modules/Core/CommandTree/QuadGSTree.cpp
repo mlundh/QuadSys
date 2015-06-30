@@ -236,12 +236,12 @@ bool QuadGSTree::NeedUpdate(const std::string& path)
 void QuadGSTree::FindPartial(const std::string& name, std::vector<std::string>& vec)
 {
   std::string token = GetModuleName(name);
-  std::cout << "QuadGSTree::FindPartial 1 finding: " << token << " on branch: " << GetName() << std::endl;
+  //std::cout << "QuadGSTree::FindPartial 1 finding: " << token << " on branch: " << GetName() << std::endl;
   for(size_t i = 0; i < mChildren.size(); i++)
   {
       if(mChildren[i]->GetName().find(token) == 0)
       {
-          std::cout << "QuadGSTree::FindPartial 2 found: " << token << " on child: " << mChildren[i]->GetName() << std::endl;
+          //std::cout << "QuadGSTree::FindPartial 2 found: " << token << " on child: " << mChildren[i]->GetName() << std::endl;
 
           vec.push_back( mChildren[i]->GetName() );
       }
