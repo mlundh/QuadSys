@@ -82,7 +82,7 @@ public:
                 mInt8_t = static_cast<int8_t>(tmp);
                 break;
             case NodeType_t::uint32_variable_type:
-                if(tmp > UINT32_MAX)
+                if(static_cast<uint32_t>(tmp) > UINT32_MAX)
                 {
                     throw std::runtime_error("Set: Overflow. Value not set.");
                 }
@@ -164,84 +164,6 @@ public:
         return value;
     }
 
-
-private:
-    bool SerializeUint32(std::vector<uint8_t>& vec)
-    {
-        if(NodeType_t::int32_variable_type == mNodeType)
-        {
-            vec.reserve(vec.size() + 4);
-            vec.push_back(mUint32_t >> 24);
-            vec.push_back(mUint32_t >> 16);
-            vec.push_back(mUint32_t >> 8);
-            vec.push_back(mUint32_t);
-            return true;
-        }
-        return false;
-    }
-
-    bool SerializeUint16(std::vector<uint8_t>& vec)
-    {
-        if(NodeType_t::uint16_variable_type == mNodeType)
-        {
-            vec.push_back(mUint16_t >> 8);
-            vec.push_back(mUint16_t);
-            return true;
-        }
-        return false;
-    }
-
-    bool SerializeUint8(std::vector<uint8_t>& vec)
-    {
-        if(NodeType_t::uint8_variable_type == mNodeType)
-        {
-            vec.push_back(mUint8_t);
-            return true;
-        }
-        return false;
-    }
-
-
-    bool DeserializeUint32(uint8_t *buffer)
-    {
-        if(NodeType_t::uint32_variable_type == mNodeType)
-        {
-            mUint32_t = 0;
-
-            mUint32_t |= buffer[0] << 24;
-            mUint32_t |= buffer[1] << 16;
-            mUint32_t |= buffer[2] << 8;
-            mUint32_t |= buffer[3] ;
-            return true;
-        }
-        return false;
-    }
-
-    bool DeserializeUint16(uint8_t *buffer)
-    {
-        if(NodeType_t::int32_variable_type == mNodeType)
-        {
-            mUint16_t = 0;
-            mUint16_t |= buffer[0] << 8;
-            mUint16_t |= buffer[1] ;
-            return true;
-        }
-        return false;
-    }
-
-    bool DeserializeUint8(uint8_t *buffer)
-    {
-        if(NodeType_t::int32_variable_type == mNodeType)
-        {
-            mUint8_t = 0;
-            mUint8_t = buffer[0];
-            return true;
-        }
-        return false;
-    }
-
-
-public:
     NodeType_t mNodeType;
 
 private:

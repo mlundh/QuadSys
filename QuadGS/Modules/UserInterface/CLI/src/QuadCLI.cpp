@@ -236,7 +236,7 @@ char * QuadCLI::command_generator (const char *text, int state)
     if (!state)
     {
         list_index = 0;
-        len = strlen (text);
+        len = static_cast<unsigned int>(strlen (text));
     }
 
     /* Return the next name which partially matches from the command list. */

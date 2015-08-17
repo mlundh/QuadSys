@@ -88,14 +88,6 @@ public:
     /**
      * @brief Start an async write operation on the configured
      * and opened serial port.
-     * @param buffer Buffer containing the data to be transmitted.
-     * @param buffer_length Length of data to be transmitted.
-     */
-    void doWrite( unsigned char *buffer, uint8_t buffer_length );
-
-    /**
-     * @brief Start an async write operation on the configured
-     * and opened serial port.
      * @param ptr to a QSP instance to be transmitted.
      */
     void doWrite( QspPayloadRaw::Ptr ptr);

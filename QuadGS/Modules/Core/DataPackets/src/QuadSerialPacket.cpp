@@ -11,7 +11,7 @@ namespace QuadGS {
 
 const uint8_t QuadSerialPacket::mHeaderSize(4);
 
-QuadSerialPacket::Ptr QuadSerialPacket::Create(const uint8_t* data, uint8_t length)
+QuadSerialPacket::Ptr QuadSerialPacket::Create(const uint8_t* data, uint16_t length)
 {
     Ptr p(new QuadSerialPacket(data, length) );
     return p;
@@ -97,8 +97,8 @@ bool QuadSerialPacket::SerializeInt16(int16_t value, uint32_t start)
     {
         return false;
     }
-    (*mPayload)[start] = value >> 8;
-    (*mPayload)[start + 1] = value;
+    (*mPayload)[start] = static_cast<uint8_t>(value >> 8);
+    (*mPayload)[start + 1] = static_cast<uint8_t>(value);
     return true;
 }
 
@@ -108,10 +108,10 @@ bool QuadSerialPacket::SerializeInt32(int32_t value, uint32_t start)
     {
         return false;
     }
-    (*mPayload)[start] = value >> 24;
-    (*mPayload)[start + 1] = value >> 16;
-    (*mPayload)[start + 2] = value >> 8;
-    (*mPayload)[start + 3] = value;
+    (*mPayload)[start]     = static_cast<uint8_t>(value >> 24);
+    (*mPayload)[start + 1] = static_cast<uint8_t>(value >> 16);
+    (*mPayload)[start + 2] = static_cast<uint8_t>(value >> 8);
+    (*mPayload)[start + 3] = static_cast<uint8_t>(value);
     return true;
 }
 
@@ -133,10 +133,10 @@ int16_t QuadSerialPacket::DeserializeInt16(uint32_t start)
     {
         return 0;
     }
-    int16_t value = 0;
+    int value = 0;
     value |= (*mPayload)[start] << 8;
     value |= (*mPayload)[start + 1] ;
-    return value;
+    return static_cast<int16_t>(value);
 }
 
 int32_t QuadSerialPacket::DeserializeInt32(uint32_t start)
@@ -145,13 +145,13 @@ int32_t QuadSerialPacket::DeserializeInt32(uint32_t start)
   {
       return 0;
   }
-  int32_t value = 0;
+  int value = 0;
 
-  value |= (*mPayload)[start]     << 24;
-  value |= (*mPayload)[start + 1] << 16;
-  value |= (*mPayload)[start + 2] << 8;
-  value |= (*mPayload)[start + 3] ;
-    return value;
+  value |= ((*mPayload)[start]     << 24);
+  value |= ((*mPayload)[start + 1] << 16);
+  value |= ((*mPayload)[start + 2] << 8);
+  value |= ((*mPayload)[start + 3] );
+  return static_cast<int32_t>(value);
 }
 
 

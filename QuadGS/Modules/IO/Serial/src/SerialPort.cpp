@@ -165,41 +165,6 @@ void SerialPort::doWrite( QspPayloadRaw::Ptr ptr)
                   boost::asio::placeholders::bytes_transferred ) );
 }
 
-
-/*Start an async write operation.*/
-void SerialPort::doWrite( unsigned char *buffer , uint8_t buffer_length)
-{
-  if( ! mSerialPort.is_open() )
-  {
-    throw std::runtime_error("Port is not open.");
-  }
-  if(mPayloadWrite.use_count() != 0)
-  {
-      //error
-      QuadLog(severity_level::error, "Write called during read operation." );
-      throw std::runtime_error("Write called during read operation.");
-  }
-    QuadLog(severity_level::debug, "Write called.");
-    QspPayloadRaw::Ptr tmpRaw = QspPayloadRaw::Create(buffer, buffer_length );
-
-    //Package into a slip packet and send the packeged data.
-    SlipPacket::SlipPacketPtr tmpSlip = SlipPacket::Create(tmpRaw, true);
-    mPayloadWrite = tmpSlip->GetPacket();
-  
-    mTimeoutWrite.expires_from_now( boost::posix_time::milliseconds( 10000 ) );
-    mTimeoutWrite.async_wait(
-            boost::bind( & SerialPort::timerWriteCallback,
-                    shared_from_this(),
-                    boost::asio::placeholders::error ) );
-
-    boost::asio::async_write( mSerialPort, boost::asio::buffer( mPayloadWrite->getPayload(), mPayloadWrite->getPayloadLength() ),
-            transferUntil(SlipPacket::SlipControlOctets::frame_boundary_octet, mPayloadWrite->getPayload()),
-            boost::bind( & SerialPort::writeCallback, shared_from_this(),
-                    boost::asio::placeholders::error,
-                    boost::asio::placeholders::bytes_transferred ) );
-  }
-
-
 void SerialPort::startReadTimer(int timeout)
 {
   mTimeoutRead.expires_from_now( boost::posix_time::milliseconds( timeout ) );
@@ -269,7 +234,7 @@ void SerialPort::readCallback( const boost::system::error_code& error,
     QuadLog(severity_level::debug, "Bytes read: " + std::to_string(bytes_transferred) +  " bytes.");
     
     QspPayloadRaw::Ptr ptr = mPayloadRead;
-    ptr->setPayloadLength(bytes_transferred);
+    ptr->setPayloadLength(static_cast<uint16_t>(bytes_transferred));
 
     SlipPacket::SlipPacketPtr tmpSlip = SlipPacket::Create(ptr, false);
     
@@ -281,12 +246,15 @@ void SerialPort::readCallback( const boost::system::error_code& error,
     }
     mTimeoutRead.cancel();
 
-    doRead();
+
   }
   catch (const std::runtime_error& e)
   {
+    mPayloadRead.reset(); // TODO move this! might cause error if slip creation fails.
+    mTimeoutRead.cancel();
     QuadLog(severity_level::error, e.what() );
   }
+  doRead();
 }
 
 /* Called when the write timer's deadline expire */

@@ -101,6 +101,7 @@ void Log::Init( std::string FilenameAppLog, std::string FilenameMsgLog, std::ost
             boost::make_shared< std::ofstream >(FilenameAppLog + ".log"));
     // The same formatter is used for all log entries.
     pSink->set_formatter(fmt);
+    pSink->locked_backend()->auto_flush(true);
     logging::core::get()->add_sink(pSink);
 
     // Create the sink for message traces.
@@ -110,6 +111,7 @@ void Log::Init( std::string FilenameAppLog, std::string FilenameMsgLog, std::ost
     pSink->set_formatter(fmt);
     // The message trase sink should only log messages of type message_trace.
     pSink->set_filter(expr::attr< severity_level >("Severity") == message_trace );
+    pSink->locked_backend()->auto_flush(true);
     logging::core::get()->add_sink(pSink);
 
     pSink = boost::make_shared< text_sink >();

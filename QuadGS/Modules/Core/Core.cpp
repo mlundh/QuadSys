@@ -56,6 +56,7 @@ void Core::UpdateTmp(std::string& path, bool findFull)
     if (pos == 0)
     {
         path.erase(0, pos + QuadGSTree::mBranchDelimiter.length());
+
         mTmpBranch = mTree;
         if(mTmpBranch->NeedUpdate(path))
         {
@@ -184,22 +185,21 @@ std::string Core::set(std::string path)
 }
 
 
-
+//TODO Make sure that we can call register multiple times for the same tree.
 std::string Core::Register(std::string path)
 {
-    if(!mTree)
+
+    size_t pos = path.find(QuadGSTree::mBranchDelimiter);
+    if (pos == 0)
     {
-        size_t pos = path.find(QuadGSTree::mBranchDelimiter);
-        if (pos == 0)
-        {
-            path.erase(0, pos + QuadGSTree::mBranchDelimiter.length());
-        }
-        mTree = QuadGSTree::ptr(new QuadGSTree(path));
-        mCurrentBranch = mTree;
-        mTmpBranch = mTree;
-        mSavedBranch = mTree;
-        QuadGSTree::RemoveModuleString(path);
+        path.erase(0, pos + QuadGSTree::mBranchDelimiter.length());
     }
+    mTree = QuadGSTree::ptr(new QuadGSTree(path));
+    mCurrentBranch = mTree;
+    mTmpBranch = mTree;
+    mSavedBranch = mTree;
+    QuadGSTree::RemoveModuleString(path);
+
     std::exception_ptr eptr;
     SaveBranch();
     try
@@ -260,7 +260,7 @@ std::string Core::writeRawCmd(std::string data)
         return "Address or control to large.";
     }
 
-    QuadSerialPacket::Ptr tmp = QuadSerialPacket::Create(reinterpret_cast<const uint8_t*>(data.c_str()),data.length() );
+    QuadSerialPacket::Ptr tmp = QuadSerialPacket::Create(reinterpret_cast<const uint8_t*>(data.c_str()),static_cast<uint16_t>(data.length()) );
     tmp->SetAddress(iAddress);
     tmp->SetControl(iControl);
     mIo->write( tmp->GetRawData() );
@@ -279,9 +279,18 @@ std::string Core::writeCmd(std::string path_dump)
         tmp = tmp->GetParent();
     }
     Path += mTmpBranch->DumpTree();
-    QuadSerialPacket::Ptr tmpPacket = QuadSerialPacket::Create(reinterpret_cast<const uint8_t*>(Path.c_str()),Path.length() );
+    QuadSerialPacket::Ptr tmpPacket = QuadSerialPacket::Create(reinterpret_cast<const uint8_t*>(Path.c_str()),static_cast<uint16_t>(Path.length()) );
     tmpPacket->SetAddress(QuadSerialPacket::addresses::Parameters);
     tmpPacket->SetControl(QuadSerialPacket::ParametersControl::SetTree);
+    mIo->write( tmpPacket->GetRawData() );
+    return "";
+}
+
+std::string Core::requestUpdateCmd(std::string )
+{
+    QuadSerialPacket::Ptr tmpPacket = QuadSerialPacket::Create(NULL, 0 );
+    tmpPacket->SetAddress(QuadSerialPacket::addresses::Parameters);
+    tmpPacket->SetControl(QuadSerialPacket::ParametersControl::GetTree);
     mIo->write( tmpPacket->GetRawData() );
     return "";
 }
@@ -303,24 +312,27 @@ std::vector< Command::ptr > Core::getCommands()
     mCommands.push_back(std::make_shared<Command> ("ls",
             std::bind(&Core::list, shared_from_this(), std::placeholders::_1),
             "List children on branch", Command::ActOn::Core));
-    mCommands.push_back(std::make_shared<Command> ("setValueTree",
+    mCommands.push_back(std::make_shared<Command> ("set",
             std::bind(&Core::set, shared_from_this(), std::placeholders::_1),
             "Set value of the command tree.", Command::ActOn::Core));
-    mCommands.push_back(std::make_shared<Command> ("getValueTree",
+    mCommands.push_back(std::make_shared<Command> ("get",
             std::bind(&Core::get, shared_from_this(), std::placeholders::_1),
             "Get value of the command tree.", Command::ActOn::Core));
-    mCommands.push_back(std::make_shared<Command> ("registerValueTree",
+    mCommands.push_back(std::make_shared<Command> ("RegisterTree",
             std::bind(&Core::Register, shared_from_this(), std::placeholders::_1),
             "Register a new value in the tree.", Command::ActOn::Core));
     mCommands.push_back(std::make_shared<Command> ("dumpTree",
             std::bind(&Core::dump, shared_from_this(), std::placeholders::_1),
             "Dump the command tree.", Command::ActOn::Core));
-    mCommands.push_back(std::make_shared<Command> ("writePort",
+    mCommands.push_back(std::make_shared<Command> ("write",
             std::bind(&Core::writeCmd, shared_from_this(), std::placeholders::_1),
-            "Write to the serial port.", Command::ActOn::IO));
-    mCommands.push_back(std::make_shared<Command> ("writePortRawData",
+            "Write tree to port, relative to current node and path.", Command::ActOn::IO));
+    mCommands.push_back(std::make_shared<Command> ("writeRawData",
             std::bind(&Core::writeRawCmd, shared_from_this(), std::placeholders::_1),
             "Write raw data to the serial port.", Command::ActOn::IO));
+    mCommands.push_back(std::make_shared<Command> ("read",
+            std::bind(&Core::requestUpdateCmd, shared_from_this(), std::placeholders::_1),
+            "Request an update from FC.", Command::ActOn::IO));
 
     return mCommands;
 }
@@ -340,11 +352,15 @@ void Core::ParameterHandler(QuadSerialPacket::Ptr packetPtr)
 {
     uint8_t control = packetPtr->GetControl();
     switch (control){
-    case QuadSerialPacket::ParametersControl::RegisterPath:
-        Register(packetPtr->GetPayload()->toString());
-        break;
     case QuadSerialPacket::ParametersControl::SetTree:
-        set(packetPtr->GetPayload()->toString());
+        if(mTree)
+        {
+            set(packetPtr->GetPayload()->toString());
+        }
+        else
+        {
+            Register(packetPtr->GetPayload()->toString());
+        }
         break;
     case QuadSerialPacket::ParametersControl::GetTree:
         break;

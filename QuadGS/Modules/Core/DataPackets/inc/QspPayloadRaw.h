@@ -55,7 +55,7 @@ public:
      * @param PayloadLength The length of the payload.
      * @return Shared pointer to the created instance.
      */
-    static Ptr Create(std::size_t PayloadLength);
+    static Ptr Create(uint16_t PayloadLength);
 
     /**
      * Get the array containing the payload.
@@ -67,14 +67,14 @@ public:
      * Get the length of the payload array.
      * @return Length of the payload.
      */
-    std::size_t getPayloadLength() const;
+    uint16_t getPayloadLength() const;
 
     /**
      * Set the payload length, used when the payload has been
      * modified.
      * @param size new size of the payload.
      */
-    bool setPayloadLength(std::size_t size);
+    bool setPayloadLength(uint16_t size);
 
     /**
      * Get the payload represented as a string.
@@ -94,11 +94,11 @@ protected:
      * Private constructors, use Create methods instead.
      */
     QspPayloadRaw( const uint8_t* Payload, uint16_t PayloadLength, uint16_t offset = 0);
-    QspPayloadRaw(std::size_t PayloadLength);
+    QspPayloadRaw(uint16_t PayloadLength);
 
     const static size_t mArrayLength;
     uint8_t* mPayload;
-    std::size_t mPayloadLength;
+    uint16_t mPayloadLength;
 
 private:
 };

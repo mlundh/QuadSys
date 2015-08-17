@@ -13,13 +13,13 @@ namespace QuadGS {
 const size_t QspPayloadRaw::mArrayLength(512);
 
 QspPayloadRaw::QspPayloadRaw(const uint8_t* Payload, uint16_t PayloadLength, uint16_t offset):
-    mPayloadLength(PayloadLength + offset)
+    mPayloadLength(static_cast<uint16_t>(PayloadLength + offset))
 {
     mPayload = new uint8_t[mArrayLength];
     memcpy((mPayload + offset), Payload, PayloadLength * sizeof(uint8_t));
 }
 
-QspPayloadRaw::QspPayloadRaw(std::size_t PayloadLength):
+QspPayloadRaw::QspPayloadRaw(uint16_t PayloadLength):
     mPayloadLength(PayloadLength)
 {
     mPayload = new uint8_t[mArrayLength];
@@ -83,7 +83,7 @@ QspPayloadRaw::Ptr QspPayloadRaw::Create(const uint8_t* Payload, uint16_t Payloa
     return p;
 }
 
-QspPayloadRaw::Ptr QspPayloadRaw::Create(std::size_t PayloadLength)
+QspPayloadRaw::Ptr QspPayloadRaw::Create(uint16_t PayloadLength)
 {
     Ptr p(new QspPayloadRaw(PayloadLength) );
     return p;
@@ -96,11 +96,11 @@ uint8_t* QspPayloadRaw::getPayload() const
 
 
 
-std::size_t QspPayloadRaw::getPayloadLength() const
+uint16_t QspPayloadRaw::getPayloadLength() const
 {
     return mPayloadLength;
 }
-bool QspPayloadRaw::setPayloadLength(std::size_t size)
+bool QspPayloadRaw::setPayloadLength(uint16_t size)
 {
     if(size >= mArrayLength)
     {

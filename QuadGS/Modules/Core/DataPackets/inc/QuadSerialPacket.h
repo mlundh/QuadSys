@@ -27,7 +27,6 @@ public:
     };
     enum ParametersControl
     {
-        RegisterPath = 1,
         SetTree = 2,
         GetTree = 3,
         Value = 4,
@@ -39,7 +38,7 @@ public:
      * @param offset.
      * @return Shared pointer to the created instance.
      */
-    static Ptr Create(const uint8_t* data, uint8_t length);
+    static Ptr Create(const uint8_t* data, uint16_t length);
 
     /**
      *

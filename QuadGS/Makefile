@@ -1,6 +1,6 @@
 #******************************************************************************
 #
-# Makefile - Rules for building the driver library and examples.
+# Makefile - Rules for building the application.
 #
 # Copyright (C) 2014  Martin Lundh
 #
@@ -103,7 +103,7 @@ COMPILER_FLAGS = -g
 # -MP add a phony target for each dependency other than the main file. 
 # -MT change target of the rule emitted by dependency generation. 
 #
-COMPILER_FLAGS += -MD -MP -MF "$(@:%.o=%.d)" -MT "$(@:%.o=%.d)" -MT "$(@:%.o=%.o)" -Wall -Wextra -pedantic 
+COMPILER_FLAGS += -MD -MP -MF "$(@:%.o=%.d)" -MT "$(@:%.o=%.d)" -MT "$(@:%.o=%.o)" -Wall -Wextra -pedantic -fsanitize=address -fno-omit-frame-pointer #-Wconversion
 COMPILER_FLAGS += $(addprefix -I, $(INCLUDE_DIR) ) 
 
 # include boost as -isystem since we can not fix the warnings in the lib.
@@ -112,12 +112,12 @@ CXXFLAGS+= -isystem $(INCLUDE_boost) -DBOOST_LOG_DYN_LINK
 CXXFLAGS += $(COMPILER_FLAGS) -std=c++11
 CFLAGS += $(COMPILER_FLAGS) -std=c11
 
-
+#LDFLAGS += 
 
 ifdef AUX_LIB
-LDFLAGS += -L$(AUX_LIB)
+LDLIBS += -L$(AUX_LIB)
 endif
-LDFLAGS +=-L$(BOOST_LIB_ROOT) -lboost_thread -lboost_program_options  -lboost_system -pthread -lboost_log -lboost_log_setup  -lreadline
+LDLIBS +=-L$(BOOST_LIB_ROOT) -lboost_thread -lboost_program_options  -lboost_system -pthread -lboost_log -lboost_log_setup  -lreadline -fsanitize=address -fno-omit-frame-pointer
 
 #
 # The default rule, which causes init to be built.
@@ -156,9 +156,9 @@ ${BUILD_DIR}/QuadGS:$(OBJS) $(OBJS_C)
 	then                                                 \
 		echo "  C++    ${<}";                            \
 	else                                                 \
-		echo ${CXX} -o $(@) $(OBJS) $(OBJS_C)  $(LDFLAGS); 		 \
+		echo ${CXX} -o $(@) $(OBJS) $(OBJS_C)  $(LDFLAGS) $(LDLIBS) $(LOADLIBES);  		 \
 	fi
-	@${CXX} -o $(@) $(OBJS) $(OBJS_C) $(LDFLAGS)
+	@${CXX} -o $(@) $(OBJS) $(OBJS_C) $(LDFLAGS) $(LDLIBS) $(LOADLIBS)
 
 #******************************************************************************
 #

@@ -73,6 +73,7 @@ public:
     std::string Register(std::string path);
     std::string writeRawCmd(std::string data);
     std::string writeCmd(std::string path_dump);
+    std::string requestUpdateCmd(std::string path_dump);
     std::string dump(std::string path);
     std::vector<Command::ptr> getCommands();
     ptr getThis();

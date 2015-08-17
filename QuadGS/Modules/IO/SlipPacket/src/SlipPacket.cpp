@@ -115,22 +115,19 @@ bool SlipPacket::Encode()
   addChecksumToPayload();
   (*mPacket)[0] = SlipControlOctets::frame_boundary_octet;
 
-  std::size_t k;
-  std::size_t i;
-  int nrEscapeOctets = 0;
+  uint16_t k;
+  uint16_t i;
   for ( i = 0, k = 1; i < (mPayload->getPayloadLength()); i++, k++ )
   {
     if ( (*mPayload)[i] == frame_boundary_octet )
     {
         (*mPacket)[k++] = control_escape_octet;
         (*mPacket)[k] = frame_boundary_octet_replacement;
-      nrEscapeOctets++;
     }
     else if ( (*mPayload)[i] == control_escape_octet )
     {
         (*mPacket)[k++] = control_escape_octet;
         (*mPacket)[k] = control_escape_octet_replacement;
-      nrEscapeOctets++;
     }
     else
     {
@@ -145,8 +142,8 @@ bool SlipPacket::Encode()
 
 bool SlipPacket::Decode()
 {
-  std::size_t k;
-  std::size_t i;
+  uint16_t k;
+  uint16_t i;
   if((*mPacket)[0] != SlipControlOctets::frame_boundary_octet)
   {
     throw std::runtime_error("Not a valid Slip Packet");
@@ -182,22 +179,22 @@ bool SlipPacket::Decode()
 void SlipPacket::addChecksumToPayload()
 {
   // Add CRC16 checksum to the payload.
-  std::size_t plLength = mPayload->getPayloadLength();
-  uint16_t msg_crc = crcFast(mPayload->getPayload(), plLength);
-  (*mPayload)[plLength++] = (msg_crc >> 8);
-  (*mPayload)[plLength++] = (msg_crc);
+  uint16_t plLength = mPayload->getPayloadLength();
+  uint16_t msg_crc = static_cast<uint16_t>(crcFast(mPayload->getPayload(), plLength));
+  (*mPayload)[plLength++] = static_cast<uint8_t>((msg_crc >> 8) & 0Xff);
+  (*mPayload)[plLength++] = static_cast<uint8_t>((msg_crc) & 0Xff);
   mPayload->setPayloadLength(plLength);
 }
 void SlipPacket::verifyChecksum()
 {
-  std::size_t plLength = mPayload->getPayloadLength();
-  uint16_t calc_crc = crcFast(mPayload->getPayload(), plLength - 2 );
+  uint16_t plLength = mPayload->getPayloadLength();
+  uint16_t calc_crc = static_cast<uint16_t>(crcFast(mPayload->getPayload(), plLength - 2 ));
   
-  uint16_t msg_crc = 0;
+  unsigned int msg_crc = 0;
   msg_crc |= (*mPayload)[plLength - 2] << 8;
   msg_crc |=  (*mPayload)[plLength - 1];
-  mPayload->setPayloadLength(plLength - 2); // remove CRC, it is not a part of the QSP.
-  if(msg_crc != calc_crc)
+  mPayload->setPayloadLength(static_cast<uint16_t>(plLength - 2)); // remove CRC, it is not a part of the QSP.
+  if(static_cast<uint16_t>(msg_crc) != calc_crc)
   {
     std::stringstream ss;
     ss <<  "calc crc: " << std::hex << calc_crc << ", msg crc: " << std::hex << msg_crc << ".";
