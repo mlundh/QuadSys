@@ -50,10 +50,6 @@ void vApplicationTickHook( void );
  QueueHandle_t xQueue_ranger = NULL;
 SemaphoreHandle_t x_param_mutex = NULL;
 SemaphoreHandle_t x_log_mutex = NULL;
-SemaphoreHandle_t twi_0_notification_semaphore = NULL;
-SemaphoreHandle_t twi_1_notification_semaphore = NULL;
-freertos_twi_if twi_0 = NULL;
-freertos_twi_if twi_1 = NULL;
 /*
  * Set up the hardware to run QuadFC.
  */
@@ -77,13 +73,9 @@ int main( void )
   x_param_mutex = xSemaphoreCreateMutex();
   x_log_mutex = xSemaphoreCreateMutex();
 
-  /*Create TWI semaphores, used for signaling that the read/write operation has finished.*/
 
-  vSemaphoreCreateBinary(twi_0_notification_semaphore);
-  vSemaphoreCreateBinary(twi_1_notification_semaphore);
 
-  if ( !xQueue_receiver || !x_param_mutex || !x_log_mutex || !twi_1_notification_semaphore
-      || !twi_0_notification_semaphore || !xQueue_ranger)
+  if ( !xQueue_receiver || !x_param_mutex || !x_log_mutex || !xQueue_ranger)
   {
     /*If one of thee queues could not be created, do nothing*/
     for ( ;; )

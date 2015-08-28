@@ -1,7 +1,7 @@
 /*
- * globals.h
+ * memory.h
  *
- * Copyright (C) 2014 martin
+ * Copyright (C) 2015 martin
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,20 +21,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef GLOBALS_H_
-#define GLOBALS_H_
+#ifndef PORTLAYER_MEMORY_INC_QUAD_FC_MEMORY_H_
+#define PORTLAYER_MEMORY_INC_QUAD_FC_MEMORY_H_
 
-#include "freertos_twi_master.h"
-#include "queue.h"
+#include "stdint.h"
 
-extern SemaphoreHandle_t x_param_mutex;
-extern SemaphoreHandle_t x_log_mutex;
+uint8_t Mem_Read(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size);
+uint8_t Mem_Write(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size);
 
-
-#define mainDONT_BLOCK                          (0)
-/*
- * Fixed point scaling factor.
- */
-#define SHIFT_EXP 6
-
-#endif /* GLOBALS_H_ */
+#endif /* PORTLAYER_MEMORY_INC_MEMORY_H_ */

@@ -89,7 +89,6 @@
 
 void main_control_task( void *pvParameters );
 void reset_control_error( control_values_pid_t *ctrl_error );
-void init_twi_main( );
 
 /*global parameters*/
 control_values_pid_t *parameters_rate = NULL;
@@ -262,8 +261,7 @@ void main_control_task( void *pvParameters )
 
   /*Initialize the IMU. A reset followed by a short delay is recommended
    * before starting the configuration.*/
-  init_twi_main();
-  mpu6050_initialize();
+  //mpu6050_initialize();
 
   /*Flight controller should always be started in fc_disarmed mode to prevent
    * unintentional motor arming. */
@@ -489,41 +487,3 @@ void reset_control_error( control_values_pid_t *ctrl_error )
   ctrl_error->altitude_d = 0;
 }
 
-
-void init_twi_main( )
-{
-  freertos_peripheral_options_t async_driver_options = {
-      NULL,
-      0,
-      (configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY + 1),
-      TWI_I2C_MASTER,
-      0,
-  };
-
-  freertos_peripheral_options_t async_driver_options1 = {
-      NULL,
-      0,
-      (configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY + 1),
-      TWI_I2C_MASTER,
-      0,
-  };
-
-  /*Initialize twi bus 0, available at pin xx and xx on the Arduino due*/
-  twi_0 = freertos_twi_master_init( TWI0,
-      &async_driver_options );
-
-  /*Initialize twi bus 1, available at pin xx and xx on the Arduino due*/
-  twi_1 = freertos_twi_master_init( TWI1,
-      &async_driver_options1 );
-
-  if ( twi_0 == NULL || twi_1 == NULL )
-  {
-    for ( ;; )
-    {
-      // ERROR, TODO set error flag
-    }
-  }
-
-  twi_set_speed( TWI0, 400000, sysclk_get_cpu_hz() ); /*High speed TWI setting*/
-  twi_set_speed( TWI1, 400000, sysclk_get_cpu_hz() ); /*High speed TWI setting*/
-}

@@ -64,14 +64,19 @@ enum QSP_ParametersControl
   QSP_ParamSetTree = 2,
   QSP_ParamGetTree = 3,
   QSP_ParamValue = 4,
+  QSP_ParamSave = 5,
+  QSP_ParamLoad = 6,
 };
 enum QSP_StatusControl
 {
+  QSP_StatusCont = 0,
   QSP_StatusAck = 1,
   QSP_StatusNack = 2,
   QSP_StatusCrcError = 3,
   QSP_StatusNotAllowed = 4,
   QSP_StatusUnexpectedSequence = 4,
+  QSP_StatusNotValidSlipPacket = 5,
+  QSP_StatusBufferOverrun = 6,
   QSP_StatusNotImplemented = 200,
 };
 typedef enum QSP_StatusControl QSP_StatusControl_t;

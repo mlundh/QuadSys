@@ -45,7 +45,7 @@
 #include "globals.h"
 
 static imu_data_t offset = { /*IMU data struct, used to store the GYRO offset values*/
-.accl_x = 0,
+    .accl_x = 0,
     .accl_y = 0,
     .accl_z = 0,
     .gyro_x = 0,
@@ -64,6 +64,15 @@ static mpu6050_data_t mpu6050_packet;
 // reg_addr Register address
 // bit_nr First bit to read (0-7)
 // data Data to be written to previously defined bits
+/**
+ *
+ * @param reg_addr  Register address
+ * @param bit_nr    bitnumber to change
+ * @param nr_bits
+ * @param data
+ * @param nr_bytes
+ * @return
+ */
 uint8_t mpu6050_write_settings( uint8_t reg_addr, uint8_t bit_nr, uint8_t nr_bits, uint8_t data, uint8_t nr_bytes )
 {
 
@@ -74,29 +83,22 @@ uint8_t mpu6050_write_settings( uint8_t reg_addr, uint8_t bit_nr, uint8_t nr_bit
 
   uint8_t mask = ((1 << nr_bits) - 1) << (bit_nr - nr_bits + 1); // create mask.
 
-  data <<= (bit_nr - nr_bits + 1);        // shift data into correct position
-  data &= mask;                           // zero all non-important bits in data
-  current_reg_value &= ~(mask);           // zero all important bits in existing word
-  current_reg_value |= data;              // combine data with existing word
+  data <<= (bit_nr - nr_bits + 1);  // shift data into correct position
+  data &= mask;                     // zero all non-important bits in data
+  current_reg_value &= ~(mask);     // zero all important bits in existing word
+  current_reg_value |= data;        // combine data with existing word
 
   data = (current_reg_value & 0xFF);
 
-  mpu6050_packet.twi_data.addr[0] = reg_addr;                   // TWI slave memory address data
+  mpu6050_packet.twi_data.addr[0] = reg_addr;
   *mpu6050_packet.data = data;
-  mpu6050_packet.twi_data.length = 1;			               // transfer data size (bytes)
+  mpu6050_packet.twi_data.length = 1;
 
-  xSemaphoreTake( mpu6050_packet.twi_notification_semaphore, mpu6050_packet.xtransmit_block_time );
-
-  twi_status = freertos_twi_write_packet_async( mpu6050_packet.twi,
+  twi_status = freertos_twi_write_packet( mpu6050_packet.twi,
       &mpu6050_packet.twi_data,
-      mpu6050_packet.xtransmit_block_time,
-      mpu6050_packet.twi_notification_semaphore );
-  //Wait until the data is written.
-  if ( (xSemaphoreTake(mpu6050_packet.twi_notification_semaphore, mpu6050_packet.xtransmit_block_time) == pdPASS) && (twi_status == STATUS_OK))
-  {
-    xSemaphoreGive( mpu6050_packet.twi_notification_semaphore );
-  }
-  else
+      mpu6050_packet.xtransmit_block_time );
+
+  if (twi_status != STATUS_OK)
   {
     Led_Set(led_error_TWI);
   }
@@ -107,21 +109,15 @@ uint8_t mpu6050_read_settings( uint8_t reg_addr, uint8_t bit_nr, uint8_t nr_bits
 {
 
   status_code_t twi_status = 0;
-  mpu6050_packet.twi_data.addr[0] = reg_addr;                   // TWI slave memory address data
-  mpu6050_packet.twi_data.length = nr_bytes;			        // transfer data size (bytes)
+  mpu6050_packet.twi_data.addr[0] = reg_addr;
+  mpu6050_packet.twi_data.length = nr_bytes;
 
-  xSemaphoreTake( mpu6050_packet.twi_notification_semaphore, mpu6050_packet.xtransmit_block_time );
-
-  twi_status = freertos_twi_read_packet_async( mpu6050_packet.twi,
+  twi_status = freertos_twi_read_packet(
+      mpu6050_packet.twi,
       &mpu6050_packet.twi_data,
-      mpu6050_packet.xtransmit_block_time,
-      mpu6050_packet.twi_notification_semaphore );
-  //Wait on completion.
-  if (( xSemaphoreTake(mpu6050_packet.twi_notification_semaphore, mpu6050_packet.xtransmit_block_time) == pdPASS) && (twi_status == STATUS_OK))
-  {
-    xSemaphoreGive( mpu6050_packet.twi_notification_semaphore );
-  }
-  else
+      mpu6050_packet.xtransmit_block_time);
+
+  if (twi_status != STATUS_OK)
   {
     Led_Set(led_error_TWI);
   }
@@ -138,46 +134,33 @@ uint8_t mpu6050_read_settings( uint8_t reg_addr, uint8_t bit_nr, uint8_t nr_bits
 uint8_t mpu6050_read_motion( imu_data_t *data )
 {
   status_code_t twi_status = 0;
-  mpu6050_packet.twi_data.addr[0] = MPU6050_RA_ACCEL_XOUT_H;                   // TWI slave memory address data
-  mpu6050_packet.twi_data.length = 14;			        // transfer data size (bytes)
+  mpu6050_packet.twi_data.addr[0] = MPU6050_RA_ACCEL_XOUT_H;
+  mpu6050_packet.twi_data.length = 14;
 
-  if ( xSemaphoreTake(mpu6050_packet.twi_notification_semaphore, mpu6050_packet.xtransmit_block_time) == pdPASS )
+  twi_status = freertos_twi_read_packet(
+      mpu6050_packet.twi,
+      &mpu6050_packet.twi_data,
+      mpu6050_packet.xtransmit_block_time);
+
+  if (twi_status != STATUS_OK)
   {
-    twi_status = freertos_twi_read_packet_async( mpu6050_packet.twi,
-        &mpu6050_packet.twi_data,
-        mpu6050_packet.xtransmit_block_time,
-        mpu6050_packet.twi_notification_semaphore );
-
-    //Wait on completion
-    if (( xSemaphoreTake(mpu6050_packet.twi_notification_semaphore,mpu6050_packet.xtransmit_block_time) == pdPASS) && (twi_status == STATUS_OK))
-    {
-      xSemaphoreGive( mpu6050_packet.twi_notification_semaphore );
-    }
-    else
-    {
-      Led_Set(led_error_TWI);
-    }
-    //TODO check validity of data!
-
-    data->accl_x = (int16_t) (mpu6050_packet.data[0] << 8 | mpu6050_packet.data[1]);
-    data->accl_y = (int16_t) (mpu6050_packet.data[2] << 8 | mpu6050_packet.data[3]);
-    data->accl_z = (int16_t) (mpu6050_packet.data[4] << 8 | mpu6050_packet.data[5]);
-    data->temp = (int16_t) (mpu6050_packet.data[6] << 8 | mpu6050_packet.data[7]);
-    data->gyro_x = -((int16_t) (mpu6050_packet.data[8] << 8 | mpu6050_packet.data[9])) - offset.gyro_x;
-    data->gyro_y = ((int16_t) (mpu6050_packet.data[10] << 8 | mpu6050_packet.data[11])) - offset.gyro_y;
-    data->gyro_z = -((int16_t) (mpu6050_packet.data[12] << 8 | mpu6050_packet.data[13])) - offset.gyro_z;
-    return 0;
+    Led_Set(led_error_TWI);
+    return 1;
   }
-  else
-  {
-    //Error!
-  }
-  return 1;
+
+  data->accl_x  = (int16_t) (mpu6050_packet.data[0]     << 8 | mpu6050_packet.data[1]);
+  data->accl_y  = (int16_t) (mpu6050_packet.data[2]     << 8 | mpu6050_packet.data[3]);
+  data->accl_z  = (int16_t) (mpu6050_packet.data[4]     << 8 | mpu6050_packet.data[5]);
+  data->temp    = (int16_t) (mpu6050_packet.data[6]     << 8 | mpu6050_packet.data[7]);
+  data->gyro_x  = -((int16_t) (mpu6050_packet.data[8]   << 8 | mpu6050_packet.data[9]))   - offset.gyro_x;
+  data->gyro_y  = ((int16_t) (mpu6050_packet.data[10]   << 8 | mpu6050_packet.data[11]))  - offset.gyro_y;
+  data->gyro_z  = -((int16_t) (mpu6050_packet.data[12]  << 8 | mpu6050_packet.data[13]))  - offset.gyro_z;
+  return 0;
 }
 
 void mpu6050_calc_offset( )
 {
-  const TickType_t xPeriod = (10UL / portTICK_PERIOD_MS); /*Read new values at 100Hz*/
+  const TickType_t xPeriod = (2UL / portTICK_PERIOD_MS);
 
   imu_data_t imu_readings;
   int i = 0;
@@ -195,7 +178,7 @@ void mpu6050_calc_offset( )
   int64_t temp_gyro_y = 0;
   int64_t temp_gyro_z = 0;
 
-  for ( i = 0; i < 2000; i++ )
+  for ( i = 0; i < 1000; i++ )
   {
     mpu6050_read_motion( &imu_readings );
     temp_accl_x += (int64_t) imu_readings.accl_x;
@@ -208,12 +191,12 @@ void mpu6050_calc_offset( )
     vTaskDelay( xPeriod );
   }
 
-  offset.accl_x = (int16_t) (temp_accl_x / 2000);
-  offset.accl_y = (int16_t) (temp_accl_y / 2000);
-  offset.accl_z = (int16_t) (temp_accl_z / 2000);
-  offset.gyro_x = (int16_t) (temp_gyro_x / 2000);
-  offset.gyro_y = (int16_t) (temp_gyro_y / 2000);
-  offset.gyro_z = (int16_t) (temp_gyro_z / 2000);
+  offset.accl_x = (int16_t) (temp_accl_x / 1000);
+  offset.accl_y = (int16_t) (temp_accl_y / 1000);
+  offset.accl_z = (int16_t) (temp_accl_z / 1000);
+  offset.gyro_x = (int16_t) (temp_gyro_x / 1000);
+  offset.gyro_y = (int16_t) (temp_gyro_y / 1000);
+  offset.gyro_z = (int16_t) (temp_gyro_z / 1000);
 }
 
 void mpu6050_initialize( )
@@ -221,7 +204,6 @@ void mpu6050_initialize( )
   static TickType_t delay_1000_ms = (1000UL / portTICK_PERIOD_MS); /*delay of 1000ms*/
 
   mpu6050_packet.twi = TWI0;
-  mpu6050_packet.twi_notification_semaphore = twi_0_notification_semaphore;
   mpu6050_packet.xtransmit_block_time = BLOCK_TIME_IMU;
   mpu6050_packet.twi_data.chip = MPU6050_ADDRESS_DORTEK;
   mpu6050_packet.twi_data.addr_length = 1;
@@ -238,7 +220,7 @@ void mpu6050_initialize( )
 
   vTaskDelay( delay_1000_ms );
 
-  /*Calculate offsets for gyro. TODO calculate angle offset for accl.*/
+  /*Calculate offsets for IMU.*/
   mpu6050_calc_offset();
 
 }

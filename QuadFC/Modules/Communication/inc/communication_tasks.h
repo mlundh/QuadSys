@@ -25,9 +25,9 @@
 void Com_CreateTasks( void );
 
 uint8_t Com_SendQSP( QSP_t *packet );
-uint8_t Com_HandleQSP(QSP_t *packet, QSP_t *QSP_RspPacket);
-uint8_t Com_HandleParameters(QSP_t *QSP_packet, QSP_t *QSP_RspPacket);
-uint8_t Com_HandleStatus(QSP_t *QSP_packet, QSP_t *QSP_RspPacket);
+uint8_t Com_HandleQSP(QSP_t *packet, QSP_t *QSP_RspPacket, SLIP_t *SLIP_packet);
+uint8_t Com_HandleParameters(QSP_t *QSP_packet, QSP_t *QSP_RspPacket, SLIP_t *SLIP_packet);
+uint8_t Com_HandleStatus(QSP_t *QSP_packet, QSP_t *QSP_RspPacket, SLIP_t *SLIP_packet);
 
 void Com_SendResponse(QSP_t *QSP_RspPacket);
 

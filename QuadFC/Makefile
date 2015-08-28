@@ -43,8 +43,10 @@ SOURCE_DIR :=$(sort $(dir $(SOURCE)))
 INCLUDE_Modules   := $(call rwildcard,Modules/,*.h)
 INCLUDE_Utilities := $(call rwildcard,Utilities/,*.h)
 INCLUDE_PortLayer := $(call rwildcard,PortLayer/,*.h)
+INCLUDE_HAL := $(call rwildcard,HAL/,*.h)
 
-INCLUDE     := $(INCLUDE_Modules) $(INCLUDE_Utilities) $(INCLUDE_PortLayer)
+
+INCLUDE     := $(INCLUDE_Modules) $(INCLUDE_Utilities) $(INCLUDE_PortLayer) $(INCLUDE_HAL)
 # Get include directories from list of all included .h files.
 INCLUDE_DIR := $(sort $(dir $(INCLUDE)))
 
