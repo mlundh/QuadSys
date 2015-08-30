@@ -191,7 +191,7 @@ void SlipPacket::verifyChecksum()
   uint16_t calc_crc = static_cast<uint16_t>(crcFast(mPayload->getPayload(), plLength - 2 ));
   
   unsigned int msg_crc = 0;
-  msg_crc |= (*mPayload)[plLength - 2] << 8;
+  msg_crc |=  (*mPayload)[plLength - 2] << 8;
   msg_crc |=  (*mPayload)[plLength - 1];
   mPayload->setPayloadLength(static_cast<uint16_t>(plLength - 2)); // remove CRC, it is not a part of the QSP.
   if(static_cast<uint16_t>(msg_crc) != calc_crc)

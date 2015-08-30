@@ -295,6 +295,24 @@ std::string Core::requestUpdateCmd(std::string )
     return "";
 }
 
+std::string Core::saveParamCmd(std::string )
+{
+    QuadSerialPacket::Ptr tmpPacket = QuadSerialPacket::Create(NULL, 0 );
+    tmpPacket->SetAddress(QuadSerialPacket::addresses::Parameters);
+    tmpPacket->SetControl(QuadSerialPacket::ParametersControl::Save);
+    mIo->write( tmpPacket->GetRawData() );
+    return "";
+}
+
+std::string Core::loadParamCmd(std::string )
+{
+    QuadSerialPacket::Ptr tmpPacket = QuadSerialPacket::Create(NULL, 0 );
+    tmpPacket->SetAddress(QuadSerialPacket::addresses::Parameters);
+    tmpPacket->SetControl(QuadSerialPacket::ParametersControl::Load);
+    mIo->write( tmpPacket->GetRawData() );
+    return "";
+}
+
 std::string Core::dump(std::string path)
 {
     UpdateTmp(path);
@@ -333,7 +351,12 @@ std::vector< Command::ptr > Core::getCommands()
     mCommands.push_back(std::make_shared<Command> ("read",
             std::bind(&Core::requestUpdateCmd, shared_from_this(), std::placeholders::_1),
             "Request an update from FC.", Command::ActOn::IO));
-
+    mCommands.push_back(std::make_shared<Command> ("save",
+            std::bind(&Core::saveParamCmd, shared_from_this(), std::placeholders::_1),
+            "Tell fc to save current parameters.", Command::ActOn::IO));
+    mCommands.push_back(std::make_shared<Command> ("load",
+            std::bind(&Core::loadParamCmd, shared_from_this(), std::placeholders::_1),
+            "Tell fc to load saved parameters.", Command::ActOn::IO));
     return mCommands;
 }
 

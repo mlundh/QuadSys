@@ -30,6 +30,8 @@ public:
         SetTree = 2,
         GetTree = 3,
         Value = 4,
+        Save = 5,
+        Load = 6,
     };
     /**
      * Create an instance from a uint8_t array. Data is copied.
