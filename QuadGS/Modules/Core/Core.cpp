@@ -395,26 +395,46 @@ void Core::ParameterHandler(QuadSerialPacket::Ptr packetPtr)
     }
 }
 
-void Core::msgHandler(QuadGS::QspPayloadRaw::Ptr ptr)
+void Core::StatusHandler(QuadSerialPacket::Ptr packetPtr)
 {
-    QuadSerialPacket::Ptr packetPtr = QuadSerialPacket::Create(ptr);
-    uint8_t address = packetPtr->GetAddress();
+    uint8_t control = packetPtr->GetControl();
+    switch (control){
+    case QuadSerialPacket::StatusControl::Ack:
+        break;
+    case QuadSerialPacket::StatusControl::BufferOverrun:
+    case QuadSerialPacket::StatusControl::Error:
+    case QuadSerialPacket::StatusControl::Nack:
+    case QuadSerialPacket::StatusControl::NotAllowed:
+    case QuadSerialPacket::StatusControl::NotImplemented:
+    case QuadSerialPacket::StatusControl::NotValidSlipPacket:
+    case QuadSerialPacket::StatusControl::UnexpectedSequence:
+        logger.QuadLog(QuadGS::error, "Not valid response: " + std::to_string(packetPtr->GetControl()));
+        break;
+
+    default:
+        break;
+    }
+}
+
+void Core::msgHandler(QuadGS::QuadSerialPacket::Ptr ptr)
+{
+    uint8_t address = ptr->GetAddress();
     switch (address){
     case QuadSerialPacket::Parameters:
-        logger.QuadLog(severity_level::message_trace, "Parameter message: \n" + ptr->toString());
-        ParameterHandler(packetPtr);
+        logger.QuadLog(severity_level::message_trace, "Parameter message: \n" + ptr->GetRawData()->toString());
+        ParameterHandler(ptr);
         break;
     case QuadSerialPacket::FunctionCall:
-        logger.QuadLog(severity_level::info, "FunctionCall message: \n" + ptr->toString());
+        logger.QuadLog(severity_level::info, "FunctionCall message: \n" + ptr->GetRawData()->toString());
         // FunctionCallHandler();
         break;
     case QuadSerialPacket::Log:
-        logger.QuadLog(severity_level::info, "Log message: \n" + ptr->toString());
+        logger.QuadLog(severity_level::info, "Log message: \n" + ptr->GetRawData()->toString());
         // LogHandler();
         break;
 
     default:
-        logger.QuadLog(severity_level::warning, "Unhandled message: " + std::to_string(address) + " with data: \n" + ptr->toString());
+        logger.QuadLog(severity_level::warning, "Unhandled message: " + std::to_string(address) + " with data: \n" + ptr->GetRawData()->toString());
         break;
     }
 }

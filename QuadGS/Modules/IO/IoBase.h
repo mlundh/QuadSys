@@ -12,6 +12,7 @@ namespace QuadGS {
 
 class Core;
 class Command;
+class QuadSerialPacket;
 class QspPayloadRaw;
 
 class IoBase
@@ -20,7 +21,9 @@ public:
   /**
   * @brief Callback typedefs.
   */
-  typedef std::function<void( std::shared_ptr<QspPayloadRaw> )> MessageHandlerFcn;
+  typedef std::function<void( std::shared_ptr<QuadSerialPacket> )> MessageHandlerFcn;
+  typedef std::function<void( std::shared_ptr<QspPayloadRaw> )> MessageHandlerRawFcn;
+  typedef std::function<void( void )> TimeoutHandlerFcn;
 
   typedef std::shared_ptr<IoBase> ptr;
   IoBase(){}

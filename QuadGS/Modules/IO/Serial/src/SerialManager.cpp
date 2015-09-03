@@ -14,6 +14,9 @@ namespace QuadGS {
 Serial_Manager::Serial_Manager():
         mIo_service()
        ,mWork(new boost::asio::io_service::work(mIo_service))
+       ,mFifo(1, 1000)
+       ,mRetries(0)
+       ,mLog("SerialManager")
 {
 }
 
@@ -21,6 +24,9 @@ void Serial_Manager::Start()
 {
   mThread_io = new std::thread(std::bind(&Serial_Manager::RunThread, this));
   mPort = QuadGS::SerialPort::create(mIo_service);
+  mPort->setReadCallback( std::bind(&Serial_Manager::messageHandler, shared_from_this(), std::placeholders::_1) );
+  mPort->setReadTimeoutCallback( std::bind(&Serial_Manager::timeoutHandler, shared_from_this()) );
+
 }
 
 
@@ -33,17 +39,18 @@ Serial_Manager::ptr Serial_Manager::create()
 
 void Serial_Manager::startRead()
 {
-  mPort->doRead();
+  mPort->Read();
 }
 
 void Serial_Manager::write( QspPayloadRaw::Ptr ptr)
 {
-  mPort->doWrite( ptr );
+  mFifo.push(ptr);
+  doWrite();
 }
 
 void Serial_Manager::setReadCallback(  IoBase::MessageHandlerFcn fcn )
 {
-  mPort->setReadCallback( fcn );
+    mMessageHandler = fcn;
 }
 
 std::string Serial_Manager::openCmd(std::string path)
@@ -149,6 +156,40 @@ void Serial_Manager::RunThread()
     std::cout << "exception from  io service!" << std::endl;
   }
 }
+
+void Serial_Manager::timeoutHandler()
+{
+    if(mRetries < 2)
+    {
+        mRetries++;
+        doWrite();
+        mLog.QuadLog(severity_level::warning, "No reply, retrying");
+
+    }
+    else
+    {
+        mRetries = 0;
+        mFifo.pop();
+        mLog.QuadLog(severity_level::error, "Transmission failed.");
+    }
+}
+
+void Serial_Manager::messageHandler( QspPayloadRaw::Ptr ptr)
+{
+    mFifo.pop();
+    QuadSerialPacket::Ptr packetPtr = QuadSerialPacket::Create(ptr);
+    if( mMessageHandler )
+    {
+        mMessageHandler( packetPtr );
+    }
+
+}
+void Serial_Manager::doWrite()
+{
+    mPort->Write( mFifo.front() );
+}
+
+
 
 
 } /* namespace QuadGS */

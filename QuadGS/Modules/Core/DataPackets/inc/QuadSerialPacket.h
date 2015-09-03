@@ -23,8 +23,9 @@ public:
         Parameters = 1,
         Log = 2,
         FunctionCall = 3,
-        Control = 4, // TODO remove from QSP, should reside a layer beneath.
+        Status = 4, // TODO remove from QSP, should reside a layer beneath.
     };
+    typedef enum addresses addresses_t;
     enum ParametersControl
     {
         SetTree = 2,
@@ -33,6 +34,20 @@ public:
         Save = 5,
         Load = 6,
     };
+    typedef enum ParametersControl ParametersControl_t;
+    enum StatusControl
+    {
+      Cont = 0,
+      Ack = 1,
+      Nack = 2,
+      Error = 3,
+      NotAllowed = 4,
+      UnexpectedSequence = 5,
+      NotValidSlipPacket = 6,
+      BufferOverrun = 7,
+      NotImplemented = 200,
+    };
+    typedef enum StatusControl StatusControl_t;
     /**
      * Create an instance from a uint8_t array. Data is copied.
      * @param Payload Pointer to the array.

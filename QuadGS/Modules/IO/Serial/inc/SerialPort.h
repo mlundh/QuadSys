@@ -83,14 +83,14 @@ public:
      * @brief start an async read operation on the configured
      * and opened serial port.
      */
-    void doRead( void );
+    void Read( void );
 
     /**
      * @brief Start an async write operation on the configured
      * and opened serial port.
      * @param ptr to a QSP instance to be transmitted.
      */
-    void doWrite( QspPayloadRaw::Ptr ptr);
+    void Write( QspPayloadRaw::Ptr ptr);
 
    void startReadTimer(int timeout = 1000);
 
@@ -125,7 +125,9 @@ public:
     
     void setStopBits( b_a_sp::stop_bits::type stop_bits );
     
-    void setReadCallback(  IoBase::MessageHandlerFcn fcn  );
+    void setReadCallback(  IoBase::MessageHandlerRawFcn fcn  );
+
+    void setReadTimeoutCallback(  IoBase::TimeoutHandlerFcn fcn  );
 
 private:
     /**
@@ -183,7 +185,8 @@ private:
     boost::asio::deadline_timer mTimeoutWrite;
     QspPayloadRaw::Ptr mPayloadWrite;
     QspPayloadRaw::Ptr mPayloadRead;
-    IoBase::MessageHandlerFcn mMessageHandler;
+    IoBase::MessageHandlerRawFcn mMessageHandler;
+    IoBase::TimeoutHandlerFcn mReadTimeoutHandler;
 };
 
 } /* namespace QuadGS */

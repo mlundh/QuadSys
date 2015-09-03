@@ -103,7 +103,8 @@ COMPILER_FLAGS = -g
 # -MP add a phony target for each dependency other than the main file. 
 # -MT change target of the rule emitted by dependency generation. 
 #
-COMPILER_FLAGS += -MD -MP -MF "$(@:%.o=%.d)" -MT "$(@:%.o=%.d)" -MT "$(@:%.o=%.o)" -Wall -Wextra -pedantic -fsanitize=address -fno-omit-frame-pointer #-Wconversion
+COMPILER_FLAGS += -MD -MP -MF "$(@:%.o=%.d)" -MT "$(@:%.o=%.d)" -MT "$(@:%.o=%.o)" -Wall -Wextra -pedantic  #-Wconversion
+COMPILER_FLAGS +=-fsanitize=address -fno-omit-frame-pointer
 COMPILER_FLAGS += $(addprefix -I, $(INCLUDE_DIR) ) 
 
 # include boost as -isystem since we can not fix the warnings in the lib.

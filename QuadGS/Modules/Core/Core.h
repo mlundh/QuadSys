@@ -81,7 +81,8 @@ public:
     ptr getThis();
     void FindPartial(std::string& name, std::vector<std::string>& vec);
     void ParameterHandler(std::shared_ptr<QuadSerialPacket> packetPtr);
-    void msgHandler(std::shared_ptr<QspPayloadRaw> ptr);
+    void StatusHandler(std::shared_ptr<QuadSerialPacket> packetPtr);
+    void msgHandler(std::shared_ptr<QuadSerialPacket> ptr);
 
     
 private:
