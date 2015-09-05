@@ -24,7 +24,6 @@
 
 #include "my_math.h"
 #include "led_control_task.h"
-#include "globals.h"
 
 /*atan2() domain: -pi to pi*/
 int32_t my_atan2( int32_t numerator, int32_t denominator )
@@ -155,4 +154,25 @@ int32_t my_mult( int32_t operand1, int32_t operand2 )
   }
 
   return (int32_t) (temp >> SHIFT_EXP);
+}
+
+int32_t my_mult2( int32_t operand1, int32_t operand2, int32_t shift_factor)
+{
+  /*The result of a multiplication will always fit in 2*n bits,
+   where n is the number of bits in the larger of the two operands. Integers of 32
+   bits should be cast to 64 bits, and smaller integers can be cast to 32 bits.*/
+
+  int64_t temp = ((int64_t) operand1 * (int64_t) operand2);
+  /*For signed integers, an overflow has not occurred if the high-order bits and
+   the sign bit on the lower half of the product are all zeros or ones. This means
+   that for a 64-bit product the upper 33 bits would need to be all
+   zeros or ones. In this application a shift factor is used for fixed point
+   arithmetics, and it is therefore OK to use more than the upper 33 bits.*/
+  if ( (temp >> (31 - shift_factor)) != (temp >> (32 - shift_factor)) )
+  {
+    //ERROR!
+    Led_Set(led_error_int_overflow);
+  }
+
+  return (int32_t) (temp >> shift_factor);
 }

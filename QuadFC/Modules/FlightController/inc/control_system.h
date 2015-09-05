@@ -1,7 +1,7 @@
 /*
- * common_types.h
+ * control_system.h
  *
- * Copyright (C) 2014 martin
+ * Copyright (C) 2015 Martin Lundh
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,45 +21,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef COMMON_TYPES_H_
-#define COMMON_TYPES_H_
-#include "stdint.h"
+#ifndef MODULES_FLIGHTCONTROLLER_INC_CONTROL_SYSTEM_H_
+#define MODULES_FLIGHTCONTROLLER_INC_CONTROL_SYSTEM_H_
+#include "common_types.h"
 
-typedef enum state_names
-{
-  pitch = 0,
-  roll = 1,
-  yaw = 2,
-  pitch_rate = 3,
-  roll_rate = 4,
-  yaw_rate = 5,
-  x_pos = 6,
-  y_pos = 7,
-  z_pos = 8,
-  x_vel = 9,
-  y_vel = 10,
-  z_vel = 11,
-  nr_states = 12,
-}state_names_t;
+typedef struct CtrlInternal CtrlInternal_t;
 
-typedef struct state_data
-{
-  int32_t state_vector[12];
-  uint8_t confidence[12];
-}state_data_t;
+CtrlInternal_t *Ctrl_Create();
 
-typedef enum control_signal_names
-{
-  u_pitch = 0,
-  u_roll = 1,
-  u_yaw = 2,
-  u_thrust = 3,
-}control_signal_names_t;
+void Ctrl_Execute(CtrlInternal_t *internals, state_data_t *state, state_data_t *setpoint, control_signal_t *u_signal);
 
+void Ctrl_On(CtrlInternal_t * param);
 
-typedef struct control_signal
-{
-  int32_t control_signal[4];
-}control_signal_t;
+void Ctrl_Off(CtrlInternal_t * param);
 
-#endif /* COMMON_TYPES_H_ */
+//TODO move to motor control block.
+void Ctrl_Allocate( control_signal_t *ctrl_signal, int32_t motor_setpoint[] );
+
+#endif /* MODULES_FLIGHTCONTROLLER_INC_CONTROL_SYSTEM_H_ */

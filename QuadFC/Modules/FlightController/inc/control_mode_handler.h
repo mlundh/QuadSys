@@ -1,7 +1,7 @@
 /*
- * state_handler.h
+ * control_mode_handler.h
  *
- * Copyright (C) 2015 martin
+ * Copyright (C) 2015 Martin Lundh
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,8 +21,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef STATE_HANDLER_H_
-#define STATE_HANDLER_H_
+#ifndef MODULES_FLIGHTCONTROLLER_INC_CONTROL_MODE_HANDLER_H_
+#define MODULES_FLIGHTCONTROLLER_INC_CONTROL_MODE_HANDLER_H_
 
 #include "stdint.h"
 #include "FreeRTOS.h"
@@ -30,53 +30,36 @@
 #include "semphr.h"
 
 typedef enum state{
-  state_init = 1,      // FC is initializing.
-  state_disarmed = 2,  // Disarmed state, no action except changing to another state.
-  state_config = 3,    // Configuration state. FC can be configured.
-  state_arming = 4,    // Motors are arming. No action other than change to error, disarmed or armed state.
-  state_armed = 5,     // Armed state, FC is flight ready.
-  state_disarming = 6, // Disarming.
-  state_fault = 7,     // FC has encountered a serious problem and has halted.
-  state_not_available = 0, // state information not available.
-}state_t;
+  Control_mode_not_available = 0,
+  Control_mode_rate = 1,
+  Control_mode_attitude = 2
+}CtrlMode_t;
 
 /**
  * Initialize the state handler. This will create queues used
  * in the implementation, and unlock the handler.
  */
-void State_InitStateHandler();
+void Ctrl_InitModeHandler();
 
 /**
- * Get the current state. Returns state_not_availible if it is not
+ * Get the current state. Returns Ctrl_not_availible if it is not
  * possible to acces the state.
  *
- * @return Current state. State_not_availible if fail.
+ * @return Current state. Ctrl_not_availible if fail.
  */
-state_t State_GetCurrent();
-
-/**
- * Lock the state, do not allow change.
- * @return pdTrue if success.
- */
-BaseType_t State_Lock();
-
-/**
- * Unlock state, allow a state transition.
- * @return pdTrue if success.
- */
-BaseType_t State_Unlock();
+CtrlMode_t Ctrl_GetCurrentMode();
 
 /**
  * Set state to fault. Use this in case of a serious problem
  * requiring the flight controller to immediately stop the motors
  * and all control.
  *
- * If the vehicle is airborne at the time of call to State_Fault,
+ * If the vehicle is airborne at the time of call to Ctrl_Fault,
  * the vehicle will crash.
  *
  * @return
  */
-BaseType_t State_Fault();
+BaseType_t Ctrl_FaultMode();
 
 /**
  * @brief Request a state change.
@@ -84,10 +67,10 @@ BaseType_t State_Fault();
  * Request that the flight controller changes state. Will fail if
  * state transition is not allowed.
  *
- * @param state_req   New state beeing requested.
+ * @param Ctrl_req   New state beeing requested.
  * @return            pdTrue if ok, pdFalse otherwise.
  */
-BaseType_t State_Change(state_t state_req);
+BaseType_t Ctrl_ChangeMode(CtrlMode_t mode_req);
 
 
-#endif /* STATE_HANDLER_H_ */
+#endif /* MODULES_FLIGHTCONTROLLER_INC_CONTROL_MODE_HANDLER_H_ */

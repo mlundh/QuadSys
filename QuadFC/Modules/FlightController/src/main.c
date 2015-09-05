@@ -48,8 +48,6 @@ void vApplicationTickHook( void );
 
  QueueHandle_t xQueue_receiver = NULL;
  QueueHandle_t xQueue_ranger = NULL;
-SemaphoreHandle_t x_param_mutex = NULL;
-SemaphoreHandle_t x_log_mutex = NULL;
 /*
  * Set up the hardware to run QuadFC.
  */
@@ -70,12 +68,8 @@ int main( void )
   /* Create the queue used to set the LED status*/
 
 
-  x_param_mutex = xSemaphoreCreateMutex();
-  x_log_mutex = xSemaphoreCreateMutex();
 
-
-
-  if ( !xQueue_receiver || !x_param_mutex || !x_log_mutex || !xQueue_ranger)
+  if ( !xQueue_receiver || !xQueue_ranger)
   {
     /*If one of thee queues could not be created, do nothing*/
     for ( ;; )

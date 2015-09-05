@@ -24,17 +24,6 @@
 #ifndef GLOBALS_H_
 #define GLOBALS_H_
 
-#include "freertos_twi_master.h"
-#include "queue.h"
-
-extern SemaphoreHandle_t x_param_mutex;
-extern SemaphoreHandle_t x_log_mutex;
-
-
 #define mainDONT_BLOCK                          (0)
-/*
- * Fixed point scaling factor.
- */
-#define SHIFT_EXP 6
 
 #endif /* GLOBALS_H_ */

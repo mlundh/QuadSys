@@ -25,7 +25,7 @@
 #define STATE_ESTIMATOR_H_
 
 #include "stdint.h"
-#include "utilities/common_types.h"
+#include "common_types.h"
 
 
 /*estimation methods supported.*/
@@ -39,17 +39,21 @@ typedef enum etstimation_types
 /**
  * Initialize the state estimator. This causes all connected and configured
  * sensors to be initialized.
+ *
  * @return 0 if success else error code.*/
-uint8_t initialize_state_estimator();
+uint8_t initialize_state_estimator(estimation_types_t type);
 
 
-/**Check if a named state variable is available with the current setup.
+/**
+ * Check if a named state variable is available with the current setup.
+ *
  * @param *state_vector the state vector.
  * @param state: named state.
- * @return state availability, 0 if available, !0 otherwise.  */
+ * @return state availability, 0 if unavailable, !0 otherwise.  */
 uint8_t is_state_available(state_data_t *state_vector, state_names_t state);
 
-/**Get the current state confidence, updated with each update of the state vector.
+/**
+ * Get the current state confidence, updated with each update of the state vector.
  *
  * @param state_vector the state vector.
  * @param state named state.
@@ -57,7 +61,9 @@ uint8_t is_state_available(state_data_t *state_vector, state_names_t state);
  * */
 uint8_t get_state_confidence(state_data_t *state_vector, state_names_t state);
 
-/**Gets the new state data and copies it into state.
+/**
+ * Gets the new state data and copies it into state.
+ *
  * get_state() might take some time to complete if multiple
  * sensors has to be read.
  *
@@ -70,6 +76,7 @@ uint8_t get_state(state_data_t *state_vector);
  * Set the desired estimation type. The different estimation types
  * will provide a different number of estimated states and different
  * confidence.
+ *
  * @param est requested estimation type
  */
 void config_set_estimation_type(estimation_types_t est);

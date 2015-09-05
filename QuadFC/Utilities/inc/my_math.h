@@ -13,6 +13,7 @@
 #define MY_PI_HALF 15708 // 3,1415/2 * MULT_FACTOR
 #define LOOKUP_ATAN_RESOLUTION 170 // 0,017 * MULT_FACTOR
 #define LOOKUP_ATAN_LENGTH 255
+#define SHIFT_EXP (6)
 
 static const int16_t atan_lookup[LOOKUP_ATAN_LENGTH] = {
     -73, -72, -72, -72, -72, -72, -71, -71, -71, -71, -71, -70, -70, -70, -70, -69
@@ -38,4 +39,5 @@ uint32_t my_square( int16_t val );
 int32_t my_sgn( int16_t val );
 int32_t my_div( int32_t numerator, int32_t denominator );
 int32_t my_mult( int32_t operand1, int32_t operand2 );
+int32_t my_mult2( int32_t operand1, int32_t operand2, int32_t shift_factor);
 #endif /* MY_MATH_H_ */

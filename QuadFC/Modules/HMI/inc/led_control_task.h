@@ -32,7 +32,7 @@
  */
 typedef enum LED_control
 {
-
+  // fc state.
   led_initializing = 0,             //!< led_initializing
   led_disarmed = 1,                 //!< led_disarmed
   led_configure = 2,                //!< led_configure
@@ -41,14 +41,22 @@ typedef enum LED_control
   led_fault = 5,                    //!< led_fault
   led_state_not_available = 6,      //!< led_state_not_available
 
+  // control system mode
+  led_control_mode_rate = 10,
+  led_control_mode_attitude = 11,
+
+  //System errors
   led_error_int_overflow = 20,      //!< led_error_int_overflow
-  led_error_TWI = 21,               //!< led_error_TWI
-  led_error_alloc = 22,             //!< led_error_alloc
-  led_error_rc_link = 23,           //!< led_error_rc_link
+  led_error_alloc = 21,             //!< led_error_alloc
+  led_main_blocked = 22,            //!< led_main_blocked
 
-  led_warning_lost_com_message = 30,//!< led_warning_lost_com_message
+  //Com errors
+  led_error_TWI = 30,               //!< led_error_TWI
+  led_error_rc_link = 31,           //!< led_error_rc_link
+  led_warning_lost_com_message = 32,//!< led_warning_lost_com_message
 
-  led_clear_error = 40,             //!< led_clear_error
+  //Clear leds.
+  led_clear_error = 50,             //!< led_clear_error
 } LED_control_t;
 
 /**

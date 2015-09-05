@@ -46,7 +46,7 @@ static  QueueHandle_t State_lock_queue;
 /**
  * Internal current state variable. TODO move to init?
  */
-static state_t current_state = state_disarmed;
+static state_t current_state = state_init;
 
 static BaseType_t State_ChangeAllowed(state_t state_req);
 static void State_UpdateLed();
@@ -68,13 +68,15 @@ void State_InitStateHandler()
     //TODO send error!
   }
   uint8_t lock = 0;
+  current_state = state_init;
+
   if(( xQueueSendToBack(State_lock_queue, &lock, 2) != pdPASS )
       || (xQueueSendToBack(State_current_queue, &current_state, 2) != pdPASS))
   {
     //TODO send error!
   }
 
-
+  State_UpdateLed();
 
 }
 
@@ -148,7 +150,7 @@ static BaseType_t State_ChangeAllowed(state_t state_req)
   switch ( State_GetCurrent() )
   {
   case state_init:
-    if(    (state_req == state_disarmed) )
+    if(    (state_req == state_disarming) )
     {
       return pdTRUE;
     }
@@ -164,7 +166,7 @@ static BaseType_t State_ChangeAllowed(state_t state_req)
     }
     break;
   case state_config:
-    if(    (state_req == state_disarmed)
+    if(    (state_req == state_disarming)
         || (state_req == state_fault ) )
     {
       return pdTRUE;
@@ -172,13 +174,20 @@ static BaseType_t State_ChangeAllowed(state_t state_req)
     break;
   case state_arming:
     if(    (state_req == state_armed)
-        || (state_req == state_disarmed )
+        || (state_req == state_disarming )
         || (state_req == state_fault ) )
     {
       return pdTRUE;
     }
     break;
   case state_armed:
+    if(    (state_req == state_disarming)
+        || (state_req == state_fault ) )
+    {
+      return pdTRUE;
+    }
+    break;
+  case   state_disarming:
     if(    (state_req == state_disarmed)
         || (state_req == state_fault ) )
     {
@@ -186,7 +195,7 @@ static BaseType_t State_ChangeAllowed(state_t state_req)
     }
     break;
   case state_fault:
-    if(    (state_req == state_disarmed) )
+    if(    (state_req == state_disarming) )
     {
       return pdTRUE;
     }

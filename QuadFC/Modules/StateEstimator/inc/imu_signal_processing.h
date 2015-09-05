@@ -8,7 +8,7 @@
 #ifndef IMU_SIGNAL_PROCESSING_H_
 #define IMU_SIGNAL_PROCESSING_H_
 #include "satellite_receiver_task.h"
-#include "control_types.h"
+#include "common_types.h"
 #include "imu.h"
 /*
  *   IMU scaling factors computed. (max angle)/(max value) = angle/unit

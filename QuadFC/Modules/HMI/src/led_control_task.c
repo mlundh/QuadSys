@@ -102,12 +102,11 @@ void Led_ControlTask( void *pvParameters )
     {
 
     case led_initializing:
-      mode_state_led_2 = led_blink_fast;
+      mode_state_led_1 = led_blink_fast;
       break;
 
     case led_disarmed:
       mode_state_led_1 = led_double_blink;
-      mode_state_led_2 = led_off;
       break;
 
     case led_configure:
@@ -127,8 +126,12 @@ void Led_ControlTask( void *pvParameters )
       mode_state_led_2 = led_const_on;
       break;
 
-    case led_error_int_overflow:
-      mode_error_led_1 = led_blink_fast;
+    case led_control_mode_rate:
+      mode_state_led_2 = led_double_blink;
+      break;
+
+    case led_control_mode_attitude:
+      mode_state_led_2 = led_blink_slow;
       break;
 
     case led_error_alloc:
@@ -136,7 +139,7 @@ void Led_ControlTask( void *pvParameters )
       break;
 
     case led_error_rc_link:
-      mode_error_led_1 = led_const_on;
+      mode_error_led_2 = led_const_on;
       break;
 
     case led_error_TWI:

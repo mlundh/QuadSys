@@ -74,9 +74,10 @@
 #include "communication_tasks.h"
 #include "satellite_receiver_task.h"
 #include "range_meter.h"
-#include "state_handler.h"
 
-#include "control_algorithm.h"
+/* Modules */
+#include "control_system.h"
+#include "state_handler.h"
 #include "imu.h"
 #include "imu_signal_processing.h"
 #include "motor_control.h"
@@ -84,46 +85,56 @@
 #include "parameters.h"
 
 #include "globals.h"
-
+#include "my_math.h"
+#include "common_types.h"
 
 
 void main_control_task( void *pvParameters );
-void reset_control_error( control_values_pid_t *ctrl_error );
 
-/*global parameters*/
-control_values_pid_t *parameters_rate = NULL;
-state_data_t *state = NULL;
-state_data_t *setpoint = NULL;
-control_signal_t *ctrl_signal = NULL;
+// Struct only used here to pass parameters to the task.
+typedef struct mainTaskParams
+{
+  state_data_t *state;
+  state_data_t *setpoint;
+  CtrlInternal_t *ctrl;
+  control_signal_t *control_signal;
+}taskParams_t;
 
 /*
  * void create_main_control_task(void)
- *
- * Create the main task. Initialize two TWI instances and pass them to the task.
- * The main control task is time critical and therefore uses the fully asynchronous 
- * transmit functions. Work can be done while communication is in progress. 
- *
- * The data being sent must not be changed while the transmission is in progress as 
- * this might corrupt the transmitted data. If the data is allocated on the stack, the 
- * calling function should not exit before the transmission is finished, or the data
- * will get corrupted. Another way of ensuring that the data will not change is to declare
- * the variable containing the data as static or global.
  */
 
 void create_main_control_task( void )
 {
   /*Create the task*/
+
+  taskParams_t * taskParam = pvPortMalloc(sizeof(taskParams_t));
+  taskParam->ctrl = Ctrl_Create();
+  taskParam->setpoint = pvPortMalloc( sizeof(state_data_t) );
+  taskParam->state = pvPortMalloc( sizeof(state_data_t) );
+  taskParam->control_signal = pvPortMalloc( sizeof(control_signal_t) );
+
+  /*Ensure that all mallocs returned valid pointers*/
+   if (!taskParam || !taskParam->ctrl || !taskParam->setpoint
+       || !taskParam->state || !taskParam->control_signal )
+   {
+     for ( ;; )
+     {
+       // TODO error handling!
+     }
+   }
+
   portBASE_TYPE create_result;
   create_result = xTaskCreate( main_control_task,   /* The function that implements the task.  */
-      (const char *const) "Main_Ctrl",       /* The name of the task. This is not used by the kernel, only aids in debugging*/
+      (const char *const) "Main_Ctrl",              /* The name of the task. This is not used by the kernel, only aids in debugging*/
       1000,                                         /* The stack size for the task*/
-      NULL,                                         /* The already configured motor data is passed as an input parameter*/
+      taskParam,                                        /* pass params to task.*/
       configMAX_PRIORITIES-1,                       /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
       NULL );                                       /* Handle to the task. Not used here and therefore NULL*/
 
   if ( create_result != pdTRUE )
   {
-    /*Error - Could not create task. TODO handle this error*/
+    /*Error - Could not create task.*/
     for ( ;; )
     {
 
@@ -139,39 +150,18 @@ void create_main_control_task( void )
 void main_control_task( void *pvParameters )
 {
   /*main_control_task execute at 500Hz*/
-  static const TickType_t xPeriodTicks = (2UL / portTICK_PERIOD_MS );
+  static const TickType_t mainPeriodTimeMs = (2UL / portTICK_PERIOD_MS );
 
-  /* declared as public in main_control_task.h, variables need to be modified by the RX task to set params.*/
+                       /*Receiver information*/
 
-  parameters_rate = pvPortMalloc(
-      sizeof(control_values_pid_t) ); /*PID parameters used in rate mode*/
+  taskParams_t * param = (taskParams_t*)(pvParameters);
 
-  control_values_pid_t *ctrl_error_rate = pvPortMalloc(
-      sizeof(control_values_pid_t) ); /*control error signal used in rate mode*/
-
-  ctrl_signal = pvPortMalloc( sizeof(control_signal_t) );
-
-  state = pvPortMalloc( sizeof(state_data_t) );     /*State information*/
-  setpoint = pvPortMalloc( sizeof(state_data_t) );  /*Setpoint information*/
-
-  receiver_data_t *local_receiver_buffer = pvPortMalloc(
-      sizeof(receiver_data_t) );                                  /*Receiver information*/
-
-
-  imu_data_t *imu_readings = pvPortMalloc( sizeof(imu_data_t) ); /*IMU data, parsed IMU values.*/
-
-
-  int32_t motor_setpoint[MAX_MOTORS] = { 0 };
-
-  xSemaphoreTake( x_param_mutex, portMAX_DELAY );
-
+  receiver_data_t *local_receiver_buffer = pvPortMalloc( sizeof(receiver_data_t) );
+  imu_data_t *imu_readings = pvPortMalloc( sizeof(imu_data_t) );
 
 
   /*Ensure that all mallocs returned valid pointers*/
-  if (  !parameters_rate
-      || !ctrl_error_rate || !state || !setpoint
-      || !local_receiver_buffer || !imu_readings || !x_param_mutex
-      || !ctrl_signal )
+  if ( !local_receiver_buffer || !imu_readings )
   {
     for ( ;; )
     {
@@ -179,8 +169,6 @@ void main_control_task( void *pvParameters )
     }
   }
 
-
-  uint8_t reset_integral_error = 0; // 0 == false
 
   /*Data received from RC receiver task */
 
@@ -194,85 +182,13 @@ void main_control_task( void *pvParameters )
   local_receiver_buffer->sync = 0;
   local_receiver_buffer->connection_ok = 0;
 
-  /*Control parameter initialization for rate mode control. TODO move to PID functions.*/
-  /*--------------------Initial parameters-------------------*/
-  parameters_rate->pitch_p = 220;
-  parameters_rate->pitch_i = 3;
-  parameters_rate->pitch_d = 0;
-  parameters_rate->roll_p = 220;
-  parameters_rate->roll_i = 3;
-  parameters_rate->roll_d = 0;
-  parameters_rate->yaw_p = 220;
-  parameters_rate->yaw_i = 3;
-  parameters_rate->yaw_d = 0;
-  parameters_rate->altitude_p = 1 << SHIFT_EXP;
-  parameters_rate->altitude_i = 0;
-  parameters_rate->altitude_d = 0;
-
-  SemaphoreHandle_t xMutexParam = xSemaphoreCreateMutex();
-
-  param_obj_t * tmp = Param_CreateObj(10, NoType, NULL, "PID_R", Param_GetRoot(), NULL);
-
-  Param_CreateObj(0, int32_variable_type, &parameters_rate->pitch_p, "pitch_p", tmp, xMutexParam);
-  Param_CreateObj(0, int32_variable_type, &parameters_rate->pitch_i, "pitch_i", tmp, xMutexParam);
-  Param_CreateObj(0, int32_variable_type, &parameters_rate->pitch_d, "pitch_d", tmp, xMutexParam);
-
-  Param_CreateObj(0, int32_variable_type, &parameters_rate->roll_p, "roll_p", tmp, xMutexParam);
-  Param_CreateObj(0, int32_variable_type, &parameters_rate->roll_i, "roll_i", tmp, xMutexParam);
-  Param_CreateObj(0, int32_variable_type, &parameters_rate->roll_d, "roll_d", tmp, xMutexParam);
-
-  Param_CreateObj(0, int32_variable_type, &parameters_rate->yaw_p, "yaw_p", tmp, xMutexParam);
-  Param_CreateObj(0, int32_variable_type, &parameters_rate->yaw_i, "yaw_i", tmp, xMutexParam);
-  Param_CreateObj(0, int32_variable_type, &parameters_rate->yaw_d, "yaw_d", tmp, xMutexParam);
-  /*Initialization for control error in rate mode.*/
-  reset_control_error( ctrl_error_rate );
-
-
-
-  /*State initialization.*/
-  state->pitch = 0;
-  state->roll = 0;
-  state->yaw = 0;
-  state->pitch_rate = 0;
-  state->roll_rate = 0;
-  state->yaw_rate = 0;
-  state->z_vel = 0;
-
-  /*Setpoint initialization*/
-
-  setpoint->pitch = 0;
-  setpoint->roll = 0;
-  setpoint->yaw = 0;
-  setpoint->pitch_rate = 0;
-  setpoint->roll_rate = 0;
-  setpoint->yaw_rate = 0;
-  setpoint->z_vel = 0;
-
-
-  /*Rang data container*/
-  int32_t ranger_data = 0;
 
   State_InitStateHandler();
-   if(pdTRUE != State_Change(state_init))
-   {
-     State_Fault();
-   }
-
-
-  /*Initialize the IMU. A reset followed by a short delay is recommended
-   * before starting the configuration.*/
-  //mpu6050_initialize();
-
-  /*Flight controller should always be started in fc_disarmed mode to prevent
-   * unintentional motor arming. */
-  if(pdTRUE != State_Change(state_disarmed))
-  {
-    State_Fault();
-  }
 
 
   // TODO read from memory
   uint32_t nr_motors = 4;
+  int32_t motorSetpoint[nr_motors];
 
   pwm_init_motor_control( nr_motors );
 
@@ -286,43 +202,50 @@ void main_control_task( void *pvParameters )
   for ( ;; )
   {
 
-    /*-----------------------------------------General info----------------------------------------------------
-     *Use different control strategy depending on what flight mode is requested. Some function calls are identical
-     * between the different control strategys, they are still called from within each mode due to the fact that
-     * the configure mode requires that no other function uses the parameters.
-     *
-     */
-
-    /*-----------------------------------------Angle mode-------------------------------------------------------
-     * Angle mode uses both the accelerometer and gyro to calculate an angle estimate of the copter. The
-     * setpoint is an angle compared to earth gravity and is stored in setpoint-> pitch/roll/yaw.  if the copter
-     * deviates from the requested angle then the controller tries to compensate for it. If all setpoints are zero
-     * the copter will try to self stabilize.*/
-
-    /*TODO should be implemented*/
-
-    /*-----------------------------------------Rate mode-------------------------------------------------------
-     * Rate mode uses only the gyro to stabilize the copter. Only the angular rate is compensated for and the copter
-     * will not self stabilize, rather this control strategy slows the dynamics of the copter down to a level where
-     * a pilot can control them. The setpoint is an angular rate and is stored in setpoint->pitch_rate/roll_rate/yaw_rate.
-     */
-    if ( state_armed == State_GetCurrent() )
+   /*
+    * Main state machine. Controls the state of the flight controller.
+    */
+    switch (State_GetCurrent())
     {
+    case state_init:
+      /*---------------------------------------Initialize mode------------------------
+       * Initialize all modules then set the fc to dissarmed state.
+       */
+      mpu6050_initialize(); // Might take time, reset the last wake time to avoid errors.
+      xLastWakeTime = xTaskGetTickCount();
 
-      mpu6050_read_motion( imu_readings );
-      get_rate_gyro( state, imu_readings );
-      calc_control_signal_rate_pid( motor_setpoint, nr_motors, parameters_rate,
-          ctrl_error_rate, state, setpoint, ctrl_signal );
-      pwm_update_setpoint( motor_setpoint, nr_motors );
-    }
-
-    /*-----------------------------------------arming mode-------------------------------------------------------
-     * When switching to fc_armed_rate_mode the fc can pass throuth an arming state to ensure that all motors
-     * are armed according to the need of the motor/esc combination.*/
-    else if ( state_arming == State_GetCurrent() )
-    {
-      if ( arming_counter >= ( 1000 / xPeriodTicks ) ) // Be in arming state for 1s.
+      if(pdTRUE != State_Change(state_disarming))
       {
+        State_Fault();
+      }
+      break;
+    case state_disarmed:
+      /*---------------------------------------Disarmed mode--------------------------
+       * Nothing will happen in disarmed mode. Allowed to change to configure mode,
+       * arming mode and fault mode.
+       */
+      break;
+    case state_config:
+      /*---------------------------------------Configure mode-------------------------
+       * Configure mode is used to update parameters used in the control of the copter.
+       * The copter has to be disarmed before entering configure mode. To enter a specific
+       * command has to be sent over USART. Configure mode can be exited by either
+       * restarting the FC or by sending a specific command over the USART communication
+       * channel.
+       */
+      break;
+    case state_arming:
+      /*-----------------------------------------arming mode--------------------------
+       * Before transition into armed mode the fc always passes through arming state to
+       * ensure that all systems are available and ready. Use the counter method rather
+       * than sleeping to allow external communication.
+       */
+      pwm_enable( nr_motors );
+      Ctrl_On(param->ctrl);
+
+      if ( arming_counter >= ( 1000 / mainPeriodTimeMs ) ) // Be in arming state for 1s.
+      {
+        arming_counter = 0;
         if( !State_Change(state_armed) )
         {
           State_Fault();
@@ -332,35 +255,50 @@ void main_control_task( void *pvParameters )
       {
         arming_counter++;
       }
-    }
+      break;
+    case state_armed:
+      /*-----------------------------------------armed mode---------------------------
+       * The FC is armed and operational. The main control loop only handles
+       * the Control system.
+       */
+      mpu6050_read_motion( imu_readings );
+      get_rate_gyro( param->state, imu_readings );
 
-    /*---------------------------------------Configure mode--------------------------------------------
-     * Configure mode is used to update parameters used in the control of the copter. The copter has to be
-     * disarmed before entering configure mode. To enter a specific command has to be sent over USART.
-     * Configure mode can be exited by either restarting the FC or
-     * by sending a specific command over the USART communication channel.
-     */
-    else if ( state_config == State_GetCurrent() )
-    {
-      //Do nothing!
-    }
+      Ctrl_Execute(param->ctrl, param->state, param->setpoint, param->control_signal);
 
-    /*---------------------------------------Disarmed mode--------------------------------------------
-     * When in disarmed mode all integral errors should be reset to avoid integral accumulation.
-     *
-     * It is only allowed to go into fc_configure mode if the copter is already in fc_disarmed mode.
-     */
-
-    else if ( state_disarmed == State_GetCurrent() )
-    {
-      if ( reset_integral_error )
+      Ctrl_Allocate(param->control_signal, motorSetpoint);
+      pwm_update_setpoint( motorSetpoint, nr_motors );
+      break;
+    case state_disarming:
+      /*---------------------------------------Disarming mode--------------------------
+       * Transitional state. Only executed once.
+       */
+      pwm_dissable();
+      Ctrl_Off(param->ctrl);
+      if( !State_Change(state_disarmed) )
       {
-        reset_control_error( ctrl_error_rate );
-        reset_integral_error = 0;
+        State_Fault();
       }
+      break;
+    case state_fault:
+      /*-----------------------------------------fault mode---------------------------
+       *  Something has gone wrong and caused the FC to go into fault mode. Nothing
+       *  happens in fault mode. Only allowed transition is to disamed mode.
+       *
+       *  TODO save reason for fault mode.
+       */
+
+      break;
+    case state_not_available:
+      /*-----------------------------------------state not available mode----------------
+       * Something is very wrong if the FC is in state_not_available.
+       */
+      break;
+    default:
+      break;
     }
 
-    /*------------------------------------read receiver -----------------------------------------------
+    /*------------------------------------read receiver -----------------------------------
      * Always read receiver.
      *TODO change from counting fc cycles to time.
      */
@@ -374,7 +312,7 @@ void main_control_task( void *pvParameters )
       /*If good signal decrease spectrum_receiver_error_counter*/
       if ( (local_receiver_buffer->connection_ok) )
       {
-        translate_receiver_signal_rate( setpoint, local_receiver_buffer );
+        translate_receiver_signal_rate( param->setpoint, local_receiver_buffer );
         if ( spectrum_receiver_error_counter > 0 )
         {
           spectrum_receiver_error_counter--;
@@ -390,7 +328,6 @@ void main_control_task( void *pvParameters )
         if ( spectrum_receiver_error_counter >= (80) )
         {
           State_Fault();
-          reset_integral_error = 1;
           pwm_dissable();
           spectrum_receiver_error_counter = 0;
         }
@@ -401,22 +338,6 @@ void main_control_task( void *pvParameters )
       }
     }
 
-    /*----------------------------------- Get new range (altitude) data. -------------------------------------
-     *
-     *
-     * */
-    if ( xQueueReceive(xQueue_ranger, &ranger_data, mainDONT_BLOCK) == pdPASS )
-    {
-      if ( (ranger_data <= 5000) && ranger_data >= 300 )
-      {
-        state->z_pos = ranger_data;
-      }
-      else
-      {
-        state->z_pos = 0;
-      }
-
-    }
     /*-------------------------------------State change request from receiver?----------------------------
      * Check if a fc_state change is requested, if so, change state. State change is only allowed if the copter is landed.
      */
@@ -426,16 +347,16 @@ void main_control_task( void *pvParameters )
         && (local_receiver_buffer->ch5 > SATELLITE_CH_CENTER)
         && (local_receiver_buffer->ch0 < 40))
     {
-      if(pdTRUE == State_Change(state_disarmed))
+      if(State_GetCurrent() != state_disarmed && State_GetCurrent() != state_disarming)
       {
-        reset_integral_error = 1;
-        pwm_dissable();
+        if(pdTRUE == State_Change(state_disarming))
+        {
+        }
+        else
+        {
+          //Not allowed to change state.
+        }
       }
-      else
-      {
-        //Not allowed to change state.
-      }
-
     }
 
     /*Arming requested*/
@@ -443,19 +364,20 @@ void main_control_task( void *pvParameters )
         && (local_receiver_buffer->ch5 < SATELLITE_CH_CENTER)
         && (local_receiver_buffer->ch0 < 40))
     {
-      if(pdTRUE == State_Change(state_arming))
+      if(State_GetCurrent() != state_armed && State_GetCurrent() != state_arming)
       {
-        arming_counter = 0;
-        pwm_enable( nr_motors );
-      }
-      else
-      {
-        //Not allowed to change state.
+        if(pdTRUE == State_Change(state_arming))
+        {
+        }
+        else
+        {
+          //Not allowed to change state.
+        }
       }
     }
 
 
-    vTaskDelayUntil( &xLastWakeTime, xPeriodTicks );
+    vTaskDelayUntil( &xLastWakeTime, mainPeriodTimeMs );
 
     /*-------------------Heartbeat----------------------
      * Toggle an led to indicate that the FC is operational.
@@ -468,22 +390,5 @@ void main_control_task( void *pvParameters )
     }
   }
   /* The task should never escape the for-loop and therefore never return.*/
-}
-
-/* Simply resets the control error (or any control_values_pid_t struct passed to it).*/
-void reset_control_error( control_values_pid_t *ctrl_error )
-{
-  ctrl_error->pitch_p = 0;
-  ctrl_error->pitch_i = 0;
-  ctrl_error->pitch_d = 0;
-  ctrl_error->roll_p = 0;
-  ctrl_error->roll_i = 0;
-  ctrl_error->roll_d = 0;
-  ctrl_error->yaw_p = 0;
-  ctrl_error->yaw_i = 0;
-  ctrl_error->yaw_d = 0;
-  ctrl_error->altitude_p = 0;
-  ctrl_error->altitude_i = 0;
-  ctrl_error->altitude_d = 0;
 }
 
