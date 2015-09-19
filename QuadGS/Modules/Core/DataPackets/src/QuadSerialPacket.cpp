@@ -1,15 +1,62 @@
 /*
  * QuadSerialPacket.cpp
  *
- *  Created on: Feb 14, 2015
- *      Author: martin
+ * Copyright (C) 2015 Martin Lundh
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
  */
-
 #include "QuadSerialPacket.h"
 #include <stdlib.h>
+
+
+
 namespace QuadGS {
 
-const uint8_t QuadSerialPacket::mHeaderSize(4);
+
+std::vector<std::string> QuadSerialPacket::mAddressStrings =
+   {
+           "Parameters",
+           "Log",
+           "FunctionCall",
+           "Status"
+   };
+std::vector<std::string> QuadSerialPacket::mParamControl =
+    {
+            "SetTree",
+            "GetTree",
+            "Value",
+            "Save",
+            "Load"
+    };
+std::vector<std::string> QuadSerialPacket::mStatusControl =
+{
+        "Cont",
+        "Ack",
+        "Nack",
+        "Error",
+        "NotAllowed",
+        "UnexpectedSequence",
+        "NotValidSlipPacket",
+        "BufferOverrun"
+};
+
+
 
 QuadSerialPacket::Ptr QuadSerialPacket::Create(const uint8_t* data, uint16_t length)
 {
@@ -17,7 +64,6 @@ QuadSerialPacket::Ptr QuadSerialPacket::Create(const uint8_t* data, uint16_t len
     return p;
 }
 QuadSerialPacket::Ptr QuadSerialPacket::Create(const QspPayloadRaw::Ptr packet)
-
 {
     Ptr p(new QuadSerialPacket(packet) );
     return p;
@@ -53,13 +99,82 @@ uint16_t QuadSerialPacket::GetPayloadLength()
 QspPayloadRaw::Ptr QuadSerialPacket::GetPayload()
 {
     // Copy payload to new QspPayloadRaw object.
-    return QspPayloadRaw::Create(mPayload->getPayload() + (sizeof(uint8_t)*mHeaderSize), GetPayloadLength());
+    return QspPayloadRaw::Create(mPayload->getPayload() + mHeaderSize, GetPayloadLength());
 
 }
 
 QspPayloadRaw::Ptr QuadSerialPacket::GetRawData()
 {
     return  mPayload;
+}
+
+
+std::string QuadSerialPacket::ToString()
+{
+    std::string result;
+
+    result = HeaderToString();
+    result += PayloadToString();
+
+
+    return result;
+}
+
+std::string QuadSerialPacket::HeaderToString()
+{
+    std::string result;
+    uint8_t address = GetAddress();
+    if (static_cast< std::size_t >(address) < mAddressStrings.size())
+    {
+        result += "[" + mAddressStrings[address] + "]";
+    }
+    else
+    {
+        result += "Unknown address]: " + std::to_string(address) + " With control: " + std::to_string(GetControl());
+        return result;
+    }
+
+    int8_t status = GetControl();
+    std::vector<std::string> string;
+
+    switch (address)
+    {
+    case addresses::Parameters:
+        string = mParamControl;
+        break;
+    case addresses::Log:
+        break;
+    case addresses::FunctionCall:
+        break;
+    case addresses::Status:
+        string = mStatusControl;
+        break;
+    }
+    if (static_cast< std::size_t >(status) < string.size())
+    {
+        result += "[" + string[status] + "]";
+    }
+    else
+    {
+        result += "Unknown control]: " + std::to_string(status);
+    }
+
+    return result;
+}
+
+std::string QuadSerialPacket::PayloadToString()
+{
+    std::string result;
+    std::string str = mPayload->toString(mHeaderSize);
+    result += "[" +  str + "]";
+    return result;
+}
+
+QuadSerialPacket::QuadSerialPacket(const uint8_t* data, uint16_t data_length, uint8_t offset)
+{
+    //Assumes data is payload.
+    mPayload = QspPayloadRaw::Create(data, data_length, mHeaderSize + offset);
+    SetPayloadLength(data_length + offset);
 }
 
 QuadSerialPacket::QuadSerialPacket(const uint8_t* data, uint16_t length)

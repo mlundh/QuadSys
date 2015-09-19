@@ -1,26 +1,45 @@
 /*
  * Core.cpp
  *
- *  Created on: May 14, 2015
- *      Author: martin
+ * Copyright (C) 2015 Martin Lundh
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
  */
+
 #include "Core.h"
 #include "UiBase.h"
 #include "IoBase.h"
 #include "QspPayloadRaw.h"
 #include "QuadSerialPacket.h"
-
+#include "QuadParamPacket.h"
 
 #include <boost/algorithm/string.hpp>
 namespace QuadGS {
 
 Core::Core():
-                 logger("Core")
+                                 logger("Core")
 {
     mTree = QuadGSTree::ptr();
     mCurrentBranch = QuadGSTree::ptr();
     mTmpBranch = QuadGSTree::ptr();
     mSavedBranch = QuadGSTree::ptr();
+
 }
 
 Core::~Core()
@@ -46,21 +65,23 @@ void Core::bind(std::shared_ptr<UiBase> UiPtr)
     UiPtr->SetCore(getThis());
 }
 
-void Core::UpdateTmp(std::string& path, bool findFull)
+bool Core::UpdateTmp(std::string& path)
 {
     if(!mTree)
     {
         throw std::runtime_error("No tree registered");
     }
     size_t pos = path.find(QuadGSTree::mBranchDelimiter);
-    if (pos == 0)
+    if (pos == 0) // Update from root.
     {
-        path.erase(0, pos + QuadGSTree::mBranchDelimiter.length());
 
         mTmpBranch = mTree;
+
+        path.erase(0, pos + QuadGSTree::mBranchDelimiter.length());
+
         if(mTmpBranch->NeedUpdate(path))
         {
-            return;
+            return true;
         }
         //else remove module from string and continue.
         QuadGSTree::RemoveModuleString(path);
@@ -69,33 +90,32 @@ void Core::UpdateTmp(std::string& path, bool findFull)
     {
         mTmpBranch = mCurrentBranch;
     }
-    //std::cout << "Core::UpdateTmp 0 path: " << path << std::endl;
-    //std::cout << "Core::UpdateTmp 1 Branch: " << mTmpBranch->GetName() << std::endl;
     while(!path.empty())
     {
         // Find will return shared_ptr to next element, or current if there is work to do in current node.
-        QuadGSTree::ptr tmp = mTmpBranch->Find(path, findFull);
+        QuadGSTree::ptr tmp = mTmpBranch->Find(path);
+
         // Node not found, return.
         if(!tmp)
         {
-            return;
+            return false;
         }
         else
         {
             // Change to branch.
             mTmpBranch = tmp;
+
             // If branch need update then return.
             if(mTmpBranch->NeedUpdate(path))
             {
-                return;
+                return true;
             }
             //else remove module from string and continue.
             QuadGSTree::RemoveModuleString(path);
-            //std::cout << "Core::UpdateTmp 2 Branch: " << mTmpBranch->GetName() << std::endl;
-            //std::cout << "Core::UpdateTmp 3 path: " << path << std::endl;
-
         }
     }
+    //we found the whole path! Return true, we found a node.
+    return true;
 }
 
 void Core::SaveBranch()
@@ -108,17 +128,20 @@ void Core::RestoreBranch()
     mCurrentBranch = mSavedBranch;
 }
 
-std::string Core::ChangeBranch(std::string& path, bool findFull)
+bool Core::ChangeBranch(std::string& path)
 {
-    UpdateTmp(path, findFull);
-    // Might throw, let caller handle it.
+    bool found = UpdateTmp(path);
     mCurrentBranch = mTmpBranch;
-    return "";
+    return found;
 }
 
 std::string Core::ChangeBranchCmd(std::string path)
 {
-    ChangeBranch(path, true);
+    ChangeBranch(path);
+    if(!path.empty())
+    {
+        throw std::runtime_error("Path does not exist: " + path + ".");
+    }
     return "";
 }
 
@@ -142,7 +165,11 @@ std::string Core::PrintCurrentPath(std::string)
 
 std::string Core::list(std::string path)
 {
-    UpdateTmp(path, true);
+    UpdateTmp(path);
+    if(!path.empty())
+    {
+        throw std::runtime_error("Path does not exist: " + path + ".");
+    }
     std::string resp = mTmpBranch->ListChildren();
     return resp;
 }
@@ -150,7 +177,7 @@ std::string Core::list(std::string path)
 
 std::string Core::get(std::string path)
 {
-    UpdateTmp(path, true);
+    UpdateTmp(path);
     if(!path.empty())
     {
         throw std::runtime_error("Get command can not contain set information.");
@@ -166,7 +193,7 @@ std::string Core::set(std::string path)
     {
         while(!path.empty())
         {
-            ChangeBranch(path, true);
+            ChangeBranch(path);
             if(!path.empty())
             {
                 mTmpBranch->SetValue(path);
@@ -185,31 +212,26 @@ std::string Core::set(std::string path)
 }
 
 
-//TODO Make sure that we can call register multiple times for the same tree.
-std::string Core::Register(std::string path)
+std::string Core::SetAndRegister(std::string path)
 {
-
-    size_t pos = path.find(QuadGSTree::mBranchDelimiter);
-    if (pos == 0)
-    {
-        path.erase(0, pos + QuadGSTree::mBranchDelimiter.length());
-    }
-    mTree = QuadGSTree::ptr(new QuadGSTree(path));
-    mCurrentBranch = mTree;
-    mTmpBranch = mTree;
-    mSavedBranch = mTree;
-    QuadGSTree::RemoveModuleString(path);
-
     std::exception_ptr eptr;
     SaveBranch();
     try
     {
         while(!path.empty())
         {
-            ChangeBranch(path, false);
+            bool found = ChangeBranch(path);
             if(!path.empty())
             {
-                std::string module = mTmpBranch->Register(path);
+                if(!found)
+                {
+                    mTmpBranch->Register(path);
+                }
+                else
+                {
+                    mTmpBranch->SetValue(path);
+                    QuadGSTree::RemoveModuleString(path);
+                }
             }
         }
     }
@@ -263,53 +285,62 @@ std::string Core::writeRawCmd(std::string data)
     QuadSerialPacket::Ptr tmp = QuadSerialPacket::Create(reinterpret_cast<const uint8_t*>(data.c_str()),static_cast<uint16_t>(data.length()) );
     tmp->SetAddress(iAddress);
     tmp->SetControl(iControl);
-    mIo->write( tmp->GetRawData() );
+    write( tmp );
     return "";
 }
 
 std::string Core::writeCmd(std::string path_dump)
 {
-    UpdateTmp(path_dump);
-    std::string Path;
-    QuadGSTree* tmp = mTmpBranch->GetParent();
-    while(tmp)
+    bool cont = true;
+    std::vector<size_t> StartPosition(QuadGSTree::mMaxDepth,0);
+    uint8_t SequenceNumber = 0;
+    while(cont)
     {
-        std::string parentString = tmp->GetNodeString();
-        Path = QuadGSTree::mBranchDelimiter + parentString + Path;
-        tmp = tmp->GetParent();
+        UpdateTmp(path_dump);
+        std::string Path;
+        QuadGSTree* tmp = mTmpBranch->GetParent();
+        while(tmp)
+        {
+            std::string parentString = tmp->GetNodeString();
+            Path = QuadGSTree::mBranchDelimiter + parentString + Path;
+            tmp = tmp->GetParent();
+        }
+        unsigned int Depth = 0;
+        cont = !(mTmpBranch->DumpTree(Path, StartPosition, Depth, 256));
+        Path += "/";
+        QuadParamPacket::Ptr tmpPacket = QuadParamPacket::Create(reinterpret_cast<const uint8_t*>(Path.c_str()),static_cast<uint16_t>(Path.length()) );
+        tmpPacket->SetSequenceNumber(SequenceNumber++);
+        tmpPacket->SetAddress(QuadSerialPacket::addresses::Parameters);
+        tmpPacket->SetControl(QuadSerialPacket::ParametersControl::SetTree);
+
+        write( std::static_pointer_cast<QuadSerialPacket>(tmpPacket) );
     }
-    Path += mTmpBranch->DumpTree();
-    QuadSerialPacket::Ptr tmpPacket = QuadSerialPacket::Create(reinterpret_cast<const uint8_t*>(Path.c_str()),static_cast<uint16_t>(Path.length()) );
-    tmpPacket->SetAddress(QuadSerialPacket::addresses::Parameters);
-    tmpPacket->SetControl(QuadSerialPacket::ParametersControl::SetTree);
-    mIo->write( tmpPacket->GetRawData() );
     return "";
 }
 
 std::string Core::requestUpdateCmd(std::string )
 {
-    QuadSerialPacket::Ptr tmpPacket = QuadSerialPacket::Create(NULL, 0 );
-    tmpPacket->SetAddress(QuadSerialPacket::addresses::Parameters);
-    tmpPacket->SetControl(QuadSerialPacket::ParametersControl::GetTree);
-    mIo->write( tmpPacket->GetRawData() );
+    RequestTree();
     return "";
 }
 
 std::string Core::saveParamCmd(std::string )
 {
-    QuadSerialPacket::Ptr tmpPacket = QuadSerialPacket::Create(NULL, 0 );
-    tmpPacket->SetAddress(QuadSerialPacket::addresses::Parameters);
-    tmpPacket->SetControl(QuadSerialPacket::ParametersControl::Save);
-    mIo->write( tmpPacket->GetRawData() );
+    QuadParamPacket::Ptr tmpPacket = QuadParamPacket::Create(NULL, 0 );
+    tmpPacket->SetSequenceNumber(0);
+    tmpPacket->SetAddress(QuadParamPacket::addresses::Parameters);
+    tmpPacket->SetControl(QuadParamPacket::ParametersControl::Save);
+    write( std::static_pointer_cast<QuadSerialPacket>(tmpPacket) );
     return "";
 }
 
 std::string Core::loadParamCmd(std::string )
 {
-    QuadSerialPacket::Ptr tmpPacket = QuadSerialPacket::Create(NULL, 0 );
-    tmpPacket->SetAddress(QuadSerialPacket::addresses::Parameters);
-    tmpPacket->SetControl(QuadSerialPacket::ParametersControl::Load);
-    mIo->write( tmpPacket->GetRawData() );
+    QuadParamPacket::Ptr tmpPacket = QuadParamPacket::Create(NULL, 0 );
+    tmpPacket->SetSequenceNumber(0);
+    tmpPacket->SetAddress(QuadParamPacket::addresses::Parameters);
+    tmpPacket->SetControl(QuadParamPacket::ParametersControl::Load);
+    write( std::static_pointer_cast<QuadSerialPacket>(tmpPacket) );
     return "";
 }
 
@@ -337,8 +368,8 @@ std::vector< Command::ptr > Core::getCommands()
             std::bind(&Core::get, shared_from_this(), std::placeholders::_1),
             "Get value of the command tree.", Command::ActOn::Core));
     mCommands.push_back(std::make_shared<Command> ("RegisterTree",
-            std::bind(&Core::Register, shared_from_this(), std::placeholders::_1),
-            "Register a new value in the tree.", Command::ActOn::Core));
+            std::bind(&Core::SetAndRegister, shared_from_this(), std::placeholders::_1),
+            "SetAndRegister a new value in the tree.", Command::ActOn::Core));
     mCommands.push_back(std::make_shared<Command> ("dumpTree",
             std::bind(&Core::dump, shared_from_this(), std::placeholders::_1),
             "Dump the command tree.", Command::ActOn::Core));
@@ -367,25 +398,74 @@ Core::ptr Core::getThis()
 
 void Core::FindPartial(std::string& name, std::vector<std::string>& vec)
 {
-    UpdateTmp(name, false);
+    UpdateTmp(name);
     mTmpBranch->FindPartial(name, vec);
+}
+
+void Core::write( QuadSerialPacket::Ptr packet)
+{
+    mIo->write( packet->GetRawData() );
+}
+
+void Core::RequestTree()
+{
+    QuadParamPacket::Ptr tmpPacket = QuadParamPacket::Create(NULL, 0 );
+    tmpPacket->SetSequenceNumber(0);
+    tmpPacket->SetAddress(QuadSerialPacket::addresses::Parameters);
+    tmpPacket->SetControl(QuadSerialPacket::ParametersControl::GetTree);
+    write( std::static_pointer_cast<QuadSerialPacket>(tmpPacket) );
 }
 
 void Core::ParameterHandler(QuadSerialPacket::Ptr packetPtr)
 {
-    uint8_t control = packetPtr->GetControl();
+    QuadParamPacket::Ptr paramPacket = QuadParamPacket::Create(packetPtr->GetRawData());
+    uint8_t control = paramPacket->GetControl();
+
+    static uint8_t lastSequenceNo = 0;
+    uint8_t sequenceNo = paramPacket->GetSequenceNumber();
+    uint8_t lastInSeq = paramPacket->GetLastInSeq();
+    std::string path = paramPacket->GetPayload()->toString();
+
     switch (control){
     case QuadSerialPacket::ParametersControl::SetTree:
-        if(mTree)
+        if((lastSequenceNo++) != sequenceNo)
         {
-            set(packetPtr->GetPayload()->toString());
+            logger.QuadLog(QuadGS::error, "Lost a setTree package, try again!" );
+            lastSequenceNo = 0;
+            RequestTree(); // We have not yet got the whole tree, continue!
+            return;
+        }
+        if(!mTree)
+        {
+            size_t pos = path.find(QuadGSTree::mBranchDelimiter);
+            if (pos == 0)
+            {
+                path.erase(0, pos + QuadGSTree::mBranchDelimiter.length());
+                mTree = QuadGSTree::ptr(new QuadGSTree(path));
+                mCurrentBranch = mTree;
+                mTmpBranch = mTree;
+                mSavedBranch = mTree;
+                QuadGSTree::RemoveModuleString(path);
+            }
+            else
+            {
+                logger.QuadLog(QuadGS::error, "Packet not relative root: " + path );
+                return;
+            }
+        }
+
+        SetAndRegister(paramPacket->GetPayload()->toString());
+        if(lastInSeq)
+        {
+            lastSequenceNo = 0;
         }
         else
         {
-            Register(packetPtr->GetPayload()->toString());
+            RequestTree(); // We have not yet got the whole tree, continue!
         }
         break;
     case QuadSerialPacket::ParametersControl::GetTree:
+        logger.QuadLog(QuadGS::error, "GetTree command not implemented in GS!" + path );
         break;
     case QuadSerialPacket::ParametersControl::Value:
         break;
@@ -401,6 +481,7 @@ void Core::StatusHandler(QuadSerialPacket::Ptr packetPtr)
     switch (control){
     case QuadSerialPacket::StatusControl::Ack:
         break;
+    case QuadSerialPacket::StatusControl::Cont:
     case QuadSerialPacket::StatusControl::BufferOverrun:
     case QuadSerialPacket::StatusControl::Error:
     case QuadSerialPacket::StatusControl::Nack:
@@ -408,7 +489,7 @@ void Core::StatusHandler(QuadSerialPacket::Ptr packetPtr)
     case QuadSerialPacket::StatusControl::NotImplemented:
     case QuadSerialPacket::StatusControl::NotValidSlipPacket:
     case QuadSerialPacket::StatusControl::UnexpectedSequence:
-        logger.QuadLog(QuadGS::error, "Not valid response: " + std::to_string(packetPtr->GetControl()));
+        logger.QuadLog(QuadGS::error, "Not valid status response: " + std::to_string(packetPtr->GetControl()));
         break;
 
     default:
@@ -421,23 +502,24 @@ void Core::msgHandler(QuadGS::QuadSerialPacket::Ptr ptr)
     uint8_t address = ptr->GetAddress();
     switch (address){
     case QuadSerialPacket::Parameters:
-        logger.QuadLog(severity_level::message_trace, "Parameter message: \n" + ptr->GetRawData()->toString());
         ParameterHandler(ptr);
         break;
     case QuadSerialPacket::FunctionCall:
-        logger.QuadLog(severity_level::info, "FunctionCall message: \n" + ptr->GetRawData()->toString());
         // FunctionCallHandler();
         break;
     case QuadSerialPacket::Log:
-        logger.QuadLog(severity_level::info, "Log message: \n" + ptr->GetRawData()->toString());
         // LogHandler();
         break;
-
+    case QuadSerialPacket::Status:
+        StatusHandler(ptr);
+        break;
     default:
         logger.QuadLog(severity_level::warning, "Unhandled message: " + std::to_string(address) + " with data: \n" + ptr->GetRawData()->toString());
         break;
     }
 }
+
+
 
 
 }

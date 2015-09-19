@@ -1,8 +1,41 @@
 /*
  * QuadSerialPacket.h
  *
- *  Created on: Feb 14, 2015
- *      Author: martin
+ * Copyright (C) 2015 Martin Lundh
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
+/**
+ * @file QuadSerialPacket.h
+ *
+ * A QSP is defined as:
+ * byte     meaning
+ * 1    [ Address   ]
+ * 2    [ Control   ]
+ * 3    [ Length H  ]
+ * 4    [ Length L  ]
+ * 5    [ Payload 1 ]
+ * 6    [ Payload 2 ]
+ *      ...
+ * m    [ Payload n ]
+ *
  */
 
 #ifndef QUADGS_MODULES_SERIAL_MANAGER_SRC_QUADSERIALPACKET_H_
@@ -10,8 +43,9 @@
 
 
 #include "QspPayloadRaw.h"
-
+#include <vector>
 namespace QuadGS {
+
 
 class QuadSerialPacket
 {
@@ -20,34 +54,48 @@ public:
 
     enum addresses
     {
-        Parameters = 1,
-        Log = 2,
-        FunctionCall = 3,
-        Status = 4, // TODO remove from QSP, should reside a layer beneath.
+        Parameters = 0,
+        Log = 1,
+        FunctionCall = 2,
+        Status = 3, // TODO remove from QSP, should reside a layer beneath.
     };
     typedef enum addresses addresses_t;
+
+    static std::vector<std::string> mAddressStrings;
+
     enum ParametersControl
     {
-        SetTree = 2,
-        GetTree = 3,
-        Value = 4,
-        Save = 5,
-        Load = 6,
+        SetTree = 0,
+        GetTree = 1,
+        Value = 2,
+        Save = 3,
+        Load = 4,
     };
     typedef enum ParametersControl ParametersControl_t;
+
+    static std::vector<std::string> mParamControl;
+
+
     enum StatusControl
     {
-      Cont = 0,
-      Ack = 1,
-      Nack = 2,
-      Error = 3,
-      NotAllowed = 4,
-      UnexpectedSequence = 5,
-      NotValidSlipPacket = 6,
-      BufferOverrun = 7,
-      NotImplemented = 200,
+        Cont = 0,
+        Ack = 1,
+        Nack = 2,
+        Error = 3,
+        NotAllowed = 4,
+        UnexpectedSequence = 5,
+        NotValidSlipPacket = 6,
+        BufferOverrun = 7,
+        NotImplemented = 8,
     };
     typedef enum StatusControl StatusControl_t;
+
+
+
+    static std::vector<std::string> mStatusControl;
+
+
+
     /**
      * Create an instance from a uint8_t array. Data is copied.
      * @param Payload Pointer to the array.
@@ -109,7 +157,7 @@ public:
      * Get the payload contained in the QSP, this is the QSP without header.
      * @return Pointer to the payload.
      */
-    QspPayloadRaw::Ptr GetPayload();
+    virtual QspPayloadRaw::Ptr GetPayload();
 
     /**
      * Get the whole message as raw data.
@@ -117,7 +165,26 @@ public:
      */
     QspPayloadRaw::Ptr GetRawData();
 
+    /**
+     * Get the complete package as a string.
+     * @return A string containing the message.
+     */
+    std::string ToString();
 protected:
+
+    /**
+     * Get the header of the message as a string.
+     * @return A string containing the header.
+     */
+    virtual std::string HeaderToString();
+
+    /**
+     * Get the payload as a string.
+     * @return  The payload as a human readable string.
+     */
+    virtual std::string PayloadToString();
+
+    QuadSerialPacket(const uint8_t* data, uint16_t data_length, uint8_t offset);
 
     /**
      * @brief Constructor
@@ -191,8 +258,11 @@ protected:
 
 
     QspPayloadRaw::Ptr mPayload;
-    const static uint8_t mHeaderSize;
+
+    const static uint8_t mHeaderSize{4};
 };
+
+
 
 } /* namespace QuadGS */
 

@@ -1,8 +1,25 @@
 /*
  * QspPayloadBase.cpp
  *
- *  Created on: Feb 15, 2015
- *      Author: martin
+ * Copyright (C) 2015 Martin Lundh
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
  */
 
 #include <string.h>
@@ -16,7 +33,10 @@ QspPayloadRaw::QspPayloadRaw(const uint8_t* Payload, uint16_t PayloadLength, uin
     mPayloadLength(static_cast<uint16_t>(PayloadLength + offset))
 {
     mPayload = new uint8_t[mArrayLength];
-    memcpy((mPayload + offset), Payload, PayloadLength * sizeof(uint8_t));
+    if(Payload)
+    {
+        memcpy((mPayload + offset), Payload, PayloadLength * sizeof(uint8_t));
+    }
 }
 
 QspPayloadRaw::QspPayloadRaw(uint16_t PayloadLength):
@@ -63,10 +83,7 @@ uint8_t QspPayloadRaw::operator[](std::size_t idx) const
 std::ostream& operator <<(std::ostream& stream, const QspPayloadRaw& pl) 
 {
   stream << "Payload length: " << std::dec << pl.getPayloadLength() << std::endl << "Payload data: ";
-  for(size_t i = 0; i < pl.getPayloadLength(); i++)
-  {
-    stream << std::hex << pl[i];
-  }
+  stream << std::hex << pl.toString();
   return stream;
 }
 
@@ -94,12 +111,11 @@ uint8_t* QspPayloadRaw::getPayload() const
   return mPayload;
 }
 
-
-
 uint16_t QspPayloadRaw::getPayloadLength() const
 {
     return mPayloadLength;
 }
+
 bool QspPayloadRaw::setPayloadLength(uint16_t size)
 {
     if(size >= mArrayLength)
@@ -110,9 +126,13 @@ bool QspPayloadRaw::setPayloadLength(uint16_t size)
     return true;
 }
 
-std::string QspPayloadRaw::toString()
+std::string QspPayloadRaw::toString(int offset) const
 {
-    std::string str(mPayload, mPayload + getPayloadLength());
+    if(getPayloadLength() <= offset)
+    {
+        return "";
+    }
+    std::string str(mPayload + offset, mPayload + getPayloadLength());
     return str;
 }
 

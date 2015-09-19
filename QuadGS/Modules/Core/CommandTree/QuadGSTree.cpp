@@ -1,10 +1,27 @@
 /*
  * CommandBase.cpp
  *
- *  Created on: May 2, 2015
- *      Author: martin
+ * Created on: May 2, 2015
+ * Copyright (C) 2015 Martin Lundh
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
  */
-
 #include "QuadGSTree.h"
 #include <sstream>
 #include <iomanip>
@@ -18,14 +35,18 @@ namespace QuadGS {
   std::string const QuadGSTree::mValueTypeDelimiterBack(">");
   std::string const QuadGSTree::mValueDelimiterFront("[");
   std::string const QuadGSTree::mValueDelimiterBack("]");
-
+  const unsigned int QuadGSTree::mMaxNameLength(8);
+  const unsigned int QuadGSTree::mMaxDepth(8);
+  const unsigned int QuadGSTree::mMaxExtra(5);
+  const unsigned int QuadGSTree::mValueTypeLength(2);
+  const unsigned int QuadGSTree::mMaxDigitsInt32(11);
+  const unsigned int QuadGSTree::mMaxNodeLength(mMaxDigitsInt32 + mMaxExtra + mMaxNameLength + mValueTypeLength);
 
 QuadGSTree::QuadGSTree(std::string name, QuadGSTreeValue::NodeType_t type):
     mName(name),
     mParent(NULL),
     mValue(type),
     mLogger("Tree")
-
 {
 
 }
@@ -70,6 +91,10 @@ std::string QuadGSTree::Register(std::string path)
     if(name.empty())
     {
       return "";
+    }
+    if(name.length() > mMaxNameLength)
+    {
+        throw std::runtime_error("Name: " + name + " is too long!");
     }
     // Make sure the node does not exist.
     for(unsigned int i = 0; i < mChildren.size(); i++)
@@ -147,7 +172,7 @@ QuadGSTree::ptr QuadGSTree::GetSelf()
   return shared_from_this();
 }
 
-QuadGSTree::ptr QuadGSTree::Find(const std::string& path, bool findFull)
+QuadGSTree::ptr QuadGSTree::Find(const std::string& path)
 {
     std::string module = GetModuleString(path);
     std::string name = GetModuleName(module);
@@ -182,18 +207,13 @@ QuadGSTree::ptr QuadGSTree::Find(const std::string& path, bool findFull)
     // If name is this, and value is different from recorded, return self.
     if((name.compare(mSelfDelimiter) == 0)) // empty. throw?
     {
-        //std::cout << "QuadGSTree::Find 2 returning self: " << module << " on branch: " << GetName() << std::endl;
+        std::cout << "QuadGSTree::Find 2 returning self: " << module << " on branch: " << GetName() << std::endl;
         return GetSelf();
 
     }
 
 
-    //We should have found something if anything matched.
-    if(findFull)
-    {
-      throw std::runtime_error("Path does not exist: " + name + ".");
-    }
-    //If not found and we did not want to find full, or name is empty (last level) return self.
+    //We did not want to find a match (name could empty = last level) return null ptr.
     //std::cout << "QuadGSTree::Find 3 returning null due to no match"  << std::endl;
     return QuadGSTree::ptr();
 }
@@ -282,18 +302,42 @@ std::string QuadGSTree::GetNodeString()
     return ss.str();
 }
 
-std::string QuadGSTree::DumpTree()
+bool QuadGSTree::DumpTree(std::string &tree, std::vector<size_t> &startPosition, unsigned int &depth, unsigned int length)
 {
-    std::string tree = ("/" + GetName() + "<" + std::to_string(mValue.mNodeType) + ">");
+    if(depth > mMaxDepth)
+    {
+        throw std::runtime_error("Tree to deep, depth: " + std::to_string(depth) );
+
+    }
+    // The tree is not allowed to be longer than length.
+    if((tree.length() + mMaxNodeLength) > length)
+    {
+        return false;
+    }
+    //dump self.
+    tree += ("/" + GetName() + "<" + std::to_string(mValue.mNodeType) + ">");
     if(QuadGSTreeValue::NodeType_t::NoType != mValue.mNodeType)
     {
         tree += "[" + mValue.GetValue() + "]";
     }
-    for(size_t i = 0; i < mChildren.size(); i++)
+    // Dump children from start position.
+    for(size_t i = startPosition[depth]; i < mChildren.size(); i++)
     {
-        tree += mChildren[i]->DumpTree() + "/..";
+
+        startPosition[depth] = i;
+        depth++;
+        if(mChildren[i]->DumpTree(tree, startPosition, depth, length))
+        {
+            tree += "/..";
+        }
+        else
+        {
+            return false;
+        }
     }
-    return tree;
+    startPosition[depth] = 0;
+    depth--;
+    return true;
 }
 
 

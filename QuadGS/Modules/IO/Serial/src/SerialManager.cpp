@@ -1,10 +1,26 @@
 /*
  * SerialManager.cpp
  *
- *  Created on: Jan 25, 2015
- *      Author: martin
+ * Copyright (C) 2015 Martin Lundh
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
  */
-
 #include "SerialManager.h"
 #include "SlipPacket.h"
 #include "QuadSerialPacket.h"
@@ -14,8 +30,9 @@ namespace QuadGS {
 Serial_Manager::Serial_Manager():
         mIo_service()
        ,mWork(new boost::asio::io_service::work(mIo_service))
-       ,mFifo(1, 1000)
+       ,mFifo(10, 1000)
        ,mRetries(0)
+       ,mOngoing(false)
        ,mLog("SerialManager")
 {
 }
@@ -151,9 +168,14 @@ void Serial_Manager::RunThread()
   {
     mIo_service.run();
   }
+  catch(const std::exception &exc)
+  {
+      std::string exception(exc.what());
+      mLog.QuadLog(severity_level::error, "Exception from  io service: " + exception );
+  }
   catch(...)
   {
-    std::cout << "exception from  io service!" << std::endl;
+      mLog.QuadLog(severity_level::error, "Unknown exception from  io service! " );
   }
 }
 
@@ -162,7 +184,6 @@ void Serial_Manager::timeoutHandler()
     if(mRetries < 2)
     {
         mRetries++;
-        doWrite();
         mLog.QuadLog(severity_level::warning, "No reply, retrying");
 
     }
@@ -172,12 +193,27 @@ void Serial_Manager::timeoutHandler()
         mFifo.pop();
         mLog.QuadLog(severity_level::error, "Transmission failed.");
     }
+    // Poll doWrite to see if there is more to be written.
+    mOngoing = false;
+    doWrite();
 }
 
 void Serial_Manager::messageHandler( QspPayloadRaw::Ptr ptr)
 {
-    mFifo.pop();
+    // Transmission ok, pop from fifo and set ok to send again.
+    if(!mFifo.empty())
+    {
+        mFifo.pop();
+    }
+    mOngoing = false;
+
+
+    // Log message.
     QuadSerialPacket::Ptr packetPtr = QuadSerialPacket::Create(ptr);
+    mLog.QuadLog(severity_level::message_trace, "Received: " + packetPtr->ToString());
+
+    doWrite();
+
     if( mMessageHandler )
     {
         mMessageHandler( packetPtr );
@@ -186,6 +222,19 @@ void Serial_Manager::messageHandler( QspPayloadRaw::Ptr ptr)
 }
 void Serial_Manager::doWrite()
 {
+    if(mOngoing)
+    {
+        return;
+    }
+    if(mFifo.empty())
+    {
+        mLog.QuadLog(severity_level::warning, "doWrite callec without anything to write.");
+        return;
+    }
+    QuadSerialPacket::Ptr packetPtr = QuadSerialPacket::Create(mFifo.front());
+    mLog.QuadLog(severity_level::message_trace, "Transmitting: " + packetPtr->ToString() + " DataLength = " + std::to_string(packetPtr->GetPayloadLength()));
+
+    mOngoing = true;
     mPort->Write( mFifo.front() );
 }
 
