@@ -1,7 +1,7 @@
 /*
  * quad_serial_packet.h
  *
- * Copyright (C) 2015 martin
+ * Copyright (C) 2015 Martin Lundh
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,7 @@
 #include "semphr.h"
 #define QSP_MAX_PACKET_SIZE (256)
 
+
 /**
  * Big endian, MSB0
  *
@@ -54,18 +55,18 @@ typedef struct QuadSerialPacket QSP_t;
 
 enum QSP_addresses
 {
-  QSP_Parameters = 1,
-  QSP_Log = 2,
-  QSP_FunctionCall = 3,
-  QSP_Status = 4, // TODO remove from QSP, should reside a layer beneath.
+  QSP_Parameters = 0,
+  QSP_Log = 1,
+  QSP_FunctionCall = 2,
+  QSP_Status = 3,
 };
 enum QSP_ParametersControl
 {
-  QSP_ParamSetTree = 2,
-  QSP_ParamGetTree = 3,
-  QSP_ParamValue = 4,
-  QSP_ParamSave = 5,
-  QSP_ParamLoad = 6,
+  QSP_ParamSetTree = 0,
+  QSP_ParamGetTree = 1,
+  QSP_ParamValue = 2,
+  QSP_ParamSave = 3,
+  QSP_ParamLoad = 4,
 };
 enum QSP_StatusControl
 {
@@ -123,6 +124,24 @@ uint8_t QSP_GetControl(QSP_t *current);
  * @return          0 if fail, 1 otherwise.
  */
 uint8_t QSP_SetControl(QSP_t *current, uint8_t control);
+
+/**
+ * Get the isResend field of the packet.
+ * @param current   Current packet, get isResend field from this packet.
+ * @return          0 if fail, isResend field otherwise.
+ */
+uint8_t QSP_GetIsResend(QSP_t *current);
+
+/**
+ * Set isResend field of the packet.
+ * @param current   Current packet, set isResend field of this packet.
+ * @param control   Control to be set.
+ * @return          0 if fail, 1 otherwise.
+ */
+uint8_t QSP_SetIsResend(QSP_t *current, uint8_t resend);
+
+
+
 
 /**
  * Get the payloadSize field of the packet.
@@ -202,5 +221,72 @@ uint8_t QSP_SetPayload(QSP_t *current, uint8_t *buffer, uint16_t bufferLength);
  * Get header size of the packet.
  */
 uint16_t QSP_GetHeaderdSize();
+
+
+
+
+/*-------------------------Param section---------------------------*/
+
+/**
+ * Get the payload pointer of the param message. Param messages
+ * contains an extra field in the header, therefore the payload
+ * is located with an offset of one.
+ * @return
+ */
+uint8_t *QSP_GetParamPayloadPtr(QSP_t *current);
+
+/**
+ * Get the sequence number of a param packet.
+ * @param current   Current packet.
+ * @return          The sequence number of the packet.
+ */
+uint8_t QSP_GetParamSequenceNumber(QSP_t *current);
+
+/**
+ * Set the sequence number of a param packet.
+ * @param current         Current packet.
+ * @param sequenceNumber  The sequence number to write.
+ * @return                0 if fail, 1 otherwise.
+ */
+uint8_t QSP_SetParamSequenceNumber(QSP_t *current, uint8_t sequenceNumber);
+
+/**
+ * Get field indicating if it is the last message in the
+ * sequence.
+ * @param current       Current packet.
+ * @return 0 if not last, 1 otherwise.
+ */
+uint8_t QSP_GetParamLastInSeq(QSP_t *current);
+
+/**
+ * Set if message is the last in sequence.
+ * @param current       Current packet.
+ * @param isLast
+ */
+void  QSP_SetParamLastInSeq(QSP_t *current, uint8_t isLast);
+
+/**
+ * Get header size of the param packet.
+ */
+uint16_t QSP_GetParamHeaderdSize();
+
+/**
+ * Get the payloadSize field of the packet. Param message type. Subtracts one
+ * from the value in the QSP due to the extra static field before the
+ * payload.
+ * @param current   Current packet, get payloadSize field from this packet.
+ * @return          0 if fail, payloadSize field otherwise.
+ */
+uint16_t QSP_GetParamPayloadSize(QSP_t *current);
+
+/**
+ * Set payloadSize field of the packet. Param message type. Adds one to the
+ * given size to accommodate the extra static field in the param message.
+ * @param current       Current packet, set payloadSize field of this packet.
+ * @param payloadSize   Control to be set.
+ * @return              0 if fail, 1 otherwise.
+ */
+uint8_t QSP_SetParamPayloadSize(QSP_t *current, uint16_t payloadSize);
+
 
 #endif /* MODULES_COMMUNICATION_INC_QUAD_SERIAL_PACKET_H_ */

@@ -681,7 +681,7 @@ uint8_t *Param_GetModuleString(uint8_t *moduleBuffer, uint32_t moduleBufferLengt
 
 uint8_t *Param_GetNameString(uint8_t *nameBuffer, uint32_t nameBufferLength, uint8_t *moduleBuffer, uint32_t moduleBufferLength)
 {
-	const char delimiters[]={"<[/\0"};
+	const char delimiters[]={'<','[','/','\0'};
 	uint8_t * after_string = Param_GetStringUntil(nameBuffer, nameBufferLength, moduleBuffer, moduleBufferLength, delimiters, 3);
 	if(!after_string)
 	{
@@ -791,19 +791,20 @@ uint8_t Param_AppendPathToHere(param_obj_t *current, uint8_t *buffer, uint32_t b
 	return 1;
 }
 
-uint8_t Param_DumpFromRoot(param_obj_t *root, uint8_t *buffer, uint32_t buffer_length)
+uint8_t Param_DumpFromRoot(uint8_t *buffer, uint32_t buffer_length, param_helper_t *helper)
 {
   buffer[0] = '\0';
   if(!Param_AppendDivider( buffer, buffer_length))
   {
     return 0;
   }
-  return Param_AppendDumpFromHere(root, buffer, buffer_length);
+  helper->depth = 0;
+  return Param_AppendDumpFromHere(Param_GetRoot(), buffer, buffer_length, helper);
 }
 
-uint8_t Param_AppendDumpFromHere(param_obj_t *current, uint8_t *buffer, uint32_t buffer_length)
+uint8_t Param_AppendDumpFromHere(param_obj_t *current, uint8_t *buffer, uint32_t buffer_length, param_helper_t *helper)
 {
-	if(!buffer || !current)
+	if(!buffer || !current || (helper->depth > MAX_DEPTH))
 	{
 		return 0;
 	}
@@ -825,9 +826,10 @@ uint8_t Param_AppendDumpFromHere(param_obj_t *current, uint8_t *buffer, uint32_t
 		return 0;
 	}
 	//Dump children.
-	for(uint8_t i = 0; i < current->registered_children; i++)
+	for(uint8_t i = helper->dumpStart[helper->depth++]; i < current->registered_children; i++)
 	{
-		if(!Param_AppendDumpFromHere(current->children[i], buffer, buffer_length))
+	  helper->dumpStart[helper->depth-1] = i;
+		if(!Param_AppendDumpFromHere(current->children[i], buffer, buffer_length, helper))
 		{
 			return 0;
 		}
@@ -836,6 +838,8 @@ uint8_t Param_AppendDumpFromHere(param_obj_t *current, uint8_t *buffer, uint32_t
 			return 0;
 		}
 	}
+	helper->depth--;
+    helper->dumpStart[helper->depth] = 0;
 	return 1;
 }
 
@@ -948,7 +952,7 @@ param_obj_t * Param_FindNext(param_obj_t *current, uint8_t *moduleBuffer, uint32
 
 uint8_t Param_SetFromRoot(param_obj_t *current, uint8_t *Buffer, uint32_t BufferLength)
 {
-	if(!current || !BufferLength)
+	if(!current || !BufferLength || !Buffer)
 	{
 		return 0;
 	}

@@ -1,7 +1,7 @@
 /*
  * state_handler.c
  *
- * Copyright (C) 2015 martin
+ * Copyright (C) 2015 Martin Lundh
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 #include "state_handler.h"
 #include "led_control_task.h"
 /*Semaphore for access control.*/

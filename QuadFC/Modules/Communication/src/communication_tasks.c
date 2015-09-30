@@ -49,6 +49,10 @@
 static QueueHandle_t xQueue_Com;
 #define COM_PACKET_LENGTH_MAX       512
 
+// Param helper.
+param_helper_t *helper;
+param_helper_t *saveHelper;
+
 /**
  * Initialize the communication module.
  * @return    1 if OK, 0 otherwise.
@@ -116,10 +120,18 @@ uint8_t Com_Init()
   /* Create the queue used to pass things to the display task*/
   xQueue_Com = xQueueCreate( COM_QUEUE_LENGTH, COM_QUEUE_ITEM_SIZE );
   crcTable = pvPortMalloc( sizeof(uint16_t) * 256 );
-  if( !xQueue_Com ||  !crcTable )
+  helper = pvPortMalloc(sizeof(param_helper_t));
+  saveHelper = pvPortMalloc(sizeof(param_helper_t));
+  if( !xQueue_Com ||  !crcTable || !helper || !saveHelper)
   {
     return 0;
   }
+  memset(helper->dumpStart, 0, MAX_DEPTH);
+  helper->depth = 0;
+  helper->sequence = 0;
+  memset(saveHelper->dumpStart, 0, MAX_DEPTH);
+  saveHelper->depth = 0;
+  saveHelper->sequence = 0;
   crcInit();
   return 1;
 }
@@ -401,37 +413,46 @@ uint8_t Com_HandleParameters(QSP_t *QSP_packet, QSP_t *QSP_RspPacket, SLIP_t *SL
 {
   QSP_ClearPayload(QSP_RspPacket);
   uint8_t result = 0;
+  uint8_t sequence = helper->sequence;
   switch ( QSP_GetControl(QSP_packet) )
   {
   case QSP_ParamGetTree:
-    result = Param_DumpFromRoot(Param_GetRoot(), QSP_GetPayloadPtr(QSP_RspPacket), QSP_GetAvailibleSize(QSP_RspPacket) - QSP_GetHeaderdSize());
-    if(result) // Dump from root was OK, create packet.
+    result = Param_DumpFromRoot(QSP_GetParamPayloadPtr(QSP_RspPacket),
+        QSP_GetAvailibleSize(QSP_RspPacket) - QSP_GetParamHeaderdSize(), helper);
+    if(result) // Dump from root is finished, reset helper.
     {
-      uint16_t len =  strlen((char *)QSP_GetPayloadPtr(QSP_RspPacket));
-      if(len <= QSP_MAX_PACKET_SIZE)
-      {
-        QSP_SetPayloadSize(QSP_RspPacket,len);
-        QSP_SetAddress(QSP_RspPacket, QSP_Parameters);
-        QSP_SetControl(QSP_RspPacket, QSP_ParamSetTree);
-      }
-      else
-      {
-        QSP_ClearPayload(QSP_RspPacket);
-        QSP_SetAddress(QSP_RspPacket, QSP_Status);
-        QSP_SetControl(QSP_RspPacket, QSP_StatusBufferOverrun);
-      }
+      memset(helper->dumpStart, 0, MAX_DEPTH); // Starting point of dump.
+      helper->sequence = 0;
+      QSP_SetParamLastInSeq(QSP_RspPacket, 1);                // This is the last in the sequence.
+    } // else dump is not finished, keep helper till next time.
+    else
+    {
+      QSP_SetParamLastInSeq(QSP_RspPacket, 0);
+      helper->sequence++;
     }
-    else // Dump was not ok, update status with Nack status.
+
+
+    // Always send dump.
+    uint16_t len =  strlen((char *)QSP_GetParamPayloadPtr(QSP_RspPacket));
+    if(len <= (QSP_MAX_PACKET_SIZE - QSP_GetParamHeaderdSize()))
+    {
+      //TODO add return value checks!
+      QSP_SetParamSequenceNumber(QSP_RspPacket, sequence);
+      QSP_SetParamPayloadSize(QSP_RspPacket,len);
+      QSP_SetAddress(QSP_RspPacket, QSP_Parameters);
+      QSP_SetControl(QSP_RspPacket, QSP_ParamSetTree);
+    }
+    else
     {
       QSP_ClearPayload(QSP_RspPacket);
       QSP_SetAddress(QSP_RspPacket, QSP_Status);
-      QSP_SetControl(QSP_RspPacket, QSP_StatusNack);
+      QSP_SetControl(QSP_RspPacket, QSP_StatusBufferOverrun);
     }
+
     break;
   case QSP_ParamSetTree:
-    result = Param_SetFromRoot(Param_GetRoot(),
-        QSP_GetPayloadPtr(QSP_packet),
-        QSP_GetPayloadSize(QSP_packet));
+    result = Param_SetFromRoot(Param_GetRoot(), QSP_GetParamPayloadPtr(QSP_packet),
+        QSP_GetParamPayloadSize(QSP_packet));
     QSP_SetAddress(QSP_RspPacket, QSP_Status);
     if(result) // Set was ok, respond with Ack.
     {
@@ -506,85 +527,132 @@ uint8_t Com_CheckCRC( QSP_t *packet)
 
 void Param_Save(SLIP_t *SLIP_packet, QSP_t *QSP_Packet)
 {
-  uint8_t result = 0;
-  result = Param_DumpFromRoot(Param_GetRoot(),
-      QSP_GetPayloadPtr(QSP_Packet),
-      QSP_GetAvailibleSize(QSP_Packet) - QSP_GetHeaderdSize());
-  if(result) // Dump was OK, packetize the QSP into a slip packet.
+  uint8_t cont = 1;
+  uint32_t address = 0;
+  memset(saveHelper->dumpStart, 0, MAX_DEPTH);
+  saveHelper->depth = 0;
+  saveHelper->sequence = 0;
+  while(cont)
   {
-    QSP_SetPayloadSize(QSP_Packet, strlen((char *)QSP_GetPayloadPtr(QSP_Packet)));
-    QSP_SetAddress(QSP_Packet, QSP_Parameters);
-    QSP_SetControl(QSP_Packet, QSP_ParamSetTree);
-    Com_AddCRC(QSP_Packet);
+    uint8_t result = 0;
+    QSP_ClearPayload(QSP_Packet);
+    uint8_t sequence = saveHelper->sequence;
+    result = Param_DumpFromRoot(QSP_GetParamPayloadPtr(QSP_Packet),
+        QSP_GetAvailibleSize(QSP_Packet) - QSP_GetParamHeaderdSize(), saveHelper);
 
-    result = Slip_Packetize(QSP_GetPacketPtr(QSP_Packet),
-        QSP_GetPayloadSize(QSP_Packet) + QSP_GetHeaderdSize(QSP_Packet) + 2,
-        SLIP_packet);
+    if(result) // Dump from root is finished, reset helper.
+    {
+      memset(saveHelper->dumpStart, 0, MAX_DEPTH);          // Starting point of dump.
+      saveHelper->sequence = 0;                             // Next will be first in sequence!
+      QSP_SetParamLastInSeq(QSP_Packet, 1);             // This is the last in the sequence.
+      cont = 0;                                         // Last package, nothing more to save.
+    } // dump is not finished, keep helper till next time.
+    else
+    {
+      QSP_SetParamLastInSeq(QSP_Packet, 0);
+      saveHelper->sequence++;
+    }
+    // Always save dump.
+    uint16_t len =  strlen((char *)QSP_GetParamPayloadPtr(QSP_Packet));
+    result = (len <= (QSP_MAX_PACKET_SIZE - QSP_GetParamHeaderdSize()));
+    if(result)
+    {
+      // Save!
+      result &= QSP_SetParamSequenceNumber(QSP_Packet, sequence);
+      result &= QSP_SetParamPayloadSize(QSP_Packet,len);
+      result &= QSP_SetAddress(QSP_Packet, QSP_Parameters);
+      result &= QSP_SetControl(QSP_Packet, QSP_ParamSetTree);
+      result &= Com_AddCRC(QSP_Packet);
+    }
+    if(result)
+    {
+
+      // Packetize into a slip package before write to mem.
+      result = Slip_Packetize(QSP_GetPacketPtr(QSP_Packet),
+          QSP_GetParamPayloadSize(QSP_Packet) + QSP_GetParamHeaderdSize(QSP_Packet) + 2,
+          SLIP_packet);
+    }
     if(result) // Packetization OK, write to mem.
     {
-      result = Mem_Write(0,
-          SLIP_packet->packetSize,
-          SLIP_packet->payload,
-          SLIP_packet->allocatedSize);
-      if(result) // Mem write was OK, send ack to indicate OK save of params.
-      {
-        QSP_ClearPayload(QSP_Packet);
-        QSP_SetAddress(QSP_Packet, QSP_Status);
-        QSP_SetControl(QSP_Packet, QSP_StatusAck);
-      }
+      result = Mem_Write(address, SLIP_packet->packetSize,
+          SLIP_packet->payload, SLIP_packet->allocatedSize);
+      address += (SLIP_packet->packetSize + 1);
+    }
+    if(result) // Mem write was OK, send ack to indicate OK save of params.
+    {
+      result &= QSP_ClearPayload(QSP_Packet);
+      result &= QSP_SetAddress(QSP_Packet, QSP_Status);
+      result &= QSP_SetControl(QSP_Packet, QSP_StatusAck);
+    }
+    else // Packetization or mem_Write did not succeed.
+    {
+      cont = 0;
+      QSP_ClearPayload(QSP_Packet);
+      QSP_SetAddress(QSP_Packet, QSP_Status);
+      QSP_SetControl(QSP_Packet, QSP_StatusNack);
     }
 
-  }
-  if(!result)
-  {
-    QSP_ClearPayload(QSP_Packet);
-    QSP_SetAddress(QSP_Packet, QSP_Status);
-    QSP_SetControl(QSP_Packet, QSP_StatusNack);
-  }
+  }// while(cont)
 }
 
 void Param_Load(SLIP_t *SLIP_packet, QSP_t *QSP_Packet)
 {
-  int k = 0;
-  uint8_t buffer[2];
-  QSP_StatusControl_t read_status = QSP_StatusCont;
-  uint32_t counter = 0;
-  uint8_t result = 0;
-  while(QSP_StatusCont == read_status && counter < QSP_MAX_PACKET_SIZE)
+  uint8_t lastInSequence = 0;
+  uint8_t EcpectedSequenceNo = 0;
+  uint32_t address = 0;
+
+  while(!lastInSequence)
   {
-    result = Mem_Read(counter,1, buffer, 2);
-    counter++;
+    QSP_ClearPayload(QSP_Packet);
+    int k = 0;
+    uint8_t buffer[2];
+    QSP_StatusControl_t read_status = QSP_StatusCont;
+    uint8_t result = 0;
+    uint32_t startAddress = address;
+    // Read from memory and add to the parser.
+    while((QSP_StatusCont == read_status))
+    {
+      result = Mem_Read(address, 1, buffer, 2);
+      if(result && ((address - startAddress) < COM_PACKET_LENGTH_MAX))
+      {
+        read_status = SLIP_QspParser(buffer, 1, SLIP_packet, QSP_Packet, &k);
+      }
+      else
+      {
+        result = 0;
+        break;
+      }
+      address++;
+    }
+    result &= (read_status == QSP_StatusAck);
+
+    // test, allways send string.
     if(result)
     {
-      read_status = SLIP_QspParser(buffer,
-          1,
-          SLIP_packet,
-          QSP_Packet,
-          &k);
+      uint8_t sequenceNo = QSP_GetParamSequenceNumber(QSP_Packet);
+      lastInSequence = QSP_GetParamLastInSeq(QSP_Packet);
+      result = (sequenceNo == EcpectedSequenceNo);
+      EcpectedSequenceNo++;
     }
-    else
+    if(result)
     {
-      result = 0;
-      break;
+      result = Param_SetFromRoot(Param_GetRoot(),
+          QSP_GetParamPayloadPtr(QSP_Packet),
+          QSP_GetParamPayloadSize(QSP_Packet));
     }
-  }
-  if(result)
-  {
-    result = Param_SetFromRoot(Param_GetRoot(),
-        QSP_GetPayloadPtr(QSP_Packet),
-        QSP_GetPayloadSize(QSP_Packet));
-    if(result) // Set was successful, params are loaded from mem, send ack.
-        {
+    if(result) // Set was successful, params are loaded from mem.
+    {
       QSP_ClearPayload(QSP_Packet);
       QSP_SetAddress(QSP_Packet, QSP_Status);
       QSP_SetControl(QSP_Packet, QSP_StatusAck);
-        }
-  }
-  if(!result)
-  {
-    QSP_ClearPayload(QSP_Packet);
-    QSP_SetAddress(QSP_Packet, QSP_Status);
-    QSP_SetControl(QSP_Packet, QSP_StatusNack);
+    }
+    else // Read or set was not successful, send Nack.
+    {
+      QSP_ClearPayload(QSP_Packet);
+      QSP_SetAddress(QSP_Packet, QSP_Status);
+      QSP_SetControl(QSP_Packet, QSP_StatusNack);
+      lastInSequence = 1;
+    }
   }
 }
 

@@ -92,7 +92,7 @@ void Ctrl_Initialize(CtrlInternal_t *internals)
       &internals->RatePitch->OutMax, "OutMax", pitchObj, internals->xMutexParam);
   Param_CreateObj(0, int32_variable_type,
       &internals->RatePitch->OutMin, "OutMin", pitchObj, internals->xMutexParam);
-/*
+
   Param_CreateObj(0, int32_variable_type,
       &internals->RateRoll->OutMax, "OutMax", rollObj, internals->xMutexParam);
   Param_CreateObj(0, int32_variable_type,
@@ -102,7 +102,7 @@ void Ctrl_Initialize(CtrlInternal_t *internals)
       &internals->RateYaw->OutMax, "OutMax", yawObj, internals->xMutexParam);
   Param_CreateObj(0, int32_variable_type,
       &internals->RateYaw->OutMin, "OutMin", yawObj, internals->xMutexParam);
-*/
+
 
 }
 

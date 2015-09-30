@@ -1,7 +1,7 @@
 /*
  * quad_serial_packet.c
  *
- * Copyright (C) 2015 martin
+ * Copyright (C) 2015 Martin Lundh
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,7 @@
 #include "quad_serial_packet.h"
 
 #define QSP_HEADER_SIZE (4)
+#define QSP_PARAM_HEADER_SIZE (5)
 
 struct QuadSerialPacket
 {
@@ -95,6 +96,15 @@ uint8_t QSP_SetControl(QSP_t *current, uint8_t control)
   return 1;
 }
 
+uint8_t QSP_GetIsResend(QSP_t *current)
+{
+  return 0;
+}
+uint8_t QSP_SetIsResend(QSP_t *current, uint8_t resend)
+{
+  return 0;
+}
+
 uint16_t QSP_GetPayloadSize(QSP_t *current)
 {
   int value = 0;
@@ -123,18 +133,18 @@ uint8_t QSP_ClearPayload(QSP_t *current)
 {
   QSP_GetPayloadPtr(current)[0] = '\0';
   QSP_SetPayloadSize(current, 0);
-  return 0;
+  return 1;
 }
 
 uint8_t QSP_SetAfterPayload(QSP_t *current, uint8_t *buffer, uint16_t bufferLength)
 {
   if(current->allocatedSize < (QSP_GetPayloadSize(current) + QSP_HEADER_SIZE + bufferLength))
   {
-    return 1;
+    return 0;
   }
   memcpy((current->payload + QSP_HEADER_SIZE + QSP_GetPayloadSize(current)), buffer, bufferLength);
   current->extPacketSize += bufferLength;
-  return 0;
+  return 1;
 }
 
 uint16_t QSP_GetPacketSize(QSP_t *current)
@@ -169,3 +179,81 @@ uint16_t QSP_GetHeaderdSize()
 {
   return QSP_HEADER_SIZE;
 }
+
+
+
+uint8_t *QSP_GetParamPayloadPtr(QSP_t *current)
+{
+  return (current->payload + QSP_PARAM_HEADER_SIZE);
+}
+
+uint8_t QSP_GetParamSequenceNumber(QSP_t *current)
+{
+  if(current->allocatedSize < QSP_PARAM_HEADER_SIZE)
+  {
+    return 0;
+  }
+  uint8_t tmp = current->payload[4];
+  tmp &= ~(1 << 7);
+  return tmp;
+}
+
+uint8_t QSP_SetParamSequenceNumber(QSP_t *current, uint8_t sequenceNumber)
+{
+  if(current->allocatedSize < QSP_PARAM_HEADER_SIZE)
+  {
+    return 0;
+  }
+  uint8_t tmp = current->payload[4];
+  tmp &= ~(0x7f);                 // Clear sequence nr from stored value.
+  sequenceNumber &= ~(1 << 7);    // Clear top bit from sequenceNumber (should have been 0 already).
+  sequenceNumber |= tmp;          // Combine the two.
+  current->payload[4] = sequenceNumber;
+  return 1;
+}
+
+uint8_t QSP_GetParamLastInSeq(QSP_t *current)
+{
+  if(current->allocatedSize < QSP_PARAM_HEADER_SIZE)
+  {
+    return 1;
+  }
+  uint8_t tmp = current->payload[4];
+  return ((tmp >> 7) & 1 ); // Highest bit indicates last in sequence.
+}
+
+void  QSP_SetParamLastInSeq(QSP_t *current, uint8_t isLast)
+{
+  if(current->allocatedSize < QSP_PARAM_HEADER_SIZE)
+  {
+    return;
+  }
+  isLast &= 1;
+  uint8_t currentVal = current->payload[4];
+  currentVal = (currentVal & ~(1 << 7)) | (isLast << 7); // Clear bit, then set to isLast.
+  current->payload[4] = currentVal;
+}
+
+uint16_t QSP_GetParamHeaderdSize()
+{
+  return QSP_PARAM_HEADER_SIZE;
+}
+
+
+uint16_t QSP_GetParamPayloadSize(QSP_t *current)
+{
+  uint16_t plSize = QSP_GetPayloadSize(current);
+  if(plSize < 1)
+  {
+    return 0;
+  }
+  return (plSize - 1);
+}
+
+uint8_t QSP_SetParamPayloadSize(QSP_t *current, uint16_t payloadSize)
+{
+  return (QSP_SetPayloadSize(current, payloadSize + 1));
+}
+
+
+

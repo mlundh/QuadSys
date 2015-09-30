@@ -109,6 +109,18 @@ struct param_obj_t
 typedef struct param_obj_t param_obj_t;
 
 /**
+ * Helper struct to save state of an aborted dump. This enables
+ * a continued dump later.
+ */
+struct param_helper
+{
+  uint8_t dumpStart[MAX_DEPTH];
+  uint8_t depth;
+  uint8_t sequence;
+};
+typedef struct param_helper param_helper_t;
+
+/**
  * Get the root parameter. Call this function to get a handle to the root node.
  * To be used when creating new modules that need parameters. These modules
  * might have sub modules, which can choose to register to the module or the
@@ -144,12 +156,12 @@ param_obj_t *Param_CreateObj(uint8_t num_children, Log_variable_type_t type, voi
 
 /**
  *
- * @param root
+
  * @param buffer
  * @param buffer_length
  * @return
  */
-uint8_t Param_DumpFromRoot(param_obj_t *root, uint8_t *buffer, uint32_t buffer_length);
+uint8_t Param_DumpFromRoot(uint8_t *buffer, uint32_t buffer_length, param_helper_t *helper);
 
 /**
  * @brief Append dump of current to buffer.
@@ -165,7 +177,7 @@ uint8_t Param_DumpFromRoot(param_obj_t *root, uint8_t *buffer, uint32_t buffer_l
  * @param buffer_length		Total length of the buffer.
  * @return					0 if fail, 1 if successful.
  */
-uint8_t Param_AppendDumpFromHere(param_obj_t *current, uint8_t *buffer, uint32_t buffer_length);
+uint8_t Param_AppendDumpFromHere(param_obj_t *current, uint8_t *buffer, uint32_t buffer_length, param_helper_t *helper);
 
 /**
  * @brief Update tree from root with content of Buffer.
