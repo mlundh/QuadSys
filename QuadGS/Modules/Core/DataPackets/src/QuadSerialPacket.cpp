@@ -84,12 +84,34 @@ void QuadSerialPacket::SetAddress(uint8_t address)
 
 uint8_t QuadSerialPacket::GetControl()
 {
-    return DeserializeInt8(1);
+    uint8_t tmp = DeserializeInt8(1);
+    tmp &= ~(1 << 7);
+    return tmp;
 }
 void QuadSerialPacket::SetControl(uint8_t control)
 {
+    uint8_t tmp =  DeserializeInt8(1);
+    tmp &= ~(0x7f);                 // Clear sequence nr from stored value.
+    control &= ~(1 << 7);           // Clear top bit from sequenceNumber (should have been 0 already).
+    control |= tmp;                 // Combine the two.
     SerializeInt8(control, 1);
 }
+
+uint8_t QuadSerialPacket::GetIsResend()
+{
+    uint8_t tmp = DeserializeInt8(1);
+    return ((tmp >> 7) & 1 ); // Highest bit indicates IsResend.
+}
+
+
+void QuadSerialPacket::SetIsResend(uint8_t IsResend)
+{
+    IsResend &= 1;
+    uint8_t currentVal = DeserializeInt8(1);
+    currentVal = (currentVal & ~(1 << 7)) | (IsResend << 7); // Clear bit, then set to resend.
+    SerializeInt8(currentVal, 1);
+}
+
 
 uint16_t QuadSerialPacket::GetPayloadLength()
 {
@@ -130,7 +152,7 @@ std::string QuadSerialPacket::HeaderToString()
     }
     else
     {
-        result += "Unknown address]: " + std::to_string(address) + " With control: " + std::to_string(GetControl());
+        result += "[Unknown address]: " + std::to_string(address) + " With control: " + std::to_string(GetControl());
         return result;
     }
 
@@ -156,9 +178,9 @@ std::string QuadSerialPacket::HeaderToString()
     }
     else
     {
-        result += "Unknown control]: " + std::to_string(status);
+        result += "[Unknown control]: " + std::to_string(status);
     }
-
+    result += "[" + std::to_string(GetIsResend()) + "]";
     return result;
 }
 

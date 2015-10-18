@@ -26,15 +26,23 @@
  * @file QuadSerialPacket.h
  *
  * A QSP is defined as:
- * byte     meaning
- * 1    [ Address   ]
- * 2    [ Control   ]
- * 3    [ Length H  ]
- * 4    [ Length L  ]
- * 5    [ Payload 1 ]
- * 6    [ Payload 2 ]
- *      ...
- * m    [ Payload n ]
+ *
+ *
+ * | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+ *
+ *  +-------------------------------+
+ * 1|            address            |
+ *  +-------------------------------+
+ * 2| R|         Control            |
+ *  +-------------------------------+
+ * 3|          payload size         |
+ *  +-------------------------------+
+ * 4|           payload             |
+ *  +-------------------------------+
+ *
+ *  Where the R field indicates resend.
+ *
+ *
  *
  */
 
@@ -146,6 +154,20 @@ public:
      */
     void SetControl(uint8_t control);
 
+
+    /**
+     * @brief Get method for IsResend field of the QSP.This field
+     * contains information to the receiving module.
+     * @return IsResend field of the QSP message.
+     */
+    uint8_t GetIsResend();
+
+    /**
+     * @brief Set method for IsResend field of the QSP. This field
+     * contains information to the receiving module.
+     * @param IsResend The IsResend field of a QSP message.
+     */
+    void SetIsResend(uint8_t IsResend);
 
     /**
      * Get the payload length.

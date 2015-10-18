@@ -207,7 +207,6 @@ void Serial_Manager::messageHandler( QspPayloadRaw::Ptr ptr)
     }
     mOngoing = false;
 
-
     // Log message.
     QuadSerialPacket::Ptr packetPtr = QuadSerialPacket::Create(ptr);
     mLog.QuadLog(severity_level::message_trace, "Received: " + packetPtr->ToString());

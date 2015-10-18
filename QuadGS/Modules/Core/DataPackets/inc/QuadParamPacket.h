@@ -24,6 +24,31 @@
 
 #ifndef QUADGS_MODULES_CORE_DATAPACKETS_INC_QUADPARAMPACKET_H_
 #define QUADGS_MODULES_CORE_DATAPACKETS_INC_QUADPARAMPACKET_H_
+/**
+ *
+ *
+ * Big endian, MSB0
+ *
+ * A parameter frame extends the QSP by adding a new
+ * static field in the header (first byte in the payload):
+ *
+ * | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+ *
+ *  +-------------------------------+
+ * 1|            address            |
+ *  +-------------------------------+
+ * 2| R|         Control            |
+ *  +-------------------------------+
+ * 3| L|       sequence number      |
+ *  +-------------------------------+
+ * 3|          payload size         |
+ *  +-------------------------------+
+ * 4|           payload             |
+ *  +-------------------------------+
+ *
+ *  The R field indicates resend.
+ *  The L field indicates if it is the last in a sequence.
+ */
 
 #include "QuadSerialPacket.h"
 
