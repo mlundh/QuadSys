@@ -35,20 +35,44 @@
  * Big endian, MSB0
  *
  * Struct containing the data protocol.
- * | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+ * | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
  *
  *  +-------------------------------+
  * 1|            address            |
  *  +-------------------------------+
- * 2|            Control            |
+ * 2| R|         Control            |
  *  +-------------------------------+
  * 3|          payload size         |
  *  +-------------------------------+
  * 4|           payload             |
  *  +-------------------------------+
  *
+ *  Where the R field indicates resend.
+ *
  * frame format:
- * [address][control][PayloadSize][Payload]
+ * [address][isResend][control][PayloadSize][Payload]
+ *
+ *
+ * A parameter frame extends the QSP by adding a new
+ * static field in the header (first byte in the payload):
+ *
+ * | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+ *
+ *  +-------------------------------+
+ * 1|            address            |
+ *  +-------------------------------+
+ * 2| R|         Control            |
+ *  +-------------------------------+
+ * 3| L|       sequence number      |
+ *  +-------------------------------+
+ * 3|          payload size         |
+ *  +-------------------------------+
+ * 4|           payload             |
+ *  +-------------------------------+
+ *
+ *  The R field indicates resend.
+ *  The L field indicates if it is the last in a sequence.
+ *
  */
 
 typedef struct QuadSerialPacket QSP_t;

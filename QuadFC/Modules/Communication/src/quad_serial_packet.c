@@ -87,22 +87,33 @@ uint8_t QSP_SetAddress(QSP_t *current, uint8_t address)
 
 uint8_t QSP_GetControl(QSP_t *current)
 {
-  return current->payload[1];
+  uint8_t tmp = current->payload[1];
+  tmp &= ~(1 << 7);
+  return tmp;
 }
 
 uint8_t QSP_SetControl(QSP_t *current, uint8_t control)
 {
+  uint8_t tmp = current->payload[1];
+  tmp &= ~(0x7f);                 // Clear sequence nr from stored value.
+  control &= ~(1 << 7);           // Clear top bit from sequenceNumber (should have been 0 already).
+  control |= tmp;                 // Combine the two.
   current->payload[1] = control;
   return 1;
 }
 
 uint8_t QSP_GetIsResend(QSP_t *current)
 {
-  return 0;
+  uint8_t tmp = current->payload[1];
+  return ((tmp >> 7) & 1 ); // Highest bit indicates IsResend.
 }
 uint8_t QSP_SetIsResend(QSP_t *current, uint8_t resend)
 {
-  return 0;
+  resend &= 1;
+  uint8_t currentVal = current->payload[1];
+  currentVal = (currentVal & ~(1 << 7)) | (resend << 7); // Clear bit, then set to resend.
+  current->payload[1] = currentVal;
+  return 1;
 }
 
 uint16_t QSP_GetPayloadSize(QSP_t *current)
