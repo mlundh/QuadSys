@@ -80,8 +80,7 @@
 #include "state_handler.h"
 #include "imu.h"
 #include "imu_signal_processing.h"
-#include "motor_control.h"
-#include "pwm_motor_control.h"
+#include "QuadFC_MotorControl.h"
 #include "parameters.h"
 
 #include "globals.h"
@@ -98,6 +97,7 @@ typedef struct mainTaskParams
   state_data_t *setpoint;
   CtrlInternal_t *ctrl;
   control_signal_t *control_signal;
+  MotorControlObj *motorControl;
 }taskParams_t;
 
 /*
@@ -113,10 +113,11 @@ void create_main_control_task( void )
   taskParam->setpoint = pvPortMalloc( sizeof(state_data_t) );
   taskParam->state = pvPortMalloc( sizeof(state_data_t) );
   taskParam->control_signal = pvPortMalloc( sizeof(control_signal_t) );
-
+  taskParam->motorControl = MotorCtrl_CreateAndInit(4);
   /*Ensure that all mallocs returned valid pointers*/
    if (!taskParam || !taskParam->ctrl || !taskParam->setpoint
-       || !taskParam->state || !taskParam->control_signal )
+       || !taskParam->state || !taskParam->control_signal
+       || !taskParam->motorControl)
    {
      for ( ;; )
      {
@@ -190,8 +191,6 @@ void main_control_task( void *pvParameters )
   uint32_t nr_motors = 4;
   int32_t motorSetpoint[nr_motors];
 
-  pwm_init_motor_control( nr_motors );
-
   TickType_t arming_counter = 0;
   uint32_t heartbeat_counter = 0;
   uint32_t spectrum_receiver_error_counter = 0;
@@ -240,7 +239,7 @@ void main_control_task( void *pvParameters )
        * ensure that all systems are available and ready. Use the counter method rather
        * than sleeping to allow external communication.
        */
-      pwm_enable( nr_motors );
+      MotorCtrl_Enable( param->motorControl );
       Ctrl_On(param->ctrl);
 
       if ( arming_counter >= ( 1000 / mainPeriodTimeMs ) ) // Be in arming state for 1s.
@@ -265,15 +264,14 @@ void main_control_task( void *pvParameters )
       get_rate_gyro( param->state, imu_readings );
 
       Ctrl_Execute(param->ctrl, param->state, param->setpoint, param->control_signal);
-
       Ctrl_Allocate(param->control_signal, motorSetpoint);
-      pwm_update_setpoint( motorSetpoint, nr_motors );
+      MotorCtrl_UpdateSetpoint( param->motorControl, motorSetpoint, param->motorControl->nr_init_motors);
       break;
     case state_disarming:
       /*---------------------------------------Disarming mode--------------------------
        * Transitional state. Only executed once.
        */
-      pwm_dissable();
+      MotorCtrl_Disable(param->motorControl);
       Ctrl_Off(param->ctrl);
       if( !State_Change(state_disarmed) )
       {
@@ -328,7 +326,7 @@ void main_control_task( void *pvParameters )
         if ( spectrum_receiver_error_counter >= (80) )
         {
           State_Fault();
-          pwm_dissable();
+          MotorCtrl_Disable(param->motorControl);
           spectrum_receiver_error_counter = 0;
         }
       }

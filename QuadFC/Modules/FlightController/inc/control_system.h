@@ -27,15 +27,40 @@
 
 typedef struct CtrlInternal CtrlInternal_t;
 
+/**
+ * Create a Control system object.
+ * @return    Control system object containing everything needed by the controller.
+ */
 CtrlInternal_t *Ctrl_Create();
 
+/**
+ * Execute the control system.
+ * @param internals Current control object.
+ * @param state     Current state data.
+ * @param setpoint  Current setpoint.
+ * @param u_signal  Output, control signal.
+ */
 void Ctrl_Execute(CtrlInternal_t *internals, state_data_t *state, state_data_t *setpoint, control_signal_t *u_signal);
 
+/**
+ * Turn control on.
+ * @param param Current control object.
+ */
 void Ctrl_On(CtrlInternal_t * param);
 
+/**
+ * Turn control off.
+ * @param param Current control object.
+ */
 void Ctrl_Off(CtrlInternal_t * param);
 
+
 //TODO move to motor control block.
+/**
+ * Allocate the control to different motors.
+ * @param ctrl_signal     control signal to be allocated to motors.
+ * @param motor_setpoint  Output, setpoint to each motor.
+ */
 void Ctrl_Allocate( control_signal_t *ctrl_signal, int32_t motor_setpoint[] );
 
 #endif /* MODULES_FLIGHTCONTROLLER_INC_CONTROL_SYSTEM_H_ */

@@ -26,7 +26,25 @@
 
 #include "stdint.h"
 
+/**
+ * Read from memory.
+ * @param addr          Address in memory to read from.
+ * @param size          Size to read.
+ * @param buffer        Buffer to read into.
+ * @param buffer_size   Buffer size.
+ * @return              1 if success, 0 otherwise.
+ */
 uint8_t Mem_Read(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size);
+
+
+/**
+ * Write to memory.
+ * @param addr          Address in memory to write to.
+ * @param size          Size to Write.
+ * @param buffer        Buffer to Write from.
+ * @param buffer_size   Buffer size.
+ * @return              1 if success, 0 otherwise.
+ */
 uint8_t Mem_Write(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size);
 
 #endif /* PORTLAYER_MEMORY_INC_MEMORY_H_ */
