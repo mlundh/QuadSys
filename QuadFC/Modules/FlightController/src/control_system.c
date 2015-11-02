@@ -36,6 +36,7 @@ struct CtrlInternal
   pidConfig_t* RateRoll;
   pidConfig_t* RateYaw;
   SemaphoreHandle_t xMutexParam;
+  CtrlModeHandler_t* ModeHandler;
 };
 
 void Ctrl_Initialize(CtrlInternal_t *internals);
@@ -44,10 +45,16 @@ void Ctrl_Initialize(CtrlInternal_t *internals);
 CtrlInternal_t *Ctrl_Create()
 {
   CtrlInternal_t *internals = pvPortMalloc(sizeof(struct CtrlInternal));
-  Ctrl_Initialize(internals);
-  Ctrl_InitModeHandler();
+  internals->ModeHandler = Ctrl_CreateModeHandler();
 
   return internals;
+}
+
+uint8_t Ctrl_init(CtrlInternal_t *obj)
+{
+  Ctrl_Initialize(obj);
+  Ctrl_InitModeHandler(obj->ModeHandler);
+  return 1;
 }
 
 void Ctrl_Initialize(CtrlInternal_t *internals)
@@ -112,7 +119,7 @@ void Ctrl_Execute(CtrlInternal_t *internals, state_data_t *state, state_data_t *
   // Make sure that we are not trying to update the pid parameters while using them.
   if( xSemaphoreTake( internals->xMutexParam, ( TickType_t )(1UL / portTICK_PERIOD_MS) ) == pdTRUE )
   {
-    switch (Ctrl_GetCurrentMode())
+    switch (Ctrl_GetCurrentMode(internals->ModeHandler))
     {
     case Control_mode_rate:
       /*-----------------------------Rate mode-----------------------

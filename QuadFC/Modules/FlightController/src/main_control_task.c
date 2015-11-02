@@ -98,6 +98,7 @@ typedef struct mainTaskParams
   CtrlInternal_t *ctrl;
   control_signal_t *control_signal;
   MotorControlObj *motorControl;
+  StateHandler_t* stateHandler;
 }taskParams_t;
 
 /*
@@ -114,10 +115,11 @@ void create_main_control_task( void )
   taskParam->state = pvPortMalloc( sizeof(state_data_t) );
   taskParam->control_signal = pvPortMalloc( sizeof(control_signal_t) );
   taskParam->motorControl = MotorCtrl_CreateAndInit(4);
+  taskParam->stateHandler = State_CreateStateHandler();
   /*Ensure that all mallocs returned valid pointers*/
    if (!taskParam || !taskParam->ctrl || !taskParam->setpoint
        || !taskParam->state || !taskParam->control_signal
-       || !taskParam->motorControl)
+       || !taskParam->motorControl || ! taskParam->stateHandler)
    {
      for ( ;; )
      {
@@ -161,6 +163,8 @@ void main_control_task( void *pvParameters )
   imu_data_t *imu_readings = pvPortMalloc( sizeof(imu_data_t) );
 
 
+  State_InitStateHandler(param->stateHandler);
+
   /*Ensure that all mallocs returned valid pointers*/
   if ( !local_receiver_buffer || !imu_readings )
   {
@@ -183,8 +187,9 @@ void main_control_task( void *pvParameters )
   local_receiver_buffer->sync = 0;
   local_receiver_buffer->connection_ok = 0;
 
-
-  State_InitStateHandler();
+  mpu6050_initialize();
+  State_InitStateHandler(param->stateHandler);
+  Ctrl_init(param->ctrl);
 
 
   // TODO read from memory
@@ -204,18 +209,20 @@ void main_control_task( void *pvParameters )
    /*
     * Main state machine. Controls the state of the flight controller.
     */
-    switch (State_GetCurrent())
+    switch (State_GetCurrent(param->stateHandler))
     {
     case state_init:
       /*---------------------------------------Initialize mode------------------------
        * Initialize all modules then set the fc to dissarmed state.
        */
-      mpu6050_initialize(); // Might take time, reset the last wake time to avoid errors.
+
+
+      // StateEst_init(); // Might take time, reset the last wake time to avoid errors.
       xLastWakeTime = xTaskGetTickCount();
 
-      if(pdTRUE != State_Change(state_disarming))
+      if(pdTRUE != State_Change(param->stateHandler, state_disarming))
       {
-        State_Fault();
+        State_Fault(param->stateHandler);
       }
       break;
     case state_disarmed:
@@ -245,9 +252,9 @@ void main_control_task( void *pvParameters )
       if ( arming_counter >= ( 1000 / mainPeriodTimeMs ) ) // Be in arming state for 1s.
       {
         arming_counter = 0;
-        if( !State_Change(state_armed) )
+        if( !State_Change(param->stateHandler, state_armed) )
         {
-          State_Fault();
+          State_Fault(param->stateHandler);
         }
       }
       else
@@ -273,9 +280,9 @@ void main_control_task( void *pvParameters )
        */
       MotorCtrl_Disable(param->motorControl);
       Ctrl_Off(param->ctrl);
-      if( !State_Change(state_disarmed) )
+      if( !State_Change(param->stateHandler, state_disarmed) )
       {
-        State_Fault();
+        State_Fault(param->stateHandler);
       }
       break;
     case state_fault:
@@ -295,6 +302,8 @@ void main_control_task( void *pvParameters )
     default:
       break;
     }
+
+
 
     /*------------------------------------read receiver -----------------------------------
      * Always read receiver.
@@ -317,7 +326,7 @@ void main_control_task( void *pvParameters )
         }
       }
       /*If bad connection and fc in a flightmode increase spectrum_receiver_error_counter.*/
-      else if ( (State_GetCurrent() == state_armed) )
+      else if ( (State_GetCurrent(param->stateHandler) == state_armed) )
       {
         /* Allow a low number of lost frames at a time. Increase counter 4 times as fast as it is decreased.
          * This ensures that there is at least 4 good frames to each bad one.*/
@@ -325,7 +334,7 @@ void main_control_task( void *pvParameters )
         /*If there has been to many errors, put the FC in disarmed mode.*/
         if ( spectrum_receiver_error_counter >= (80) )
         {
-          State_Fault();
+          State_Fault(param->stateHandler);
           MotorCtrl_Disable(param->motorControl);
           spectrum_receiver_error_counter = 0;
         }
@@ -345,9 +354,9 @@ void main_control_task( void *pvParameters )
         && (local_receiver_buffer->ch5 > SATELLITE_CH_CENTER)
         && (local_receiver_buffer->ch0 < 40))
     {
-      if(State_GetCurrent() != state_disarmed && State_GetCurrent() != state_disarming)
+      if(State_GetCurrent(param->stateHandler) != state_disarmed && State_GetCurrent(param->stateHandler) != state_disarming)
       {
-        if(pdTRUE == State_Change(state_disarming))
+        if(pdTRUE == State_Change(param->stateHandler, state_disarming))
         {
         }
         else
@@ -362,9 +371,9 @@ void main_control_task( void *pvParameters )
         && (local_receiver_buffer->ch5 < SATELLITE_CH_CENTER)
         && (local_receiver_buffer->ch0 < 40))
     {
-      if(State_GetCurrent() != state_armed && State_GetCurrent() != state_arming)
+      if(State_GetCurrent(param->stateHandler) != state_armed && State_GetCurrent(param->stateHandler) != state_arming)
       {
-        if(pdTRUE == State_Change(state_arming))
+        if(pdTRUE == State_Change(param->stateHandler, state_arming))
         {
         }
         else

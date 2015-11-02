@@ -41,11 +41,18 @@ typedef enum state{
   state_not_available = 0, // state information not available.
 }state_t;
 
+typedef struct StateHandler StateHandler_t;
+/**
+ * Create the state handler object.
+ * @return Handle to the created object.
+ */
+StateHandler_t* State_CreateStateHandler();
+
 /**
  * Initialize the state handler. This will create queues used
  * in the implementation, and unlock the handler.
  */
-void State_InitStateHandler();
+void State_InitStateHandler(StateHandler_t*);
 
 /**
  * Get the current state. Returns state_not_availible if it is not
@@ -53,19 +60,19 @@ void State_InitStateHandler();
  *
  * @return Current state. State_not_availible if fail.
  */
-state_t State_GetCurrent();
+state_t State_GetCurrent(StateHandler_t*);
 
 /**
  * Lock the state, do not allow change.
  * @return pdTrue if success.
  */
-BaseType_t State_Lock();
+BaseType_t State_Lock(StateHandler_t*);
 
 /**
  * Unlock state, allow a state transition.
  * @return pdTrue if success.
  */
-BaseType_t State_Unlock();
+BaseType_t State_Unlock(StateHandler_t*);
 
 /**
  * Set state to fault. Use this in case of a serious problem
@@ -77,7 +84,7 @@ BaseType_t State_Unlock();
  *
  * @return
  */
-BaseType_t State_Fault();
+BaseType_t State_Fault(StateHandler_t*);
 
 /**
  * @brief Request a state change.
@@ -88,7 +95,7 @@ BaseType_t State_Fault();
  * @param state_req   New state beeing requested.
  * @return            pdTrue if ok, pdFalse otherwise.
  */
-BaseType_t State_Change(state_t state_req);
+BaseType_t State_Change(StateHandler_t*, state_t state_req);
 
 
 #endif /* STATE_HANDLER_H_ */

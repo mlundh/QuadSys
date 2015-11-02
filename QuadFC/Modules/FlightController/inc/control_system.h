@@ -34,6 +34,13 @@ typedef struct CtrlInternal CtrlInternal_t;
 CtrlInternal_t *Ctrl_Create();
 
 /**
+ * Initialize the control object.
+ * @param obj Control object.
+ * @return    0 if fail, 1 otherwise.
+ */
+uint8_t Ctrl_init(CtrlInternal_t *obj);
+
+/**
  * Execute the control system.
  * @param internals Current control object.
  * @param state     Current state data.

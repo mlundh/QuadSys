@@ -29,25 +29,36 @@
 #include "queue.h"
 #include "semphr.h"
 
+typedef struct CtrlModeHandler CtrlModeHandler_t;
+
+
 typedef enum state{
   Control_mode_not_available = 0,
   Control_mode_rate = 1,
   Control_mode_attitude = 2
 }CtrlMode_t;
 
+
+/**
+ * Create the mode handler object.
+ * @return Handle to the created object.
+ */
+CtrlModeHandler_t* Ctrl_CreateModeHandler();
+
 /**
  * Initialize the state handler. This will create queues used
  * in the implementation, and unlock the handler.
+ * @param   obj Handle to the current mode handler object.
  */
-void Ctrl_InitModeHandler();
+void Ctrl_InitModeHandler(CtrlModeHandler_t* obj);
 
 /**
  * Get the current state. Returns Ctrl_not_availible if it is not
  * possible to acces the state.
- *
+ * @param   obj Handle to the current mode handler object.
  * @return Current state. Ctrl_not_availible if fail.
  */
-CtrlMode_t Ctrl_GetCurrentMode();
+CtrlMode_t Ctrl_GetCurrentMode(CtrlModeHandler_t* obj);
 
 /**
  * Set state to fault. Use this in case of a serious problem
@@ -56,10 +67,10 @@ CtrlMode_t Ctrl_GetCurrentMode();
  *
  * If the vehicle is airborne at the time of call to Ctrl_Fault,
  * the vehicle will crash.
- *
+ * @param   obj Handle to the current mode handler object.
  * @return
  */
-BaseType_t Ctrl_FaultMode();
+BaseType_t Ctrl_FaultMode(CtrlModeHandler_t* obj);
 
 /**
  * @brief Request a state change.
@@ -67,10 +78,11 @@ BaseType_t Ctrl_FaultMode();
  * Request that the flight controller changes state. Will fail if
  * state transition is not allowed.
  *
+ * @param   obj Handle to the current mode handler object.
  * @param Ctrl_req   New state beeing requested.
  * @return            pdTrue if ok, pdFalse otherwise.
  */
-BaseType_t Ctrl_ChangeMode(CtrlMode_t mode_req);
+BaseType_t Ctrl_ChangeMode(CtrlModeHandler_t* obj, CtrlMode_t mode_req);
 
 
 #endif /* MODULES_FLIGHTCONTROLLER_INC_CONTROL_MODE_HANDLER_H_ */

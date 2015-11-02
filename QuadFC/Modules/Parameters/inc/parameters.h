@@ -47,6 +47,7 @@
  * /root/rate/Ki[13]
  *
  *
+ * All parameters should be created before the scheduler is started.
  *
  *  Created on: Jul 24, 2015
  *      Author: martin

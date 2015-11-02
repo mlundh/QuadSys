@@ -41,9 +41,6 @@ typedef struct peripheral_i2c {
   uint8_t   slaveAddress;         //!< 7 bit chip address of slave node.
 }QuadFC_I2C;
 
-
-
-
 typedef struct peripheral_serial
 {
   uint8_t*  buffer;               //!< Buffer containing the data to transfer.

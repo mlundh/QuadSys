@@ -36,30 +36,14 @@ typedef enum etstimation_types
   complementary_filter = 3,
 } estimation_types_t;
 
+void StateEst_Create();
+
 /**
  * Initialize the state estimator. This causes all connected and configured
  * sensors to be initialized.
  *
  * @return 0 if success else error code.*/
-uint8_t initialize_state_estimator(estimation_types_t type);
-
-
-/**
- * Check if a named state variable is available with the current setup.
- *
- * @param *state_vector the state vector.
- * @param state: named state.
- * @return state availability, 0 if unavailable, !0 otherwise.  */
-uint8_t is_state_available(state_data_t *state_vector, state_names_t state);
-
-/**
- * Get the current state confidence, updated with each update of the state vector.
- *
- * @param state_vector the state vector.
- * @param state named state.
- * @return state confidence.
- * */
-uint8_t get_state_confidence(state_data_t *state_vector, state_names_t state);
+uint8_t StateEst_init(estimation_types_t type);
 
 /**
  * Gets the new state data and copies it into state.
@@ -70,7 +54,7 @@ uint8_t get_state_confidence(state_data_t *state_vector, state_names_t state);
  * @param state_vector The state vector.
  * @return 0 for Success or failure code.
  * */
-uint8_t get_state(state_data_t *state_vector);
+uint8_t StateEst_get_state(state_data_t *state_vector);
 
 /**
  * Set the desired estimation type. The different estimation types
@@ -79,19 +63,13 @@ uint8_t get_state(state_data_t *state_vector);
  *
  * @param est requested estimation type
  */
-void config_set_estimation_type(estimation_types_t est);
+uint8_t StateEst_SetEstType(estimation_types_t est);
 
 /**
  * Get the current estimation type described in the estimation
  * type enumeration.
  * @return current estimation type.
  */
-estimation_types_t get_estimation_type();
-
-
-/*private section, to be moved to .c file*/
-
-void set_state_confidence(state_data_t state_vector, state_names_t state);
-
+estimation_types_t StateEst_GetEstType();
 
 #endif /* STATE_ESTIMATOR_H_ */

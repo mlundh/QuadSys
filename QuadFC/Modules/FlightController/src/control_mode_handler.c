@@ -25,8 +25,19 @@
 
 
 #include "led_control_task.h"
+
+
+
+struct CtrlModeHandler
+{
+  SemaphoreHandle_t xMutex;
+  QueueHandle_t Mode_current_queue;
+  CtrlMode_t current_mode;
+  SemaphoreHandle_t xMutexParam;
+};
+
 /*Semaphore for access control.*/
-SemaphoreHandle_t xMutex;
+
 
 /**
  * Queue holding current mode. Implemented
@@ -34,46 +45,51 @@ SemaphoreHandle_t xMutex;
  */
 #define MODE_CURRENT_QUEUE_LENGTH      (1)
 #define MODE_CURRENT_QUEUE_ITEM_SIZE        (sizeof(CtrlMode_t))
-static  QueueHandle_t Mode_current_queue;
 
 
-/**
- * Internal current mode variable. TODO move to init?
- */
-static CtrlMode_t current_mode = Control_mode_rate;
+static BaseType_t Ctrl_ModeChangeAllowed(CtrlModeHandler_t* obj, CtrlMode_t mode_req);
+static void Ctrl_UpdateLed(CtrlModeHandler_t* obj);
 
-static BaseType_t Ctrl_ModeChangeAllowed(CtrlMode_t mode_req);
-static void Ctrl_UpdateLed();
-
-/*Initialize queues and mutex used internally
- * by the mode handler*/
-void Ctrl_InitModeHandler()
+CtrlModeHandler_t* Ctrl_CreateModeHandler()
 {
-  Mode_current_queue = xQueueCreate( MODE_CURRENT_QUEUE_LENGTH,
-      MODE_CURRENT_QUEUE_ITEM_SIZE );
-  xMutex = xSemaphoreCreateMutex();
+  CtrlModeHandler_t* obj = pvPortMalloc(sizeof(CtrlModeHandler_t));
+  if(!obj)
+  {
+    return NULL;
+  }
+
+  obj->Mode_current_queue = xQueueCreate( MODE_CURRENT_QUEUE_LENGTH,
+        MODE_CURRENT_QUEUE_ITEM_SIZE );
+  obj->xMutex = xSemaphoreCreateMutex();
 
 
-  if(!Mode_current_queue || !xMutex)
+    if(!obj->Mode_current_queue || !obj->xMutex)
+    {
+      return NULL;
+    }
+    return obj;
+}
+
+
+void Ctrl_InitModeHandler(CtrlModeHandler_t* obj)
+{
+
+  obj->current_mode = Control_mode_rate;
+  if(xQueueSendToBack(obj->Mode_current_queue, &obj->current_mode, 2) != pdPASS)
   {
     //TODO send error!
   }
-  current_mode = Control_mode_rate;
-  if(xQueueSendToBack(Mode_current_queue, &current_mode, 2) != pdPASS)
-  {
-    //TODO send error!
-  }
-  Ctrl_UpdateLed();
+  Ctrl_UpdateLed(obj);
 
 }
 
 /**
  * Get the current mode.
  */
-CtrlMode_t Ctrl_GetCurrentMode()
+CtrlMode_t Ctrl_GetCurrentMode(CtrlModeHandler_t* obj)
 {
   CtrlMode_t mode = Control_mode_not_available;
-  if( !xQueuePeek(Mode_current_queue, &mode, 0) )
+  if( !xQueuePeek(obj->Mode_current_queue, &mode, 0) )
   {
     //no mode, error!
   }
@@ -81,39 +97,39 @@ CtrlMode_t Ctrl_GetCurrentMode()
 }
 
 // TODO add fault text readable from remote.
-BaseType_t Ctrl_FaultMode()
+BaseType_t Ctrl_FaultMode(CtrlModeHandler_t* obj)
 {
-  if( xSemaphoreTake( xMutex, ( TickType_t )(10UL / portTICK_PERIOD_MS) ) == pdTRUE )
+  if( xSemaphoreTake( obj->xMutex, ( TickType_t )(10UL / portTICK_PERIOD_MS) ) == pdTRUE )
   {
     CtrlMode_t mode_req = Control_mode_not_available;
-    xQueueOverwrite(Mode_current_queue, &mode_req);
-    Ctrl_UpdateLed();
-    xSemaphoreGive(xMutex);
+    xQueueOverwrite(obj->Mode_current_queue, &mode_req);
+    Ctrl_UpdateLed(obj);
+    xSemaphoreGive(obj->xMutex);
   }
   return pdTRUE;
 
 }
 
-BaseType_t Ctrl_ChangeMode(CtrlMode_t mode_req)
+BaseType_t Ctrl_ChangeMode(CtrlModeHandler_t* obj, CtrlMode_t mode_req)
 {
   BaseType_t result = pdFALSE;
-  if( xSemaphoreTake( xMutex, ( TickType_t )(2UL / portTICK_PERIOD_MS) ) == pdTRUE )
+  if( xSemaphoreTake( obj->xMutex, ( TickType_t )(2UL / portTICK_PERIOD_MS) ) == pdTRUE )
   {
-    if(Ctrl_ModeChangeAllowed(mode_req) == pdTRUE)
+    if(Ctrl_ModeChangeAllowed(obj, mode_req) == pdTRUE)
     {
-      result = xQueueOverwrite(Mode_current_queue, &mode_req);
-      Ctrl_UpdateLed();
+      result = xQueueOverwrite(obj->Mode_current_queue, &mode_req);
+      Ctrl_UpdateLed(obj);
     }
-    xSemaphoreGive(xMutex);
+    xSemaphoreGive(obj->xMutex);
   }
   /*Could not obtain mutex or change not allowed.*/
   return result;
 }
 
 
-static BaseType_t Ctrl_ModeChangeAllowed(CtrlMode_t mode_req)
+static BaseType_t Ctrl_ModeChangeAllowed(CtrlModeHandler_t* obj, CtrlMode_t mode_req)
 {
-  switch ( Ctrl_GetCurrentMode() )
+  switch ( Ctrl_GetCurrentMode(obj) )
   {
   case Control_mode_rate:
     if(    (mode_req == Control_mode_attitude) )
@@ -135,10 +151,10 @@ static BaseType_t Ctrl_ModeChangeAllowed(CtrlMode_t mode_req)
   return pdFALSE;
 }
 
-static void Ctrl_UpdateLed()
+static void Ctrl_UpdateLed(CtrlModeHandler_t* obj)
 {
 
-  switch ( Ctrl_GetCurrentMode() )
+  switch ( Ctrl_GetCurrentMode(obj) )
   {
   case Control_mode_rate:
     Led_Set(led_control_mode_rate);

@@ -23,8 +23,14 @@
  */
 #include "state_handler.h"
 #include "led_control_task.h"
-/*Semaphore for access control.*/
-SemaphoreHandle_t xMutex;
+
+struct StateHandler
+{
+  SemaphoreHandle_t xMutex;
+  QueueHandle_t State_current_queue;
+  QueueHandle_t State_lock_queue;
+  state_t current_state;
+};
 
 /**
  * Queue holding current state. Implemented
@@ -32,7 +38,7 @@ SemaphoreHandle_t xMutex;
  */
 #define STATE_CURRENT_QUEUE_LENGTH      (1)
 #define STATE_CURRENT_QUEUE_ITEM_SIZE        (sizeof(state_t))
-static  QueueHandle_t State_current_queue;
+
 
 /**
  * State lock queue. Use this to prevent state changes.
@@ -40,105 +46,109 @@ static  QueueHandle_t State_current_queue;
  */
 #define STATE_LOCK_QUEUE_LENGTH      (1)
 #define STATE_LOCK_QUEUE_ITEM_SIZE        (sizeof(uint8_t))
-static  QueueHandle_t State_lock_queue;
 
-/**
- * Internal current state variable. TODO move to init?
- */
-static state_t current_state = state_init;
+static BaseType_t State_ChangeAllowed(StateHandler_t* obj, state_t state_req);
+static void State_UpdateLed(StateHandler_t* obj);
 
-static BaseType_t State_ChangeAllowed(state_t state_req);
-static void State_UpdateLed();
+
+StateHandler_t* State_CreateStateHandler()
+{
+  StateHandler_t* obj = pvPortMalloc(sizeof(StateHandler_t));
+
+  obj->State_current_queue = xQueueCreate( STATE_CURRENT_QUEUE_LENGTH,
+      STATE_CURRENT_QUEUE_ITEM_SIZE );
+  obj->State_lock_queue = xQueueCreate(STATE_LOCK_QUEUE_LENGTH, STATE_LOCK_QUEUE_ITEM_SIZE);
+  obj->xMutex = xSemaphoreCreateMutex();
+
+
+  if( !obj->State_lock_queue
+      || !obj->State_lock_queue
+      || !obj->xMutex)
+  {
+    return NULL;
+  }
+  return obj;
+}
+
 
 /*Initialize queues and mutex used internally
  * by the state handler*/
-void State_InitStateHandler()
+void State_InitStateHandler(StateHandler_t* obj)
 {
-  State_current_queue = xQueueCreate( STATE_CURRENT_QUEUE_LENGTH,
-      STATE_CURRENT_QUEUE_ITEM_SIZE );
-  State_lock_queue = xQueueCreate(STATE_LOCK_QUEUE_LENGTH, STATE_LOCK_QUEUE_ITEM_SIZE);
-  xMutex = xSemaphoreCreateMutex();
 
-
-  if( !State_lock_queue
-      || !State_lock_queue
-      || !xMutex)
-  {
-    //TODO send error!
-  }
   uint8_t lock = 0;
-  current_state = state_init;
+  obj->current_state = state_init;
 
-  if(( xQueueSendToBack(State_lock_queue, &lock, 2) != pdPASS )
-      || (xQueueSendToBack(State_current_queue, &current_state, 2) != pdPASS))
+  if(( xQueueSendToBack(obj->State_lock_queue, &lock, 2) != pdPASS )
+      || (xQueueSendToBack(obj->State_current_queue, &obj->current_state, 2) != pdPASS))
   {
     //TODO send error!
   }
 
-  State_UpdateLed();
+  State_UpdateLed(obj);
 
 }
 
 /**
  * Get the current state.
  */
-state_t State_GetCurrent()
+state_t State_GetCurrent(StateHandler_t* obj)
 {
   state_t state = state_not_available;
-  if( !xQueuePeek(State_current_queue, &state, 0) )
+  if( !xQueuePeek(obj->State_current_queue, &state, 0) )
   {
     //no state, error!
   }
   return state;
 }
 
-BaseType_t State_Lock()
+BaseType_t State_Lock(StateHandler_t* obj)
 {
   uint8_t lock = 1;
-  xQueueOverwrite(State_lock_queue, &lock);
+  xQueueOverwrite(obj->State_lock_queue, &lock);
   return pdTRUE;
 }
 
-BaseType_t State_Unlock()
+BaseType_t State_Unlock(StateHandler_t* obj)
 {
   uint8_t lock = 0;
-  xQueueOverwrite(State_lock_queue, &lock);
+  xQueueOverwrite(obj->State_lock_queue, &lock);
   return pdTRUE;
 }
 
 // TODO add fault text readable from remote.
-BaseType_t State_Fault()
+BaseType_t State_Fault(StateHandler_t* obj)
 {
   state_t state_req = state_fault;
   //State_Lock();
-  xQueueOverwrite(State_current_queue, &state_req);
-  State_UpdateLed();
+  xQueueOverwrite(obj->State_current_queue, &state_req);
+  State_UpdateLed(obj);
   return pdTRUE;
 
 }
 
-BaseType_t State_Change(state_t state_req)
+BaseType_t State_Change(StateHandler_t* obj, state_t state_req)
 {
   BaseType_t result = pdFALSE;
-  if( xSemaphoreTake( xMutex, ( TickType_t )(2UL / portTICK_PERIOD_MS) ) == pdTRUE )
+  if( xSemaphoreTake( obj->xMutex, ( TickType_t )(2UL / portTICK_PERIOD_MS) ) == pdTRUE )
   {
-    if(State_ChangeAllowed(state_req) == pdTRUE)
+    if(State_ChangeAllowed(obj, state_req) == pdTRUE)
     {
-      result = xQueueOverwrite(State_current_queue, &state_req);
-      State_UpdateLed();
+      result = xQueueOverwrite(obj->State_current_queue, &state_req);
+      State_UpdateLed(obj);
     }
-    xSemaphoreGive(xMutex);
+    xSemaphoreGive(obj->xMutex);
   }
   /*Could not obtain mutex or change not allowed.*/
   return result;
 }
 
 
-static BaseType_t State_ChangeAllowed(state_t state_req)
+static BaseType_t State_ChangeAllowed(StateHandler_t* obj, state_t state_req)
 {
   uint8_t lock = 0;
 
-  BaseType_t read_success = xQueuePeek(State_lock_queue, &lock, ( TickType_t )(2UL / portTICK_PERIOD_MS) );
+  BaseType_t read_success = xQueuePeek(obj->State_lock_queue, &lock, ( TickType_t )(2UL / portTICK_PERIOD_MS) );
 
   if(pdTRUE != read_success || lock != 0)
   {
@@ -146,7 +156,7 @@ static BaseType_t State_ChangeAllowed(state_t state_req)
     return pdFALSE;
   }
 
-  switch ( State_GetCurrent() )
+  switch ( State_GetCurrent(obj) )
   {
   case state_init:
     if(    (state_req == state_disarming) )
@@ -207,10 +217,10 @@ static BaseType_t State_ChangeAllowed(state_t state_req)
   return pdFALSE;
 }
 
-static void State_UpdateLed()
+static void State_UpdateLed(StateHandler_t* obj)
 {
 
-  switch ( State_GetCurrent() )
+  switch ( State_GetCurrent(obj) )
   {
   case state_init:
     Led_Set(led_initializing);
