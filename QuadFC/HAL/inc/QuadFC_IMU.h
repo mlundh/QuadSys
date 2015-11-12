@@ -1,5 +1,5 @@
 /*
- * flight_controller.h
+ * QuadFC_IMU.h
  *
  * Copyright (C) 2015 Martin Lundh
  *
@@ -21,17 +21,43 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef FLIGHT_CONTROLLER_H_
-#define FLIGHT_CONTROLLER_H_
+#ifndef HAL_INC_QUADFC_IMU_H_
+#define HAL_INC_QUADFC_IMU_H_
 
 #include "stdint.h"
 #include "common_types.h"
 
+
+typedef struct Imu
+{
+  ImuData_t ImuOffset;
+  ImuData_t ImuData;
+  void *internals;
+}Imu_t;
+
+
 /**
- * Creates the main control task. Called by main.
+ * Create the IMU unit. This function should be called before the
+ * scheduler is started.
+ * @return            A newly created IMU object. */
+Imu_t * Imu_Create();
+
+/**
+ * Initialize the imu object. This function should be called after the
+ * scheduler is started.
+ * @param obj         Current IMU object.
+ * @return            0 if fail, 1 otherwise.
  */
-void create_main_control_task( void );
+uint8_t Imu_Init(Imu_t *obj);
+
+/**
+ * Get the scaled (but unfiltered) data from the imu. The state data
+ * contains information of confidence, 0 confidence means not availible,
+ * higher confidence means ok reading.
+ * @param obj           Current IMU object.
+ * @return              0 if fail, 1 otherwise.
+ */
+uint8_t Imu_GetData(Imu_t *obj);
 
 
-
-#endif /* FLIGHT_CONTROLLER_H_ */
+#endif /* HAL_INC_QUADFC_IMU_H_ */

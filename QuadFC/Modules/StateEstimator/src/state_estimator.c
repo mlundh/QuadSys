@@ -22,3 +22,63 @@
  * THE SOFTWARE.
  */
 
+#include "state_estimator.h"
+#include "stddef.h"
+#include "QuadFC_IMU.h"
+#include "imu_signal_processing.h"
+
+struct StateEst
+{
+  Imu_t * imu;
+  estimation_types_t est_type;
+};
+
+StateEst_t *StateEst_Create()
+{
+  StateEst_t * stateEstObj = pvPortMalloc(sizeof(StateEst_t));
+  if(!stateEstObj)
+  {
+    return NULL;
+  }
+  stateEstObj->imu = Imu_Create();
+  stateEstObj->est_type = type_not_availible;
+
+  if(!stateEstObj->imu)
+  {
+    return NULL;
+  }
+  return stateEstObj;
+}
+
+
+uint8_t StateEst_init(StateEst_t *obj, estimation_types_t type)
+{
+  obj->est_type = type;
+  Imu_Init(obj->imu);
+  return 0;
+}
+
+uint8_t StateEst_getState(StateEst_t *obj, state_data_t *state_vector)
+{
+  Imu_GetData(obj->imu);
+  switch (obj->est_type)
+  {
+  case raw_data_rate:
+    get_rate_gyro( state_vector, &obj->imu->ImuData ); // TODO add confidence measure!
+    break;
+  default:
+    return 0;
+  }
+  return 1;
+}
+
+uint8_t StateEst_SetEstType(StateEst_t *obj, estimation_types_t est)
+{
+  obj->est_type = est;
+  return 1;
+}
+
+estimation_types_t StateEst_GetEstType(StateEst_t *obj)
+{
+  return obj->est_type;
+}

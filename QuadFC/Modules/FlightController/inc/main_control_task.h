@@ -27,5 +27,4 @@
 
 void create_main_control_task( void );
 
-
 #endif /* MAIN_CONTROL_TASK_H_ */

@@ -24,46 +24,56 @@
 #include "imu_signal_processing.h"
 #include "my_math.h"
 
-void get_euler_angles_accel( state_data_t *state, imu_data_t *measurments )
+void get_euler_angles_accel( state_data_t *state, ImuData_t *measurments )
 {
   // TODO DO NOT USE UNTILL FIXED. MY_ATAN DOES NOT WORK NOW!
   int32_t numerator = 0;
   int32_t denominator = 0;
 
   // pitch calculation
-  numerator = (int32_t) (measurments->accl_y);
-  denominator = (my_sgn( measurments->accl_z )) * (int32_t) (my_square_root( (my_square( measurments->accl_z ) + my_mult( my_square( measurments->accl_x ), MY )) ));
+  numerator = (int32_t) (measurments->imu_data[accl_y]);
+  denominator = (my_sgn( measurments->imu_data[accl_z] ))
+      * (int32_t) (my_square_root( (my_square( measurments->imu_data[accl_z] )
+      + my_mult( my_square( measurments->imu_data[accl_x] ), MY )) ));
 
   state->state_vector[pitch] = my_atan2( numerator, denominator );
   // roll calculation
-  numerator = (int32_t) (measurments->accl_x);
-  denominator = (int32_t) (my_square_root( my_square( measurments->accl_x ) + my_square( measurments->accl_z ) ));
+  numerator = (int32_t) (measurments->imu_data[accl_x]);
+  denominator = (int32_t) (my_square_root( my_square( measurments->imu_data[accl_x] )
+      + my_square( measurments->imu_data[accl_z] ) ));
 
   state->state_vector[roll] = my_atan2( numerator, denominator );
 }
 
-void get_euler_angles_gyro( state_data_t *state, imu_data_t *measurments )
+void get_euler_angles_gyro( state_data_t *state, ImuData_t *measurments )
 {
   /*
    * TODO
    * DO NOT USE UNTIL FIXED
    */
-  state->state_vector[pitch] += my_mult( ((int32_t) measurments->gyro_x * (int32_t) CONVERT_IMU_TO_RECEIVER_UNITS), TIME_STEP );
-  state->state_vector[roll] += my_mult( ((int32_t) measurments->gyro_y * (int32_t) CONVERT_IMU_TO_RECEIVER_UNITS), TIME_STEP );
-  state->state_vector[yaw] += my_mult( ((int32_t) measurments->gyro_z * (int32_t) CONVERT_IMU_TO_RECEIVER_UNITS), TIME_STEP );
+  state->state_vector[pitch] += my_mult( ((int32_t) measurments->imu_data[gyro_x] *
+      (int32_t) CONVERT_IMU_TO_RECEIVER_UNITS), TIME_STEP );
+  state->state_vector[roll] += my_mult( ((int32_t) measurments->imu_data[gyro_y] *
+      (int32_t) CONVERT_IMU_TO_RECEIVER_UNITS), TIME_STEP );
+  state->state_vector[yaw] += my_mult( ((int32_t) measurments->imu_data[gyro_z] *
+      (int32_t) CONVERT_IMU_TO_RECEIVER_UNITS), TIME_STEP );
 }
 
-void get_rate_gyro( state_data_t *state, imu_data_t *measurments )
+void get_rate_gyro( state_data_t *state, ImuData_t *measurments )
 {
-  state->state_vector[pitch_rate] = ((int32_t) measurments->gyro_x) >> 6;
-  state->state_vector[roll_rate] = ((int32_t) measurments->gyro_y) >> 6;
-  state->state_vector[yaw_rate] = ((int32_t) measurments->gyro_z) >> 6;
+  state->state_vector[pitch_rate] = ((int32_t) measurments->imu_data[gyro_x]) >> 6;
+  state->state_vector[roll_rate] = ((int32_t) measurments->imu_data[gyro_y]) >> 6;
+  state->state_vector[yaw_rate] = ((int32_t) measurments->imu_data[gyro_z]) >> 6;
 }
 
 void complemetary_filter( state_data_t *state_accel, state_data_t *state_gyro, state_data_t *state )
 {
-  state->state_vector[pitch] = my_mult( (int32_t) state_gyro->state_vector[pitch], (int32_t) FILTER_COEFFICENT_GYRO ) + my_mult( (int32_t) state_accel->state_vector[pitch], (int32_t) FILTER_COEFFICENT_ACCEL );
-  state->state_vector[roll] = my_mult( (int32_t) state_gyro->state_vector[roll], (int32_t) FILTER_COEFFICENT_GYRO ) + my_mult( (int32_t) state_accel->state_vector[roll], (int32_t) FILTER_COEFFICENT_ACCEL );
+  state->state_vector[pitch] = my_mult( (int32_t) state_gyro->state_vector[pitch],
+      (int32_t) FILTER_COEFFICENT_GYRO ) + my_mult( (int32_t) state_accel->state_vector[pitch],
+      (int32_t) FILTER_COEFFICENT_ACCEL );
+  state->state_vector[roll] = my_mult( (int32_t) state_gyro->state_vector[roll],
+      (int32_t) FILTER_COEFFICENT_GYRO ) + my_mult( (int32_t) state_accel->state_vector[roll],
+      (int32_t) FILTER_COEFFICENT_ACCEL );
   /*Update gyro state to reduce accumulatory errors.*/
   state_gyro->state_vector[pitch] = state->state_vector[pitch];
   state_gyro->state_vector[roll] = state->state_vector[roll];

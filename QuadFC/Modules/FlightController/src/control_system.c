@@ -30,7 +30,7 @@
 #include "parameters.h"
 #include "led_control_task.h" // TODO refactor LED
 
-struct CtrlInternal
+struct CtrlObj
 {
   pidConfig_t* RatePitch;
   pidConfig_t* RateRoll;
@@ -39,25 +39,25 @@ struct CtrlInternal
   CtrlModeHandler_t* ModeHandler;
 };
 
-void Ctrl_Initialize(CtrlInternal_t *internals);
+void Ctrl_Initialize(CtrlObj_t *internals);
 
 
-CtrlInternal_t *Ctrl_Create()
+CtrlObj_t *Ctrl_Create()
 {
-  CtrlInternal_t *internals = pvPortMalloc(sizeof(struct CtrlInternal));
+  CtrlObj_t *internals = pvPortMalloc(sizeof(struct CtrlObj));
   internals->ModeHandler = Ctrl_CreateModeHandler();
 
   return internals;
 }
 
-uint8_t Ctrl_init(CtrlInternal_t *obj)
+uint8_t Ctrl_init(CtrlObj_t *obj)
 {
   Ctrl_Initialize(obj);
   Ctrl_InitModeHandler(obj->ModeHandler);
   return 1;
 }
 
-void Ctrl_Initialize(CtrlInternal_t *internals)
+void Ctrl_Initialize(CtrlObj_t *internals)
 {
 
   internals->RatePitch = Pid_Create(220, 3, 0, -2000, 2000);
@@ -114,7 +114,7 @@ void Ctrl_Initialize(CtrlInternal_t *internals)
 }
 
 
-void Ctrl_Execute(CtrlInternal_t *internals, state_data_t *state, state_data_t *setpoint, control_signal_t *u_signal)
+void Ctrl_Execute(CtrlObj_t *internals, state_data_t *state, state_data_t *setpoint, control_signal_t *u_signal)
 {
   // Make sure that we are not trying to update the pid parameters while using them.
   if( xSemaphoreTake( internals->xMutexParam, ( TickType_t )(1UL / portTICK_PERIOD_MS) ) == pdTRUE )
@@ -161,14 +161,14 @@ void Ctrl_Execute(CtrlInternal_t *internals, state_data_t *state, state_data_t *
   }
 }
 
-void Ctrl_On(CtrlInternal_t * param)
+void Ctrl_On(CtrlObj_t * param)
 {
   Pid_SetMode(param->RatePitch, pid_on, 0, 0);
   Pid_SetMode(param->RateRoll, pid_on, 0, 0);
   Pid_SetMode(param->RateYaw, pid_on, 0, 0);
 }
 
-void Ctrl_Off(CtrlInternal_t * param)
+void Ctrl_Off(CtrlObj_t * param)
 {
   Pid_SetMode(param->RatePitch, pid_off, 0, 0);
   Pid_SetMode(param->RateRoll, pid_off, 0, 0);

@@ -167,14 +167,21 @@ MotorControlObj * MotorCtrl_CreateAndInit(uint32_t nr_motors )
 
   //Create
   MotorControlObj *obj = pvPortMalloc(sizeof(MotorControlObj));
-  obj->armed = 0;
-  obj->controlInternals = (void *)pwm_create();
-  obj->nr_init_motors = 0;
-
-  if(!obj->controlInternals)
+  if(!obj)
   {
     return NULL;
   }
+  obj->armed = 0;
+  obj->controlInternals = (void *)pwm_create();
+  obj->nr_init_motors = 0;
+  obj->motorSetpoint = pvPortMalloc(sizeof(int32_t) * nr_motors);
+
+  if(!obj->controlInternals || !obj->motorSetpoint)
+  {
+    return NULL;
+  }
+
+  memset(obj->motorSetpoint, 0, sizeof(int32_t) * nr_motors);
 
   // Enable tuning of parameters.
 
@@ -287,13 +294,9 @@ uint8_t MotorCtrl_Disable(MotorControlObj *obj)
   return 1;
 }
 
-uint8_t MotorCtrl_UpdateSetpoint(MotorControlObj *obj, int32_t setpoint[], uint8_t setpointSize)
+uint8_t MotorCtrl_UpdateSetpoint(MotorControlObj *obj)
 {
 
-  if(setpointSize != obj->nr_init_motors)
-  {
-    return 0;
-  }
   pwm_internals_t *internals = pwm_getInternals(obj);
 
   // Make sure we are thread safe.
@@ -306,21 +309,21 @@ uint8_t MotorCtrl_UpdateSetpoint(MotorControlObj *obj, int32_t setpoint[], uint8
   for (int i = 0; i < obj->nr_init_motors; i++ )
   {
     /*Add armed duty value to make to propellers spin.*/
-    setpoint[i] += internals->armed_duty_value;
+    obj->motorSetpoint[i] += internals->armed_duty_value;
     
-    if ( setpoint[i] < internals->armed_duty_value )
+    if ( obj->motorSetpoint[i] < internals->armed_duty_value )
     {
-      setpoint[i] = internals->armed_duty_value;
+      obj->motorSetpoint[i] = internals->armed_duty_value;
     }
-    else if ( setpoint[i] > MAX_SETPOINT )
+    else if ( obj->motorSetpoint[i] > MAX_SETPOINT )
 		{
-			setpoint[i] = MAX_SETPOINT;
+      obj->motorSetpoint[i] = MAX_SETPOINT;
 		}
 	}
 	 for(int i = 0; i < obj->nr_init_motors; i++)
 	 {
 	   internals->pwm_channels.channel = internals->pwm_parameters[i].pwm_channel;
-		 pwm_channel_update_duty(PWM, &internals->pwm_channels, (setpoint[i]));
+		 pwm_channel_update_duty(PWM, &internals->pwm_channels, (obj->motorSetpoint[i]));
 	 }
 	 pwm_sync_unlock_update(PWM);
 
@@ -330,9 +333,9 @@ uint8_t MotorCtrl_UpdateSetpoint(MotorControlObj *obj, int32_t setpoint[], uint8
 }
 
 pwm_internals_t *pwm_getInternals(MotorControlObj *obj)
- {
-   return (pwm_internals_t *)obj->controlInternals;
- }
+{
+  return (pwm_internals_t *)obj->controlInternals;
+}
 
 uint8_t pwm_takeMutex(pwm_internals_t *obj)
 {

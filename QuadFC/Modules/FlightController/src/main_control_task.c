@@ -78,28 +78,35 @@
 /* Modules */
 #include "control_system.h"
 #include "state_handler.h"
-#include "imu.h"
+#include "state_estimator.h"
 #include "imu_signal_processing.h"
 #include "QuadFC_MotorControl.h"
 #include "parameters.h"
 
 #include "globals.h"
-#include "my_math.h"
 #include "common_types.h"
 
 
-void main_control_task( void *pvParameters );
 
 // Struct only used here to pass parameters to the task.
 typedef struct mainTaskParams
 {
   state_data_t *state;
   state_data_t *setpoint;
-  CtrlInternal_t *ctrl;
+  CtrlObj_t *ctrl;
   control_signal_t *control_signal;
   MotorControlObj *motorControl;
   StateHandler_t* stateHandler;
+  StateEst_t* stateEst;
 }taskParams_t;
+
+void main_control_task( void *pvParameters );
+/**
+ * Puts FC into a fault state, motors are stopped and control system is
+ * shut off.
+ * @param param
+ */
+void main_fault(taskParams_t *param);
 
 /*
  * void create_main_control_task(void)
@@ -116,10 +123,13 @@ void create_main_control_task( void )
   taskParam->control_signal = pvPortMalloc( sizeof(control_signal_t) );
   taskParam->motorControl = MotorCtrl_CreateAndInit(4);
   taskParam->stateHandler = State_CreateStateHandler();
+  taskParam->stateEst = StateEst_Create();
+
   /*Ensure that all mallocs returned valid pointers*/
-   if (!taskParam || !taskParam->ctrl || !taskParam->setpoint
+   if (   !taskParam || !taskParam->ctrl || !taskParam->setpoint
        || !taskParam->state || !taskParam->control_signal
-       || !taskParam->motorControl || ! taskParam->stateHandler)
+       || !taskParam->motorControl || !taskParam->stateHandler
+       || !taskParam->stateEst)
    {
      for ( ;; )
      {
@@ -130,7 +140,7 @@ void create_main_control_task( void )
   portBASE_TYPE create_result;
   create_result = xTaskCreate( main_control_task,   /* The function that implements the task.  */
       (const char *const) "Main_Ctrl",              /* The name of the task. This is not used by the kernel, only aids in debugging*/
-      1000,                                         /* The stack size for the task*/
+      2000,                                         /* The stack size for the task*/
       taskParam,                                        /* pass params to task.*/
       configMAX_PRIORITIES-1,                       /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
       NULL );                                       /* Handle to the task. Not used here and therefore NULL*/
@@ -155,18 +165,13 @@ void main_control_task( void *pvParameters )
   /*main_control_task execute at 500Hz*/
   static const TickType_t mainPeriodTimeMs = (2UL / portTICK_PERIOD_MS );
 
-                       /*Receiver information*/
-
   taskParams_t * param = (taskParams_t*)(pvParameters);
 
   receiver_data_t *local_receiver_buffer = pvPortMalloc( sizeof(receiver_data_t) );
-  imu_data_t *imu_readings = pvPortMalloc( sizeof(imu_data_t) );
 
-
-  State_InitStateHandler(param->stateHandler);
 
   /*Ensure that all mallocs returned valid pointers*/
-  if ( !local_receiver_buffer || !imu_readings )
+  if ( !local_receiver_buffer )
   {
     for ( ;; )
     {
@@ -187,14 +192,8 @@ void main_control_task( void *pvParameters )
   local_receiver_buffer->sync = 0;
   local_receiver_buffer->connection_ok = 0;
 
-  mpu6050_initialize();
   State_InitStateHandler(param->stateHandler);
   Ctrl_init(param->ctrl);
-
-
-  // TODO read from memory
-  uint32_t nr_motors = 4;
-  int32_t motorSetpoint[nr_motors];
 
   TickType_t arming_counter = 0;
   uint32_t heartbeat_counter = 0;
@@ -216,14 +215,19 @@ void main_control_task( void *pvParameters )
        * Initialize all modules then set the fc to dissarmed state.
        */
 
+      if(!StateEst_init(param->stateEst, raw_data_rate))
+      {
+        main_fault(param);
+      }
 
       // StateEst_init(); // Might take time, reset the last wake time to avoid errors.
       xLastWakeTime = xTaskGetTickCount();
 
       if(pdTRUE != State_Change(param->stateHandler, state_disarming))
       {
-        State_Fault(param->stateHandler);
+        main_fault(param);
       }
+
       break;
     case state_disarmed:
       /*---------------------------------------Disarmed mode--------------------------
@@ -254,7 +258,7 @@ void main_control_task( void *pvParameters )
         arming_counter = 0;
         if( !State_Change(param->stateHandler, state_armed) )
         {
-          State_Fault(param->stateHandler);
+          main_fault(param);
         }
       }
       else
@@ -267,12 +271,14 @@ void main_control_task( void *pvParameters )
        * The FC is armed and operational. The main control loop only handles
        * the Control system.
        */
-      mpu6050_read_motion( imu_readings );
-      get_rate_gyro( param->state, imu_readings );
+      if(!StateEst_getState(param->stateEst, param->state))
+      {
+        main_fault(param);
+      }
 
       Ctrl_Execute(param->ctrl, param->state, param->setpoint, param->control_signal);
-      Ctrl_Allocate(param->control_signal, motorSetpoint);
-      MotorCtrl_UpdateSetpoint( param->motorControl, motorSetpoint, param->motorControl->nr_init_motors);
+      Ctrl_Allocate(param->control_signal, param->motorControl->motorSetpoint);
+      MotorCtrl_UpdateSetpoint( param->motorControl);
       break;
     case state_disarming:
       /*---------------------------------------Disarming mode--------------------------
@@ -282,7 +288,7 @@ void main_control_task( void *pvParameters )
       Ctrl_Off(param->ctrl);
       if( !State_Change(param->stateHandler, state_disarmed) )
       {
-        State_Fault(param->stateHandler);
+        main_fault(param);
       }
       break;
     case state_fault:
@@ -302,8 +308,6 @@ void main_control_task( void *pvParameters )
     default:
       break;
     }
-
-
 
     /*------------------------------------read receiver -----------------------------------
      * Always read receiver.
@@ -334,8 +338,7 @@ void main_control_task( void *pvParameters )
         /*If there has been to many errors, put the FC in disarmed mode.*/
         if ( spectrum_receiver_error_counter >= (80) )
         {
-          State_Fault(param->stateHandler);
-          MotorCtrl_Disable(param->motorControl);
+          main_fault(param);
           spectrum_receiver_error_counter = 0;
         }
       }
@@ -344,6 +347,8 @@ void main_control_task( void *pvParameters )
         //Do nothing.
       }
     }
+    //gpio_toggle_pin( PIN_41_GPIO );
+    //gpio_toggle_pin( PIN_31_GPIO );
 
     /*-------------------------------------State change request from receiver?----------------------------
      * Check if a fc_state change is requested, if so, change state. State change is only allowed if the copter is landed.
@@ -399,3 +404,9 @@ void main_control_task( void *pvParameters )
   /* The task should never escape the for-loop and therefore never return.*/
 }
 
+void main_fault(taskParams_t *param)
+{
+  State_Fault(param->stateHandler);
+  MotorCtrl_Disable(param->motorControl);
+  Ctrl_Off(param->ctrl);
+}

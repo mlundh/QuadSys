@@ -68,10 +68,12 @@ uint8_t QuadFC_i2cWrite(QuadFC_I2C *i2c_data, uint8_t busIndex, TickType_t block
 {
   if(busIndex > (sizeof(twi_instances)/sizeof(twi_instances[0])))
   {
+    Led_Set(led_error_TWI);
     return 0;
   }
   if(!twi_Init[busIndex])
   {
+    Led_Set(led_error_TWI);
     if(!Init_Twi(busIndex))
     {
       return 0;
@@ -102,12 +104,14 @@ uint8_t QuadFC_i2cRead(QuadFC_I2C *i2c_data, uint8_t busIndex, TickType_t blockT
 {
   if(busIndex > (sizeof(twi_instances)/sizeof(twi_instances[0])))
   {
+    Led_Set(led_error_TWI);
     return 0;
   }
   if(!twi_Init[busIndex])
   {
     if(!Init_Twi(busIndex))
     {
+      Led_Set(led_error_TWI);
       return 0;
     }
   }

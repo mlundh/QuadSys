@@ -25,20 +25,20 @@
 #define MODULES_FLIGHTCONTROLLER_INC_CONTROL_SYSTEM_H_
 #include "common_types.h"
 
-typedef struct CtrlInternal CtrlInternal_t;
+typedef struct CtrlObj CtrlObj_t;
 
 /**
  * Create a Control system object.
  * @return    Control system object containing everything needed by the controller.
  */
-CtrlInternal_t *Ctrl_Create();
+CtrlObj_t *Ctrl_Create();
 
 /**
  * Initialize the control object.
  * @param obj Control object.
  * @return    0 if fail, 1 otherwise.
  */
-uint8_t Ctrl_init(CtrlInternal_t *obj);
+uint8_t Ctrl_init(CtrlObj_t *obj);
 
 /**
  * Execute the control system.
@@ -47,22 +47,22 @@ uint8_t Ctrl_init(CtrlInternal_t *obj);
  * @param setpoint  Current setpoint.
  * @param u_signal  Output, control signal.
  */
-void Ctrl_Execute(CtrlInternal_t *internals, state_data_t *state, state_data_t *setpoint, control_signal_t *u_signal);
+void Ctrl_Execute(CtrlObj_t *internals, state_data_t *state, state_data_t *setpoint, control_signal_t *u_signal);
 
 /**
  * Turn control on.
  * @param param Current control object.
  */
-void Ctrl_On(CtrlInternal_t * param);
+void Ctrl_On(CtrlObj_t * param);
 
 /**
  * Turn control off.
  * @param param Current control object.
  */
-void Ctrl_Off(CtrlInternal_t * param);
+void Ctrl_Off(CtrlObj_t * param);
 
 
-//TODO move to motor control block.
+//TODO move to motor control block and use number of motors.
 /**
  * Allocate the control to different motors.
  * @param ctrl_signal     control signal to be allocated to motors.

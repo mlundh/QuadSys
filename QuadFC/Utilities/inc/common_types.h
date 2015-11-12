@@ -44,8 +44,8 @@ typedef enum state_names
 
 typedef struct state_data
 {
-  int32_t state_vector[12];
-  uint8_t confidence[12];
+  int32_t state_vector[nr_states];
+  uint8_t confidence[nr_states];
 }state_data_t;
 
 typedef enum control_signal_names
@@ -56,10 +56,30 @@ typedef enum control_signal_names
   u_thrust = 3,
 }control_signal_names_t;
 
-
 typedef struct control_signal
 {
   int32_t control_signal[4];
 }control_signal_t;
+
+typedef enum ImuNames
+{
+  accl_x = 0,
+  accl_y = 1,
+  accl_z = 2,
+  gyro_x = 3,
+  gyro_y = 4,
+  gyro_z = 5,
+  mag_x = 6,
+  mag_y = 7,
+  mag_z = 8,
+  temp_imu = 9,
+  nr_imu_values = 10,
+}ImuNames_t;
+
+typedef struct ImuData
+{
+  int16_t imu_data[nr_imu_values];
+  uint8_t confidence[nr_imu_values];
+}ImuData_t;
 
 #endif /* COMMON_TYPES_H_ */

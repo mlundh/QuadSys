@@ -27,23 +27,26 @@
 #include "stdint.h"
 #include "common_types.h"
 
+typedef struct StateEst StateEst_t;
+
 
 /*estimation methods supported.*/
 typedef enum etstimation_types
 {
-  raw_data = 1,
+  raw_data_rate = 1,
   kalman_filtered = 2,
   complementary_filter = 3,
+  type_not_availible = 4
 } estimation_types_t;
 
-void StateEst_Create();
+StateEst_t *StateEst_Create();
 
 /**
  * Initialize the state estimator. This causes all connected and configured
  * sensors to be initialized.
  *
  * @return 0 if success else error code.*/
-uint8_t StateEst_init(estimation_types_t type);
+uint8_t StateEst_init(StateEst_t *obj, estimation_types_t type);
 
 /**
  * Gets the new state data and copies it into state.
@@ -54,7 +57,7 @@ uint8_t StateEst_init(estimation_types_t type);
  * @param state_vector The state vector.
  * @return 0 for Success or failure code.
  * */
-uint8_t StateEst_get_state(state_data_t *state_vector);
+uint8_t StateEst_getState(StateEst_t *obj, state_data_t *state_vector);
 
 /**
  * Set the desired estimation type. The different estimation types
@@ -63,13 +66,13 @@ uint8_t StateEst_get_state(state_data_t *state_vector);
  *
  * @param est requested estimation type
  */
-uint8_t StateEst_SetEstType(estimation_types_t est);
+uint8_t StateEst_SetEstType(StateEst_t *obj, estimation_types_t est);
 
 /**
  * Get the current estimation type described in the estimation
  * type enumeration.
  * @return current estimation type.
  */
-estimation_types_t StateEst_GetEstType();
+estimation_types_t StateEst_GetEstType(StateEst_t *obj);
 
 #endif /* STATE_ESTIMATOR_H_ */

@@ -26,11 +26,11 @@
 
 #include "stdint.h"
 
-// TODO make opaque.
 typedef struct MotorControl
 {
   uint32_t nr_init_motors;
   uint8_t armed;
+  int32_t *motorSetpoint;
   void *controlInternals;
 } MotorControlObj;
 
@@ -63,6 +63,6 @@ uint8_t MotorCtrl_Disable(MotorControlObj *obj);
  * @param setpoint  Array of setpoints. Must be as long as nr_motors.
  * @return          1 of success, 0 otherwise.
  */
-uint8_t MotorCtrl_UpdateSetpoint(MotorControlObj *obj, int32_t *setpoint, uint8_t );
+uint8_t MotorCtrl_UpdateSetpoint(MotorControlObj *obj);
 
 #endif /* HAL_INC_QUADFC_MOTORCONTROL_H_ */

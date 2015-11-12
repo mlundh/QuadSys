@@ -9,8 +9,8 @@
 #define MPU6050_H_
 
 #include "freertos_twi_master.h"
-#include "imu.h"
 #include "portmacro.h"
+#include "QuadFC_IMU.h"
 
 #define BLOCK_TIME_IMU (2UL / portTICK_PERIOD_MS)
 
@@ -18,7 +18,7 @@
 #define MPU6050_ADDRESS_AD0_LOW     0x68 // address pin low (GND), default for InvenSense evaluation board
 #define MPU6050_ADDRESS_AD0_HIGH    0x69 // address pin high (VCC)
 #define MPU6050_DEFAULT_ADDRESS     MPU6050_ADDRESS_AD0_LOW
-#define MPU6050_ADDRESS_DORTEK		MPU6050_ADDRESS_AD0_HIGH
+#define MPU6050_ADDRESS_DORTEK		  MPU6050_ADDRESS_AD0_HIGH
 
 #define MPU6050_RA_XG_OFFS_TC       0x00 //[7] PWR_MODE, [6:1] XG_OFFS_TC, [0] OTP_BNK_VLD
 #define MPU6050_RA_YG_OFFS_TC       0x01 //[7] PWR_MODE, [6:1] YG_OFFS_TC, [0] OTP_BNK_VLD
@@ -370,35 +370,22 @@
 #define MPU6050_DMP_MEMORY_BANK_SIZE    256
 #define MPU6050_DMP_MEMORY_CHUNK_SIZE   16
 
-typedef struct mpu6050_data
-{
-  twi_package_t twi_data;                         //twi package
-  SemaphoreHandle_t twi_notification_semaphore;    //Notification semaphore
-  freertos_twi_if twi;                            // Initialized twi buss.
-  TickType_t xtransmit_block_time;              // block time
-  uint8_t data[16];
-} mpu6050_data_t;
+#define  mpu6050_read_byte(obj, reg_addr, data) mpu6050_read_settings(obj, reg_addr, 7, 8, data, 1)
+#define  mpu6050_read_bit(obj, reg_addr, bit_nr, data) mpu6050_read_settings(obj, reg_addr, bit_nr, 1, data, 1)
+#define  mpu6050_write_byte(obj, reg_addr, data) mpu6050_write_settings(obj, reg_addr, 7, 8, data, 1)
+#define  mpu6050_write_bit(obj, reg_addr, bit_nr, data) mpu6050_write_settings(obj, reg_addr, bit_nr, 1, data, 1)
 
-#define  mpu6050_read_byte(reg_addr, data) mpu6050_read_settings(reg_addr, 7, 8, data, 1)
-#define  mpu6050_read_bit(reg_addr, bit_nr, data) mpu6050_read_settings(reg_addr, bit_nr, 1, data, 1)
-#define  mpu6050_write_byte(reg_addr, data) mpu6050_write_settings(reg_addr, 7, 8, data, 1)
-#define  mpu6050_write_bit(reg_addr, bit_nr, data) mpu6050_write_settings(reg_addr, bit_nr, 1, data, 1)
-
-uint8_t mpu6050_write_settings( uint8_t reg_addr, uint8_t bit_nr, uint8_t nr_bits, uint8_t data, uint8_t nr_bytes );
-uint8_t mpu6050_read_settings( uint8_t reg_addr, uint8_t bit_nr, uint8_t nr_bits, uint8_t *data, uint8_t nr_bytes );
-
-uint8_t mpu6050_read_motion( imu_data_t *data );
-void mpu6050_calc_offset( );
-void mpu6050_initialize( );
-void mpu6050_setClockSource( uint8_t source );
-void mpu6050_setFullScaleGyroRange( uint8_t range );
-void mpu6050_getFullScaleAccelRange( uint8_t *buffer );
-void mpu6050_setFullScaleAccelRange( uint8_t range );
-void mpu6050_getSleepEnabled( uint8_t *buffer );
-void mpu6050_setSleepEnabled( uint8_t enabled );
-uint8_t mpu6050_getDLPFMode( uint8_t *buffer );
-void mpu6050_setDLPFMode( uint8_t mode );
-
-void mpu6050_reset( );
+uint8_t mpu6050_write_settings(Imu_t * obj, uint8_t reg_addr, uint8_t bit_nr, uint8_t nr_bits, uint8_t data, uint8_t nr_bytes);
+uint8_t mpu6050_read_settings(Imu_t * obj, uint8_t reg_addr, uint8_t bit_nr, uint8_t nr_bits, uint8_t *data, uint8_t nr_bytes);
+uint8_t mpu6050_calc_offset(Imu_t * obj);
+void mpu6050_setClockSource(Imu_t * obj, uint8_t source);
+void mpu6050_setFullScaleGyroRange(Imu_t * obj, uint8_t range);
+void mpu6050_getFullScaleAccelRange(Imu_t * obj, uint8_t *buffer);
+void mpu6050_setFullScaleAccelRange(Imu_t * obj, uint8_t range);
+void mpu6050_getSleepEnabled(Imu_t * obj, uint8_t *buffer);
+void mpu6050_setSleepEnabled(Imu_t * obj, uint8_t enabled);
+uint8_t mpu6050_getDLPFMode(Imu_t * obj, uint8_t *buffer);
+void mpu6050_setDLPFMode(Imu_t * obj, uint8_t mode);
+void mpu6050_reset(Imu_t * obj);
 
 #endif /* MPU6050_H_ */
