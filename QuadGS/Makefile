@@ -118,8 +118,9 @@ CFLAGS += $(COMPILER_FLAGS) -std=c11
 ifdef AUX_LIB
 LDLIBS += -L$(AUX_LIB)
 endif
-LDLIBS +=-L$(BOOST_LIB_ROOT) -lboost_thread -lboost_program_options  -lboost_system -pthread -lboost_log -lboost_log_setup  -lreadline -fsanitize=address -fno-omit-frame-pointer
-
+LDLIBS +=-L$(BOOST_LIB_ROOT) -lboost_thread -lboost_program_options  -lboost_system -pthread 
+LDLIBS +=-lboost_log -lboost_filesystem -lboost_log_setup  -lreadline 
+LDLIBS +=-fsanitize=address -fno-omit-frame-pointer
 #
 # The default rule, which causes init to be built.
 #

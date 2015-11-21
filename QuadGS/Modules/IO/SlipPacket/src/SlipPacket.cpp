@@ -42,7 +42,7 @@ SlipPacket::SlipPacket(QspPayloadRaw::Ptr data, bool isPayload)
   if(isPayload)
   {
     mPayload = data->Copy();
-    mPacket = QspPayloadRaw::Create(255);
+    mPacket = QspPayloadRaw::Create(512);
     Encode();
   }
   else
@@ -61,13 +61,13 @@ SlipPacket::SlipPacket(const uint8_t* data, uint8_t dataLength, bool isPayload)
   if(isPayload)
   {
     mPayload  = QspPayloadRaw::Create(data, dataLength);
-    mPacket = QspPayloadRaw::Create(255);
+    mPacket = QspPayloadRaw::Create(512);
     Encode();
   }
   else
   {
     mPacket  = QspPayloadRaw::Create(data, dataLength);
-    mPayload = QspPayloadRaw::Create(255);
+    mPayload = QspPayloadRaw::Create(512);
     Decode();
   }
 }
