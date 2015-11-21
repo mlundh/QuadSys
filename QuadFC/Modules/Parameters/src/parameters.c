@@ -405,7 +405,7 @@ uint8_t Param_AppendDivider( uint8_t *buffer, uint32_t buffer_length)
 	uint32_t buf_index = (uint32_t)strlen( (const char *)buffer);
 
 	//ensure that the name will fit in current buffer.
-	if((buf_index + 1) > buffer_length)
+	if((buf_index + 2) > buffer_length) // one char + null
 	{
 		return 0;
 	}
@@ -422,7 +422,7 @@ uint8_t Param_AppendParentNotation( uint8_t *buffer, uint32_t buffer_length)
 	uint32_t buf_index = (uint32_t)strlen( (const char *)buffer);
 
 	//ensure that the name will fit in current buffer.
-	if((buf_index + 3) > buffer_length)
+	if((buf_index + 4) > buffer_length) // 3 char + null
 	{
 		return 0;
 	}

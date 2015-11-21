@@ -89,8 +89,8 @@ Imu_t * Imu_Create()
       &ImuObj->ImuOffset.imu_data[5], "gyro_z", ImuRoot, internals->xMutexParam);
 
 
-/* TODO remove when not needed.
-  param_obj_t * Imu = Param_CreateObj(6, NoType, NULL, "IMU", Param_GetRoot(), NULL);
+ //TODO remove when not needed.
+/*  param_obj_t * Imu = Param_CreateObj(6, NoType, NULL, "IMU", Param_GetRoot(), NULL);
 
   Param_CreateObj(0, int16_variable_type,
       &ImuObj->ImuData.imu_data[0], "accl_x", Imu, internals->xMutexParam);

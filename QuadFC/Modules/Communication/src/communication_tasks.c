@@ -418,7 +418,8 @@ uint8_t Com_HandleParameters(QSP_t *QSP_packet, QSP_t *QSP_RspPacket, SLIP_t *SL
   {
   case QSP_ParamGetTree:
     result = Param_DumpFromRoot(QSP_GetParamPayloadPtr(QSP_RspPacket),
-        QSP_GetAvailibleSize(QSP_RspPacket) - QSP_GetParamHeaderdSize(), helper);
+        QSP_GetAvailibleSize(QSP_RspPacket) - QSP_GetParamHeaderdSize() - 2,
+        helper);
     if(result) // Dump from root is finished, reset helper.
     {
       memset(helper->dumpStart, 0, MAX_DEPTH); // Starting point of dump.
