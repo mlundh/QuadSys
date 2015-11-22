@@ -302,7 +302,7 @@ param_obj_t * Param_FindNext(param_obj_t *current, uint8_t *moduleBuffer, uint32
 
 void Param_Init()
 {
-  mRoot = Param_CreateObj(8, NoType, NULL, "QuadFC", NULL, NULL );
+  mRoot = Param_CreateObj(8, NoType, readOnly, NULL, "QuadFC", NULL, NULL );
 }
 
 param_obj_t *Param_GetRoot()
@@ -323,8 +323,9 @@ void Param_SetChild(param_obj_t *current, param_obj_t *child)
 	current->children[current->registered_children++] = child;
 }
 
-param_obj_t *Param_CreateObj(uint8_t num_children, Log_variable_type_t type, void *value,
-    const char *obj_name, param_obj_t *parent, SemaphoreHandle_t xMutex)
+param_obj_t *Param_CreateObj(uint8_t num_children, Log_variable_type_t type,
+    Log_variable_access_t access, void *value, const char *obj_name,
+    param_obj_t *parent, SemaphoreHandle_t xMutex)
 {
 
 	if((NoType != type) && !value)
@@ -338,6 +339,7 @@ param_obj_t *Param_CreateObj(uint8_t num_children, Log_variable_type_t type, voi
 	}
 	log_obj->num_variables = num_children;
 	log_obj->type = type;
+	log_obj->access = access;
 	log_obj->value = value;
 	log_obj->group_name = pvPortMalloc( sizeof( unsigned char ) * MAX_LOG_NAME_LENGTH + 1 );
 	log_obj->parent = parent;
@@ -501,7 +503,9 @@ uint8_t Param_SettNodeValue(param_obj_t *current, uint8_t *buffer)
 	{
 		return 0;
 	}
-	if(!(strlen((char *)buffer) > 0))
+  // Check if we have anything to update with. For now it is ok to try to set a read only,
+  // it will not be set though.
+	if(!(strlen((char *)buffer) > 0) || (current->access != readWrite))
 	{
 		return 1; // OK to not update value if there is nothing to update with.
 	}

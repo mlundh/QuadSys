@@ -90,6 +90,12 @@ typedef enum variable_type
     last_variable_type  =             7,//!< last_variable_type
 }Log_variable_type_t;
 
+typedef enum variable_access
+{
+    readWrite               =            0,//!< read and write access
+    readOnly                =            1,//!< read only
+}Log_variable_access_t;
+
 /**
  * @struct log_obj_t
  * @brief The log objects.
@@ -100,6 +106,7 @@ struct param_obj_t
 {
   uint8_t num_variables;
   Log_variable_type_t type;
+  Log_variable_access_t access;
   void* value;
   signed char *group_name;
   struct param_obj_t *parent;
@@ -152,8 +159,9 @@ param_obj_t *Param_GetRoot();
  * @return					    A handle to the newly created log object. NULL if
  * 							something went wrong.
  */
-param_obj_t *Param_CreateObj(uint8_t num_children, Log_variable_type_t type, void *value,
-    const char *obj_name, param_obj_t *parent, SemaphoreHandle_t xMutex);
+param_obj_t *Param_CreateObj(uint8_t num_children, Log_variable_type_t type,
+    Log_variable_access_t access, void *value, const char *obj_name,
+    param_obj_t *parent, SemaphoreHandle_t xMutex);
 
 /**
  *

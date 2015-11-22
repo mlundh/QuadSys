@@ -73,38 +73,21 @@ Imu_t * Imu_Create()
 
   internals->xMutexParam = xSemaphoreCreateMutex();
 
-  param_obj_t * ImuRoot = Param_CreateObj(6, NoType, NULL, "IMU_Off", Param_GetRoot(), NULL);
+  param_obj_t * ImuRoot = Param_CreateObj(6, NoType, readOnly, NULL, "IMU_Off", Param_GetRoot(), NULL);
 
-  Param_CreateObj(0, int16_variable_type,
+  Param_CreateObj(0, int16_variable_type, readOnly,
       &ImuObj->ImuOffset.imu_data[0], "accl_x", ImuRoot, internals->xMutexParam);
-  Param_CreateObj(0, int16_variable_type,
+  Param_CreateObj(0, int16_variable_type, readOnly,
       &ImuObj->ImuOffset.imu_data[1], "accl_y", ImuRoot, internals->xMutexParam);
-  Param_CreateObj(0, int16_variable_type,
+  Param_CreateObj(0, int16_variable_type, readOnly,
       &ImuObj->ImuOffset.imu_data[2], "accl_z", ImuRoot, internals->xMutexParam);
-  Param_CreateObj(0, int16_variable_type,
+  Param_CreateObj(0, int16_variable_type, readOnly,
       &ImuObj->ImuOffset.imu_data[3], "gyro_x", ImuRoot, internals->xMutexParam);
-  Param_CreateObj(0, int16_variable_type,
+  Param_CreateObj(0, int16_variable_type, readOnly,
       &ImuObj->ImuOffset.imu_data[4], "gyro_y", ImuRoot, internals->xMutexParam);
-  Param_CreateObj(0, int16_variable_type,
+  Param_CreateObj(0, int16_variable_type, readOnly,
       &ImuObj->ImuOffset.imu_data[5], "gyro_z", ImuRoot, internals->xMutexParam);
 
-
- //TODO remove when not needed.
-/*  param_obj_t * Imu = Param_CreateObj(6, NoType, NULL, "IMU", Param_GetRoot(), NULL);
-
-  Param_CreateObj(0, int16_variable_type,
-      &ImuObj->ImuData.imu_data[0], "accl_x", Imu, internals->xMutexParam);
-  Param_CreateObj(0, int16_variable_type,
-      &ImuObj->ImuData.imu_data[1], "accl_y", Imu, internals->xMutexParam);
-  Param_CreateObj(0, int16_variable_type,
-      &ImuObj->ImuData.imu_data[2], "accl_z", Imu, internals->xMutexParam);
-  Param_CreateObj(0, int16_variable_type,
-      &ImuObj->ImuData.imu_data[3], "gyro_x", Imu, internals->xMutexParam);
-  Param_CreateObj(0, int16_variable_type,
-      &ImuObj->ImuData.imu_data[4], "gyro_y", Imu, internals->xMutexParam);
-  Param_CreateObj(0, int16_variable_type,
-      &ImuObj->ImuData.imu_data[5], "gyro_z", Imu, internals->xMutexParam);
-*/
   return ImuObj;
 }
 

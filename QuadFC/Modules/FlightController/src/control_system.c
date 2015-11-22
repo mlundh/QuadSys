@@ -66,48 +66,48 @@ void Ctrl_Initialize(CtrlObj_t *internals)
 
   internals->xMutexParam = xSemaphoreCreateMutex();
 
-  param_obj_t * RateRoot = Param_CreateObj(10, NoType, NULL, "PID_R", Param_GetRoot(), NULL);
+  param_obj_t * RateRoot = Param_CreateObj(10, NoType, readOnly, NULL, "PID_R", Param_GetRoot(), NULL);
 
   // Enable tuning of the pid parameters.
-  param_obj_t * pitchObj = Param_CreateObj(10, NoType, NULL, "Pitch", RateRoot, NULL);
-  param_obj_t * rollObj = Param_CreateObj(10, NoType, NULL, "Roll", RateRoot, NULL);
-  param_obj_t * yawObj = Param_CreateObj(10, NoType, NULL, "Yaw", RateRoot, NULL);
+  param_obj_t * pitchObj = Param_CreateObj(10, NoType, readOnly, NULL, "Pitch", RateRoot, NULL);
+  param_obj_t * rollObj = Param_CreateObj(10, NoType, readOnly, NULL, "Roll", RateRoot, NULL);
+  param_obj_t * yawObj = Param_CreateObj(10, NoType, readOnly, NULL, "Yaw", RateRoot, NULL);
 
-  Param_CreateObj(0, int32_variable_type,
+  Param_CreateObj(0, int32_variable_type, readWrite,
       &internals->RatePitch->kp, "Kp", pitchObj, internals->xMutexParam);
-  Param_CreateObj(0, int32_variable_type,
+  Param_CreateObj(0, int32_variable_type, readWrite,
       &internals->RatePitch->ki, "Ki", pitchObj, internals->xMutexParam);
-  Param_CreateObj(0, int32_variable_type,
+  Param_CreateObj(0, int32_variable_type, readWrite,
       &internals->RatePitch->kd, "Kd", pitchObj, internals->xMutexParam);
 
-  Param_CreateObj(0, int32_variable_type,
+  Param_CreateObj(0, int32_variable_type, readWrite,
       &internals->RateRoll->kp, "Kp", rollObj, internals->xMutexParam);
-  Param_CreateObj(0, int32_variable_type,
+  Param_CreateObj(0, int32_variable_type, readWrite,
       &internals->RateRoll->ki, "Ki", rollObj, internals->xMutexParam);
-  Param_CreateObj(0, int32_variable_type,
+  Param_CreateObj(0, int32_variable_type, readWrite,
       &internals->RateRoll->kd, "Kd", rollObj, internals->xMutexParam);
 
-  Param_CreateObj(0, int32_variable_type,
+  Param_CreateObj(0, int32_variable_type, readWrite,
       &internals->RateYaw->kp, "Kp", yawObj, internals->xMutexParam);
-  Param_CreateObj(0, int32_variable_type,
+  Param_CreateObj(0, int32_variable_type, readWrite,
       &internals->RateYaw->ki, "Ki", yawObj, internals->xMutexParam);
-  Param_CreateObj(0, int32_variable_type,
+  Param_CreateObj(0, int32_variable_type, readWrite,
       &internals->RateYaw->kd, "Kd", yawObj, internals->xMutexParam);
 
 
-  Param_CreateObj(0, int32_variable_type,
+  Param_CreateObj(0, int32_variable_type, readWrite,
       &internals->RatePitch->OutMax, "OutMax", pitchObj, internals->xMutexParam);
-  Param_CreateObj(0, int32_variable_type,
+  Param_CreateObj(0, int32_variable_type, readWrite,
       &internals->RatePitch->OutMin, "OutMin", pitchObj, internals->xMutexParam);
 
-  Param_CreateObj(0, int32_variable_type,
+  Param_CreateObj(0, int32_variable_type, readWrite,
       &internals->RateRoll->OutMax, "OutMax", rollObj, internals->xMutexParam);
-  Param_CreateObj(0, int32_variable_type,
+  Param_CreateObj(0, int32_variable_type, readWrite,
       &internals->RateRoll->OutMin, "OutMin", rollObj, internals->xMutexParam);
 
-  Param_CreateObj(0, int32_variable_type,
+  Param_CreateObj(0, int32_variable_type, readWrite,
       &internals->RateYaw->OutMax, "OutMax", yawObj, internals->xMutexParam);
-  Param_CreateObj(0, int32_variable_type,
+  Param_CreateObj(0, int32_variable_type, readWrite,
       &internals->RateYaw->OutMin, "OutMin", yawObj, internals->xMutexParam);
 
 

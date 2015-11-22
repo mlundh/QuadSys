@@ -187,11 +187,11 @@ MotorControlObj * MotorCtrl_CreateAndInit(uint32_t nr_motors )
 
   pwm_internals_t *internals = pwm_getInternals(obj);
   internals->xMutex = xSemaphoreCreateMutex();
-  param_obj_t * PwmRoot = Param_CreateObj(10, NoType, NULL, "PWM", Param_GetRoot(), NULL);
+  param_obj_t * PwmRoot = Param_CreateObj(10, NoType, readOnly, NULL, "PWM", Param_GetRoot(), NULL);
 
-  Param_CreateObj(0, uint32_variable_type,
+  Param_CreateObj(0, uint32_variable_type, readWrite,
       &internals->armed_duty_value, "dtyOn", PwmRoot, internals->xMutex);
-  Param_CreateObj(0, uint32_variable_type,
+  Param_CreateObj(0, uint32_variable_type, readWrite,
       &internals->arming_duty_value, "dtyArm", PwmRoot, internals->xMutex);
 
 
