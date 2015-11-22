@@ -24,17 +24,14 @@
 #ifndef HAL_INC_QUADFC_IMU_H_
 #define HAL_INC_QUADFC_IMU_H_
 
+/**
+ * @file QuadFC_IMU.h
+ *
+ * Interface responsible for handling IMUs in the system.
+ */
+
 #include "stdint.h"
 #include "common_types.h"
-
-
-typedef struct Imu
-{
-  ImuData_t ImuOffset;
-  ImuData_t ImuData;
-  void *internals;
-}Imu_t;
-
 
 /**
  * Create the IMU unit. This function should be called before the
@@ -58,6 +55,5 @@ uint8_t Imu_Init(Imu_t *obj);
  * @return              0 if fail, 1 otherwise.
  */
 uint8_t Imu_GetData(Imu_t *obj);
-
 
 #endif /* HAL_INC_QUADFC_IMU_H_ */

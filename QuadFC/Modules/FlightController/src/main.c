@@ -79,9 +79,12 @@ int main( void )
   /* Create all tasks used in the application.*/
   create_satellite_receiver_task();
   Led_CreateLedControlTask();
-  Com_CreateTasks(); // Creates two tasks, RX and TX.
   create_range_meter_task();
   create_main_control_task();
+
+  /*Should always be created last as it loads the parameters*/
+  Com_CreateTasks(); // Creates two tasks, RX and TX.
+
   /* Start the RTOS scheduler. */
   vTaskStartScheduler();
   /* If all is well, the scheduler will now be running, and the following line

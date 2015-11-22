@@ -1,5 +1,5 @@
 /*
- * state_estimator.c
+ * QuadFC_IMU.h
  *
  * Copyright (C) 2015 Martin Lundh
  *
@@ -21,64 +21,40 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+#ifndef HAL_INC_QUADFC_IMUINTERNAL_H_
+#define HAL_INC_QUADFC_IMUINTERNAL_H_
 
-#include "state_estimator.h"
-#include "stddef.h"
-#include "QuadFC_IMU.h"
-#include "imu_signal_processing.h"
-
-struct StateEst
-{
-  Imu_t * imu;
-  estimation_types_t est_type;
-};
-
-StateEst_t *StateEst_Create()
-{
-  StateEst_t * stateEstObj = pvPortMalloc(sizeof(StateEst_t));
-  if(!stateEstObj)
-  {
-    return NULL;
-  }
-  stateEstObj->imu = Imu_Create();
-  stateEstObj->est_type = type_not_availible;
-
-  if(!stateEstObj->imu)
-  {
-    return NULL;
-  }
-  return stateEstObj;
-}
+/**
+ * @file QuadFC_IMUInternal.h
+ *
+ * Interface required to be implemented by any IMU in the system. This
+ * internal interface is used by the external interface QuadFC_IMU.
+ */
 
 
-uint8_t StateEst_init(StateEst_t *obj, estimation_types_t type)
-{
-  obj->est_type = type;
-  Imu_Init(obj->imu);
-  return 0;
-}
+#include "stdint.h"
+#include "common_types.h"
 
-uint8_t StateEst_getState(StateEst_t *obj, state_data_t *state_vector)
-{
-  Imu_GetData(obj->imu);
-  switch (obj->est_type)
-  {
-  case raw_data_rate:
-    get_rate_gyro( state_vector, &obj->imu->ImuData );
-    break;
-  default:
-    return 0;
-  }
-  return 1;
-}
+/**
+ * Create the IMU unit. This function should be called before the
+ * scheduler is started.
+ * @return            A newly created IMU object. */
+Imu_t * Imu_CreateInternal();
 
-uint8_t StateEst_SetEstType(StateEst_t *obj, estimation_types_t est)
-{
-  obj->est_type = est;
-  return 1;
-}
+/**
+ * Initialize the imu object. This function should be called after the
+ * scheduler is started.
+ * @param obj         Current IMU object.
+ * @return            0 if fail, 1 otherwise.
+ */
+uint8_t Imu_InitInternal(Imu_t *obj);
 
-estimation_types_t StateEst_GetEstType(StateEst_t *obj)
-{
-  return obj->est_type;
-}
+/**
+ * Internal function that adds sensor orientation information to the object.
+ * Any implementation has to implement this functionallity.
+ * @param obj           Current IMU object.
+ * @return              0 if fail, 1 otherwise.
+ */
+uint8_t Imu_GetDataInternal(Imu_t *obj);
+
+#endif /* HAL_INC_QUADFC_IMUINTERNAL_H_ */

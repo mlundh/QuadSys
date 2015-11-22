@@ -24,6 +24,19 @@
 #ifndef STATE_ESTIMATOR_H_
 #define STATE_ESTIMATOR_H_
 
+/**
+ * @file state_estimator.h
+ *
+ * StateEstimator is a core module responsible of gathering data
+ * and analyzing the data to get a estimate of the current
+ * stat (physical state) of the vehicle.
+ *
+ * Depending on the requested estimation type, different
+ * states might be available for the control system to use,
+ * examine the confidence field of the data to gain information
+ * on what states are availible.
+ */
+
 #include "stdint.h"
 #include "common_types.h"
 

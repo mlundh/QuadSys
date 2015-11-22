@@ -82,4 +82,20 @@ typedef struct ImuData
   uint8_t confidence[nr_imu_values];
 }ImuData_t;
 
+typedef struct ImuOrientation
+{
+  int8_t x_sign;
+  int8_t y_sign;
+  int8_t z_sign;
+}ImuOrientation_t;
+
+typedef struct Imu
+{
+  ImuData_t ImuOffset;
+  ImuData_t ImuData;
+  ImuData_t tempData;
+  ImuOrientation_t Orient;
+  void *internals;
+}Imu_t;
+
 #endif /* COMMON_TYPES_H_ */

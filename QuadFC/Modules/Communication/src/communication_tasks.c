@@ -170,6 +170,9 @@ void Com_CreateTasks( void )
       &driver_options );
 
 
+  // TODO add proper initialization of all "static" variables here.
+
+
   /**
    * Create the freeRTOS tasks responsible for
    */

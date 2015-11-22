@@ -62,8 +62,13 @@ void get_euler_angles_gyro( state_data_t *state, ImuData_t *measurments )
 void get_rate_gyro( state_data_t *state, ImuData_t *measurments )
 {
   state->state_vector[pitch_rate] = ((int32_t) measurments->imu_data[gyro_x]) >> 6;
+  state->confidence[pitch_rate] = 1;
+
   state->state_vector[roll_rate] = ((int32_t) measurments->imu_data[gyro_y]) >> 6;
+  state->confidence[roll_rate] = 1;
+
   state->state_vector[yaw_rate] = ((int32_t) measurments->imu_data[gyro_z]) >> 6;
+  state->confidence[roll_rate] = 1;
 }
 
 void complemetary_filter( state_data_t *state_accel, state_data_t *state_gyro, state_data_t *state )

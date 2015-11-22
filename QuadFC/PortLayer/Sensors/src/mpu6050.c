@@ -44,6 +44,7 @@
 #include "QuadFC_Peripherals.h"
 #include "globals.h"
 #include "parameters.h"
+#include "QuadFC_IMUInternal.h"
 
 #define MPU6050_BUSS                  (0x0)
 #define MPU6050_BLOCK_TIME            (50UL / portTICK_PERIOD_MS)
@@ -64,7 +65,7 @@ ImuInternals_t *Imu_getInternals(Imu_t *obj)
    return (ImuInternals_t *)obj->internals;
  }
 
-Imu_t * Imu_Create()
+Imu_t * Imu_CreateInternal()
 {
   Imu_t *ImuObj = pvPortMalloc(sizeof(Imu_t));
 
@@ -92,7 +93,7 @@ Imu_t * Imu_Create()
 }
 
 
-uint8_t Imu_Init(Imu_t *obj)
+uint8_t Imu_InitInternal(Imu_t *obj)
 {
   static TickType_t delay_1000_ms = (1000UL / portTICK_PERIOD_MS); /*delay of 1000ms*/
 
@@ -104,6 +105,7 @@ uint8_t Imu_Init(Imu_t *obj)
 
   memcpy(&obj->ImuOffset, &tmp, sizeof(tmp));
   memcpy(&obj->ImuData, &tmp, sizeof(tmp));
+  memcpy(&obj->tempData, &tmp, sizeof(tmp));
 
   mpu6050_reset(obj);
   vTaskDelay( delay_1000_ms );
@@ -124,7 +126,7 @@ uint8_t Imu_Init(Imu_t *obj)
   return result;
 }
 
-uint8_t Imu_GetData(Imu_t *obj)
+uint8_t Imu_GetDataInternal(Imu_t *obj)
 {
   ImuInternals_t *internals = Imu_getInternals(obj);
 
@@ -139,13 +141,13 @@ uint8_t Imu_GetData(Imu_t *obj)
   {
     return 0;
   }
-  obj->ImuData.imu_data[accl_x]      = (int16_t) ((i2c_data.buffer[0]     << 8) | i2c_data.buffer[1]);
-  obj->ImuData.imu_data[accl_y]      = (int16_t) ((i2c_data.buffer[2]     << 8) | i2c_data.buffer[3]);
-  obj->ImuData.imu_data[accl_z]      = (int16_t) ((i2c_data.buffer[4]     << 8) | i2c_data.buffer[5]);
-  obj->ImuData.imu_data[temp_imu]    = (int16_t) ((i2c_data.buffer[6]     << 8) | i2c_data.buffer[7]);
-  obj->ImuData.imu_data[gyro_x]      = -((int16_t) ((i2c_data.buffer[8]   << 8) | i2c_data.buffer[9]))   - obj->ImuOffset.imu_data[gyro_x];
-  obj->ImuData.imu_data[gyro_y]      =   (int16_t) ((i2c_data.buffer[10]  << 8) | i2c_data.buffer[11])  - obj->ImuOffset.imu_data[gyro_y];
-  obj->ImuData.imu_data[gyro_z]      = -((int16_t) ((i2c_data.buffer[12]  << 8) | i2c_data.buffer[13]))  - obj->ImuOffset.imu_data[gyro_z];
+  obj->tempData.imu_data[accl_x]      = (int16_t) ((i2c_data.buffer[0]     << 8) | i2c_data.buffer[1]);
+  obj->tempData.imu_data[accl_y]      = (int16_t) ((i2c_data.buffer[2]     << 8) | i2c_data.buffer[3]);
+  obj->tempData.imu_data[accl_z]      = (int16_t) ((i2c_data.buffer[4]     << 8) | i2c_data.buffer[5]);
+  obj->tempData.imu_data[temp_imu]    = (int16_t) ((i2c_data.buffer[6]     << 8) | i2c_data.buffer[7]);
+  obj->tempData.imu_data[gyro_x]      = (int16_t) ((i2c_data.buffer[8]     << 8) | i2c_data.buffer[9])   - obj->ImuOffset.imu_data[gyro_x];
+  obj->tempData.imu_data[gyro_y]      = (int16_t) ((i2c_data.buffer[10]    << 8) | i2c_data.buffer[11])  - obj->ImuOffset.imu_data[gyro_y];
+  obj->tempData.imu_data[gyro_z]      = (int16_t) ((i2c_data.buffer[12]    << 8) | i2c_data.buffer[13])  - obj->ImuOffset.imu_data[gyro_z];
   return 1;
 }
 
@@ -226,7 +228,7 @@ uint8_t mpu6050_calc_offset(Imu_t * obj)
   /*The first readings might be nonsense*/
   for (i = 0; i < 100; i++)
   {
-    if(!Imu_GetData(obj))
+    if(!Imu_GetDataInternal(obj))
     {
       return 0;
     }
@@ -242,16 +244,16 @@ uint8_t mpu6050_calc_offset(Imu_t * obj)
 
   for (i = 0; i < 1000; i++)
   {
-    if(!Imu_GetData(obj))
+    if(!Imu_GetDataInternal(obj))
     {
       return 0;
     }
-    temp_accl_x += (int64_t) obj->ImuData.imu_data[accl_x];
-    temp_accl_y += (int64_t) obj->ImuData.imu_data[accl_y];
-    temp_accl_z += (int64_t) obj->ImuData.imu_data[accl_z];
-    temp_gyro_x += (int64_t) obj->ImuData.imu_data[gyro_x];
-    temp_gyro_y += (int64_t) obj->ImuData.imu_data[gyro_y];
-    temp_gyro_z += (int64_t) obj->ImuData.imu_data[gyro_z];
+    temp_accl_x += (int64_t) obj->tempData.imu_data[accl_x];
+    temp_accl_y += (int64_t) obj->tempData.imu_data[accl_y];
+    temp_accl_z += (int64_t) obj->tempData.imu_data[accl_z];
+    temp_gyro_x += (int64_t) obj->tempData.imu_data[gyro_x];
+    temp_gyro_y += (int64_t) obj->tempData.imu_data[gyro_y];
+    temp_gyro_z += (int64_t) obj->tempData.imu_data[gyro_z];
     // TODO check validity of measurments!!
     vTaskDelay( xPeriod );
 

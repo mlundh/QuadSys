@@ -28,6 +28,7 @@
 #include <board.h>
 #include <sysclk.h>
 #include "FreeRTOS.h"
+#include "semphr.h"
 #include <string.h>
 #include "parameters.h"
 /** Required resolution = 2000 usable steps. */
