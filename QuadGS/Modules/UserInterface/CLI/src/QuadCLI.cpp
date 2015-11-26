@@ -210,7 +210,16 @@ char ** QuadCLI::completion (const char *text, int start, int)
     else
     {
       std::string tmpLine(rl_line_buffer);
-      size_t i = FindCommand(tmpLine);
+      size_t i = 0;
+      try
+      {
+          FindCommand(tmpLine);
+      }
+      catch(const std::runtime_error& e)
+      {
+          return (matches);
+      }
+
       switch (mCommands[i]->mActOn)
       {
         case Command::ActOn::Core:

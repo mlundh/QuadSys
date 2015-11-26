@@ -104,7 +104,6 @@ COMPILER_FLAGS = -g
 # -MT change target of the rule emitted by dependency generation. 
 #
 COMPILER_FLAGS += -MD -MP -MF "$(@:%.o=%.d)" -MT "$(@:%.o=%.d)" -MT "$(@:%.o=%.o)" -Wall -Wextra -pedantic  #-Wconversion
-COMPILER_FLAGS +=-fsanitize=address -fno-omit-frame-pointer
 COMPILER_FLAGS += $(addprefix -I, $(INCLUDE_DIR) ) 
 
 # include boost as -isystem since we can not fix the warnings in the lib.
@@ -118,9 +117,16 @@ CFLAGS += $(COMPILER_FLAGS) -std=c11
 ifdef AUX_LIB
 LDLIBS += -L$(AUX_LIB)
 endif
-LDLIBS +=-L$(BOOST_LIB_ROOT) -lboost_thread -lboost_program_options  -lboost_system -pthread 
-LDLIBS +=-lboost_log -lboost_filesystem -lboost_log_setup  -lreadline 
+LDLIBS +=-L$(BOOST_LIB_ROOT) -lboost_thread -lboost_program_options  -lboost_system -lboost_locale
+LDLIBS +=-lboost_log -lboost_filesystem -lboost_log_setup -lboost_regex -lboost_date_time 
+LDLIBS += -lreadline  -pthread
+
+ifdef ADDRESS_SANITIZER
 LDLIBS +=-fsanitize=address -fno-omit-frame-pointer
+COMPILER_FLAGS +=-fsanitize=address -fno-omit-frame-pointer
+endif
+
+
 #
 # The default rule, which causes init to be built.
 #

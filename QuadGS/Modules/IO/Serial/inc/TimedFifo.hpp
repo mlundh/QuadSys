@@ -33,7 +33,7 @@ template<class T>
 class TimedFifo
 {
 public:
-    TimedFifo(int size = 1, int timeout = 1000): mQueue(), mTimedMutex(), mSize(size), mTimeoutMs(timeout)
+    TimedFifo(unsigned int size = 1, int timeout = 1000): mQueue(), mTimedMutex(), mSize(size), mTimeoutMs(timeout)
     {}
 
     ~TimedFifo()
@@ -121,7 +121,7 @@ private:
     using Ms = std::chrono::milliseconds;
     std::queue<T> mQueue;
     std::timed_mutex mTimedMutex;
-    int mSize;
+    unsigned int mSize;
     int mTimeoutMs;
 };
 
