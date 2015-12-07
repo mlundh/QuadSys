@@ -33,7 +33,7 @@
 
 uint8_t Mem_Read(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size)
 {
-  QuadFC_I2C i2c_data;
+  QuadFC_I2C_t i2c_data;
   i2c_data.buffer = buffer;
   i2c_data.bufferLength = size;
   i2c_data.internalAddrLength = 2;
@@ -49,7 +49,7 @@ uint8_t Mem_Read(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_
 
 uint8_t Mem_Write(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size)
 {
-  QuadFC_I2C i2c_data;
+  QuadFC_I2C_t i2c_data;
   i2c_data.buffer = buffer;
   i2c_data.bufferLength = size;
   i2c_data.internalAddrLength = 2;

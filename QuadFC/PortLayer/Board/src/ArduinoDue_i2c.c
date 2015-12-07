@@ -39,6 +39,10 @@ uint8_t Init_Twi(int index)
   {
     return 0;
   }
+  if(twi_Init[index] == 1)
+  {
+    return 1; // allready initialized.
+  }
   freertos_peripheral_options_t async_driver_options = {
       NULL,
       0,
@@ -64,7 +68,7 @@ uint8_t Init_Twi(int index)
 }
 
 
-uint8_t QuadFC_i2cWrite(QuadFC_I2C *i2c_data, uint8_t busIndex, TickType_t blockTimeMs)
+uint8_t QuadFC_i2cWrite(QuadFC_I2C_t *i2c_data, uint8_t busIndex, TickType_t blockTimeMs)
 {
   if(busIndex > (sizeof(twi_instances)/sizeof(twi_instances[0])))
   {
@@ -79,6 +83,7 @@ uint8_t QuadFC_i2cWrite(QuadFC_I2C *i2c_data, uint8_t busIndex, TickType_t block
       return 0;
     }
   }
+  TickType_t blockTimeTicks = (blockTimeMs / portTICK_PERIOD_MS);
 
   status_code_t twi_status = 0;
   tmp_twi.addr_length = i2c_data->internalAddrLength;
@@ -89,7 +94,7 @@ uint8_t QuadFC_i2cWrite(QuadFC_I2C *i2c_data, uint8_t busIndex, TickType_t block
 
   twi_status = freertos_twi_write_packet( freeRTOS_twi[busIndex],
       &tmp_twi,
-      blockTimeMs );
+      blockTimeTicks );
 
 
   if (twi_status != STATUS_OK)
@@ -100,7 +105,7 @@ uint8_t QuadFC_i2cWrite(QuadFC_I2C *i2c_data, uint8_t busIndex, TickType_t block
   return 1;
 }
 
-uint8_t QuadFC_i2cRead(QuadFC_I2C *i2c_data, uint8_t busIndex, TickType_t blockTimeMs)
+uint8_t QuadFC_i2cRead(QuadFC_I2C_t *i2c_data, uint8_t busIndex, TickType_t blockTimeMs)
 {
   if(busIndex > (sizeof(twi_instances)/sizeof(twi_instances[0])))
   {
@@ -115,6 +120,8 @@ uint8_t QuadFC_i2cRead(QuadFC_I2C *i2c_data, uint8_t busIndex, TickType_t blockT
       return 0;
     }
   }
+  TickType_t blockTimeTicks = (blockTimeMs / portTICK_PERIOD_MS);
+
   status_code_t twi_status = 0;
   tmp_twi.addr_length = i2c_data->internalAddrLength;
   memcpy(tmp_twi.addr, i2c_data->internalAddr, i2c_data->internalAddrLength);
@@ -124,7 +131,7 @@ uint8_t QuadFC_i2cRead(QuadFC_I2C *i2c_data, uint8_t busIndex, TickType_t blockT
 
   twi_status = freertos_twi_read_packet( freeRTOS_twi[busIndex],
       &tmp_twi,
-      blockTimeMs );
+      blockTimeTicks );
 
   if (twi_status != STATUS_OK)
   {

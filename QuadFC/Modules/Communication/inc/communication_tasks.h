@@ -1,5 +1,5 @@
 /*
- * Test_task.h
+ * communication_tasks.h
  *
  * Copyright (C) 2015 Martin Lundh
  *
@@ -23,14 +23,6 @@
  */
 
 
-/*  Data is stored according to:
- *
- *  [start byte][address][control][length][data (0-MAX_DATA_LENGTH bytes)][crc][end byte]
- *
- *  and the start byte is escaped according to QSP_control_octets enum.
- *
- *
- */
 
 #ifndef COMMUNICATION_TASKS_H_
 #define COMMUNICATION_TASKS_H_
@@ -40,19 +32,19 @@
 #include "slip_packet.h"
 #include "quad_serial_packet.h"
 
-
+/**
+ * Create the communication tasks. These tasks are responsible for
+ * communication with external components such as QuadGS. They are
+ * also responsible for setting parameters.
+ */
 void Com_CreateTasks( void );
 
+/**
+ * Interface function for sending a QSP to the external component (QuadGS).
+ * @param packet  QSP to send.
+ * @return        1 if sucessful, 0 otherwise.
+ */
 uint8_t Com_SendQSP( QSP_t *packet );
-uint8_t Com_HandleQSP(QSP_t *packet, QSP_t *QSP_RspPacket, SLIP_t *SLIP_packet);
-uint8_t Com_HandleParameters(QSP_t *QSP_packet, QSP_t *QSP_RspPacket, SLIP_t *SLIP_packet);
-uint8_t Com_HandleStatus(QSP_t *QSP_packet, QSP_t *QSP_RspPacket, SLIP_t *SLIP_packet);
-
-void Com_SendResponse(QSP_t *QSP_RspPacket);
-
-uint8_t Com_AddCRC( QSP_t *packet);
-uint8_t Com_CheckCRC( QSP_t *packet);
-
 
 
 #endif /* COMMUNICATION-TASKS-H- */

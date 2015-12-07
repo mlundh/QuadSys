@@ -34,7 +34,8 @@ struct QuadSerialPacket
   uint8_t *payload;
   uint16_t allocatedSize;
   uint16_t extPacketSize;
-  SemaphoreHandle_t xMutex;
+  SemaphoreHandle_t xSemPopulated;
+  SemaphoreHandle_t xSemEmpty;
 } ;
 
 QSP_t *QSP_Create(uint16_t size)
@@ -45,21 +46,23 @@ QSP_t *QSP_Create(uint16_t size)
   }
   QSP_t *package = pvPortMalloc( sizeof(QSP_t) );
   package->payload = pvPortMalloc(sizeof(uint8_t) * size);
-  package->xMutex = xSemaphoreCreateMutex();
-  if(!package || !package->payload || !package->xMutex)
+  package->xSemPopulated = xSemaphoreCreateBinary();
+  package->xSemEmpty = xSemaphoreCreateBinary();
+  if(!package || !package->payload || !package->xSemPopulated || !package->xSemEmpty)
   {
     return NULL;
   }
+
   package->extPacketSize = QSP_HEADER_SIZE;
   package->allocatedSize = size;
   QSP_SetPayloadSize(package, 0);
   return package;
 }
 
-uint8_t QSP_TakeOwnership(QSP_t *current)
+uint8_t QSP_TakeIsPopulated(QSP_t *current)
 {
   uint8_t result = 0;
-  if( xSemaphoreTake( current->xMutex, (0) ) == pdTRUE )
+  if( xSemaphoreTake( current->xSemPopulated, (0) ) == pdTRUE )
   {
     result = 1;
   }
@@ -67,15 +70,33 @@ uint8_t QSP_TakeOwnership(QSP_t *current)
   return result;
 }
 
-uint8_t QSP_GiveOwnership(QSP_t *current)
+uint8_t QSP_GiveIsPopulated(QSP_t *current)
 {
-  xSemaphoreGive(current->xMutex);
+  xSemaphoreGive(current->xSemPopulated);
+  return 1;
+}
+
+uint8_t QSP_TakeIsEmpty(QSP_t *current)
+{
+  uint8_t result = 0;
+  if( xSemaphoreTake( current->xSemEmpty, (0) ) == pdTRUE )
+  {
+    result = 1;
+  }
+  /*Could not obtain mutex.*/
+  return result;
+}
+
+uint8_t QSP_GiveIsEmpty(QSP_t *current)
+{
+  xSemaphoreGive(current->xSemEmpty);
   return 1;
 }
 
 uint8_t QSP_GetAddress(QSP_t *current)
 {
-  return current->payload[0];
+  uint8_t address = current->payload[0];
+  return address;
 }
 
 
@@ -107,6 +128,7 @@ uint8_t QSP_GetIsResend(QSP_t *current)
   uint8_t tmp = current->payload[1];
   return ((tmp >> 7) & 1 ); // Highest bit indicates IsResend.
 }
+
 uint8_t QSP_SetIsResend(QSP_t *current, uint8_t resend)
 {
   resend &= 1;
@@ -132,12 +154,14 @@ uint8_t QSP_SetPayloadSize(QSP_t *current, uint16_t payloadSize)
   }
   current->payload[2] = (uint8_t)(payloadSize >> 8);
   current->payload[3] = (uint8_t)(payloadSize);
+  current->extPacketSize = payloadSize + QSP_HEADER_SIZE;
   return 1;
 }
 
 uint8_t *QSP_GetPayloadPtr(QSP_t *current)
 {
-  return (current->payload + QSP_HEADER_SIZE);
+  uint8_t* ptr = (current->payload + QSP_HEADER_SIZE);
+  return ptr;
 }
 
 uint8_t QSP_ClearPayload(QSP_t *current)
@@ -147,30 +171,22 @@ uint8_t QSP_ClearPayload(QSP_t *current)
   return 1;
 }
 
-uint8_t QSP_SetAfterPayload(QSP_t *current, uint8_t *buffer, uint16_t bufferLength)
-{
-  if(current->allocatedSize < (QSP_GetPayloadSize(current) + QSP_HEADER_SIZE + bufferLength))
-  {
-    return 0;
-  }
-  memcpy((current->payload + QSP_HEADER_SIZE + QSP_GetPayloadSize(current)), buffer, bufferLength);
-  current->extPacketSize += bufferLength;
-  return 1;
-}
-
 uint16_t QSP_GetPacketSize(QSP_t *current)
 {
-  return current->extPacketSize;
+  uint16_t size = current->extPacketSize;
+  return size;
 }
 
 uint8_t *QSP_GetPacketPtr(QSP_t *current)
 {
-  return current->payload;
+  uint8_t* ptr = current->payload;
+  return ptr;
 }
 
 uint16_t QSP_GetAvailibleSize(QSP_t *current)
 {
-  return (current->allocatedSize);
+  uint16_t allocated = (current->allocatedSize);
+  return allocated;
 }
 
 
@@ -195,7 +211,8 @@ uint16_t QSP_GetHeaderdSize()
 
 uint8_t *QSP_GetParamPayloadPtr(QSP_t *current)
 {
-  return (current->payload + QSP_PARAM_HEADER_SIZE);
+  uint8_t* paramPayloadPtr = (current->payload + QSP_PARAM_HEADER_SIZE);
+  return paramPayloadPtr;
 }
 
 uint8_t QSP_GetParamSequenceNumber(QSP_t *current)

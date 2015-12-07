@@ -33,31 +33,139 @@
  * most chip support/demand a message format with it, so
  * it is supported here as well.
  */
-typedef struct peripheral_i2c {
+typedef struct{
   uint8_t   internalAddr[3];      //!< Internal i2c address of the other chip.
   uint32_t  internalAddrLength;   //!< Length of the i2c internal address. 0-3 bytes supported.
   uint8_t*  buffer;               //!< Buffer containing the data to transfer.
   uint32_t  bufferLength;         //!< Number of bytes to transfer.
   uint8_t   slaveAddress;         //!< 7 bit chip address of slave node.
-}QuadFC_I2C;
+}QuadFC_I2C_t;
 
-typedef struct peripheral_serial
-{
+/**
+ * @struct QuadFC_Serial_t
+ * Container for information needed by the read/write functionality of
+ * the serial port.
+ */
+typedef struct{
   uint8_t*  buffer;               //!< Buffer containing the data to transfer.
   uint32_t  bufferLength;         //!< Number of bytes to transfer.
-}QuadFC_Serial;
+}QuadFC_Serial_t;
+
+/**
+ * @enum
+ * Enum used for initialization of a uart instance. Defines
+ * the allowed parity values.
+ */
+typedef enum{
+  NoParity = 0,//!< NoParity
+  OddParity,   //!< OddParity
+  EvenParity,  //!< EvenParity
+}QuadFC_SerialParity_t;
+
+/**
+ * @enum
+ * Enum used for initialization of a uart instance. Defines
+ * the allowed number of data bits in a char.
+ */
+typedef enum{
+  FiveDataBits = 0,
+  SixDataBits,
+  SevenDataBits,
+  EightDataBits,
+}QuadFC_SerialDataBits_t;
+
+/**
+ * @enum
+ * Enum used for initialization of a uart instance. Defines
+ * the allowed number of stop bits.
+ */
+typedef enum{
+  OneStopBit = 0,
+  OneAndHalfStopBits,
+  TwoStopBits,
+}QuadFC_SerialStopBits_t;
+
+/**
+ * @enum
+ * Enum used for initialization of a uart instance. Defines
+ * the allowed flow control.
+ */
+typedef enum{
+  NoFlowControl = 0,
+}QuadFC_SerialFlowControl_t;
+
+/**
+ * @struct QuadFC_SerialOptions_t
+ * Struct containing the settings for a serial port.
+ */
+typedef struct peripheral_serial_options
+{
+  uint32_t baudRate;
+  QuadFC_SerialDataBits_t dataBits;
+  QuadFC_SerialParity_t parityType;
+  QuadFC_SerialStopBits_t stopBits;
+  QuadFC_SerialFlowControl_t flowControl;
+  uint8_t *receiveBuffer;
+  uint32_t bufferLength;
+}QuadFC_SerialOptions_t;
 
 typedef struct peripheral_spi
 {
 
 }QuadFC_SPI;
 
-uint8_t QuadFC_i2cWrite(QuadFC_I2C *i2c_data, uint8_t busIndex, TickType_t blockTimeMs);
-uint8_t QuadFC_i2cRead(QuadFC_I2C *i2c_data, uint8_t busIndex, TickType_t blockTimeMs);
-/*
-uint8_t QuadFC_SerialWrite(QuadFC_Serial *serial_data, uint8_t busIndex, TickType_t blockTimeMs){return 0;}
-uint8_t QuadFC_SerialRead(QuadFC_Serial *serial_data, uint8_t busIndex, TickType_t blockTimeMs){return 0;}
-*/
+/**
+ * Initialize the i2c bus on index busIndex.
+ * @param busIndex    Index of the buss the device is connected to.
+ * @param speed       Speed of the buss.
+ * @return            1 if success, 0 otherwise.
+ */
+uint8_t QuadFC_i2cInit(int busIndex, int speed);
+
+/**
+ * Send data over the i2c bus.
+ * @param i2c_data      Struct containing the data and address etc needed.
+ * @param busIndex      i2c bus index on the board.
+ * @param blockTimeMs   Time to block. 0 meand indefenetly.
+ * @return              0 if fail, 1 otherwise.
+ */
+uint8_t QuadFC_i2cWrite(QuadFC_I2C_t *i2c_data, uint8_t busIndex, TickType_t blockTimeMs);
+
+/**
+ * read data from the i2c bus.
+ * @param i2c_data      Struct containing the data and address etc needed.
+ * @param busIndex      i2c bus index on the board.
+ * @param blockTimeMs   Time to block. 0 meand indefenetly.
+ * @return              0 if fail, 1 otherwise.
+ */
+uint8_t QuadFC_i2cRead(QuadFC_I2C_t *i2c_data, uint8_t busIndex, TickType_t blockTimeMs);
+
+/**
+ * Initialize the serial port on index busIndex.
+ * @param busIndex    Index of the serial port the device is connected to.
+ * @param opt         Serial options.
+ * @return            1 if success, 0 otherwise.
+ */
+uint8_t QuadFC_SerialInit(int busIndex, QuadFC_SerialOptions_t* opt);
+
+/**
+ * Write data to the serial interface.
+ * @param serial_data      Struct containing the data.
+ * @param busIndex      Serial index on the board.
+ * @param blockTimeMs   Time to block. 0 meand indefenetly.
+ * @return              0 if fail, 1 otherwise.
+ */
+uint8_t QuadFC_SerialWrite(QuadFC_Serial_t *serial_data, uint8_t busIndex, TickType_t blockTimeMs);
+
+/**
+ * Read data from the serial interface.
+ * @param serial_data      Struct containing the data.
+ * @param busIndex      Serial index on the board.
+ * @param blockTimeMs   Time to block. 0 meand indefenetly.
+ * @return              0 if fail, 1 otherwise.
+ */
+uint32_t QuadFC_SerialRead(QuadFC_Serial_t *serial_data, uint8_t busIndex, TickType_t blockTimeMs);
+
 
 
 #endif /* PORTLAYER_BOARD_INC_QUADFC_PERIPHERALS_H_ */

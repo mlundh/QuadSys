@@ -28,9 +28,8 @@
 #include "QuadFC_Memory.h"
 #include "led_control_task.h"
 #include "globals.h"
-#include "crc.h"
 #include "slip_packet.h"
-#include "freertos_uart_serial.h"
+#include "QuadFC_Peripherals.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
@@ -41,23 +40,48 @@
 #include <pio.h>
 
 /* Use USART1 (labeled RX2 17 and TX2 16)*/
-#define TERMINAL_USART USART1
+#define COM_SERIAL (1)
+#define COM_RECEIVE_BUFFER_LENGTH       (2)
+
 
 /*Display queue*/
 #define COM_QUEUE_LENGTH      (1)
 #define COM_QUEUE_ITEM_SIZE         (sizeof(QSP_t*))
-static QueueHandle_t xQueue_Com;
 #define COM_PACKET_LENGTH_MAX       512
+static QueueHandle_t xQueue_Com;
+/*Global crc table*/
+uint16_t *crcTable;
 
-// Param helper.
-param_helper_t *helper;
-param_helper_t *saveHelper;
+
+typedef struct RxCom
+{
+  QuadFC_Serial_t * serialBuffer;
+  QSP_t *QspPacket;                  //!< RxTask owns QSP package.
+  QSP_t *QspRespPacket;              //!< RxTask creates the response QSP package.
+  SLIP_t *SLIP;                   //!< RxTask owns SLIP package.
+  uint8_t *receive_buffer;
+  param_helper_t *helper;
+  param_helper_t *saveHelper;
+}RxCom_t;
+
+typedef struct TxCom
+{
+  SLIP_t *txSLIP;              //!< Handle for SLIP packet, frame that will be transmitted.
+}TxCom_t;
+
 
 /**
  * Initialize the communication module.
  * @return    1 if OK, 0 otherwise.
  */
-uint8_t Com_Init();
+TxCom_t* Com_InitTx();
+
+/**
+ * Initialize the communication module.
+ * @return    1 if OK, 0 otherwise.
+ */
+RxCom_t* Com_InitRx();
+
 
 /**
  * FreeRTOS task handling transmission of messages.
@@ -71,124 +95,151 @@ static void Com_TxTask( void *pvParameters );
  */
 static void Com_RxTask( void *pvParameters );
 
-/**
- * Parser that builds a SLIP package via multiple calls. The
- * parser function will return with QSP_StatusCont if no packet
- * is finished, and QSP_StatusAck if there is a package. Any
- * other response is an error condition.
- *
- * The index is used internally to keep track of index in the
- * raw slip packet. User has to provide this to ensure thread
- * safety. User should not update except for discarding data
- * already saved in the SLIP packet.
- * @param buffer          Buffer containing > 1 bytes of data.
- * @param buffer_length   number of bytes in buffer.
- * @param SLIP_packet     Slip packet used internally.
- * @param QSP_packet      Resulting QSP.
- * @param index           User should initialize to zero and then not update.
- * @return                QSP_StatusAck when done, QSP_StatusCont if not done, anything else is an error condition.
- */
-QSP_StatusControl_t SLIP_QspParser(uint8_t *buffer,
-    int buffer_length,
-    SLIP_t *SLIP_packet,
-    QSP_t *QSP_packet,
-    int *index);
 
 /**
  * Save the current parameters. The two packages are cleared
  * and used internally. The QSP packet contains the result
  * of the operation, QSP_StatusAck if OK.
- * @param SLIP_packet       QSP with response.
- * @param QSP_Packet        SLIP used internally.
  */
-void Param_Save(SLIP_t *SLIP_packet, QSP_t *QSP_Packet);
+void Com_ParamSave(RxCom_t* obj);
 
 /**
  * Load stored parameters. The two packages are cleared
  * and used internally. The QSP packet contains the result
  * of the operation, QSP_StatusAck if OK.
- * @param SLIP_packet       QSP with response.
- * @param QSP_Packet        SLIP used internally.
  */
-void Param_Load(SLIP_t *SLIP_packet, QSP_t *QSP_Packet);
+void Com_ParamLoad(RxCom_t* obj);
+
+/**
+ * Handle the QSP.
+ * @param obj   The current object.
+ * @return      0 if fail, 1 otherwise.
+ */
+uint8_t Com_HandleQSP(RxCom_t* obj);
+
+/**
+ * Handle a parameter QSP message.
+ * @param obj   The current object.
+ * @return      0 if fail, 1 otherwise.
+ */
+uint8_t Com_HandleParameters(RxCom_t* obj);
+
+/**
+ * Handle a status QSP message.
+ * @param obj   The current object.
+ * @return      0 if fail, 1 otherwise.
+ */
+uint8_t Com_HandleStatus(RxCom_t* obj);
+
+TxCom_t* Com_InitTx()
+{
+  TxCom_t* taskParam = pvPortMalloc(sizeof(TxCom_t));
+  taskParam->txSLIP =  Slip_Create(COM_PACKET_LENGTH_MAX);
+  xQueue_Com = xQueueCreate( COM_QUEUE_LENGTH, COM_QUEUE_ITEM_SIZE );
+
+  if(! taskParam || !xQueue_Com || !taskParam->txSLIP)
+  {
+    return NULL;
+  }
+  return taskParam;
+}
 
 
-
-
-uint8_t Com_Init()
+RxCom_t* Com_InitRx()
 {
   /* Create the queue used to pass things to the display task*/
-  xQueue_Com = xQueueCreate( COM_QUEUE_LENGTH, COM_QUEUE_ITEM_SIZE );
-  crcTable = pvPortMalloc( sizeof(uint16_t) * 256 );
-  helper = pvPortMalloc(sizeof(param_helper_t));
-  saveHelper = pvPortMalloc(sizeof(param_helper_t));
-  if( !xQueue_Com ||  !crcTable || !helper || !saveHelper)
+  RxCom_t* taskParam = pvPortMalloc(sizeof(RxCom_t));
+  taskParam->helper = pvPortMalloc(sizeof(param_helper_t));
+  taskParam->saveHelper = pvPortMalloc(sizeof(param_helper_t));
+  taskParam->QspPacket = QSP_Create(QSP_MAX_PACKET_SIZE);
+  taskParam->QspRespPacket = QSP_Create(QSP_MAX_PACKET_SIZE);
+  taskParam->SLIP =  Slip_Create(COM_PACKET_LENGTH_MAX);
+  taskParam->receive_buffer = pvPortMalloc(sizeof(uint8_t) * COM_RECEIVE_BUFFER_LENGTH );
+
+
+  if( !taskParam || !taskParam->helper || !taskParam->saveHelper || !taskParam->QspPacket
+      || !taskParam->QspRespPacket || !taskParam->SLIP || !taskParam->receive_buffer )
   {
-    return 0;
+    return NULL;
   }
-  memset(helper->dumpStart, 0, MAX_DEPTH);
-  helper->depth = 0;
-  helper->sequence = 0;
-  memset(saveHelper->dumpStart, 0, MAX_DEPTH);
-  saveHelper->depth = 0;
-  saveHelper->sequence = 0;
-  crcInit();
-  return 1;
+
+  memset(taskParam->helper->dumpStart, 0, MAX_DEPTH);
+  taskParam->helper->depth = 0;
+  taskParam->helper->sequence = 0;
+
+  memset(taskParam->saveHelper->dumpStart, 0, MAX_DEPTH);
+  taskParam->saveHelper->depth = 0;
+  taskParam->saveHelper->sequence = 0;
+
+
+  return taskParam;
 }
 
 void Com_CreateTasks( void )
 {
-
-
-  //TODO move all init of peripheral to board init.
-  if(!Com_Init())
-  {
-    for ( ;; );
-  }
   uint8_t* receive_buffer_driver = pvPortMalloc(
       sizeof(uint8_t) * COM_PACKET_LENGTH_MAX );
 
-  freertos_usart_if freertos_usart;
+  RxCom_t *paramRx = Com_InitRx();
+  TxCom_t *paramTx = Com_InitTx();
+  crcTable =  pvPortMalloc( sizeof(crc_data_t) * CRC_ARRAY_SIZE ); // TODO move to util init!
 
-  freertos_peripheral_options_t driver_options = { receive_buffer_driver,   /* The buffer used internally by the USART driver to store incoming characters. */
-      COM_PACKET_LENGTH_MAX,                                                /* The size of the buffer provided to the USART driver to store incoming characters. */
-      (configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY + 4),                   /* The priority used by the USART interrupts. */
-      USART_RS232,                                                          /* Configure the USART for RS232 operation. */
-      (WAIT_TX_COMPLETE)                                                    /* Wait for a Tx to complete before returning from send functions. */
+
+  crcInit();
+
+  if(!paramTx || !paramRx || !crcTable || !receive_buffer_driver)
+  {
+    for ( ;; );
+  }
+
+  QuadFC_SerialOptions_t opt = {
+      57600,
+      EightDataBits,
+      NoParity,
+      OneStopBit,
+      NoFlowControl,
+      receive_buffer_driver,
+      COM_PACKET_LENGTH_MAX
   };
 
-  const sam_usart_opt_t usart_settings = { 57600,                           /* Speed of the transfer, baud*/
-      US_MR_CHRL_8_BIT,                                                     /* 8 bit transfer*/
-      US_MR_PAR_NO,                                                         /* No parity*/
-      US_MR_NBSTOP_1_BIT,                                                   /* One stop bit*/
-      US_MR_CHMODE_NORMAL,                                                  /* */
-      0                                                                     /* Only used in IrDA mode. */
-  };
 
-  /* Initialize the USART interface. TODO move this. */
-  freertos_usart = freertos_usart_serial_init( TERMINAL_USART, &usart_settings,
-      &driver_options );
+  uint8_t rsp = QuadFC_SerialInit(COM_SERIAL, &opt);
+  if(!rsp)
+  {
+    /*Error - Could not create serial interface.*/
 
+    for ( ;; )
+    {
 
-  // TODO add proper initialization of all "static" variables here.
+    }
+  }
 
+   /* Create the freeRTOS tasks responsible for communication.*/
+  portBASE_TYPE create_result_rx, create_result_tx;
 
-  /**
-   * Create the freeRTOS tasks responsible for
-   */
-  xTaskCreate( Com_TxTask,                           /* The task that implements the transmission of messages. */
+  create_result_tx = xTaskCreate( Com_TxTask,           /* The task that implements the transmission of messages. */
       (const char *const) "UARTTX",                  /* Name, debugging only.*/
       500,                                           /* The size of the stack allocated to the task. */
-      (void *) freertos_usart,                       /* Pass the already configured USART port into the task. */
+      (void *) paramTx,                                /* Pass the task parameters to the task. */
       configMAX_PRIORITIES-3,                        /* The priority allocated to the task. */
       NULL );                                        /* No handle required. */
 
-  xTaskCreate( Com_RxTask,                           /* The task that implements the receiveing of messages. */
+  create_result_rx = xTaskCreate( Com_RxTask,          /* The task that implements the receiveing of messages. */
       (const char *const) "UARTRX",                  /* Name, debugging only. */
       500,                                           /* The size of the stack allocated to the task. */
-      (void *) freertos_usart,                       /* Pass the already configured USART port into the task. */
+      (void *) paramRx,                                /* Pass the task parameters to the task. */
       configMAX_PRIORITIES-3,                        /* The priority allocated to the task. */
       NULL );                                        /* No handle required. */
+
+  if ( create_result_tx != pdTRUE || create_result_rx != pdTRUE)
+  {
+    /*Error - Could not create task.*/
+    for ( ;; )
+    {
+
+    }
+  }
+
 }
 
 /**
@@ -197,52 +248,45 @@ void Com_CreateTasks( void )
  */
 void Com_TxTask( void *pvParameters )
 {
-  TickType_t max_block_time_ticks = 333UL / portTICK_PERIOD_MS; //!< Max block time for transmission of messages.
-
-  status_code_t result;
-
-  QSP_t *txPacket;                                      //!< Handle for a QSP packet, used for receiving from queue.
-  SLIP_t *txSLIP = Slip_Create(COM_PACKET_LENGTH_MAX);  //!< Handle for SLIP packet, frame that will be transmitted.
+  TickType_t max_block_time_ms = 333UL; //!< Max block time for transmission of messages.
 
   /**
-   * The already open usart port is passed through the task parameters TODO fix peripherals.
+   * The struct containing all data needed by the task.
    */
-  freertos_usart_if xbee_usart = (freertos_usart_if) pvParameters;
+  TxCom_t * obj = (TxCom_t *) pvParameters;
+
+  QSP_t *txPacket;            //!< Handle for a QSP packet, used for receiving from queue.
 
   for ( ;; )
   {
-
-    /**
-     * Wait blocking for items in the queue and transmit the data
-     * as soon as it arrives. Pack into a crc protected slip frame.
-     */
+    /* Wait blocking for items in the queue and transmit the data
+      as soon as it arrives. Pack into a crc protected slip frame.*/
     if (xQueueReceive(xQueue_Com, &txPacket, portMAX_DELAY) != pdPASS )
     {
+      //QSP_GiveIsEmpty(txPacket); //Should this be here?
       continue; //FrameError.
     }
-
-    /**
-     * We have a packet, calculate and append crc. Packetize.
-     */
-    Com_AddCRC(txPacket);
-    if(!Slip_Packetize(QSP_GetPacketPtr(txPacket), QSP_GetPayloadSize(txPacket) + QSP_GetHeaderdSize(txPacket) + 2, txSLIP))
+    QSP_TakeIsPopulated(txPacket);
+     /* We have a packet, packetize into a SLIP. */
+    if(!Slip_Packetize(QSP_GetPacketPtr(txPacket), QSP_GetPacketSize(txPacket),
+        QSP_GetAvailibleSize(txPacket), obj->txSLIP))
     {
+      QSP_GiveIsEmpty(txPacket);
       continue; // skip this, packet not valid.
     }
-    if ( txSLIP->packetSize < COM_PACKET_LENGTH_MAX )
+    QSP_GiveIsEmpty(txPacket);
+    if ( obj->txSLIP->packetSize < COM_PACKET_LENGTH_MAX )
     {
+      /* TX is blocking */
+      QuadFC_Serial_t serialData;
+      serialData.buffer = obj->txSLIP->payload;
+      serialData.bufferLength = obj->txSLIP->packetSize;
+      uint8_t result = QuadFC_SerialWrite(&serialData, COM_SERIAL, max_block_time_ms);
 
-      // TX is blocking
-      result = freertos_usart_write_packet( xbee_usart,
-          txSLIP->payload,
-          txSLIP->packetSize,
-          max_block_time_ticks );
-
-      if ( result != STATUS_OK )
+      if ( !result )
       {
         //TODO error led?
       }
-
     }
     else
     {
@@ -255,65 +299,63 @@ void Com_TxTask( void *pvParameters )
 void Com_RxTask( void *pvParameters )
 {
 
-  int k = 0;
+  int ParserIndex = 0; //!< Variable containing static information for the parser.
 
-  uint8_t *receive_buffer = pvPortMalloc(sizeof(uint8_t) * 2 );
+  /*The already allocated data is passed to the task.*/
+  RxCom_t * obj = (RxCom_t *) pvParameters;
 
-  QSP_t *rxPacket = QSP_Create(QSP_MAX_PACKET_SIZE);      //!< RxTask owns QSP package.
-  QSP_t *rxRespPacket = QSP_Create(QSP_MAX_PACKET_SIZE);      //!< RxTask creates the response QSP package. Gives ownership to tx.
-  SLIP_t *rxSLIP = Slip_Create(COM_PACKET_LENGTH_MAX);    //!< RxTask owns SLIP package.
-
-  if(!rxPacket || !rxSLIP)
-  {
-    //ERROR! TODO
-    for ( ;; );
-  }
-  Param_Load(rxSLIP, rxRespPacket);
-  if( QSP_StatusAck != QSP_GetControl(rxRespPacket))
+  /*Load parameters.*/
+  Com_ParamLoad(obj);
+  if( QSP_StatusAck != QSP_GetControl(obj->QspRespPacket))
   {
     //No parameters to load.
   }
-
-  /*The already open usart port is passed through the task parameters*/
-  freertos_usart_if xbee_usart = (freertos_usart_if) pvParameters;
 
   for ( ;; )
   {
 
     /*--------------------------Receive the packet---------------------*/
 
-    uint32_t nr_bytes_received;
-    nr_bytes_received = freertos_usart_serial_read_packet( xbee_usart,  /* The USART port*/
-        receive_buffer,                                                 /* Pointer to the buffer into which received data is to be copied.*/
-        1,                                                              /* The number of bytes to copy. */
-        portMAX_DELAY );                                                /* Block time*/
-    QSP_StatusControl_t result;
-    result = SLIP_QspParser(receive_buffer,
-        nr_bytes_received,
-        rxSLIP,
-        rxPacket,
-        &k);
-    uint8_t answer_qsp;
+    QuadFC_Serial_t serialData;
+    serialData.buffer = obj->receive_buffer;
+    serialData.bufferLength = 1;
+
+    uint32_t nr_bytes_received = QuadFC_SerialRead(&serialData, COM_SERIAL, portMAX_DELAY);
+
+    SLIP_Status_t result;
+    result = SLIP_Parser(obj->receive_buffer, nr_bytes_received,
+        obj->SLIP, &ParserIndex);
+
+    uint8_t rxRespComplete;
     switch ( result )
     {
-    case QSP_StatusCont:
+    case SLIP_StatusCont:
       // Package is not finished, continue.
       break;
-    case QSP_StatusAck:
-      answer_qsp = Com_HandleQSP(rxPacket, rxRespPacket, rxSLIP);
-      if(answer_qsp)
+    case SLIP_StatusOK:
+      if(Slip_DePacketize(QSP_GetPacketPtr(obj->QspPacket), QSP_GetAvailibleSize(obj->QspPacket),
+          obj->SLIP))
       {
-        Com_SendQSP(rxRespPacket);
+        rxRespComplete = Com_HandleQSP(obj);
+        if(rxRespComplete)
+        {
+          Com_SendQSP(obj->QspRespPacket);
+        }
+      }
+      else
+      {
+        QSP_ClearPayload(obj->QspRespPacket);
+        QSP_SetAddress(obj->QspRespPacket, QSP_Status);
+        QSP_SetControl(obj->QspRespPacket, QSP_StatusNack);
+        Com_SendQSP(obj->QspRespPacket);
       }
       break;
-    case QSP_StatusNack: /* FALLTHROUGH */
-    case QSP_StatusCrcError:
-    case QSP_StatusNotAllowed:
-    case QSP_StatusNotImplemented:
-      QSP_ClearPayload(rxRespPacket);
-      QSP_SetAddress(rxRespPacket, QSP_Status);
-      QSP_SetControl(rxRespPacket, result);
-      Com_SendQSP(rxRespPacket);
+    case SLIP_StatusNok:
+    case SLIP_StatusCrcError:
+      QSP_ClearPayload(obj->QspRespPacket);
+      QSP_SetAddress(obj->QspRespPacket, QSP_Status);
+      QSP_SetControl(obj->QspRespPacket, QSP_StatusNack);
+      Com_SendQSP(obj->QspRespPacket);
       break;
     default:
       break;
@@ -323,66 +365,16 @@ void Com_RxTask( void *pvParameters )
 }
 
 
-QSP_StatusControl_t SLIP_QspParser(uint8_t *buffer,
-    int buffer_length,
-    SLIP_t *SLIP_packet,
-    QSP_t *QSP_packet,
-    int *index)
-{
-  if ( buffer_length < 1 )
-  {
-    return 0;
-  }
-  QSP_StatusControl_t result = QSP_StatusCont;
-  for ( int i = 0; i < buffer_length; i++, (*index)++ )
-  {
-    SLIP_packet->payload[*index] = buffer[i];
-    if ( SLIP_packet->payload[*index] == frame_boundary_octet )
-    {
-      if ( *index > 4 ) // Last boundary of frame. Frame minimum length = 4
-      {
-        SLIP_packet->packetSize = *index + 1;
-        *index = 0;
-        /*handle communication*/
-        if(Slip_DePacketize(QSP_GetPacketPtr(QSP_packet),
-            QSP_GetAvailibleSize(QSP_packet),
-            SLIP_packet))
-        {
-          if(Com_CheckCRC(QSP_packet)) // CRC ok!
-          {
-            result = QSP_StatusAck;
-          }
-          else // CRC error.
-          {
-            result = QSP_StatusCrcError;
-          }
-        }
-        else // Not valid slip packet.
-        {
-          result =  QSP_StatusNotValidSlipPacket;
-        }
-      }
-      else // First boundary of frame.
-      {
-        *index = 0;
-        SLIP_packet->payload[*index] = buffer[i];
-      }
-    }// Frame boundary
-  }//for()
-  return result;
-}
-
-
-uint8_t Com_HandleQSP( QSP_t *QSP_packet, QSP_t *QSP_RspPacket, SLIP_t *SLIP_packet)
+uint8_t Com_HandleQSP(RxCom_t* obj)
 {
   uint8_t result = 0;
-  switch ( QSP_GetAddress(QSP_packet) )
+  switch ( QSP_GetAddress(obj->QspPacket) )
   {
   case QSP_Parameters:
-    result = Com_HandleParameters(QSP_packet, QSP_RspPacket, SLIP_packet);
+    result = Com_HandleParameters(obj);
     break;
   case QSP_Status:
-    result = Com_HandleStatus(QSP_packet, QSP_RspPacket, SLIP_packet);
+    result = Com_HandleStatus(obj);
     break;
   default:
     break;
@@ -391,10 +383,11 @@ uint8_t Com_HandleQSP( QSP_t *QSP_packet, QSP_t *QSP_RspPacket, SLIP_t *SLIP_pac
   return result;
 }
 
-uint8_t Com_HandleStatus(QSP_t *QSP_packet, QSP_t *QSP_RspPacket, SLIP_t *SLIP_packet)
+//TODO SLIP should not be needed.
+uint8_t Com_HandleStatus(RxCom_t* obj)
 {
   uint8_t result = 0;
-  switch ( QSP_GetControl(QSP_packet) )
+  switch ( QSP_GetControl(obj->QspPacket) )
   {
   case QSP_StatusAck:
     break;
@@ -412,66 +405,68 @@ uint8_t Com_HandleStatus(QSP_t *QSP_packet, QSP_t *QSP_RspPacket, SLIP_t *SLIP_p
 
   return result;
 }
-uint8_t Com_HandleParameters(QSP_t *QSP_packet, QSP_t *QSP_RspPacket, SLIP_t *SLIP_packet)
+
+//TODO SLIP should not be needed.
+uint8_t Com_HandleParameters(RxCom_t* obj)
 {
-  QSP_ClearPayload(QSP_RspPacket);
+  QSP_ClearPayload(obj->QspRespPacket);
   uint8_t result = 0;
-  uint8_t sequence = helper->sequence;
-  switch ( QSP_GetControl(QSP_packet) )
+  uint8_t sequence = obj->helper->sequence;
+  switch ( QSP_GetControl(obj->QspPacket) )
   {
   case QSP_ParamGetTree:
-    result = Param_DumpFromRoot(QSP_GetParamPayloadPtr(QSP_RspPacket),
-        QSP_GetAvailibleSize(QSP_RspPacket) - QSP_GetParamHeaderdSize() - 2,
-        helper);
+    result = Param_DumpFromRoot(QSP_GetParamPayloadPtr(obj->QspRespPacket),
+        QSP_GetAvailibleSize(obj->QspRespPacket) - QSP_GetParamHeaderdSize() - 2,
+        obj->helper);
     if(result) // Dump from root is finished, reset helper.
     {
-      memset(helper->dumpStart, 0, MAX_DEPTH); // Starting point of dump.
-      helper->sequence = 0;
-      QSP_SetParamLastInSeq(QSP_RspPacket, 1);                // This is the last in the sequence.
+      memset(obj->helper->dumpStart, 0, MAX_DEPTH); // Starting point of dump.
+      obj->helper->sequence = 0;
+      QSP_SetParamLastInSeq(obj->QspRespPacket, 1);                // This is the last in the sequence.
     } // else dump is not finished, keep helper till next time.
     else
     {
-      QSP_SetParamLastInSeq(QSP_RspPacket, 0);
-      helper->sequence++;
+      QSP_SetParamLastInSeq(obj->QspRespPacket, 0);
+      obj->helper->sequence++;
     }
 
 
     // Always send dump.
-    uint16_t len =  strlen((char *)QSP_GetParamPayloadPtr(QSP_RspPacket));
+    uint16_t len =  strlen((char *)QSP_GetParamPayloadPtr(obj->QspRespPacket));
     if(len <= (QSP_MAX_PACKET_SIZE - QSP_GetParamHeaderdSize()))
     {
       //TODO add return value checks!
-      QSP_SetParamSequenceNumber(QSP_RspPacket, sequence);
-      QSP_SetParamPayloadSize(QSP_RspPacket,len);
-      QSP_SetAddress(QSP_RspPacket, QSP_Parameters);
-      QSP_SetControl(QSP_RspPacket, QSP_ParamSetTree);
+      QSP_SetParamSequenceNumber(obj->QspRespPacket, sequence);
+      QSP_SetParamPayloadSize(obj->QspRespPacket, len);
+      QSP_SetAddress(obj->QspRespPacket, QSP_Parameters);
+      QSP_SetControl(obj->QspRespPacket, QSP_ParamSetTree);
     }
     else
     {
-      QSP_ClearPayload(QSP_RspPacket);
-      QSP_SetAddress(QSP_RspPacket, QSP_Status);
-      QSP_SetControl(QSP_RspPacket, QSP_StatusBufferOverrun);
+      QSP_ClearPayload(obj->QspRespPacket);
+      QSP_SetAddress(obj->QspRespPacket, QSP_Status);
+      QSP_SetControl(obj->QspRespPacket, QSP_StatusBufferOverrun);
     }
 
     break;
   case QSP_ParamSetTree:
-    result = Param_SetFromRoot(Param_GetRoot(), QSP_GetParamPayloadPtr(QSP_packet),
-        QSP_GetParamPayloadSize(QSP_packet));
-    QSP_SetAddress(QSP_RspPacket, QSP_Status);
+    result = Param_SetFromRoot(Param_GetRoot(), QSP_GetParamPayloadPtr(obj->QspPacket),
+        QSP_GetParamPayloadSize(obj->QspPacket));
+    QSP_SetAddress(obj->QspRespPacket, QSP_Status);
     if(result) // Set was ok, respond with Ack.
     {
-      QSP_SetControl(QSP_RspPacket, QSP_StatusAck);
+      QSP_SetControl(obj->QspRespPacket, QSP_StatusAck);
     }
     else  // Set was not ok, respond with Nack.
     {
-      QSP_SetControl(QSP_RspPacket, QSP_StatusNack);
+      QSP_SetControl(obj->QspRespPacket, QSP_StatusNack);
     }
     break;
   case QSP_ParamSave: // (miss)use the response and slip packages to save data in memory.
-    Param_Save(SLIP_packet, QSP_RspPacket);
+    Com_ParamSave(obj);
     break;
   case QSP_ParamLoad: // (miss)use the response and slip packages to load data from memory.
-    Param_Load(SLIP_packet, QSP_RspPacket);
+    Com_ParamLoad(obj);
     break;
   default:
     break;
@@ -483,123 +478,86 @@ uint8_t Com_HandleParameters(QSP_t *QSP_packet, QSP_t *QSP_RspPacket, SLIP_t *SL
 
 uint8_t Com_SendQSP( QSP_t *packet )
 {
-  //TODO add check to make sure sending was successful.
-  //QSP_GiveOwnership(packet);
-  status_code_t result = xQueueSendToBack( xQueue_Com, &packet, mainDONT_BLOCK );
-  if(result != STATUS_OK)
+  QSP_GiveIsPopulated(packet);
+  BaseType_t result = xQueueSendToBack( xQueue_Com, &packet, mainDONT_BLOCK );
+  QSP_TakeIsEmpty(packet);
+  if(result != pdTRUE)
   {
     return 0;
   }
   return 1;
 }
 
-
-uint8_t Com_AddCRC( QSP_t *packet)
-{
-
-  //Calculate and append CRC16 checksum.
-  uint16_t crcCalc;
-  crcCalc = crcFast( QSP_GetPacketPtr(packet), (QSP_GetPayloadSize(packet) + QSP_GetHeaderdSize()));
-  uint8_t tmp[2];
-  tmp[0] = (uint8_t) ((crcCalc >> 8) & 0Xff);
-  tmp[1] = (uint8_t) ((crcCalc) & 0Xff);
-  if(!QSP_SetAfterPayload(packet, tmp, 2))
-  {
-    return 0;
-  }
-  return 1;
-}
-
-uint8_t Com_CheckCRC( QSP_t *packet)
-{
-  uint16_t payloadSize = QSP_GetPayloadSize(packet);
-
-  //Calculate and compare CRC16 checksum.
-  uint16_t crcCalc = 0;
-  uint16_t crcMsg = 0;
-  crcCalc = crcFast( QSP_GetPacketPtr(packet), (payloadSize + QSP_GetHeaderdSize()));
-
-  crcMsg |=  (uint16_t)(QSP_GetPacketPtr(packet)[QSP_GetHeaderdSize() + payloadSize]) << 8;
-  crcMsg |=  (uint16_t)(QSP_GetPacketPtr(packet)[QSP_GetHeaderdSize() + payloadSize + 1]);
-
-  if ( crcCalc != crcMsg )
-  {
-    return 0;
-  }
-  return 1;
-}
-
-void Param_Save(SLIP_t *SLIP_packet, QSP_t *QSP_Packet)
+void Com_ParamSave(RxCom_t* obj)
 {
   uint8_t cont = 1;
   uint32_t address = 0;
-  memset(saveHelper->dumpStart, 0, MAX_DEPTH);
-  saveHelper->depth = 0;
-  saveHelper->sequence = 0;
+  memset(obj->saveHelper->dumpStart, 0, MAX_DEPTH);
+  obj->saveHelper->depth = 0;
+  obj->saveHelper->sequence = 0;
   while(cont)
   {
     uint8_t result = 0;
-    QSP_ClearPayload(QSP_Packet);
-    uint8_t sequence = saveHelper->sequence;
-    result = Param_DumpFromRoot(QSP_GetParamPayloadPtr(QSP_Packet),
-        QSP_GetAvailibleSize(QSP_Packet) - QSP_GetParamHeaderdSize(), saveHelper);
+    QSP_ClearPayload(obj->QspPacket);
+    uint8_t sequence = obj->saveHelper->sequence;
+    result = Param_DumpFromRoot(QSP_GetParamPayloadPtr(obj->QspPacket),
+        QSP_GetAvailibleSize(obj->QspPacket) - QSP_GetParamHeaderdSize(), obj->saveHelper);
 
     if(result) // Dump from root is finished, reset helper.
     {
-      memset(saveHelper->dumpStart, 0, MAX_DEPTH);          // Starting point of dump.
-      saveHelper->sequence = 0;                             // Next will be first in sequence!
-      QSP_SetParamLastInSeq(QSP_Packet, 1);             // This is the last in the sequence.
+      memset(obj->saveHelper->dumpStart, 0, MAX_DEPTH);          // Starting point of dump.
+      obj->saveHelper->sequence = 0;                             // Next will be first in sequence!
+      QSP_SetParamLastInSeq(obj->QspPacket, 1);             // This is the last in the sequence.
       cont = 0;                                         // Last package, nothing more to save.
     } // dump is not finished, keep helper till next time.
     else
     {
-      QSP_SetParamLastInSeq(QSP_Packet, 0);
-      saveHelper->sequence++;
+      QSP_SetParamLastInSeq(obj->QspPacket, 0);
+      obj->saveHelper->sequence++;
     }
     // Always save dump.
-    uint16_t len =  strlen((char *)QSP_GetParamPayloadPtr(QSP_Packet));
+    uint16_t len =  strlen((char *)QSP_GetParamPayloadPtr(obj->QspPacket));
     result = (len <= (QSP_MAX_PACKET_SIZE - QSP_GetParamHeaderdSize()));
     if(result)
     {
       // Save!
-      result &= QSP_SetParamSequenceNumber(QSP_Packet, sequence);
-      result &= QSP_SetParamPayloadSize(QSP_Packet,len);
-      result &= QSP_SetAddress(QSP_Packet, QSP_Parameters);
-      result &= QSP_SetControl(QSP_Packet, QSP_ParamSetTree);
-      result &= Com_AddCRC(QSP_Packet);
+      result &= QSP_SetParamSequenceNumber(obj->QspPacket, sequence);
+      result &= QSP_SetParamPayloadSize(obj->QspPacket,len);
+      result &= QSP_SetAddress(obj->QspPacket, QSP_Parameters);
+      result &= QSP_SetControl(obj->QspPacket, QSP_ParamSetTree);
     }
     if(result)
     {
 
       // Packetize into a slip package before write to mem.
-      result = Slip_Packetize(QSP_GetPacketPtr(QSP_Packet),
-          QSP_GetParamPayloadSize(QSP_Packet) + QSP_GetParamHeaderdSize(QSP_Packet) + 2,
-          SLIP_packet);
+      result = Slip_Packetize(QSP_GetPacketPtr(obj->QspPacket),
+          QSP_GetPacketSize(obj->QspPacket), QSP_GetAvailibleSize(obj->QspPacket),
+          obj->SLIP);
     }
     if(result) // Packetization OK, write to mem.
     {
-      result = Mem_Write(address, SLIP_packet->packetSize,
-          SLIP_packet->payload, SLIP_packet->allocatedSize);
-      address += (SLIP_packet->packetSize + 1);
+      result = Mem_Write(address, obj->SLIP->packetSize,
+          obj->SLIP->payload, obj->SLIP->allocatedSize);
+      address += (obj->SLIP->packetSize + 1);
     }
     if(result) // Mem write was OK, send ack to indicate OK save of params.
     {
-      result &= QSP_ClearPayload(QSP_Packet);
-      result &= QSP_SetAddress(QSP_Packet, QSP_Status);
-      result &= QSP_SetControl(QSP_Packet, QSP_StatusAck);
+      result &= QSP_ClearPayload(obj->QspPacket);
+      result &= QSP_SetAddress(obj->QspPacket, QSP_Status);
+      result &= QSP_SetControl(obj->QspPacket, QSP_StatusAck);
     }
     else // Packetization or mem_Write did not succeed.
     {
       cont = 0;
-      QSP_ClearPayload(QSP_Packet);
-      QSP_SetAddress(QSP_Packet, QSP_Status);
-      QSP_SetControl(QSP_Packet, QSP_StatusNack);
+      QSP_ClearPayload(obj->QspPacket);
+      QSP_SetAddress(obj->QspPacket, QSP_Status);
+      QSP_SetControl(obj->QspPacket, QSP_StatusNack);
     }
 
   }// while(cont)
 }
 
-void Param_Load(SLIP_t *SLIP_packet, QSP_t *QSP_Packet)
+void Com_ParamLoad(RxCom_t* obj)
 {
   uint8_t lastInSequence = 0;
   uint8_t EcpectedSequenceNo = 0;
@@ -607,7 +565,7 @@ void Param_Load(SLIP_t *SLIP_packet, QSP_t *QSP_Packet)
 
   while(!lastInSequence)
   {
-    QSP_ClearPayload(QSP_Packet);
+    QSP_ClearPayload(obj->QspPacket);
     int k = 0;
     uint8_t buffer[2];
     QSP_StatusControl_t read_status = QSP_StatusCont;
@@ -619,7 +577,7 @@ void Param_Load(SLIP_t *SLIP_packet, QSP_t *QSP_Packet)
       result = Mem_Read(address, 1, buffer, 2);
       if(result && ((address - startAddress) < COM_PACKET_LENGTH_MAX))
       {
-        read_status = SLIP_QspParser(buffer, 1, SLIP_packet, QSP_Packet, &k);
+        read_status = SLIP_Parser(buffer, 1, obj->SLIP, &k);
       }
       else
       {
@@ -633,28 +591,28 @@ void Param_Load(SLIP_t *SLIP_packet, QSP_t *QSP_Packet)
     // test, allways send string.
     if(result)
     {
-      uint8_t sequenceNo = QSP_GetParamSequenceNumber(QSP_Packet);
-      lastInSequence = QSP_GetParamLastInSeq(QSP_Packet);
+      uint8_t sequenceNo = QSP_GetParamSequenceNumber(obj->QspPacket);
+      lastInSequence = QSP_GetParamLastInSeq(obj->QspPacket);
       result = (sequenceNo == EcpectedSequenceNo);
       EcpectedSequenceNo++;
     }
     if(result)
     {
       result = Param_SetFromRoot(Param_GetRoot(),
-          QSP_GetParamPayloadPtr(QSP_Packet),
-          QSP_GetParamPayloadSize(QSP_Packet));
+          QSP_GetParamPayloadPtr(obj->QspPacket),
+          QSP_GetParamPayloadSize(obj->QspPacket));
     }
     if(result) // Set was successful, params are loaded from mem.
     {
-      QSP_ClearPayload(QSP_Packet);
-      QSP_SetAddress(QSP_Packet, QSP_Status);
-      QSP_SetControl(QSP_Packet, QSP_StatusAck);
+      QSP_ClearPayload(obj->QspPacket);
+      QSP_SetAddress(obj->QspPacket, QSP_Status);
+      QSP_SetControl(obj->QspPacket, QSP_StatusAck);
     }
     else // Read or set was not successful, send Nack.
     {
-      QSP_ClearPayload(QSP_Packet);
-      QSP_SetAddress(QSP_Packet, QSP_Status);
-      QSP_SetControl(QSP_Packet, QSP_StatusNack);
+      QSP_ClearPayload(obj->QspPacket);
+      QSP_SetAddress(obj->QspPacket, QSP_Status);
+      QSP_SetControl(obj->QspPacket, QSP_StatusNack);
       lastInSequence = 1;
     }
   }

@@ -25,7 +25,8 @@
 #define INITIAL_REMAINDER	0xFFFF
 #define FINAL_XOR_VALUE		0x0000
 #define CHECK_VALUE			0x29B1
-
+#define CRC_ARRAY_SIZE  256
+typedef uint16_t crc_data_t;
 /*Crc lookup table.*/
 extern uint16_t *crcTable;
 

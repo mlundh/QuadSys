@@ -27,9 +27,7 @@
  * This is the main task in the QuadFC. This is the core of the QuadFC and interfaces 
  * described in main_control_task.h and main.h should always be obeyed. 
 
- * The task follows the structure below, initializations are done in main.c 
- * before the scheduler is started. 
- *
+ * The task follows the structure below.
  * -------------------------------------------------------------------------------------------------------
  *
  *
@@ -98,7 +96,7 @@ typedef struct mainTaskParams
   MotorControlObj *motorControl;
   StateHandler_t* stateHandler;
   StateEst_t* stateEst;
-}taskParams_t;
+}MaintaskParams_t;
 
 void main_control_task( void *pvParameters );
 /**
@@ -106,7 +104,7 @@ void main_control_task( void *pvParameters );
  * shut off.
  * @param param
  */
-void main_fault(taskParams_t *param);
+void main_fault(MaintaskParams_t *param);
 
 /*
  * void create_main_control_task(void)
@@ -116,7 +114,7 @@ void create_main_control_task( void )
 {
   /*Create the task*/
 
-  taskParams_t * taskParam = pvPortMalloc(sizeof(taskParams_t));
+  MaintaskParams_t * taskParam = pvPortMalloc(sizeof(MaintaskParams_t));
   taskParam->ctrl = Ctrl_Create();
   taskParam->setpoint = pvPortMalloc( sizeof(state_data_t) );
   taskParam->state = pvPortMalloc( sizeof(state_data_t) );
@@ -141,7 +139,7 @@ void create_main_control_task( void )
   create_result = xTaskCreate( main_control_task,   /* The function that implements the task.  */
       (const char *const) "Main_Ctrl",              /* The name of the task. This is not used by the kernel, only aids in debugging*/
       2000,                                         /* The stack size for the task*/
-      taskParam,                                        /* pass params to task.*/
+      taskParam,                                    /* pass params to task.*/
       configMAX_PRIORITIES-1,                       /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
       NULL );                                       /* Handle to the task. Not used here and therefore NULL*/
 
@@ -165,7 +163,7 @@ void main_control_task( void *pvParameters )
   /*main_control_task execute at 500Hz*/
   static const TickType_t mainPeriodTimeMs = (2UL / portTICK_PERIOD_MS );
 
-  taskParams_t * param = (taskParams_t*)(pvParameters);
+  MaintaskParams_t * param = (MaintaskParams_t*)(pvParameters);
 
   receiver_data_t *local_receiver_buffer = pvPortMalloc( sizeof(receiver_data_t) );
 
@@ -404,7 +402,7 @@ void main_control_task( void *pvParameters )
   /* The task should never escape the for-loop and therefore never return.*/
 }
 
-void main_fault(taskParams_t *param)
+void main_fault(MaintaskParams_t *param)
 {
   State_Fault(param->stateHandler);
   MotorCtrl_Disable(param->motorControl);

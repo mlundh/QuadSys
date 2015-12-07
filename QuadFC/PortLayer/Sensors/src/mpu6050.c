@@ -47,7 +47,7 @@
 #include "QuadFC_IMUInternal.h"
 
 #define MPU6050_BUSS                  (0x0)
-#define MPU6050_BLOCK_TIME            (50UL / portTICK_PERIOD_MS)
+#define MPU6050_BLOCK_TIME_MS         (50UL)
 
 typedef struct ImuInternals
 {
@@ -130,14 +130,14 @@ uint8_t Imu_GetDataInternal(Imu_t *obj)
 {
   ImuInternals_t *internals = Imu_getInternals(obj);
 
-  QuadFC_I2C i2c_data;
+  QuadFC_I2C_t i2c_data;
   i2c_data.internalAddr[0] = MPU6050_RA_ACCEL_XOUT_H;
   i2c_data.internalAddrLength = 1;
   i2c_data.buffer = internals->rawData;
   i2c_data.bufferLength = 14;
   i2c_data.slaveAddress = internals->slaveAddress;
 
-  if(!QuadFC_i2cRead(&i2c_data, internals->i2cBus, MPU6050_BLOCK_TIME))
+  if(!QuadFC_i2cRead(&i2c_data, internals->i2cBus, MPU6050_BLOCK_TIME_MS))
   {
     return 0;
   }
@@ -179,14 +179,14 @@ uint8_t mpu6050_write_settings(Imu_t *obj, uint8_t reg_addr, uint8_t bit_nr, uin
 
   data = (current_reg_value & 0xFF);
 
-  QuadFC_I2C i2c_data;
+  QuadFC_I2C_t i2c_data;
   i2c_data.internalAddr[0] = reg_addr;
   i2c_data.internalAddrLength = 1;
   i2c_data.buffer = &data;
   i2c_data.bufferLength = 1;
   i2c_data.slaveAddress = internals->slaveAddress;
 
-  if(!QuadFC_i2cWrite(&i2c_data, internals->i2cBus, MPU6050_BLOCK_TIME))
+  if(!QuadFC_i2cWrite(&i2c_data, internals->i2cBus, MPU6050_BLOCK_TIME_MS))
   {
     return 0;
   }
@@ -198,14 +198,14 @@ uint8_t mpu6050_read_settings(Imu_t *obj, uint8_t reg_addr, uint8_t bit_nr, uint
   ImuInternals_t *internals = Imu_getInternals(obj);
 
   uint8_t readData[nr_bytes];
-  QuadFC_I2C i2c_data;
+  QuadFC_I2C_t i2c_data;
   i2c_data.internalAddr[0] = reg_addr;
   i2c_data.internalAddrLength = 1;
   i2c_data.buffer = readData;
   i2c_data.bufferLength = nr_bytes;
   i2c_data.slaveAddress = internals->slaveAddress;
 
-  if(!QuadFC_i2cRead(&i2c_data, internals->i2cBus, MPU6050_BLOCK_TIME))
+  if(!QuadFC_i2cRead(&i2c_data, internals->i2cBus, MPU6050_BLOCK_TIME_MS))
   {
     return 0;
   }

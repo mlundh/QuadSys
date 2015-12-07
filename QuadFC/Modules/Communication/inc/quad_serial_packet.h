@@ -106,9 +106,33 @@ enum QSP_StatusControl
 };
 typedef enum QSP_StatusControl QSP_StatusControl_t;
 
-uint8_t QSP_TakeOwnership(QSP_t *current);
+/**
+ * Acquire semaphore indicating that the QSP is populated.
+ * @param current   Current QSP.
+ * @return          1 if successful, 0 otherwise.
+ */
+uint8_t QSP_TakeIsPopulated(QSP_t *current);
 
-uint8_t QSP_GiveOwnership(QSP_t *current);
+/**
+ * Notify that the QSP is populated.
+ * @param current   Current QSP.
+ * @return          1 if successful, 0 otherwise.
+ */
+uint8_t QSP_GiveIsPopulated(QSP_t *current);
+
+/**
+ * Acquire semaphore indicating that the QSP is empty.
+ * @param current   Current QSP.
+ * @return          1 if successful, 0 otherwise.
+ */
+uint8_t QSP_TakeIsEmpty(QSP_t *current);
+
+/**
+ * Notify that the QSP is empty.
+ * @param current   Current QSP.
+ * @return          1 if successful, 0 otherwise.
+ */
+uint8_t QSP_GiveIsEmpty(QSP_t *current);
 
 /**
  * Create a new QSP packet. Function will allocate "size" memory and return a initialized package.
@@ -164,9 +188,6 @@ uint8_t QSP_GetIsResend(QSP_t *current);
  */
 uint8_t QSP_SetIsResend(QSP_t *current, uint8_t resend);
 
-
-
-
 /**
  * Get the payloadSize field of the packet.
  * @param current   Current packet, get payloadSize field from this packet.
@@ -197,17 +218,6 @@ uint8_t *QSP_GetPayloadPtr(QSP_t *current);
  * @return          0 if fail, 1 otherwise.
  */
 uint8_t QSP_ClearPayload(QSP_t *current);
-
-
-/**
- * Set data after end of payload. This can be used to add data that is not
- * a standard part of the QSP, for example crc.
- * @param current       Current packet.
- * @param buffer        Buffer containing the data to add after payload.
- * @param bufferLength  Length of data to add.
- * @return              0 if fail, 1 otherwise.
- */
-uint8_t QSP_SetAfterPayload(QSP_t *current, uint8_t *buffer, uint16_t bufferLength);
 
 /**
  * Get the size of the complete package, including non-standard fields.
