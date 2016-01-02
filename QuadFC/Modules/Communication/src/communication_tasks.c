@@ -406,7 +406,6 @@ uint8_t Com_HandleStatus(RxCom_t* obj)
   return result;
 }
 
-//TODO SLIP should not be needed.
 uint8_t Com_HandleParameters(RxCom_t* obj)
 {
   QSP_ClearPayload(obj->QspRespPacket);
@@ -422,7 +421,7 @@ uint8_t Com_HandleParameters(RxCom_t* obj)
     {
       memset(obj->helper->dumpStart, 0, MAX_DEPTH); // Starting point of dump.
       obj->helper->sequence = 0;
-      QSP_SetParamLastInSeq(obj->QspRespPacket, 1);                // This is the last in the sequence.
+      QSP_SetParamLastInSeq(obj->QspRespPacket, 1); // This is the last in the sequence.
     } // else dump is not finished, keep helper till next time.
     else
     {
@@ -462,10 +461,10 @@ uint8_t Com_HandleParameters(RxCom_t* obj)
       QSP_SetControl(obj->QspRespPacket, QSP_StatusNack);
     }
     break;
-  case QSP_ParamSave: // (miss)use the response and slip packages to save data in memory.
+  case QSP_ParamSave:
     Com_ParamSave(obj);
     break;
-  case QSP_ParamLoad: // (miss)use the response and slip packages to load data from memory.
+  case QSP_ParamLoad:
     Com_ParamLoad(obj);
     break;
   default:
@@ -542,16 +541,16 @@ void Com_ParamSave(RxCom_t* obj)
     }
     if(result) // Mem write was OK, send ack to indicate OK save of params.
     {
-      result &= QSP_ClearPayload(obj->QspPacket);
-      result &= QSP_SetAddress(obj->QspPacket, QSP_Status);
-      result &= QSP_SetControl(obj->QspPacket, QSP_StatusAck);
+      result &= QSP_ClearPayload(obj->QspRespPacket);
+      result &= QSP_SetAddress(obj->QspRespPacket, QSP_Status);
+      result &= QSP_SetControl(obj->QspRespPacket, QSP_StatusAck);
     }
     else // Packetization or mem_Write did not succeed.
     {
       cont = 0;
-      QSP_ClearPayload(obj->QspPacket);
-      QSP_SetAddress(obj->QspPacket, QSP_Status);
-      QSP_SetControl(obj->QspPacket, QSP_StatusNack);
+      QSP_ClearPayload(obj->QspRespPacket);
+      QSP_SetAddress(obj->QspRespPacket, QSP_Status);
+      QSP_SetControl(obj->QspRespPacket, QSP_StatusNack);
     }
 
   }// while(cont)
@@ -568,11 +567,11 @@ void Com_ParamLoad(RxCom_t* obj)
     QSP_ClearPayload(obj->QspPacket);
     int k = 0;
     uint8_t buffer[2];
-    QSP_StatusControl_t read_status = QSP_StatusCont;
+    SLIP_Status_t read_status = SLIP_StatusCont;
     uint8_t result = 0;
     uint32_t startAddress = address;
     // Read from memory and add to the parser.
-    while((QSP_StatusCont == read_status))
+    while((SLIP_StatusCont == read_status))
     {
       result = Mem_Read(address, 1, buffer, 2);
       if(result && ((address - startAddress) < COM_PACKET_LENGTH_MAX))
@@ -586,9 +585,14 @@ void Com_ParamLoad(RxCom_t* obj)
       }
       address++;
     }
-    result &= (read_status == QSP_StatusAck);
-
-    // test, allways send string.
+    result &= (read_status == SLIP_StatusOK);
+    if(result){
+      if(!Slip_DePacketize(QSP_GetPacketPtr(obj->QspPacket), QSP_GetAvailibleSize(obj->QspPacket),
+          obj->SLIP))
+      {
+        result = 0;
+      }
+    }
     if(result)
     {
       uint8_t sequenceNo = QSP_GetParamSequenceNumber(obj->QspPacket);
@@ -604,15 +608,15 @@ void Com_ParamLoad(RxCom_t* obj)
     }
     if(result) // Set was successful, params are loaded from mem.
     {
-      QSP_ClearPayload(obj->QspPacket);
-      QSP_SetAddress(obj->QspPacket, QSP_Status);
-      QSP_SetControl(obj->QspPacket, QSP_StatusAck);
+      QSP_ClearPayload(obj->QspRespPacket);
+      QSP_SetAddress(obj->QspRespPacket, QSP_Status);
+      QSP_SetControl(obj->QspRespPacket, QSP_StatusAck);
     }
     else // Read or set was not successful, send Nack.
     {
-      QSP_ClearPayload(obj->QspPacket);
-      QSP_SetAddress(obj->QspPacket, QSP_Status);
-      QSP_SetControl(obj->QspPacket, QSP_StatusNack);
+      QSP_ClearPayload(obj->QspRespPacket);
+      QSP_SetAddress(obj->QspRespPacket, QSP_Status);
+      QSP_SetControl(obj->QspRespPacket, QSP_StatusNack);
       lastInSequence = 1;
     }
   }

@@ -139,7 +139,6 @@ uint16_t Slip_DePacketize(uint8_t* buffer, uint16_t bufferLength, SLIP_t *packet
       buffer[i] = packet->payload[k];
     }
   }
-  i++;
   if(!SLIP_CheckCRC(buffer, &i))
   {
     return 0;
