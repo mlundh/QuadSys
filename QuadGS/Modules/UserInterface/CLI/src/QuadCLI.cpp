@@ -213,7 +213,7 @@ char ** QuadCLI::completion (const char *text, int start, int)
       size_t i = 0;
       try
       {
-          FindCommand(tmpLine);
+          i = FindCommand(tmpLine);
       }
       catch(const std::runtime_error& e)
       {
