@@ -32,7 +32,7 @@
 #ifndef MODULES_FLIGHTCONTROLLER_INC_PID_H_
 #define MODULES_FLIGHTCONTROLLER_INC_PID_H_
 
-#include "stdint.h"
+#include <stdint.h>
 
 typedef struct pidInternal pidInternal_t;
 

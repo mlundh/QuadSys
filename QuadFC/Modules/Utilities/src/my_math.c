@@ -22,8 +22,8 @@
  * THE SOFTWARE.
  */
 
-#include "my_math.h"
-#include "led_control_task.h"
+#include "../inc/my_math.h"
+#include "HMI/inc/led_control_task.h"
 
 /*atan2() domain: -pi to pi*/
 int32_t my_atan2( int32_t numerator, int32_t denominator )

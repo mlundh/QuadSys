@@ -23,10 +23,10 @@
  */
 
 
-#include "QuadFC_Peripherals.h"
 #include "freertos_uart_serial.h"
-#include "led_control_task.h"
 #include "string.h"
+#include "QuadFC/QuadFC_Peripherals.h"
+#include "HMI/inc/led_control_task.h"
 
 
 

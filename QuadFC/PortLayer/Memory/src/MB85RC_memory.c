@@ -21,10 +21,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#include "QuadFC_Memory.h"
+
 #include "stddef.h"
 #include "FreeRTOS.h"
-#include "QuadFC_Peripherals.h"
+#include "QuadFC/QuadFC_Memory.h"
+#include "QuadFC/QuadFC_Peripherals.h"
 
 #define MB85RC_DEFAULT_ADDRESS        (0x50) /* 1010 + A2 + A1 + A0 = 0x50 default */
 #define MB85RC_SLAVE_ID               (0xF8)

@@ -23,6 +23,7 @@
  */
 #ifndef LED_INTERFACE_H_
 #define LED_INTERFACE_H_
+#include <stdint.h>
 
 typedef enum led_mode
 {
@@ -32,5 +33,11 @@ typedef enum led_mode
   led_double_blink = 3,
   led_const_on = 4,
 } led_mode_t;
+
+
+void led_handler( uint8_t mode, uint8_t pin, uint32_t *counter,
+    uint8_t *on_off );
+void toggle_led( uint8_t pin, uint8_t* on_off );
+
 
 #endif /* LED_INTERFACE_H_ */

@@ -21,10 +21,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#include "QuadFC_Peripherals.h"
+#include "QuadFC/QuadFC_Peripherals.h"
 #include "freertos_twi_master.h"
-#include "led_control_task.h"
-#include "string.h"
+#include "HMI/inc/led_control_task.h"
+#include <string.h>
 
 
 static  Twi    *        twi_instances[] = {TWI0, TWI1};

@@ -23,79 +23,120 @@
 # THE SOFTWARE.
 #
 #******************************************************************************
+
+# ---------------------------- Warning!---------------------------
+# .c files are not allowed to have the same name anywhere in the 
+# directory structure. This is due to the vact that make does not
+# seem to allow target-specific VPATH.
+#------------------------------------------------------------------
+
 # Make does not offer a recursive wildcard function, so here's one:
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
+
+#Clear CFLAGS and VPATH
+CFLAGS := 
+VPATH:=
+ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 BUILD_DIR := out
 
+# Add include path for header files. Third party is special, the files expects all
+# dirs to be in include path.
+INCLUDE_ThirdParty := $(sort $(dir $(call rwildcard,ThirdParty/,*.h)))
+CFLAGS+= -I Modules -I HAL -I Top -I $(ROOT_DIR) $(addprefix -I, $(INCLUDE_ThirdParty))
+
+include $(ROOT_DIR)/executables.mk
+
+all: $(EXECUTABLES)
+
+# Include the makefiles that has the defined rules and flags.
+INCLUDE_MAKEFILES := $(ROOT_DIR)/rules.mk $(ROOT_DIR)/flags.mk 
+include $(INCLUDE_MAKEFILES)
+
+# Second expansion allows us to use $@ and such variables in the prerequisit list.
+.SECONDEXPANSION:
+
+# Add categories here if needed.
+CATEGORIES := Modules PortLayer Top
+CATEGORIES_R := ThirdParty
+ALL_CATEGORIES := $(CATEGORIES) $(CATEGORIES_R)
 
 
-
-ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-
-#Find all .c files in the project. All files are located in the folders (and subfolders of) asf and src
-SOURCE_Modules   := $(call rwildcard,Modules/,*.c)
-SOURCE_Utilities := $(call rwildcard,Utilities/,*.c)
-SOURCE_PortLayer := $(call rwildcard,PortLayer/,*.c)
-
-SOURCE     := $(SOURCE_Modules) $(SOURCE_Utilities) $(SOURCE_PortLayer)
-SOURCE_DIR :=$(sort $(dir $(SOURCE)))
-
-INCLUDE_Modules   := $(call rwildcard,Modules/,*.h)
-INCLUDE_Utilities := $(call rwildcard,Utilities/,*.h)
-INCLUDE_PortLayer := $(call rwildcard,PortLayer/,*.h)
-INCLUDE_HAL := $(call rwildcard,HAL/,*.h)
-
-
-INCLUDE     := $(INCLUDE_Modules) $(INCLUDE_Utilities) $(INCLUDE_PortLayer) $(INCLUDE_HAL)
-# Get include directories from list of all included .h files.
-INCLUDE_DIR := $(sort $(dir $(INCLUDE)))
-
-
-OBJS := $(SOURCE:.c=.o)
-# all output should be in the "out" folder. 
-OBJS := $(notdir $(OBJS))
-OBJS := $(addprefix $(BUILD_DIR)/,$(OBJS))
-
-VPATH :=$(SOURCE_DIR)
-
-include makedefs
-
-CFLAGS+= $(addprefix -I, $(INCLUDE_DIR)) -DBOARD=ARDUINO_DUE_X -DUDD_ENABLE -D__SAM3X8E__
-
-SCATTER_QuadFC:=PortLayer/asf/sam/utils/linker_scripts/sam3x/sam3x8/gcc/flash.ld
-ENTRY_QuadFC:=Reset_Handler
-
+#*************************************************************************
+# Set up all the variables used by each category. Also sets up a phony target that 
+# lists all sub-modules of each category, and a rule to make the output dir of the
+# category.
 #
-# The default rule, which causes init to be built.
+# Variables set:
+# $(Category)_BUILD_DIR
+# $(Category)_LIST
+# $(Category)_LIB_LIST
+# $(Category)_SOURCE_DIR
+# and adds the source dir to VPATH
+# and also sets up the target $(Category)_LIST
 #
-all: ${BUILD_DIR} ${BUILD_DIR}/QuadFC.elf
+#*************************************************************************
+$(foreach category,$(ALL_CATEGORIES),$(eval $(call VARIABLES,$(category))))
+#$(foreach category,$(ALL_CATEGORIES),$(info $(call VARIABLES,$(category))))
+
+#*************************************************************************
+#
+# Creates the rule for building the archive library for each sub module
+# to each category. This rule looks for source prerequisits in the 
+# "src" folder of the sub module.
+#
+#*************************************************************************
+$(foreach category,$(CATEGORIES),$(eval $(call LIB_RULE,$$($(category)_LIB_LIST),$$($(category)_BUILD_DIR))))
+#$(foreach category,$(CATEGORIES),$(info $(call LIB_RULE,$$($(category)_LIB_LIST),$$($(category)_BUILD_DIR))))
+
+#*************************************************************************
+#
+# Creates the rule for building the archive library for each sub module
+# to each category. This rule looks for source files recusively in the folder
+#
+#*************************************************************************
+$(foreach category,$(CATEGORIES_R),$(eval $(call LIB_RULE_RECURSIVE,$$($(category)_LIB_LIST),$$($(category)_BUILD_DIR))))
+#$(foreach category,$(CATEGORIES_R),$(info $(call LIB_RULE_RECURSIVE,$$($(category)_LIB_LIST),$$($(category)_BUILD_DIR))))
+
+#*************************************************************************
+#
+# Creates the rule for building .o file from each source file in the 
+# sub module of each category.
+#
+#*************************************************************************
+$(foreach category,$(ALL_CATEGORIES),$(eval $(call O_RULE, $$($(category)_BUILD_DIR))))
+#$(foreach category,$(ALL_CATEGORIES),$(info $(call O_RULE, $$($(category)_BUILD_DIR))))
+
+#*************************************************************************
+#
+# Creates the rule for linking an application. All applications are
+# defined in the variable EXECUTABLES
+#
+#*************************************************************************
+$(foreach exec,$(EXECUTABLES),$(eval $(call ELF_RULE,$(exec))))
+#$(foreach exec,$(EXECUTABLES),$(info $(call ELF_RULE,$(exec))))
+
+#*************************************************************************
+#
+# Include the automatically generated dep files.
+#
+#*************************************************************************
+$(foreach category,$(ALL_CATEGORIES),$(eval $(call DEP_INC,$(category))))
+#$(foreach category,$(ALL_CATEGORIES),$(info $(call DEP_INC,$(category))))
+
+.PHONY: all clean print
+
+$(BUILD_DIR):
+	@mkdir -p ${BUILD_DIR}
+	@echo "mkdir ${BUILD_DIR}"
 #
 # The rule to clean out all the build products
 # Simple solution, remove the out dir...
 #
-.PHONY : clean
 clean:
 	rm -rf ${BUILD_DIR}
 
-
-#
-# The rule to create the target directory
-#
-${BUILD_DIR}:
-	@mkdir ${BUILD_DIR}
-	@echo "mkdir	${BUILD_DIR}"
-
-#
-#.objs has an implicit rule defined in makedefs
-#
-
-${BUILD_DIR}/QuadFC.elf:${OBJS}
-#
-#
-# Include the automatically generated dependency files.
-#
--include ${wildcard ${BUILD_DIR}/*.d}
-
+print:
+	@echo "Modules_SOURCE_DIR:" $(VPATH)
 
 
 .PHONY : flash

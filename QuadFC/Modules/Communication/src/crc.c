@@ -16,9 +16,9 @@
  **********************************************************************/
 /*Modified by Martin Lundh to fit QuadFC*/
 
-#include "crc.h"
-#include "stdint.h"
-#include "stddef.h"
+#include "../inc/crc.h"
+#include <stdint.h>
+#include <stddef.h>
 /*
  * Derive parameters from the standard-specific parameters in crc.h.
  */

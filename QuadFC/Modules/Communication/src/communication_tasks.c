@@ -23,21 +23,18 @@
  */
 #include "string.h"
 
-#include "communication_tasks.h"
-#include "parameters.h"
-#include "QuadFC_Memory.h"
-#include "led_control_task.h"
-#include "globals.h"
-#include "slip_packet.h"
-#include "QuadFC_Peripherals.h"
+#include "Communication/inc/communication_tasks.h"
+#include "Communication/inc/slip_packet.h"
+#include "Communication/inc/crc.h"
+#include "Parameters/inc/parameters.h"
+#include "QuadFC/QuadFC_Memory.h"
+#include "QuadFC/QuadFC_Peripherals.h"
+#include "HMI/inc/led_control_task.h"
+#include "Utilities/inc/globals.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
 
-
-
-#include <gpio.h>
-#include <pio.h>
 
 /* Use USART1 (labeled RX2 17 and TX2 16)*/
 #define COM_SERIAL (1)
@@ -74,13 +71,13 @@ typedef struct TxCom
  * Initialize the communication module.
  * @return    1 if OK, 0 otherwise.
  */
-TxCom_t* Com_InitTx();
+TxCom_t* Com_InitTx(void);
 
 /**
  * Initialize the communication module.
  * @return    1 if OK, 0 otherwise.
  */
-RxCom_t* Com_InitRx();
+RxCom_t* Com_InitRx(void);
 
 
 /**
@@ -175,7 +172,7 @@ RxCom_t* Com_InitRx()
   return taskParam;
 }
 
-void Com_CreateTasks( void )
+void Com_CreateTasks( )
 {
   uint8_t* receive_buffer_driver = pvPortMalloc(
       sizeof(uint8_t) * COM_PACKET_LENGTH_MAX );

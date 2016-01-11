@@ -254,7 +254,7 @@ uint8_t QSP_SetPayload(QSP_t *current, uint8_t *buffer, uint16_t bufferLength);
 /**
  * Get header size of the packet.
  */
-uint16_t QSP_GetHeaderdSize();
+uint16_t QSP_GetHeaderdSize(void);
 
 
 
@@ -302,7 +302,7 @@ void  QSP_SetParamLastInSeq(QSP_t *current, uint8_t isLast);
 /**
  * Get header size of the param packet.
  */
-uint16_t QSP_GetParamHeaderdSize();
+uint16_t QSP_GetParamHeaderdSize(void);
 
 /**
  * Get the payloadSize field of the packet. Param message type. Subtracts one

@@ -38,9 +38,9 @@
  * 
  *
  */ 
-#include "satellite_receiver_task.h"
+#include "PortLayer/Communication/inc/satellite_receiver_task.h"
 
-#include "led_control_task.h"
+#include "HMI/inc/led_control_task.h"
 
 int satellite_decode_signal(uint8_t data[], spektrum_data_t *decoded_data);
 static uint8_t receive_buffer[SATELLITE_MESSAGE_LENGTH*2];

@@ -21,10 +21,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#include "control_mode_handler.h"
+#include "../inc/control_mode_handler.h"
 
 
-#include "led_control_task.h"
+#include "HMI/inc/led_control_task.h"
 
 
 

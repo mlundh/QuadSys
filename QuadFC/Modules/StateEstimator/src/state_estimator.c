@@ -22,10 +22,10 @@
  * THE SOFTWARE.
  */
 
-#include "state_estimator.h"
-#include "stddef.h"
-#include "QuadFC_IMU.h"
-#include "imu_signal_processing.h"
+#include <stddef.h>
+#include "StateEstimator/inc/state_estimator.h"
+#include "StateEstimator/inc/imu_signal_processing.h"
+#include "QuadFC/QuadFC_IMU.h"
 
 struct StateEst
 {

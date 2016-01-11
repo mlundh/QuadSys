@@ -22,9 +22,9 @@
  * THE SOFTWARE.
  */
 
-#include "string.h"
-#include "stddef.h"
-#include "quad_serial_packet.h"
+#include <string.h>
+#include <stddef.h>
+#include "Communication/inc/quad_serial_packet.h"
 
 #define QSP_HEADER_SIZE (4)
 #define QSP_PARAM_HEADER_SIZE (5)

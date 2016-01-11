@@ -23,7 +23,7 @@
  */
 #ifndef MODULES_FLIGHTCONTROLLER_INC_CONTROL_SYSTEM_H_
 #define MODULES_FLIGHTCONTROLLER_INC_CONTROL_SYSTEM_H_
-#include "common_types.h"
+#include "Utilities/inc/common_types.h"
 
 typedef struct CtrlObj CtrlObj_t;
 

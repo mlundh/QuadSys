@@ -39,12 +39,12 @@
  THE SOFTWARE.
  ===============================================
  */
-#include "string.h"
-#include "mpu6050.h"
-#include "QuadFC_Peripherals.h"
-#include "globals.h"
-#include "parameters.h"
-#include "QuadFC_IMUInternal.h"
+#include <string.h>
+#include "PortLayer/Sensors/inc/mpu6050.h"
+#include "QuadFC/QuadFC_Peripherals.h"
+#include "QuadFC/QuadFC_IMUInternal.h"
+#include "Parameters/inc/parameters.h"
+#include "Utilities/inc/globals.h"
 
 #define MPU6050_BUSS                  (0x0)
 #define MPU6050_BLOCK_TIME_MS         (50UL)

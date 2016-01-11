@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-#include "QuadFC_MotorControl.h"
+#include "QuadFC/QuadFC_MotorControl.h"
 #include <pwm.h>
 #include <pio.h>
 #include <board.h>
@@ -30,7 +30,7 @@
 #include "FreeRTOS.h"
 #include "semphr.h"
 #include <string.h>
-#include "parameters.h"
+#include "Parameters/inc/parameters.h"
 /** Required resolution = 2000 usable steps. */
 
 /** PWM frequency in Hz */

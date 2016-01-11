@@ -57,7 +57,7 @@
  * ----------------------------------------------------------------------------------------------------------
  */
 
-#include "main_control_task.h"
+#include "FlightController/inc/main_control_task.h"
 /* Kernel includes. */
 #include "FreeRTOS.h"
 #include "task.h"
@@ -68,22 +68,23 @@
 #include <pio.h>
 
 /* Task includes. */
-#include "led_control_task.h"
-#include "communication_tasks.h"
-#include "satellite_receiver_task.h"
-#include "range_meter.h"
+#include "HMI/inc/led_control_task.h"
+#include "Communication/inc/communication_tasks.h"
 
 /* Modules */
-#include "control_system.h"
-#include "state_handler.h"
-#include "state_estimator.h"
-#include "imu_signal_processing.h"
-#include "QuadFC_MotorControl.h"
-#include "parameters.h"
+#include "FlightController/inc/control_system.h"
+#include "FlightController/inc/state_handler.h"
 
-#include "globals.h"
-#include "common_types.h"
+#include "StateEstimator/inc/state_estimator.h"
+#include "StateEstimator/inc/imu_signal_processing.h"
+#include "QuadFC/QuadFC_MotorControl.h"
+#include "Parameters/inc/parameters.h"
 
+#include "Utilities/inc/globals.h"
+#include "Utilities/inc/common_types.h"
+
+/*TODO Refactor, remove*/
+#include "PortLayer/Communication/inc/satellite_receiver_task.h"
 
 
 // Struct only used here to pass parameters to the task.

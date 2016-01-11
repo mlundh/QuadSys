@@ -30,13 +30,16 @@
 #include "timers.h"
 
 /*Include units*/
-#include "main_control_task.h"
-#include "satellite_receiver_task.h"
-#include "communication_tasks.h"
-#include "led_control_task.h"
-#include "range_meter.h"
+#include "FlightController/inc/main_control_task.h"
+#include "Communication/inc/communication_tasks.h"
+#include "HMI/inc/led_control_task.h"
 
-#include "globals.h"
+#include "Utilities/inc/globals.h"
+
+/*TODO refactor, remove*/
+#include "PortLayer/Communication/inc/satellite_receiver_task.h"
+#include "PortLayer/Sensors/inc/range_meter.h"
+
 /*
  * FreeRTOS hook (or callback) functions that are defined in this file.
  */

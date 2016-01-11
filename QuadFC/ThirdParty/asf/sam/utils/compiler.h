@@ -155,7 +155,9 @@
 #if defined(__CC_ARM)
 #   define __always_inline   __forceinline
 #elif (defined __GNUC__)
+#ifndef __always_inline
 #	define __always_inline   inline __attribute__((__always_inline__))
+#endif
 #elif (defined __ICCARM__)
 #	define __always_inline   _Pragma("inline=forced")
 #endif
@@ -185,7 +187,7 @@
 #endif
 
 /* Define WEAK attribute */
-#if defined   ( __CC_ARM   ) /* Keil µVision 4 */
+#if defined   ( __CC_ARM   ) /* Keil ï¿½Vision 4 */
 #   define WEAK __attribute__ ((weak))
 #elif defined ( __ICCARM__ ) /* IAR Ewarm 5.41+ */
 #   define WEAK __weak
@@ -203,7 +205,7 @@
 #endif
 
 /* Define RAMFUNC attribute */
-#if defined   ( __CC_ARM   ) /* Keil µVision 4 */
+#if defined   ( __CC_ARM   ) /* Keil ï¿½Vision 4 */
 #   define RAMFUNC __attribute__ ((section(".ramfunc")))
 #elif defined ( __ICCARM__ ) /* IAR Ewarm 5.41+ */
 #   define RAMFUNC __ramfunc

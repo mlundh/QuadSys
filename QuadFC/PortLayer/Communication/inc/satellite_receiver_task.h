@@ -12,7 +12,7 @@
 #include "task.h"
 #include "queue.h"
 #include "freertos_uart_serial.h"
-#include "globals.h"
+#include "Utilities/inc/globals.h"
 
 #define SATELLITE_DATA_MASK 0x7ff            /*Data contained in the 11 least significant bits*/
 #define SATELLITE_CHANNEL_MASK 0x7800        /*Channel number contained in the 4 bits above data.*/

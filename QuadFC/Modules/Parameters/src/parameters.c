@@ -7,12 +7,12 @@
  *  Created on: Jul 24, 2015
  *      Author: martin
  */
-#include "string.h"
+#include <string.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
-#include "parameters.h"
+#include "Modules/Parameters/inc/parameters.h"
 
 
 #include <gpio.h>

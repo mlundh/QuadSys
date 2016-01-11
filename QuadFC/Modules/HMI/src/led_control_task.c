@@ -22,10 +22,9 @@
  * THE SOFTWARE.
  */
 
-#include "led_control_task.h"
-#include "led.h"
-#include "led_interface.h"
-#include "stdint.h"
+#include "../inc/led_control_task.h"
+#include "../inc/led_interface.h"
+#include <stdint.h>
 
 #include "task.h"
 #include "queue.h"

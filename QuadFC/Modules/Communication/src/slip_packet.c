@@ -22,9 +22,9 @@
  * THE SOFTWARE.
  */
 
-#include "stddef.h"
-#include "slip_packet.h"
-#include "crc.h"
+#include <stddef.h>
+#include "Communication/inc/slip_packet.h"
+#include "Communication/inc/crc.h"
 #include "FreeRTOS.h"
 
 /**

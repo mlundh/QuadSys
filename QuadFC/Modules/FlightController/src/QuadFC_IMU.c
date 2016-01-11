@@ -26,13 +26,13 @@
  * @file Generic implementation of the QuadFC_IMU interface.
  */
 
-#include "stdint.h"
+#include <stdint.h>
 #include "FreeRTOS.h"
 #include "semphr.h"
-#include "common_types.h"
-#include "parameters.h"
-#include "QuadFC_IMU.h"
-#include "QuadFC_IMUInternal.h"
+#include "Utilities/inc/common_types.h"
+#include "Parameters/inc/parameters.h"
+#include "QuadFC/QuadFC_IMU.h"
+#include "QuadFC/QuadFC_IMUInternal.h"
 
 
 #define SIGN(x) ((x > 0) - (x < 0))

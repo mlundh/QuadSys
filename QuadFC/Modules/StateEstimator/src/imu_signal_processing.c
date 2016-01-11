@@ -21,8 +21,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#include "imu_signal_processing.h"
-#include "my_math.h"
+#include "StateEstimator/inc/imu_signal_processing.h"
+#include "Utilities/inc/my_math.h"
 
 void get_euler_angles_accel( state_data_t *state, ImuData_t *measurments )
 {

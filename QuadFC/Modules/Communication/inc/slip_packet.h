@@ -24,7 +24,7 @@
 #ifndef SLIP_PACKET_H_
 #define SLIP_PACKET_H_
 
-#include "stdint.h"
+#include <stdint.h>
 
 enum Slip_Control_Octets
 {

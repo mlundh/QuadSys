@@ -21,9 +21,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#include "pid.h"
+#include "../inc/pid.h"
 #include "FreeRTOS.h"
-#include "my_math.h"
+#include "Utilities/inc/my_math.h"
 
 struct pidInternal
 {

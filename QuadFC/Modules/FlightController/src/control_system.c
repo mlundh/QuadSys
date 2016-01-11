@@ -23,12 +23,12 @@
  */
 
 
-#include "stddef.h"
-#include "control_system.h"
-#include "pid.h"
-#include "control_mode_handler.h"
-#include "parameters.h"
-#include "led_control_task.h" // TODO refactor LED
+#include <stddef.h>
+#include "../inc/control_system.h"
+#include "../inc/pid.h"
+#include "../inc/control_mode_handler.h"
+#include "Parameters/inc/parameters.h"
+#include "HMI/inc/led_control_task.h" // TODO refactor LED
 
 struct CtrlObj
 {

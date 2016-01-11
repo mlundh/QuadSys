@@ -22,11 +22,10 @@
  * THE SOFTWARE.
  */
 
-#include "led.h"
 #include <gpio.h>
 #include <pio.h>
 #include "arduino_due_x.h"
-#include "led_interface.h"
+#include "HMI/inc/led_interface.h"
 
 void led_handler( uint8_t mode, uint8_t pin, uint32_t *counter, uint8_t *on_off )
 {

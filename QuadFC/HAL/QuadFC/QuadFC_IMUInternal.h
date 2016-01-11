@@ -32,8 +32,8 @@
  */
 
 
-#include "stdint.h"
-#include "common_types.h"
+#include <stdint.h>
+#include "Utilities/inc/common_types.h"
 
 /**
  * Create the IMU unit. This function should be called before the

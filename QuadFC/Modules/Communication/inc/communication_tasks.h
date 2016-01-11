@@ -27,11 +27,8 @@
 #ifndef COMMUNICATION_TASKS_H_
 #define COMMUNICATION_TASKS_H_
 
-#include "crc.h"
-#include "stdint.h"
-#include "slip_packet.h"
-#include "quad_serial_packet.h"
-
+#include <stdint.h>
+#include "Communication/inc/quad_serial_packet.h"
 /**
  * Create the communication tasks. These tasks are responsible for
  * communication with external components such as QuadGS. They are

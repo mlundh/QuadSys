@@ -21,8 +21,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#include "state_handler.h"
-#include "led_control_task.h"
+#include "../inc/state_handler.h"
+#include "HMI/inc/led_control_task.h"
 
 struct StateHandler
 {

@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-#include "string_utils.h"
+#include "../inc/string_utils.h"
 uint8_t isNumericChar( uint8_t );
 void reverse( uint8_t *str, int32_t length );
 /* Returns the string representation of a 32bit signed integer. 
