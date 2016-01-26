@@ -44,7 +44,7 @@ VPATH += $$($(1)_SOURCE_DIR)
 # The rule to mapp folder name to lib name.
 $$($(1)_LIST): $(1)/% : $$($(1)_BUILD_DIR)/lib%.a 
 # The rule to make the output directory.
-$$($(1)_BUILD_DIR) :
+$$($(1)_BUILD_DIR) : $$(BUILD_DIR)
 	@mkdir -p $${$(1)_BUILD_DIR}
 	@echo "mkdir  $${$(1)_BUILD_DIR}"
 endef
