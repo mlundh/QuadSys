@@ -38,15 +38,16 @@
  * | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
  *
  *  +-------------------------------+
- * 1|            address            |
+ * 0|            address            |
  *  +-------------------------------+
- * 2| R|         Control            |
+ * 1| R|         Control            |
  *  +-------------------------------+
- * 3|          payload size         |
+ * 2|         payload size H        |
  *  +-------------------------------+
- * 4|           payload             |
+ * 3|        payload size L         |
  *  +-------------------------------+
- *
+ * 4|            payload            |
+ *  +-------------------------------+
  *  Where the R field indicates resend.
  *
  * frame format:
@@ -59,17 +60,18 @@
  * | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
  *
  *  +-------------------------------+
- * 1|            address            |
+ * 0|            address            |
  *  +-------------------------------+
- * 2| R|         Control            |
+ * 1| R|         Control            |
  *  +-------------------------------+
- * 3| L|       sequence number      |
+ * 2|         payload size H        |
  *  +-------------------------------+
- * 3|          payload size         |
+ * 3|        payload size L         |
  *  +-------------------------------+
- * 4|           payload             |
+ * 4| L|         payload            |
  *  +-------------------------------+
- *
+ * 5|            payload            |
+ *  +-------------------------------+
  *  The R field indicates resend.
  *  The L field indicates if it is the last in a sequence.
  *
@@ -83,6 +85,7 @@ enum QSP_addresses
   QSP_Log = 1,
   QSP_FunctionCall = 2,
   QSP_Status = 3,
+  QSP_Debug = 4,
 };
 enum QSP_ParametersControl
 {
@@ -104,6 +107,14 @@ enum QSP_StatusControl
   QSP_StatusBufferOverrun = 7,
   QSP_StatusNotImplemented = 200,
 };
+
+enum QSP_DebugControl
+{
+  QSP_DebugGetRuntimeStats = 0,
+  QSP_DebugSetRuntimeStats = 1,
+  QSP_DebugGetErrorMessages = 2,
+};
+
 typedef enum QSP_StatusControl QSP_StatusControl_t;
 
 /**

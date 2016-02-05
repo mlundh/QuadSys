@@ -31,6 +31,7 @@
 #include "QuadFC/QuadFC_Peripherals.h"
 #include "HMI/inc/led_control_task.h"
 #include "Utilities/inc/globals.h"
+#include "Utilities/inc/run_time_stats.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
@@ -127,6 +128,13 @@ uint8_t Com_HandleParameters(RxCom_t* obj);
  * @return      0 if fail, 1 otherwise.
  */
 uint8_t Com_HandleStatus(RxCom_t* obj);
+
+/**
+ * Handle a Debug QSP message.
+ * @param obj   The current object.
+ * @return      0 if fail, 1 otherwise.
+ */
+uint8_t Com_HandleDebug(RxCom_t* obj);
 
 TxCom_t* Com_InitTx()
 {
@@ -373,6 +381,9 @@ uint8_t Com_HandleQSP(RxCom_t* obj)
   case QSP_Status:
     result = Com_HandleStatus(obj);
     break;
+  case QSP_Debug:
+    result = Com_HandleDebug(obj);
+    break;
   default:
     break;
   }
@@ -380,7 +391,6 @@ uint8_t Com_HandleQSP(RxCom_t* obj)
   return result;
 }
 
-//TODO SLIP should not be needed.
 uint8_t Com_HandleStatus(RxCom_t* obj)
 {
   uint8_t result = 0;
@@ -402,6 +412,30 @@ uint8_t Com_HandleStatus(RxCom_t* obj)
 
   return result;
 }
+
+uint8_t Com_HandleDebug(RxCom_t* obj)
+{
+  uint8_t result = 0;
+  switch ( QSP_GetControl(obj->QspPacket) )
+  {
+  case QSP_DebugGetRuntimeStats:
+    QuadFC_RuntimeStats(QSP_GetPayloadPtr(obj->QspRespPacket) , QSP_GetAvailibleSize(obj->QspRespPacket) - QSP_GetHeaderdSize());
+    //vTaskList((char *)(QSP_GetPayloadPtr(obj->QspRespPacket)));
+    uint16_t len =  strlen((char *)QSP_GetPayloadPtr(obj->QspRespPacket));
+    QSP_SetPayloadSize(obj->QspRespPacket, len);
+    result = 1;
+    QSP_SetAddress(obj->QspRespPacket, QSP_Debug);
+    QSP_SetControl(obj->QspRespPacket, QSP_DebugSetRuntimeStats);
+    break;
+  case QSP_DebugGetErrorMessages:
+    break;
+  default:
+    break;
+  }
+
+  return result;
+}
+
 
 uint8_t Com_HandleParameters(RxCom_t* obj)
 {

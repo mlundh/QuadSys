@@ -82,7 +82,7 @@ int main( void )
   /* Create all tasks used in the application.*/
   create_satellite_receiver_task();
   Led_CreateLedControlTask();
-  create_range_meter_task();
+//  create_range_meter_task();
   create_main_control_task();
 
   /*Should always be created last as it loads the parameters*/

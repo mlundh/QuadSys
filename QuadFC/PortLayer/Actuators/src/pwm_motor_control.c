@@ -342,7 +342,7 @@ uint8_t pwm_takeMutex(pwm_internals_t *obj)
 {
   if(obj->xMutex)
   {
-    if( !xSemaphoreTake( obj->xMutex, ( TickType_t )(2UL / portTICK_PERIOD_MS) ) == pdTRUE )
+    if( !(xSemaphoreTake( obj->xMutex, ( TickType_t )(2UL / portTICK_PERIOD_MS) ) == pdTRUE) )
     {
       return 0; // Was not able to aquire mutex, return with error.
     }

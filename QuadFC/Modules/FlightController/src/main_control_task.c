@@ -139,7 +139,7 @@ void create_main_control_task( void )
   portBASE_TYPE create_result;
   create_result = xTaskCreate( main_control_task,   /* The function that implements the task.  */
       (const char *const) "Main_Ctrl",              /* The name of the task. This is not used by the kernel, only aids in debugging*/
-      2000,                                         /* The stack size for the task*/
+      500,                                         /* The stack size for the task*/
       taskParam,                                    /* pass params to task.*/
       configMAX_PRIORITIES-1,                       /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
       NULL );                                       /* Handle to the task. Not used here and therefore NULL*/

@@ -92,9 +92,8 @@ extern uint32_t SystemCoreClock;
 #define configTICK_RATE_HZ				( ( TickType_t ) 1000 )
 #define configMAX_PRIORITIES			( 5 )
 #define configMINIMAL_STACK_SIZE		( ( unsigned short ) 130 )
-#define configTOTAL_HEAP_SIZE			( ( size_t ) ( 40960 ) )
+#define configTOTAL_HEAP_SIZE			( ( size_t ) ( 50960 ) )
 #define configMAX_TASK_NAME_LEN			( 10 )
-#define configUSE_TRACE_FACILITY		0
 #define configUSE_16_BIT_TICKS			0
 #define configIDLE_SHOULD_YIELD			1
 #define configUSE_MUTEXES				1
@@ -104,19 +103,24 @@ extern uint32_t SystemCoreClock;
 #define configUSE_MALLOC_FAILED_HOOK	1
 #define configUSE_APPLICATION_TASK_TAG	0
 #define configUSE_COUNTING_SEMAPHORES	1
-#define configGENERATE_RUN_TIME_STATS	0
-
 //ensure that all syscalls are according to V8.x.x
 #define configENABLE_BACKWARD_COMPATIBILITY 0
 
+#ifdef QuadFCStats
+/* Run time and task stats gathering related definitions. */
+#define configGENERATE_RUN_TIME_STATS           1
+#define configUSE_TRACE_FACILITY                1
+#define configUSE_STATS_FORMATTING_FUNCTIONS    1
+#else
+#define configGENERATE_RUN_TIME_STATS           0
+#define configUSE_TRACE_FACILITY                0
+#define configUSE_STATS_FORMATTING_FUNCTIONS    0
+#endif
 /* Run time stats gathering definitions. */
-#if defined (__GNUC__) || defined (__ICCARM__)
 void configure_timer_for_run_time_stats( void );
 uint32_t get_run_time_counter_value( void );
-#define configGENERATE_RUN_TIME_STATS 0
 #define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() configure_timer_for_run_time_stats()
 #define portGET_RUN_TIME_COUNTER_VALUE() get_run_time_counter_value()
-#endif
 
 
 /* Co-routine definitions. */
@@ -124,7 +128,7 @@ uint32_t get_run_time_counter_value( void );
 #define configMAX_CO_ROUTINE_PRIORITIES ( 2 )
 
 /* Software timer definitions. */
-#define configUSE_TIMERS				1
+#define configUSE_TIMERS				0
 #define configTIMER_TASK_PRIORITY		( configMAX_PRIORITIES - 2  )
 #define configTIMER_QUEUE_LENGTH		5
 #define configTIMER_TASK_STACK_DEPTH	( configMINIMAL_STACK_SIZE * 2 )

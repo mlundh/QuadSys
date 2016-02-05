@@ -80,7 +80,7 @@ void create_range_meter_task( void )
 
   /*Create the worker task*/
   xTaskCreate( range_meter_task,
-      NULL,
+      "Range",
       500,
       (void * ) freertos_usart,
       configMAX_PRIORITIES-2,

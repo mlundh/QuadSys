@@ -442,7 +442,7 @@ uint8_t Param_GetNodeValue(param_obj_t *current, uint8_t *buffer, uint32_t buffe
   // Aquire the mutex if there is one connected to current.
 	if(current->xMutex)
 	{
-	  if( !xSemaphoreTake( current->xMutex, ( TickType_t )(2UL / portTICK_PERIOD_MS) ) == pdTRUE )
+	  if( !(xSemaphoreTake( current->xMutex, ( TickType_t )(2UL / portTICK_PERIOD_MS) ) == pdTRUE) )
 	  {
 	    return 0; // Was not able to aquire mutex, return with error.
 	  }
@@ -513,7 +513,7 @@ uint8_t Param_SettNodeValue(param_obj_t *current, uint8_t *buffer)
   // Aquire the mutex to ensure thread saftey.
   if(current->xMutex)
   {
-    if( !xSemaphoreTake( current->xMutex, ( TickType_t )(2UL / portTICK_PERIOD_MS) ) == pdTRUE )
+    if( !(xSemaphoreTake( current->xMutex, ( TickType_t )(2UL / portTICK_PERIOD_MS) ) == pdTRUE) )
     {
       return 0; // Was not able to aquire mutex, return with error.
     }

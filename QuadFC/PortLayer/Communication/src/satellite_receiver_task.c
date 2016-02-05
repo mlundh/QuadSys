@@ -86,7 +86,7 @@ void create_satellite_receiver_task(void)
     
     /*Create the worker task*/
 	xTaskCreate(	satellite_receiver_task,					    /* The task that implements the test. */
-					NULL,	                            /* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
+					"Satellite",	                            /* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
 					500,							    /* The size of the stack allocated to the task. */
 					(void *) freertos_usart,		    /* The parameter is used to pass the already configured USART port into the task. */
 					configMAX_PRIORITIES-2,			    /* The priority allocated to the task. */

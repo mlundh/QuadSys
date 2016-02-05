@@ -59,6 +59,10 @@ else
 CFLAGS += -O1
 endif
 
+ifdef QUADFC_STATS
+CFLAGS += -DQuadFCStats
+endif
+
 #
 # The flags passed to the compiler.
 #
@@ -70,12 +74,12 @@ endif
 
 CFLAGS+= -mthumb -mcpu=cortex-m3 -MMD -MP -MT "$$(patsubst %.o, %.d, $$(notdir $$(@)))" -MT "$$(@)"
 CFLAGS+= -fdata-sections -ffunction-sections -mlong-calls -Wall -c -std=gnu99 -Wshadow
-CFLAGS+= -DBOARD=ARDUINO_DUE_X -DUDD_ENABLE -D__SAM3X8E__ 
+CFLAGS+= -DBOARD=ARDUINO_DUE_X -DUDD_ENABLE -D__SAM3X8E__
 
 #
 # The flags passed to the linker.
 #
 LDFLAGS= -mthumb -Wl,-Map,"$(BUILD_DIR)/out.map" -Wl,--start-group -lm  -Wl,--end-group 
 LDFLAGS+= -Wl,--gc-sections -mcpu=cortex-m3 -T $(SCATTER_QuadFC) -Wl,--cref 
-LDFLAGS+= -Wl,--entry=$(ENTRY_QuadFC) -mthumb 
+LDFLAGS+= -Wl,--entry=$(ENTRY_QuadFC) -mthumb  -specs=nano.specs
 
