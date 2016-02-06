@@ -49,6 +49,7 @@ public:
   
   virtual void SetCore(Core::ptr ptr);
 
+  virtual void Display(std::string str);
 private:
 
   QuadCLI();

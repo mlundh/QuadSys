@@ -28,6 +28,11 @@
 #include <string.h>
 #include <stdexcept>
 
+#include <memory>
+#include <functional>
+#include <string>
+#include <vector>
+#include "QuadGSTree.h"
 #include "QspPayloadRaw.h"
 namespace QuadGS {
 

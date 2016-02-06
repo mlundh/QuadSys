@@ -34,7 +34,8 @@ std::vector<std::string> QuadSerialPacket::mAddressStrings =
            "Parameters",
            "Log",
            "FunctionCall",
-           "Status"
+           "Status",
+           "Debug"
    };
 std::vector<std::string> QuadSerialPacket::mParamControl =
     {
@@ -55,7 +56,12 @@ std::vector<std::string> QuadSerialPacket::mStatusControl =
         "NotValidSlipPacket",
         "BufferOverrun"
 };
-
+std::vector<std::string> QuadSerialPacket::mDebugControl =
+{
+        "GetRuntimeStats",
+        "SetRuntimeStats",
+        "GetErrorMessages",
+};
 
 
 QuadSerialPacket::Ptr QuadSerialPacket::Create(const uint8_t* data, uint16_t length)
@@ -170,6 +176,9 @@ std::string QuadSerialPacket::HeaderToString()
         break;
     case addresses::Status:
         string = mStatusControl;
+        break;
+    case addresses::Debug:
+        string = mDebugControl;
         break;
     }
     if (static_cast< std::size_t >(status) < string.size())

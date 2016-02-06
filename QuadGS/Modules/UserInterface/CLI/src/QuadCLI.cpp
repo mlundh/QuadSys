@@ -127,6 +127,11 @@ void QuadCLI::SetCore(Core::ptr ptr)
   mCore = ptr;
 }
 
+void QuadCLI::Display(std::string str)
+{
+    std::cout << std::endl << str << std::endl;
+}
+
 void QuadCLI::BuildPrompt()
 {
     if(mPromptStatus.empty())
@@ -226,11 +231,11 @@ char ** QuadCLI::completion (const char *text, int start, int)
           rl_completer_word_break_characters = WordBreakPath; 
           rl_attempted_completion_over = 1;
           //temporarily change branch for the completion function.
-          mCore->SaveBranch(); 
-          mCore->ChangeBranch(tmpLine);
+          mCore->mParameters->SaveBranch();
+          mCore->mParameters->ChangeBranch(tmpLine);
           matches = rl_completion_matches (text, path_generator);
           // Restore the current branch.
-          mCore->RestoreBranch();
+          mCore->mParameters->RestoreBranch();
           break;
         case Command::ActOn::IO:
           rl_attempted_completion_over = 1;
@@ -297,7 +302,7 @@ char * QuadCLI::path_generator (const char *text, int state)
         list_index = 0;
         vec.clear();
         std::string text_s(text);
-        mCore->FindPartial(text_s, vec);
+        mCore->mParameters->FindPartial(text_s, vec);
     }
     std::string text_s(text);
     boost::trim(text_s);

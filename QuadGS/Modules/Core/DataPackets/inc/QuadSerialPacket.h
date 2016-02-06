@@ -65,7 +65,8 @@ public:
         Parameters = 0,
         Log = 1,
         FunctionCall = 2,
-        Status = 3, // TODO remove from QSP, should reside a layer beneath.
+        Status = 3,
+        Debug = 4,
     };
     typedef enum addresses addresses_t;
 
@@ -98,9 +99,19 @@ public:
     };
     typedef enum StatusControl StatusControl_t;
 
-
-
     static std::vector<std::string> mStatusControl;
+
+
+    enum DebugControl
+    {
+        GetRuntimeStats = 0,
+        SetRuntimeStats = 1,
+        GetErrorMessages = 2,
+
+    };
+    typedef enum DebugControl DebugControl_t;
+
+    static std::vector<std::string> mDebugControl;
 
 
 

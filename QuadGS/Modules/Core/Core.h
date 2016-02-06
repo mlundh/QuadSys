@@ -28,8 +28,8 @@
 #include <functional>
 #include <string>
 #include <vector>
-#include "QuadGSTree.h"
 #include "Log.h"
+#include "Parameters.h"
 namespace QuadGS {
 
 
@@ -94,50 +94,6 @@ public:
     void bind(std::shared_ptr<UiBase> UiPtr);
 
     /**
-     * Update the temp branch to point at path. mTmpBranch will point at
-     * the node selected by path, or the first node in the chain that needs to be
-     * updated to correspond to the path. All nodes in path before the function
-     * returns will be removed.
-     * @param path      Path to the node.
-     * @return          return true if path was found, false otherwise.
-     */
-    bool UpdateTmp(std::string& path);
-
-    /**
-     * Save current branch. Current branch can be restored by a call to RestoreBranch()
-     */
-    void SaveBranch();
-
-    /**
-     * Restore the previously saved branch.
-     */
-    void RestoreBranch();
-
-    /**
-     * Change branch to path. If path includes nodes that need to be updated, then
-     * the method will only change to the first of the branches that needs an update.
-     * @param path
-     * @return
-     */
-    bool ChangeBranch(std::string& path);
-
-    /**
-     * User commands that can be used by the UI.
-     */
-    std::string ChangeBranchCmd(std::string path);
-    std::string PrintCurrentPath(std::string pathIn);
-    std::string list(std::string path);
-    std::string get(std::string path);
-    std::string set(std::string path);
-    std::string SetAndRegister(std::string path);
-    std::string writeRawCmd(std::string data);
-    std::string writeCmd(std::string path_dump);
-    std::string requestUpdateCmd(std::string path_dump);
-    std::string saveParamCmd(std::string );
-    std::string loadParamCmd(std::string );
-    std::string dump(std::string path);
-
-    /**
      * Function to get all commands availible to the User Interface.
      * @return  A vector of commands, with descriptions.
      */
@@ -150,28 +106,15 @@ public:
     ptr getThis();
 
     /**
-     * Find all nodes in the tree that matches the string "name".
-     * @param name  incomplete name to search for.
-     * @param vec   Vector of matches.
-     */
-    void FindPartial(std::string& name, std::vector<std::string>& vec);
-
-    /**
      * Internal write function. All writes to IO module passes this function.
      * @param  A pointer to a QSP that should be passed to the IO module.
      */
     void write( std::shared_ptr<QuadSerialPacket>);
 
-    /**
-     * Internal get tree function. Will request next param message.
-     */
-    void RequestTree();
 
-    /**
-     * Handler function for parameter messages.
-     * @param packetPtr Message.
-     */
-    void ParameterHandler(std::shared_ptr<QuadSerialPacket> packetPtr);
+    std::string getRuntimeStats(std::string path);
+
+    std::string FormatRuntimeStats(std::string runtimeStats);
 
     /**
      * Handler function for status messages.
@@ -180,21 +123,24 @@ public:
     void StatusHandler(std::shared_ptr<QuadSerialPacket> packetPtr);
 
     /**
+     * Handler function for debug messages.
+     * @param packetPtr Message.
+     */
+    void DebugHandler(std::shared_ptr<QuadSerialPacket> packetPtr);
+
+    /**
      * Message handler. Dispatches messages based on the address of the message.
      * @param ptr   Message.
      */
     void msgHandler(std::shared_ptr<QuadSerialPacket> ptr);
 
-    
+    std::shared_ptr<Parameters> mParameters;
+
 private:
     Core();
     Log logger;
-    QuadGSTree::ptr mTmpBranch;
-    QuadGSTree::ptr mCurrentBranch;
-    QuadGSTree::ptr mSavedBranch;
-    QuadGSTree::ptr mTree;
     std::shared_ptr<IoBase> mIo;
-
+    std::shared_ptr<UiBase> mUi;
 };
 
 } /* namespace QuadGS */
