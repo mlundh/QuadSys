@@ -25,6 +25,9 @@
 #define COMMON_TYPES_H_
 #include "stdint.h"
 
+typedef struct SpObj SpObj_t;
+typedef struct StateHandler StateHandler_t;
+
 typedef enum state_names
 {
   pitch = 0,
@@ -97,5 +100,7 @@ typedef struct Imu
   ImuOrientation_t Orient;
   void *internals;
 }Imu_t;
+
+
 
 #endif /* COMMON_TYPES_H_ */

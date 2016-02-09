@@ -83,13 +83,3 @@ void complemetary_filter( state_data_t *state_accel, state_data_t *state_gyro, s
   state_gyro->state_vector[pitch] = state->state_vector[pitch];
   state_gyro->state_vector[roll] = state->state_vector[roll];
 }
-
-/*Translates the received signal into fixed point used in project*/
-void translate_receiver_signal_rate( state_data_t *setpoint, receiver_data_t *received_data )
-{
-  setpoint->state_vector[z_vel] = (received_data->ch0);
-  setpoint->state_vector[roll_rate] = -((received_data->ch1 - SATELLITE_CH_CENTER) );
-  setpoint->state_vector[pitch_rate] = -((received_data->ch2 - SATELLITE_CH_CENTER));
-  setpoint->state_vector[yaw_rate] = -((received_data->ch3 - SATELLITE_CH_CENTER) );
-
-}

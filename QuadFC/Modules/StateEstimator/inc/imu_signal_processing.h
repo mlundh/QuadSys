@@ -42,7 +42,5 @@ void get_euler_angles_accel( state_data_t *state, ImuData_t *measurments );
 void get_euler_angles_gyro( state_data_t *state, ImuData_t *measurments );
 void get_rate_gyro( state_data_t *state, ImuData_t *measurments );
 void complemetary_filter( state_data_t *state_accel, state_data_t *state_gyro, state_data_t *state );
-void translate_receiver_signal_angle( state_data_t *setpoint, receiver_data_t *received_data );
-void translate_receiver_signal_rate( state_data_t *setpoint, receiver_data_t *received_data );
 #endif /* IMU_SIGNAL_PROCESSING_H_ */
 

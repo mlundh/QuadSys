@@ -79,7 +79,7 @@ CFLAGS+= -DBOARD=ARDUINO_DUE_X -DUDD_ENABLE -D__SAM3X8E__
 #
 # The flags passed to the linker.
 #
-LDFLAGS= -mthumb -Wl,-Map,"$(BUILD_DIR)/out.map" -Wl,--start-group -lm  -Wl,--end-group 
+LDFLAGS= -mthumb -Wl,-Map,"$(@).map" -Wl,--start-group -lm  -Wl,--end-group 
 LDFLAGS+= -Wl,--gc-sections -mcpu=cortex-m3 -T $(SCATTER_QuadFC) -Wl,--cref 
 LDFLAGS+= -Wl,--entry=$(ENTRY_QuadFC) -mthumb  -specs=nano.specs
 

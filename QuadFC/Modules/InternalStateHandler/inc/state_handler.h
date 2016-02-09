@@ -29,6 +29,7 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "semphr.h"
+#include "Utilities/inc/common_types.h"
 
 typedef enum state{
   state_init = 1,      // FC is initializing.
@@ -41,7 +42,7 @@ typedef enum state{
   state_not_available = 0, // state information not available.
 }state_t;
 
-typedef struct StateHandler StateHandler_t;
+//typedef struct StateHandler StateHandler_t;
 /**
  * Create the state handler object.
  * @return Handle to the created object.
@@ -49,8 +50,7 @@ typedef struct StateHandler StateHandler_t;
 StateHandler_t* State_CreateStateHandler();
 
 /**
- * Initialize the state handler. This will create queues used
- * in the implementation, and unlock the handler.
+ * Initialize the state handler. This will set the state to a fixed initial state.
  */
 void State_InitStateHandler(StateHandler_t*);
 

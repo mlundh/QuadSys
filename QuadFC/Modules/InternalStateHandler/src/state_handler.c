@@ -239,6 +239,7 @@ static void State_UpdateLed(StateHandler_t* obj)
 
   case state_arming:
     Led_Set(led_arming);
+    Led_Set(led_clear_error);
     return;
 
     break;

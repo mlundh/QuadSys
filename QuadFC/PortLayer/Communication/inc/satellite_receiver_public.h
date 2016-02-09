@@ -1,7 +1,7 @@
 /*
- * main_control_task.h
+ * satellite_receiver_public.h
  *
- * Copyright (C) 2015 Martin Lundh
+ * Copyright (C) 2016 Martin Lundh
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,11 +21,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+#ifndef PORTLAYER_COMMUNICATION_INC_SATELLITE_RECEIVER_PUBLIC_H_
+#define PORTLAYER_COMMUNICATION_INC_SATELLITE_RECEIVER_PUBLIC_H_
+#include "SetpointHandler/inc/setpoint_handler.h"
+/**
+ * Public interface for the satellite receiver task.
+ */
+void Satellite_CreateReceiverTask( StateHandler_t* stateHandler, SpObj_t* setpointHandler );
 
-#ifndef MAIN_CONTROL_TASK_H_
-#define MAIN_CONTROL_TASK_H_
-#include "Utilities/inc/common_types.h"
-
-void create_main_control_task( StateHandler_t* stateHandler, SpObj_t* setpointHandler );
-
-#endif /* MAIN_CONTROL_TASK_H_ */
+#endif /* PORTLAYER_COMMUNICATION_INC_SATELLITE_RECEIVER_PUBLIC_H_ */

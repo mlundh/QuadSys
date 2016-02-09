@@ -33,402 +33,386 @@
  * 11 least significant bits and channel number is contained
  * in the 4 bits over that.
  *
- * That is one frame looks as: [0 C C C C D D D D D D D D D D D]
+ * That is one channel looks as: [0 C C C C D D D D D D D D D D D]
  * Where "D" is data and "C" is channel.
  * 
  *
  */ 
 #include "PortLayer/Communication/inc/satellite_receiver_task.h"
-
+#include "PortLayer/Communication/inc/satellite_receiver_public.h"
+#include "QuadFC/QuadFC_Peripherals.h"
 #include "HMI/inc/led_control_task.h"
+#include "InternalStateHandler/inc/state_handler.h"
+#include "SetpointHandler/inc/setpoint_handler.h"
 
-int satellite_decode_signal(uint8_t data[], spektrum_data_t *decoded_data);
-static uint8_t receive_buffer[SATELLITE_MESSAGE_LENGTH*2];
+/*Include utilities*/
+#include "Utilities/inc/my_math.h"
+
+Satellite_t* Satellite_Init(StateHandler_t* stateHandler, SpObj_t* setpointHandler)
+{
+  /* Create the queue used to pass things to the display task*/
+  Satellite_t* taskParam = pvPortMalloc(sizeof(Satellite_t));
+  taskParam->decoded_data = pvPortMalloc(sizeof(spektrum_data_t));
+  taskParam->configuration = pvPortMalloc(sizeof(spectrum_config_t));
+  taskParam->setpoint = pvPortMalloc(sizeof(state_data_t));
+  taskParam->satellite_receive_buffer = pvPortMalloc(SATELLITE_MESSAGE_LENGTH * 2);
+  taskParam->setpointHandler = setpointHandler;
+  taskParam->stateHandler = stateHandler;
+  taskParam->divisor = 1;
+  taskParam->multiplier = 1;
+  taskParam->xMutexParam = xSemaphoreCreateMutex();
+
+  param_obj_t * ReceiverRoot = Param_CreateObj(2, NoType, readOnly, NULL, "Rcver", Param_GetRoot(), NULL);
+
+   // Enable receiver sensitivity adjustment.
+  Param_CreateObj(0, int32_variable_type, readWrite, &taskParam->multiplier, "mult", ReceiverRoot, taskParam->xMutexParam);
+  Param_CreateObj(0, int32_variable_type, readWrite, &taskParam->divisor, "div", ReceiverRoot, taskParam->xMutexParam);
+
+  if( !taskParam || !taskParam->decoded_data || !taskParam->configuration || !taskParam->setpoint
+      || !taskParam->satellite_receive_buffer || !taskParam->xMutexParam)
+  {
+    return NULL;
+  }
+  //Scope so that the tmp structs live a short life.
+  {
+    spektrum_data_t tmpData = {0};
+    *taskParam->decoded_data = tmpData;
+
+    spectrum_config_t tmpConfig = {0};
+    *taskParam->configuration = tmpConfig;
+
+    state_data_t tmpSetpoint = {0};
+    *taskParam->setpoint = tmpSetpoint;
+  }
+
+  return taskParam;
+}
+
 
 /*void create_satellite_receiver_task(void)
  * Spectrum satellite receiver task. Initialize the USART instance
  * and create the task.
- *
  */ 
-void create_satellite_receiver_task(void)
+void Satellite_CreateReceiverTask(  StateHandler_t* stateHandler, SpObj_t* setPointHandler )
 {
-    
-    freertos_usart_if freertos_usart;
-    
-    freertos_peripheral_options_t driver_options = {
-        receive_buffer,									/* The buffer used internally by the USART driver to store incoming characters. */
-        SATELLITE_MESSAGE_LENGTH,     					/* The size of the buffer provided to the USART driver to store incoming characters. */
-        (configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY + 3),	/* The priority used by the USART interrupts. */
-        USART_RS232,									/* Configure the USART for RS232 operation. */
-        (WAIT_TX_COMPLETE|WAIT_RX_COMPLETE)				/* Wait for Tx and Rx to complete before returning from functions. */
-    };
+  uint8_t* receiver_buffer_driver = pvPortMalloc(
+      sizeof(uint8_t) * SATELLITE_MESSAGE_LENGTH*2 );
 
-    const sam_usart_opt_t usart_settings = {
-        BAUD_SATELLITE,                                 /* Speed of the transfer, baud*/
-        US_MR_CHRL_8_BIT,                               /* 8 bit transfer*/
-        US_MR_PAR_NO,                                   /* No parity*/
-        US_MR_NBSTOP_1_BIT,                             /* One stop bit*/
-        US_MR_CHMODE_NORMAL,                            /* */
-        0                                               /* Only used in IrDA mode. */
-    };
+  Satellite_t *SatelliteParam = Satellite_Init(stateHandler, setPointHandler);
 
-    /* Initialize the USART interface. */
-    freertos_usart = freertos_usart_serial_init(SATELITE_USART,
-                                                &usart_settings,
-                                                &driver_options);
-    if (freertos_usart == NULL)
+
+  if(!SatelliteParam || !receiver_buffer_driver)
+  {
+    for ( ;; );
+  }
+
+  QuadFC_SerialOptions_t opt = {
+      BAUD_SATELLITE,
+      EightDataBits,
+      NoParity,
+      OneStopBit,
+      NoFlowControl,
+      receiver_buffer_driver,
+      SATELLITE_MESSAGE_LENGTH*2
+  };
+
+  uint8_t rsp = QuadFC_SerialInit(SATELITE_USART, &opt);
+  if(!rsp)
+  {
+    /*Error - Could not create serial interface.*/
+
+    for ( ;; )
     {
-        for (;;)
-        {
 
-        }
     }
-    
-    /*Create the worker task*/
-	xTaskCreate(	satellite_receiver_task,					    /* The task that implements the test. */
-					"Satellite",	                            /* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
-					500,							    /* The size of the stack allocated to the task. */
-					(void *) freertos_usart,		    /* The parameter is used to pass the already configured USART port into the task. */
-					configMAX_PRIORITIES-2,			    /* The priority allocated to the task. */
-		    		NULL);							    /* Used to store the handle to the created task - in this case the handle is not required. */
+  }
+
+  /*Create the worker task*/
+  xTaskCreate(	Satellite_ReceiverTask,   /* The task that implements the test. */
+      "Satellite",                        /* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
+      500,                                /* The size of the stack allocated to the task. */
+      (void *) SatelliteParam,            /* The parameter is used to pass the already configured USART port into the task. */
+      configMAX_PRIORITIES-2,             /* The priority allocated to the task. */
+      NULL);                              /* Used to store the handle to the created task - in this case the handle is not required. */
 }
 
 
-/* void satellite_receiver_task(void *pvParameters)
- *
- * Task communicating with the satellite receiver. 
- *
- * it is necessary to sync communication with the satellite receiver to
- * ensure that each frame is captured as a whole. A frame consists of 
- * 16 consecutive bytes that should be received without delay. A new 
- * frame should arrive every 11 or 22 ms.
+/*
 
  */
-void satellite_receiver_task(void *pvParameters)
+void Satellite_ReceiverTask(void *pvParameters)
 {
-   
-    
-  uint8_t satellite_receive_buffer[SATELLITE_MESSAGE_LENGTH];
-  const portBASE_TYPE satellite_block_time = 25UL / portTICK_PERIOD_MS;	        // One frame each 11 or 22 ms. This causes an error message if no valid rc-signal is detected. 25ms between reads
-  const portBASE_TYPE satellite_block_time_sync = 5UL / portTICK_PERIOD_MS;		// One frame each 11 ms
+  /**
+   * One frame each 11 or 22 ms. This causes an error message
+   * if no valid rc-signal is detected. 25ms between reads.
+   */
+  const portBASE_TYPE satellite_block_time = 25UL / portTICK_PERIOD_MS;
+  /**
+   *  One frame each 11 ms.
+   */
+  const portBASE_TYPE satellite_block_time_sync = 5UL / portTICK_PERIOD_MS;
 
 
   uint8_t bytes_read = 0;
-  uint8_t timeout_ok = 0;
-  spektrum_data_t decoded_data;
-  spektrum_channels_t merged_data;
-  receiver_data_t satellite_data_legacy;
-    
-  /*The already open usart port is passed through the task parameters*/
-  freertos_usart_if spectrum_usart = (freertos_usart_if)pvParameters;
 
-  /* Initialize the data structure that holds the decoded reciever data */
-  decoded_data.ch_count = sizeof(decoded_data.ch)/sizeof(decoded_data.ch[0]);
-  decoded_data.frame_type_count = sizeof(decoded_data.frame_type)/sizeof(decoded_data.frame_type[0]);
-  for (int i = 0; i < decoded_data.ch_count; i++) {
-    decoded_data.ch[i].value = 0;
-  }
-  for (int i = 0; i < decoded_data.frame_type_count; i++) {
-    decoded_data.frame_type[i].channels = 0;
-    decoded_data.frame_type[i].confidence = 0;
-  }
-  decoded_data.confident_frame_types = false;
-  decoded_data.channels_available = 0;
-
-  /* Initialize the data structure where we merg data from multiple reciever frames */
-  merged_data.ch_count          = sizeof(merged_data.ch)/sizeof(merged_data.ch[0]);
-  merged_data.channels_merged   = 0;
-  merged_data.updated = false;
-  merged_data.frames_needed = 0;
-  for (int i = 0; i < merged_data.ch_count; i++) {
-    merged_data.ch[i].value = 0;
-  }
+  Satellite_t* param = (Satellite_t*)pvParameters;
+  spektrum_data_t* decoded_data = param->decoded_data;
+  spectrum_config_t* configuration = param->configuration;
+  state_data_t* setpoint = param->setpoint;
+  uint8_t *satellite_receive_buffer = param->satellite_receive_buffer;
+  SpObj_t* setpointHandler = param->setpointHandler;
 
   /*Like most tasks this is realized by a never-ending loop*/
-    
-  // TODO add check that the queue is empty
   for ( ;; )
   {
-    // LED
-    //uint8_t led_state = clear_error_led2;
-    //xQueueSendToBack(xQueue_led, &led_state, mainDONT_BLOCK);
-    
-    if (true == merged_data.updated)
-    {
-      merged_data.channels_merged = 0;
-      merged_data.updated         = false;
-      merged_data.frames_needed   = 0;
-      for (int i = 0; i < merged_data.ch_count; i++) {
-        merged_data.ch[i].value = 0;
-      }
-    }
-      
     /*Read data from the satellite receiver, wait longer than the period of the frames.*/
-    bytes_read = freertos_usart_serial_read_packet(spectrum_usart, satellite_receive_buffer, SATELLITE_MESSAGE_LENGTH, satellite_block_time);
-    merged_data.frames_needed++;
-    
-    /*If not 16 bytes are read something is wrong */
-    if ((bytes_read != SATELLITE_MESSAGE_LENGTH))
+
+    QuadFC_Serial_t serialData;
+    serialData.buffer = satellite_receive_buffer;
+    serialData.bufferLength = SATELLITE_MESSAGE_LENGTH;
+    bytes_read = QuadFC_SerialRead(&serialData, SATELITE_USART, satellite_block_time);
+
+    /*If 16 bytes are read then all is ok, otherwise skip. */
+    if ((bytes_read == SATELLITE_MESSAGE_LENGTH))
     {
-      /*error!*/
-      decoded_data.channels_last_read = 0;
-      // Send incomplete data to the FC indicating that there is an error.
-      satellite_data_legacy = dx7s_to_legacy_fc_channels(&merged_data);
-      xQueueSendToBack(xQueue_receiver, &satellite_data_legacy, mainDONT_BLOCK);
-    }
-    else
-    {
-      int ret = satellite_decode_signal(satellite_receive_buffer, &decoded_data);
-      if (0 == ret)
+      int ret = Satellite_DecodeSignal(satellite_receive_buffer, configuration, decoded_data);
+      if (ret)
       {
-        for (int i = 0; i < merged_data.ch_count; i++) {
-          if (0 < (decoded_data.channels_last_read & (1 << i)))
-          {
-            merged_data.ch[i].value        = decoded_data.ch[i].value;
-          }
-        }
-        merged_data.channels_merged |= decoded_data.channels_last_read;
-        if (merged_data.channels_merged == decoded_data.channels_available)
+        decoded_data->channels_merged |= decoded_data->channels_last_read;
+
+        // If all channels in the configuration are present then we have a complete setpoint.
+        if (decoded_data->channels_merged == configuration->channels_available)
         {
           // We have a complete set of channels.
-          merged_data.updated = true;
-          
-          // LED
-          //uint8_t led_state = warning_lost_com_message;
-          //xQueueSendToBack(xQueue_led, &led_state, mainDONT_BLOCK);
-          
-          // Convert to the old format used by the flight controller.
-          satellite_data_legacy = dx7s_to_legacy_fc_channels(&merged_data);
-          // Send the data to the back of the queue
-          xQueueSendToBack(xQueue_receiver, &satellite_data_legacy, mainDONT_BLOCK);
-        } else if (merged_data.frames_needed > 2) {
-          // Send incomplete data to the FC indicating that there is an error.
-          satellite_data_legacy = dx7s_to_legacy_fc_channels(&merged_data);
-          xQueueSendToBack(xQueue_receiver, &satellite_data_legacy, mainDONT_BLOCK);
-        }
-      }
-      else
-      {
-        // Send incomplete data to the FC indicating that there is an error.
-        satellite_data_legacy = dx7s_to_legacy_fc_channels(&merged_data);
-        xQueueSendToBack(xQueue_receiver, &satellite_data_legacy, mainDONT_BLOCK);
-        // Something went wrong parsing the data
-        if (ret == -1)
-        {
-          // Check return values...
+          Satellite_MapToSetpointRate(param, decoded_data, setpoint);
+          SpHandl_SetSetpoint(setpointHandler, setpoint, MESSAGE_VALID_FOR_MS, 1);
+          Satellite_UpdateState(param, decoded_data);
+
         }
       }
     }
 
-    timeout_ok = freertos_usart_serial_read_packet(spectrum_usart, satellite_receive_buffer,
-    SATELLITE_MESSAGE_LENGTH*2,
-    satellite_block_time_sync);
-    if (timeout_ok >=SATELLITE_MESSAGE_LENGTH)
+    // Sync by reading with a timeout smaller than that between two messages,
+    // but longer than a single message.
+    QuadFC_Serial_t serialDataSync;
+    serialDataSync.buffer = satellite_receive_buffer;
+    serialDataSync.bufferLength = SATELLITE_MESSAGE_LENGTH*2;
+    uint32_t nr_bytes_received = QuadFC_SerialRead(&serialDataSync, SATELITE_USART, satellite_block_time_sync);
+
+    if (nr_bytes_received >=SATELLITE_MESSAGE_LENGTH)
     {
       /*no timeout occurred, error!*/
     }
   }
 }
 
-
-/* -------------------------------------------------------------------
- * Helper functions
- *--------------------------------------------------------------------
- */
-
-/* void satellite_decode_signal(uint8_t data[], receiver_data_t *decoded_data)
- * 
- * Data is written into the struct struct receiver_data *decoded_data, if
- * the field decoded_data->connection_ok is 0 then the decoding was sucsessful,
- * otherwise something is wrong and values in the struct should be discarded. 
- * 
- */
-int satellite_decode_signal(uint8_t data[], spektrum_data_t *decoded_data){
+int Satellite_DecodeSignal(uint8_t* data, spectrum_config_t* configuration, spektrum_data_t* spectrum_data)
+{
   uint32_t raw_data;
   uint32_t channel;
   uint32_t channel_data;
-  uint16_t check = 0;
-  int ret = 0;
-    
-  // Create a working copy where we can store the extracted channel data temporarily.
-  spektrum_channel_t l_channel_data[decoded_data->ch_count];
-  for (int i = 0; i < decoded_data->ch_count; i++) {
-    l_channel_data[i].value = 0;
-  }
-    
-  /******************************************************************
-  * Check that the frame we recieved match one of the expected ones.
-  ******************************************************************/
+  // Check uses the individual bits to determine if the channel has been seen.
+  uint16_t channels_in_current_frame = 0;
 
-  /*Each channel uses two bytes of information as described in the above comment.*/
-  for (int i=2; i<16; i += 2) // The first two bytes (0 & 1 are headers with quality factors etc.)
+  // Create a working copy where we can store the extracted channel data temporarily.
+  // We are using a local copy to allow multiple frames to be merged, at the same time
+  // as we make sure that we can safely discard any faulty frames.
+  spektrum_channel_t l_channel_data[NUMBER_OF_CHANNELS] = {0};
+
+  /*
+   * Each channel uses two bytes of information as described in the above comment.
+   * The first two bytes (0 & 1) are headers with quality factors etc.
+   */
+  for (int i=2; i<16; i += 2)
   {
-    raw_data = ((uint32_t)data[i]<<8) | ((uint32_t)data[i+1]);		// Combine the two bytes of data that represents one channel.
-    channel = (raw_data & SATELLITE_CHANNEL_MASK) >> 11;			// Get the channel.
-    channel_data = (raw_data & SATELLITE_DATA_MASK);				// Get the data.
-      
-    if (channel < 15) // Channel 15 represent unused fields in the frame. All channel numbers should be less then that.
+    // Extract data and channel info.
+    raw_data = ((uint32_t)data[i]<<8) | ((uint32_t)data[i+1]);    // Combine the two bytes of data that represents one channel.
+    channel = (raw_data & SATELLITE_CHANNEL_MASK) >> 11;          // Get the channel number.
+    channel_data = (raw_data & SATELLITE_DATA_MASK);              // Get the data.
+
+    // Verify that the data is valid and that we have not seen this before.
+
+    /*
+     * Channel 15 represent unused fields in the frame. All channel numbers
+     * should be less then that.
+     */
+    if (channel < NUMBER_OF_CHANNELS)
     {
-      if (!(check & (1 << channel))) // Channel has not been set while updating this frame. (All is fine if the bit is set to 0.)
+      if (! (channels_in_current_frame & (1 << channel)))
       {
+        // The current channel has not been set while updating this frame.
+        // (All is fine if the bit in channels_in_current_frame is set to 0.)
         l_channel_data[channel].value = channel_data;
-        check |= 1 << channel;
+        channels_in_current_frame |= 1 << channel;
       }
       else
       {
-        // If something went wrong and we see a chennel more then once.
-        ret = -1;
+        // If something went wrong and we have already seen this channel.
+        return 0;
       }
     }
   }
-    
-  if (decoded_data->confident_frame_types) {
+
+  if (configuration->confident_frame_config)
+  {
     // We have a known set of frames. Anything other then that should be discarded.
-    bool known = false;
-    for (int i = 0; i < decoded_data->frame_type_count; i++)
+    uint8_t known = 0;
+    for (int i = 0; i < MAX_NUMBER_OF_FRAME_TYPES; i++)
     {
-      if ((check == decoded_data->frame_type[i].channels) && (decoded_data->frame_type[i].confidence > FRAME_CONFIDENCE_THRESHOLD)) {
+      if ((channels_in_current_frame == configuration->frame_types_present[i].channels) && !known)
+      {
         // This channel configuration is known.
-        known = true;
+        known = 1;
       }
     }
-    if (!known) {
-      // The frame configuration is unknown and should not be used.
-      ret = -2;
-      return ret;
-    }
-  }
-    
-  // At this point we know that the frame matches what we expect and that the data can be trusted.
-  // Copy the extracted data to the real data structure and update the confidence.
-  for (int channel_nr = 0; channel_nr < decoded_data->ch_count; channel_nr++) {
-    if( 0 < (check & (1 << channel_nr)))
+    if (!known)
     {
-      decoded_data->ch[channel_nr].value = l_channel_data[channel_nr].value;
+      // The frame configuration is unknown and should not be used.
+      return 0;
     }
+    // At this point we know that the frame matches what we expect and that the data can be trusted.
+    // Copy the extracted data to the real data structure.
+    for (int channel_nr = 0; channel_nr < NUMBER_OF_CHANNELS; channel_nr++)
+    {
+      if( 0 < (channels_in_current_frame & (1 << channel_nr)))
+      {
+        spectrum_data->ch[channel_nr].value = l_channel_data[channel_nr].value;
+      }
+    }
+    spectrum_data->channels_last_read = channels_in_current_frame;
   }
-  decoded_data->channels_last_read = check;
+  else
+  {
+    // No fixed frame config, try to lock a frame config.
+    Satellite_LockFrameType(configuration, channels_in_current_frame);
+    // We should not use the frame since we do not have a confident configuration.
+    return 0;
+  }
+  return 1;
+}
 
-
+uint8_t Satellite_LockFrameType(spectrum_config_t* configuration, uint16_t channels_in_current_frame)
+{
+  // Validate the input. This function should not be called if we have a valid configuration.
+  if (configuration->confident_frame_config)
+  {
+    return 0;
+  }
   /*
    * Build confidence in the frame setup.
    * The process:
    * 1. Check if the frame configuration has been seen before. Increase confidence if it has.
    * 2. If it is a new or unknown configuration, try adding it to an unused slot. (Where count is 0.)
-   * 3. Retart validation of all frames below a threshold if all slots are occupied.    
-  */
-  if (!decoded_data->confident_frame_types)
+   * 3. Restart validation of all frames below a threshold if all slots are occupied.
+   */
+
+  // We have not yet reached a state where we can trust the frames.
+  uint8_t match = 0;
+  for (int i = 0; i < MAX_NUMBER_OF_FRAME_TYPES; i++)
   {
-    // We have not yet reached a state where we can trust the frames.
-    bool match = false;
-    for (int i = 0; i < decoded_data->frame_type_count; i++)
+    // Loop through all the stored frame configurations.
+    if (channels_in_current_frame == configuration->frame_types_present[i].channels)
     {
-      // Loop through all the stored frame configurations.
-      if (check == decoded_data->frame_type[i].channels) {
-        // A frame with the same channel setup has been recived before. Good!
-        if (decoded_data->frame_type[i].confidence < FRAME_CONFIDENCE_MAX)
+      // A frame with the same channel setup has been received before. Good!
+      match = 1;
+      // Increase confidence in the frame configuration if it hasn't maxed out already.
+      if (configuration->frame_types_present[i].confidence < FRAME_CONFIDENCE_MAX)
+      {
+        configuration->frame_types_present[i].confidence++;
+        if(configuration->frame_types_present[i].confidence >= FRAME_CONFIDENCE_MAX)
         {
-          // Increase confidence in the frame configuration if it hasn't maxed out already.
-          decoded_data->frame_type[i].confidence++;
-          if (decoded_data->frame_type[i].confidence == FRAME_CONFIDENCE_MAX)
+          // One frame has reached max confidence. Generate a list of all available channels.
+          configuration->confident_frame_config = 1;
+          for (int j = 0; j < MAX_NUMBER_OF_FRAME_TYPES; j++)
           {
-            // One frame has reached max confidence. Generate a list of all available channels.
-            decoded_data->confident_frame_types = true;
-            for (int j = 0; j < decoded_data->frame_type_count; j++)
+            // Loop through all the stored frame configurations and store all availible channels.
+            if (configuration->frame_types_present[j].confidence > FRAME_CONFIDENCE_THRESHOLD)
             {
-              // Loop through all the stored frame configurations.
-              if (decoded_data->confident_frame_types && (decoded_data->frame_type[j].confidence > FRAME_CONFIDENCE_THRESHOLD))
-              {
-                decoded_data->channels_available |= decoded_data->frame_type[j].channels;
-              }
+              configuration->channels_available |= configuration->frame_types_present[j].channels;
             }
           }
         }
-        match = true;
       }
     }
-    if (match) {
-      return ret; // We already found the frame. Good!
-    }
-    
+  }
+
+  uint8_t ret = 0;
+  if (match)
+  {
+    ret = 1; // We already found the frame. Good!
+  }
+  else
+  {
     // This frame configuration is unknown, try to add it.
-    for (int i = 0; i < decoded_data->frame_type_count; i++)
+    for (int i = 0; i < MAX_NUMBER_OF_FRAME_TYPES; i++)
     {
       // Loop through all the stored frame configurations.
-      if (decoded_data->frame_type[i].confidence == 0) {
-        // An available slot is found. Add then return.
-        decoded_data->frame_type[i].channels = check;
-        decoded_data->frame_type[i].confidence = 1;
-        return ret;
+      if (configuration->frame_types_present[i].confidence == 0 && !ret)
+      {
+        // An available slot is found.
+        configuration->frame_types_present[i].channels = channels_in_current_frame;
+        configuration->frame_types_present[i].confidence = 1;
+        // This is a valid state, indicate this.
+        ret = 1;
       }
     }
-    
+  }
+
+  if(!ret)
+  {
     // Too many frames of different configurations seen. Restarting validation...
-    for (int i = 0; i < decoded_data->frame_type_count; i++)
+    for (int i = 0; i < MAX_NUMBER_OF_FRAME_TYPES; i++)
     {
       // Loop through all the stored frame configurations.
-      if (decoded_data->frame_type[i].confidence < FRAME_CONFIDENCE_THRESHOLD) // Reset frames if the threshold is not met.
+      // Reset frames if the threshold is not met.
+      if (configuration->frame_types_present[i].confidence < FRAME_CONFIDENCE_THRESHOLD)
       {
-        decoded_data->frame_type[i].channels = 0;
-        decoded_data->frame_type[i].confidence = 0;
+        configuration->frame_types_present[i].channels = 0;
+        configuration->frame_types_present[i].confidence = 0;
       }
     }
   }
   return ret;
 }
 
-/**********************************************************************
- * Function to map into a new format the FC will understand eventually.
- **********************************************************************/
-
-fc_channels_t dx7s_to_fc_channels(spektrum_channels_t *reciever_channels) {
-  fc_channels_t control_channels;
-  control_channels.stick_left_up_down.value         = 32*reciever_channels->ch[0].value;
-  control_channels.stick_left_up_down.updated       = (0 < (reciever_channels->channels_merged & (1 << 0))) ? reciever_channels->updated : false;
-  
-  control_channels.stick_left_right_left.value      = 32*reciever_channels->ch[3].value;
-  control_channels.stick_left_right_left.updated    = (0 < (reciever_channels->channels_merged & (1 << 3))) ? reciever_channels->updated : false;
-  
-  control_channels.stick_right_up_down.value        = 32*reciever_channels->ch[2].value;
-  control_channels.stick_right_up_down.updated      = (0 < (reciever_channels->channels_merged & (1 << 2))) ? reciever_channels->updated : false;
-  
-  control_channels.stick_right_right_left.value     = 32*reciever_channels->ch[1].value;
-  control_channels.stick_right_right_left.updated   = (0 < (reciever_channels->channels_merged & (1 << 1))) ? reciever_channels->updated : false;
-  
-  control_channels.aux[0].value                     = 32*reciever_channels->ch[5].value; // FLAP
-  control_channels.aux[0].updated                   = (0 < (reciever_channels->channels_merged & (1 << 5))) ? reciever_channels->updated : false;
-  
-  control_channels.aux[1].value                     = 32*reciever_channels->ch[4].value; // GEAR
-  control_channels.aux[1].updated                   = (0 < (reciever_channels->channels_merged & (1 << 4))) ? reciever_channels->updated : false;
-  
-  control_channels.aux[2].value                     = 32*reciever_channels->ch[6].value; // AUX2
-  control_channels.aux[2].updated                   = (0 < (reciever_channels->channels_merged & (1 << 6))) ? reciever_channels->updated : false;
-  
-  control_channels.aux_channel_count = sizeof(control_channels.aux)/sizeof(control_channels.aux[0]);
-  
-  for (int i = 3; i > control_channels.aux_channel_count; i++)
+void Satellite_MapToSetpointRate(Satellite_t* obj, spektrum_data_t *reciever_data, state_data_t *setpoint)
+{
+  if( xSemaphoreTake( obj->xMutexParam, ( TickType_t )(1UL / portTICK_PERIOD_MS) ) == pdTRUE )
   {
-    control_channels.aux[i].updated = false;
+    setpoint->state_vector[z_vel]               = reciever_data->ch[0].value; // THRO
+    setpoint->state_vector[yaw_rate]            = ((reciever_data->ch[3].value - SATELLITE_CH_CENTER) * obj->multiplier); // YAW
+    setpoint->state_vector[pitch_rate]          = ((reciever_data->ch[2].value - SATELLITE_CH_CENTER) * obj->multiplier); // PITCH
+    setpoint->state_vector[roll_rate]           = ((reciever_data->ch[1].value - SATELLITE_CH_CENTER) * obj->multiplier); // ROLL
+
+    if(obj->divisor > 0)
+    {
+      setpoint->state_vector[yaw_rate]  = (setpoint->state_vector[yaw_rate]  / obj->divisor);
+      setpoint->state_vector[pitch_rate]= (setpoint->state_vector[pitch_rate]/ obj->divisor);
+      setpoint->state_vector[roll_rate] = (setpoint->state_vector[roll_rate] / obj->divisor);
+    }
+    xSemaphoreGive(obj->xMutexParam);
   }
-  
-  return control_channels;
+  return;
 }
 
-/*****************************************************
- * Function to map into a legacy format the FC
- * will understand. (adapt to the current FC format.)
- *****************************************************/
-
-receiver_data_t dx7s_to_legacy_fc_channels(spektrum_channels_t *reciever_channels) {
-  receiver_data_t control_channels;
-  control_channels.ch0            = reciever_channels->ch[0].value; // THRO
-  control_channels.ch3            = reciever_channels->ch[3].value; // YAW
-  control_channels.ch2            = reciever_channels->ch[2].value; // PITCH
-  control_channels.ch1            = reciever_channels->ch[1].value; // ROLL
-  control_channels.ch5            = reciever_channels->ch[4].value; // FLAP
-  control_channels.ch6            = reciever_channels->ch[5].value; // GEAR
-  control_channels.connection_ok  = reciever_channels->updated;
-  
-  //reciever_channels->updated = false;
-  return control_channels;
+uint8_t Satellite_UpdateState(Satellite_t* obj, spektrum_data_t *merged_data)
+{
+  /*Disarm requested*/
+  uint8_t ret = 1;
+  if ((merged_data->ch[4].value > SATELLITE_CH_CENTER) // Flap is on
+      && (merged_data->ch[0].value < 40)) // throttle is low
+  {
+    if(pdTRUE == State_Change(obj->stateHandler, state_disarming))
+    {
+    }
+  }
+  /*Arming request*/
+  else if ((merged_data->ch[4].value < SATELLITE_CH_CENTER) // Flap is off
+      && (merged_data->ch[0].value < 40)) // throttle is low
+  {
+    if(pdTRUE == State_Change(obj->stateHandler, state_arming))
+    {
+    }
+  }
+  return ret;
 }

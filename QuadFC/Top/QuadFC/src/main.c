@@ -29,16 +29,18 @@
 #include "queue.h"
 #include "timers.h"
 
-/*Include units*/
+/*Include tasks*/
 #include "FlightController/inc/main_control_task.h"
 #include "Communication/inc/communication_tasks.h"
 #include "HMI/inc/led_control_task.h"
+#include "PortLayer/Communication/inc/satellite_receiver_public.h"
 
+/*include utilities*/
 #include "Utilities/inc/globals.h"
+#include "Utilities/inc/common_types.h"
 
-/*TODO refactor, remove*/
-#include "PortLayer/Communication/inc/satellite_receiver_task.h"
-#include "PortLayer/Sensors/inc/range_meter.h"
+/*Include task communication modules*/
+#include "InternalStateHandler/inc/state_handler.h"
 
 /*
  * FreeRTOS hook (or callback) functions that are defined in this file.
@@ -49,8 +51,6 @@ void vApplicationStackOverflowHook( TaskHandle_t pxTask,
     signed char *pcTaskName );
 void vApplicationTickHook( void );
 
- QueueHandle_t xQueue_receiver = NULL;
- QueueHandle_t xQueue_ranger = NULL;
 /*
  * Set up the hardware to run QuadFC.
  */
@@ -62,28 +62,14 @@ int main( void )
   /* Prepare the hardware to run QuadFC. */
   prvSetupHardware();
 
-  /* Create the queue used for receiver communication*/
-  xQueue_receiver = xQueueCreate( RECEIVER_QUEUE_LENGTH,
-      RECEIVER_QUEUE_ITEM_SIZE );
+  /*Create cross-task communication utilities.*/
+  SpObj_t* SetpointHandler = SpHandl_Create();
+  StateHandler_t* stateHandler = State_CreateStateHandler();
 
-  /*Create the queue used to pass new range data to the main task*/
-  xQueue_ranger = xQueueCreate( RANGER_QUEUE_LENGTH, RANGER_QUEUE_ITEM_SIZE );
-  /* Create the queue used to set the LED status*/
-
-
-
-  if ( !xQueue_receiver || !xQueue_ranger)
-  {
-    /*If one of thee queues could not be created, do nothing*/
-    for ( ;; )
-    {
-    }
-  }
   /* Create all tasks used in the application.*/
-  create_satellite_receiver_task();
+  create_main_control_task(stateHandler, SetpointHandler);
+  Satellite_CreateReceiverTask(stateHandler, SetpointHandler);
   Led_CreateLedControlTask();
-//  create_range_meter_task();
-  create_main_control_task();
 
   /*Should always be created last as it loads the parameters*/
   Com_CreateTasks(); // Creates two tasks, RX and TX.

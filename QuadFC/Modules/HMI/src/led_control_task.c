@@ -122,8 +122,9 @@ void Led_ControlTask( void *pvParameters )
       break;
 
     case led_fault:
-      mode_state_led_1 = led_const_on;
-      mode_state_led_2 = led_const_on;
+      mode_error_led_1 = led_const_on;
+      mode_error_led_2 = led_const_on;
+      mode_state_led_1 = led_off;
       break;
 
     case led_control_mode_rate:

@@ -24,37 +24,7 @@
 /* QuadFC - A quadcopter flight controller.
  * 
  *
- * This is the main task in the QuadFC. This is the core of the QuadFC and interfaces 
- * described in main_control_task.h and main.h should always be obeyed. 
-
- * The task follows the structure below.
- * -------------------------------------------------------------------------------------------------------
- *
- *
- *      Check current flight mode.              (Landed, landing, flying, taking off?)
- *                  |
- *            Read sensors.                     (TWI communication)
- *                  |
- *        Filter sensor values.                 (kalman or complementary filer)
- *                  |
- *         Get reference signal.                (From radio control system or path planning, USART or queue)
- *                  |
- *      Calculate control signal.               (PID or LQG)
- *                  |
- *     Write control signal to motors.          (TWI communication)
- *                  |
- *          Read motor data.                    (Possibly)
- *                  |
- *       Check quadcopter status.               (Errors, self check etc.)
- *                  |
- *          Heartbeat signal.                   (Led, visual indication that everything is OK)
- *                  |
- *         Wait motor data sent                 (PDC says ok, might be moved to right before read sensors)
- *                  |
- *
- *
- *
- * ----------------------------------------------------------------------------------------------------------
+ * This is the main task in the QuadFC.
  */
 
 #include "FlightController/inc/main_control_task.h"
@@ -62,6 +32,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
+#include "timers.h"
 
 /*include drivers*/
 #include <gpio.h>
@@ -73,18 +44,18 @@
 
 /* Modules */
 #include "FlightController/inc/control_system.h"
-#include "FlightController/inc/state_handler.h"
+#include "InternalStateHandler/inc/state_handler.h"
 
 #include "StateEstimator/inc/state_estimator.h"
 #include "StateEstimator/inc/imu_signal_processing.h"
 #include "QuadFC/QuadFC_MotorControl.h"
 #include "Parameters/inc/parameters.h"
+#include "SetpointHandler/inc/setpoint_handler.h"
 
+/*Include Utilities*/
 #include "Utilities/inc/globals.h"
-#include "Utilities/inc/common_types.h"
 
-/*TODO Refactor, remove*/
-#include "PortLayer/Communication/inc/satellite_receiver_task.h"
+const static uint16_t SpTimeoutTimeMs = 500;
 
 
 // Struct only used here to pass parameters to the task.
@@ -97,6 +68,8 @@ typedef struct mainTaskParams
   MotorControlObj *motorControl;
   StateHandler_t* stateHandler;
   StateEst_t* stateEst;
+  SpObj_t* setPointHandler;
+  TimerHandle_t xTimer;
 }MaintaskParams_t;
 
 void main_control_task( void *pvParameters );
@@ -107,11 +80,15 @@ void main_control_task( void *pvParameters );
  */
 void main_fault(MaintaskParams_t *param);
 
+
+void main_TimerCallback( TimerHandle_t pxTimer );
+
+
 /*
  * void create_main_control_task(void)
  */
 
-void create_main_control_task( void )
+void create_main_control_task(  StateHandler_t* stateHandler, SpObj_t* setpointHandler )
 {
   /*Create the task*/
 
@@ -121,14 +98,16 @@ void create_main_control_task( void )
   taskParam->state = pvPortMalloc( sizeof(state_data_t) );
   taskParam->control_signal = pvPortMalloc( sizeof(control_signal_t) );
   taskParam->motorControl = MotorCtrl_CreateAndInit(4);
-  taskParam->stateHandler = State_CreateStateHandler();
+  taskParam->stateHandler = stateHandler;
   taskParam->stateEst = StateEst_Create();
+  taskParam->setPointHandler = setpointHandler;
+  taskParam->xTimer = xTimerCreate("Tmain", SpTimeoutTimeMs / portTICK_PERIOD_MS, pdFALSE, ( void * ) taskParam, main_TimerCallback);
 
   /*Ensure that all mallocs returned valid pointers*/
    if (   !taskParam || !taskParam->ctrl || !taskParam->setpoint
        || !taskParam->state || !taskParam->control_signal
        || !taskParam->motorControl || !taskParam->stateHandler
-       || !taskParam->stateEst)
+       || !taskParam->stateEst || !taskParam->setPointHandler)
    {
      for ( ;; )
      {
@@ -166,41 +145,18 @@ void main_control_task( void *pvParameters )
 
   MaintaskParams_t * param = (MaintaskParams_t*)(pvParameters);
 
-  receiver_data_t *local_receiver_buffer = pvPortMalloc( sizeof(receiver_data_t) );
-
-
-  /*Ensure that all mallocs returned valid pointers*/
-  if ( !local_receiver_buffer )
-  {
-    for ( ;; )
-    {
-      // TODO error handling!
-    }
-  }
-
-
-  /*Data received from RC receiver task */
-
-  local_receiver_buffer->ch0 = 0; /* throttle, should be 0 at first. */
-  local_receiver_buffer->ch1 = SATELLITE_CH_CENTER;
-  local_receiver_buffer->ch2 = SATELLITE_CH_CENTER;
-  local_receiver_buffer->ch3 = SATELLITE_CH_CENTER;
-  local_receiver_buffer->ch4 = SATELLITE_CH_CENTER;
-  local_receiver_buffer->ch5 = SATELLITE_CH_CENTER;
-  local_receiver_buffer->ch6 = SATELLITE_CH_CENTER;
-  local_receiver_buffer->sync = 0;
-  local_receiver_buffer->connection_ok = 0;
-
+  /*Initialize modules*/
   State_InitStateHandler(param->stateHandler);
   Ctrl_init(param->ctrl);
 
+  /*Utility variables*/
   TickType_t arming_counter = 0;
   uint32_t heartbeat_counter = 0;
-  uint32_t spectrum_receiver_error_counter = 0;
 
   /*The main control loop*/
 
   unsigned portBASE_TYPE xLastWakeTime = xTaskGetTickCount();
+
   for ( ;; )
   {
 
@@ -218,8 +174,7 @@ void main_control_task( void *pvParameters )
       {
         main_fault(param);
       }
-
-      // StateEst_init(); // Might take time, reset the last wake time to avoid errors.
+      // StateEst_init Might take time, reset the last wake time to avoid errors.
       xLastWakeTime = xTaskGetTickCount();
 
       if(pdTRUE != State_Change(param->stateHandler, state_disarming))
@@ -269,12 +224,37 @@ void main_control_task( void *pvParameters )
       /*-----------------------------------------armed mode---------------------------
        * The FC is armed and operational. The main control loop only handles
        * the Control system.
-       */
+       *
+       * Get current setpoint. If there is no active setpoint start a timer
+       * that will disarm the copter when it expires. If a valid setpoint
+       * is received before the timer expires, then the timer is stopped.
+       * */
+      if(!SpHandl_GetSetpoint(param->setPointHandler, param->setpoint, 0 ))
+      {
+        if( xTimerIsTimerActive( param->xTimer ) != pdTRUE )
+        {
+          if( xTimerStart( param->xTimer, 0 ) != pdPASS )
+          {
+            //TODO add warning message to log.
+          }
+        }
+
+      }
+      else
+      {
+        if( xTimerIsTimerActive( param->xTimer ) == pdTRUE )
+        {
+          if( xTimerStop( param->xTimer, 0 ) == pdPASS )
+          {
+            //TODO add warning message to log.
+          }
+        }
+      }
+
       if(!StateEst_getState(param->stateEst, param->state))
       {
         main_fault(param);
       }
-
       Ctrl_Execute(param->ctrl, param->state, param->setpoint, param->control_signal);
       Ctrl_Allocate(param->control_signal, param->motorControl->motorSetpoint);
       MotorCtrl_UpdateSetpoint( param->motorControl);
@@ -284,6 +264,7 @@ void main_control_task( void *pvParameters )
        * Transitional state. Only executed once.
        */
       MotorCtrl_Disable(param->motorControl);
+      xTimerStop( param->xTimer, 0 ); // if this fails we end up in fault mode, acceptable.
       Ctrl_Off(param->ctrl);
       if( !State_Change(param->stateHandler, state_disarmed) )
       {
@@ -293,7 +274,7 @@ void main_control_task( void *pvParameters )
     case state_fault:
       /*-----------------------------------------fault mode---------------------------
        *  Something has gone wrong and caused the FC to go into fault mode. Nothing
-       *  happens in fault mode. Only allowed transition is to disamed mode.
+       *  happens in fault mode. Only allowed transition is to disarmed mode.
        *
        *  TODO save reason for fault mode.
        */
@@ -307,86 +288,6 @@ void main_control_task( void *pvParameters )
     default:
       break;
     }
-
-    /*------------------------------------read receiver -----------------------------------
-     * Always read receiver.
-     *TODO change from counting fc cycles to time.
-     */
-    if ( xQueueReceive(xQueue_receiver, local_receiver_buffer,
-        mainDONT_BLOCK) == pdPASS )
-    {
-      /* The code in this scope will execute once every 22 ms (the frequency of new data
-       * from the receiver).
-       */
-
-      /*If good signal decrease spectrum_receiver_error_counter*/
-      if ( (local_receiver_buffer->connection_ok) )
-      {
-        translate_receiver_signal_rate( param->setpoint, local_receiver_buffer );
-        if ( spectrum_receiver_error_counter > 0 )
-        {
-          spectrum_receiver_error_counter--;
-        }
-      }
-      /*If bad connection and fc in a flightmode increase spectrum_receiver_error_counter.*/
-      else if ( (State_GetCurrent(param->stateHandler) == state_armed) )
-      {
-        /* Allow a low number of lost frames at a time. Increase counter 4 times as fast as it is decreased.
-         * This ensures that there is at least 4 good frames to each bad one.*/
-        spectrum_receiver_error_counter += 4;
-        /*If there has been to many errors, put the FC in disarmed mode.*/
-        if ( spectrum_receiver_error_counter >= (80) )
-        {
-          main_fault(param);
-          spectrum_receiver_error_counter = 0;
-        }
-      }
-      else
-      {
-        //Do nothing.
-      }
-    }
-    //gpio_toggle_pin( PIN_41_GPIO );
-    //gpio_toggle_pin( PIN_31_GPIO );
-
-    /*-------------------------------------State change request from receiver?----------------------------
-     * Check if a fc_state change is requested, if so, change state. State change is only allowed if the copter is landed.
-     */
-
-    /*Disarm requested*/
-    if ( (local_receiver_buffer->connection_ok)
-        && (local_receiver_buffer->ch5 > SATELLITE_CH_CENTER)
-        && (local_receiver_buffer->ch0 < 40))
-    {
-      if(State_GetCurrent(param->stateHandler) != state_disarmed && State_GetCurrent(param->stateHandler) != state_disarming)
-      {
-        if(pdTRUE == State_Change(param->stateHandler, state_disarming))
-        {
-        }
-        else
-        {
-          //Not allowed to change state.
-        }
-      }
-    }
-
-    /*Arming requested*/
-    if ( (local_receiver_buffer->connection_ok)
-        && (local_receiver_buffer->ch5 < SATELLITE_CH_CENTER)
-        && (local_receiver_buffer->ch0 < 40))
-    {
-      if(State_GetCurrent(param->stateHandler) != state_armed && State_GetCurrent(param->stateHandler) != state_arming)
-      {
-        if(pdTRUE == State_Change(param->stateHandler, state_arming))
-        {
-        }
-        else
-        {
-          //Not allowed to change state.
-        }
-      }
-    }
-
 
     vTaskDelayUntil( &xLastWakeTime, mainPeriodTimeMs );
 
@@ -409,3 +310,11 @@ void main_fault(MaintaskParams_t *param)
   MotorCtrl_Disable(param->motorControl);
   Ctrl_Off(param->ctrl);
 }
+
+void main_TimerCallback( TimerHandle_t pxTimer )
+{
+  MaintaskParams_t *obj = ( MaintaskParams_t * ) pvTimerGetTimerID( pxTimer );
+  main_fault(obj);
+  //TODO write error message!
+}
+

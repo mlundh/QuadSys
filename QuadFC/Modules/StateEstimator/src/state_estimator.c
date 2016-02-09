@@ -54,8 +54,8 @@ StateEst_t *StateEst_Create()
 uint8_t StateEst_init(StateEst_t *obj, estimation_types_t type)
 {
   obj->est_type = type;
-  Imu_Init(obj->imu);
-  return 0;
+  uint8_t result = Imu_Init(obj->imu);
+  return result;
 }
 
 uint8_t StateEst_getState(StateEst_t *obj, state_data_t *state_vector)

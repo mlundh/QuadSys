@@ -29,16 +29,16 @@
 # directory structure. This is due to the vact that make does not
 # seem to allow target-specific VPATH.
 #------------------------------------------------------------------
+.SUFFIXES:
 
 # Make does not offer a recursive wildcard function, so here's one:
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 
 #Clear CFLAGS and VPATH
 CFLAGS := 
-VPATH:=
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 BUILD_DIR := out
-
+VPATH:=
 # Add include path for header files. Third party is special, the files expects all
 # dirs to be in include path.
 INCLUDE_ThirdParty := $(sort $(dir $(call rwildcard,ThirdParty/,*.h)))
@@ -70,13 +70,24 @@ ALL_CATEGORIES := $(CATEGORIES) $(CATEGORIES_R)
 # $(Category)_BUILD_DIR
 # $(Category)_LIST
 # $(Category)_LIB_LIST
-# $(Category)_SOURCE_DIR
-# and adds the source dir to VPATH
 # and also sets up the target $(Category)_LIST
 #
 #*************************************************************************
 $(foreach category,$(ALL_CATEGORIES),$(eval $(call VARIABLES,$(category))))
 #$(foreach category,$(ALL_CATEGORIES),$(info $(call VARIABLES,$(category))))
+
+
+
+#*************************************************************************
+# Set up all the variables used by each recursive category. 
+#
+# Variables set:
+# $(Category)_SOURCE_DIR
+# and adds the source dir to VPATH
+#*************************************************************************
+$(foreach category,$(CATEGORIES_R),$(eval $(call VARIABLES_R,$(category))))
+#$(foreach category,$(CATEGORIES_R),$(info $(call VARIABLES_R,$(category))))
+
 
 #*************************************************************************
 #
@@ -85,8 +96,10 @@ $(foreach category,$(ALL_CATEGORIES),$(eval $(call VARIABLES,$(category))))
 # "src" folder of the sub module.
 #
 #*************************************************************************
-$(foreach category,$(CATEGORIES),$(eval $(call LIB_RULE,$$($(category)_LIB_LIST),$$($(category)_BUILD_DIR))))
-#$(foreach category,$(CATEGORIES),$(info $(call LIB_RULE,$$($(category)_LIB_LIST),$$($(category)_BUILD_DIR))))
+$(foreach category,$(CATEGORIES),\
+  $(eval $(call LIB_RULE,$$($(category)_LIB_LIST),$$($(category)_BUILD_DIR))))
+#$(foreach category,$(CATEGORIES),\
+  $(info $(call LIB_RULE,$$($(category)_LIB_LIST),$$($(category)_BUILD_DIR))))
 
 #*************************************************************************
 #
@@ -94,17 +107,34 @@ $(foreach category,$(CATEGORIES),$(eval $(call LIB_RULE,$$($(category)_LIB_LIST)
 # to each category. This rule looks for source files recusively in the folder
 #
 #*************************************************************************
-$(foreach category,$(CATEGORIES_R),$(eval $(call LIB_RULE_RECURSIVE,$$($(category)_LIB_LIST),$$($(category)_BUILD_DIR))))
-#$(foreach category,$(CATEGORIES_R),$(info $(call LIB_RULE_RECURSIVE,$$($(category)_LIB_LIST),$$($(category)_BUILD_DIR))))
+$(foreach category,$(CATEGORIES_R),\
+  $(eval $(call LIB_RULE_RECURSIVE,$$($(category)_LIB_LIST),$$($(category)_BUILD_DIR))))
+#$(foreach category,$(CATEGORIES_R),\
+  $(info $(call LIB_RULE_RECURSIVE,$$($(category)_LIB_LIST),$$($(category)_BUILD_DIR))))
 
 #*************************************************************************
 #
 # Creates the rule for building .o file from each source file in the 
-# sub module of each category.
+# sub modules of each category.
 #
 #*************************************************************************
-$(foreach category,$(ALL_CATEGORIES),$(eval $(call O_RULE, $$($(category)_BUILD_DIR))))
-#$(foreach category,$(ALL_CATEGORIES),$(info $(call O_RULE, $$($(category)_BUILD_DIR))))
+$(foreach category,$(CATEGORIES),\
+  $(foreach sub_category,$($(category)_LIST),\
+  $(eval $(call O_RULE, $(BUILD_DIR),$(sub_category)))))
+#$(foreach category,$(CATEGORIES),\
+  $(foreach sub_category,$($(category)_LIST),\
+  $(info $(call O_RULE, $(BUILD_DIR),$(sub_category)))))
+
+
+#*************************************************************************
+#
+# Creates the rule for building .o file from each source file in the 
+# sub modules of each category. This rule is used for recursively
+# found sources. 
+#
+#*************************************************************************
+$(foreach category,$(CATEGORIES_R), $(eval $(call O_RULE_recursive, $(BUILD_DIR),$(category))))
+#$(foreach category,$(CATEGORIES_R), $(info $(call O_RULE_recursive, $(BUILD_DIR),$(category))))
 
 #*************************************************************************
 #
@@ -112,7 +142,7 @@ $(foreach category,$(ALL_CATEGORIES),$(eval $(call O_RULE, $$($(category)_BUILD_
 # defined in the variable EXECUTABLES
 #
 #*************************************************************************
-$(foreach exec,$(EXECUTABLES),$(eval $(call ELF_RULE,$(exec))))
+$(foreach exec,$(EXECUTABLES),$(eval $(call ELF_RULE,$(exec), $(BUILD_DIR))))
 #$(foreach exec,$(EXECUTABLES),$(info $(call ELF_RULE,$(exec))))
 
 #*************************************************************************
@@ -120,8 +150,12 @@ $(foreach exec,$(EXECUTABLES),$(eval $(call ELF_RULE,$(exec))))
 # Include the automatically generated dep files.
 #
 #*************************************************************************
-$(foreach category,$(ALL_CATEGORIES),$(eval $(call DEP_INC,$(category))))
-#$(foreach category,$(ALL_CATEGORIES),$(info $(call DEP_INC,$(category))))
+$(foreach category,$(ALL_CATEGORIES),\
+  $(foreach sub_category,$($(category)_LIST),\
+  $(eval $(call DEP_INC, $(BUILD_DIR),$(sub_category)))))
+#$(foreach category,$(CATEGORIES),\
+  $(foreach sub_category,$($(category)_LIST),\
+  $(info $(call DEP_INC, $(BUILD_DIR),$(sub_category)))))
 
 .PHONY: all clean print
 
@@ -136,9 +170,9 @@ clean:
 	rm -rf ${BUILD_DIR}
 
 print:
-	@echo "Modules_SOURCE_DIR:" $(VPATH)
-
-
+	@echo "_SOURCE_DIR:" $(ThirdParty_SOURCE_DIR)
+	@echo "VPATH = $(VPATH)"
+	
 .PHONY : flash
 flash:
 	python connect1200.py

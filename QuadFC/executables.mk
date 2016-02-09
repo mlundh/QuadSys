@@ -32,9 +32,10 @@
 # <nameOfExec>_DEPS. Add all dependencies to this variable.
 #
 
-EXECUTABLES := QuadFC 
+EXECUTABLES := QuadFC
 
 QuadFC_DEPS:= Top/QuadFC
-QuadFC_DEPS+= $(addprefix Modules/, Communication FlightController HMI Parameters StateEstimator Utilities)
+QuadFC_DEPS+= $(addprefix Modules/, Communication FlightController HMI Parameters)
+QuadFC_DEPS+= $(addprefix Modules/, StateEstimator Utilities SetpointHandler InternalStateHandler)
 QuadFC_DEPS+= $(addprefix PortLayer/, Actuators Board Communication HMI Memory Sensors)
 QuadFC_DEPS+= $(addprefix ThirdParty/, asf)
