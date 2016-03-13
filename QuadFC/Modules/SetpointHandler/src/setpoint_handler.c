@@ -77,7 +77,7 @@ uint8_t SpHandl_SetSetpoint(SpObj_t* obj, state_data_t* setpoint, uint8_t valid_
       .setpoint = *setpoint, // Shallow copy is all that is needed!
       .prio = prio};
 
-  SetpointData_t inQueue = {0};
+  SetpointData_t inQueue = {{{0}}};
   //if there is a message in the queue check if it has a higher prio then the current item.
   if(uxQueueMessagesWaiting(obj->xQueue_Sp_Handl))
   {

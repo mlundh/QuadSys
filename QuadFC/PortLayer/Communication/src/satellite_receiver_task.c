@@ -75,13 +75,13 @@ Satellite_t* Satellite_Init(StateHandler_t* stateHandler, SpObj_t* setpointHandl
   }
   //Scope so that the tmp structs live a short life.
   {
-    spektrum_data_t tmpData = {0};
+    spektrum_data_t tmpData = {{{0}}};
     *taskParam->decoded_data = tmpData;
 
-    spectrum_config_t tmpConfig = {0};
+    spectrum_config_t tmpConfig = {{{0}}};
     *taskParam->configuration = tmpConfig;
 
-    state_data_t tmpSetpoint = {0};
+    state_data_t tmpSetpoint = {{0}};
     *taskParam->setpoint = tmpSetpoint;
   }
 
@@ -217,7 +217,7 @@ int Satellite_DecodeSignal(uint8_t* data, spectrum_config_t* configuration, spek
   // Create a working copy where we can store the extracted channel data temporarily.
   // We are using a local copy to allow multiple frames to be merged, at the same time
   // as we make sure that we can safely discard any faulty frames.
-  spektrum_channel_t l_channel_data[NUMBER_OF_CHANNELS] = {0};
+  spektrum_channel_t l_channel_data[NUMBER_OF_CHANNELS] = {{0}};
 
   /*
    * Each channel uses two bytes of information as described in the above comment.
