@@ -1,10 +1,39 @@
-/*
- * mpu6050.h
- *
- * Created: 2013-07-08 17:54:10
- *  Author: martin.lundh
- */
+// I2Cdev library collection - MPU6050 I2C device class
+// Based on InvenSense MPU-6050 register map document rev. 2.0, 5/19/2011 (RM-MPU-6000A-00)
+// 8/24/2011 by Jeff Rowberg <jeff@rowberg.net>
+// Updates should (hopefully) always be available at https://github.com/jrowberg/i2cdevlib
+//
+// Changelog:
+//     ... - ongoing debug release
+// NOTE: THIS IS ONLY A PARIAL RELEASE. THIS DEVICE CLASS IS CURRENTLY UNDERGOING ACTIVE
+// DEVELOPMENT AND IS STILL MISSING SOME IMPORTANT FEATURES. PLEASE KEEP THIS IN MIND IF
+// YOU DECIDE TO USE THIS PARTICULAR CODE FOR ANYTHING.
+/* ============================================
+ I2Cdev device library code is placed under the MIT license
+ Copyright (c) 2012 Jeff Rowberg
 
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
+ ===============================================
+ */
+/*
+ * Modified to fit QuadFC by Martin Lundh
+ */
 #ifndef MPU6050_H_
 #define MPU6050_H_
 
@@ -32,6 +61,10 @@
 #define MPU6050_RA_YA_OFFS_L_TC     0x09
 #define MPU6050_RA_ZA_OFFS_H        0x0A //[15:0] ZA_OFFS
 #define MPU6050_RA_ZA_OFFS_L_TC     0x0B
+#define MPU6050_RA_SELF_TEST_X      0x0D //[7:5] XA_TEST[4-2], [4:0] XG_TEST[4-0]
+#define MPU6050_RA_SELF_TEST_Y      0x0E //[7:5] YA_TEST[4-2], [4:0] YG_TEST[4-0]
+#define MPU6050_RA_SELF_TEST_Z      0x0F //[7:5] ZA_TEST[4-2], [4:0] ZG_TEST[4-0]
+#define MPU6050_RA_SELF_TEST_A      0x10 //[5:4] XA_TEST[1-0], [3:2] YA_TEST[1-0], [1:0] ZA_TEST[1-0]
 #define MPU6050_RA_XG_OFFS_USRH     0x13 //[15:0] XG_OFFS_USR
 #define MPU6050_RA_XG_OFFS_USRL     0x14
 #define MPU6050_RA_YG_OFFS_USRH     0x15 //[15:0] YG_OFFS_USR
@@ -131,6 +164,26 @@
 #define MPU6050_RA_FIFO_R_W         0x74
 #define MPU6050_RA_WHO_AM_I         0x75
 
+#define MPU6050_SELF_TEST_XA_1_BIT     0x07
+#define MPU6050_SELF_TEST_XA_1_LENGTH  0x03
+#define MPU6050_SELF_TEST_XA_2_BIT     0x05
+#define MPU6050_SELF_TEST_XA_2_LENGTH  0x02
+#define MPU6050_SELF_TEST_YA_1_BIT     0x07
+#define MPU6050_SELF_TEST_YA_1_LENGTH  0x03
+#define MPU6050_SELF_TEST_YA_2_BIT     0x03
+#define MPU6050_SELF_TEST_YA_2_LENGTH  0x02
+#define MPU6050_SELF_TEST_ZA_1_BIT     0x07
+#define MPU6050_SELF_TEST_ZA_1_LENGTH  0x03
+#define MPU6050_SELF_TEST_ZA_2_BIT     0x01
+#define MPU6050_SELF_TEST_ZA_2_LENGTH  0x02
+
+#define MPU6050_SELF_TEST_XG_1_BIT     0x04
+#define MPU6050_SELF_TEST_XG_1_LENGTH  0x05
+#define MPU6050_SELF_TEST_YG_1_BIT     0x04
+#define MPU6050_SELF_TEST_YG_1_LENGTH  0x05
+#define MPU6050_SELF_TEST_ZG_1_BIT     0x04
+#define MPU6050_SELF_TEST_ZG_1_LENGTH  0x05
+
 #define MPU6050_TC_PWR_MODE_BIT     7
 #define MPU6050_TC_OFFSET_BIT       6
 #define MPU6050_TC_OFFSET_LENGTH    6
@@ -160,6 +213,10 @@
 #define MPU6050_DLPF_BW_20          0x04
 #define MPU6050_DLPF_BW_10          0x05
 #define MPU6050_DLPF_BW_5           0x06
+
+#define MPU6050_GCONFIG_XG_ST_BIT           7
+#define MPU6050_GCONFIG_YG_ST_BIT           6
+#define MPU6050_GCONFIG_ZG_ST_BIT           5
 
 #define MPU6050_GCONFIG_FS_SEL_BIT      4
 #define MPU6050_GCONFIG_FS_SEL_LENGTH   2
@@ -370,15 +427,61 @@
 #define MPU6050_DMP_MEMORY_BANK_SIZE    256
 #define MPU6050_DMP_MEMORY_CHUNK_SIZE   16
 
+
 #define  mpu6050_read_byte(obj, reg_addr, data) mpu6050_read_settings(obj, reg_addr, 7, 8, data, 1)
 #define  mpu6050_read_bit(obj, reg_addr, bit_nr, data) mpu6050_read_settings(obj, reg_addr, bit_nr, 1, data, 1)
 #define  mpu6050_write_byte(obj, reg_addr, data) mpu6050_write_settings(obj, reg_addr, 7, 8, data, 1)
 #define  mpu6050_write_bit(obj, reg_addr, bit_nr, data) mpu6050_write_settings(obj, reg_addr, bit_nr, 1, data, 1)
 
+uint8_t Imu_GetRawData(Imu_t *obj);
+uint8_t Imu_ScaleData(Imu_t *obj);
+
 uint8_t mpu6050_write_settings(Imu_t * obj, uint8_t reg_addr, uint8_t bit_nr, uint8_t nr_bits, uint8_t data, uint8_t nr_bytes);
 uint8_t mpu6050_read_settings(Imu_t * obj, uint8_t reg_addr, uint8_t bit_nr, uint8_t nr_bits, uint8_t *data, uint8_t nr_bytes);
 uint8_t mpu6050_calc_offset(Imu_t * obj);
+uint8_t mpu6050_SelfTestGyro(Imu_t *obj);
+uint8_t mpu6050_SelfTestAcc(Imu_t *obj);
+uint8_t mpu6050_EvaluateSelfTest(float low, float high, int16_t selfTestResp, float factoryTrim );
+
+/** Get self-test factory trim value for gyro axis.
+ * @return Self-test factory trim value
+ */
+uint8_t mpu6050_GetGyroXSelfTestFactoryTrim(Imu_t *obj);
+uint8_t mpu6050_GetGyroYSelfTestFactoryTrim(Imu_t *obj);
+uint8_t mpu6050_GetGyroZSelfTestFactoryTrim(Imu_t *obj);
+
+/** Get self-test factory trim value for accelerometer X axis.
+ * @return Self-test factory trim value
+ */
+uint8_t mpu6050_GetAccelXSelfTestFactoryTrim(Imu_t *obj);
+uint8_t mpu6050_GetAccelYSelfTestFactoryTrim(Imu_t *obj);
+uint8_t mpu6050_GetAccelZSelfTestFactoryTrim(Imu_t *obj);
+
+/** Get and set functions for self-test enabled
+ * bits for the accelerometer axis.
+ * @see MPU6050_RA_ACCEL_CONFIG
+ */
+uint8_t mpu6050_GetAccelXSelfTest(Imu_t *obj);
+void mpu6050_SetAccelXSelfTest(Imu_t *obj, uint8_t enabled);
+uint8_t mpu6050_GetAccelYSelfTest(Imu_t *obj);
+void mpu6050_SetAccelYSelfTest(Imu_t *obj, uint8_t enabled);
+uint8_t mpu6050_GetAccelZSelfTest(Imu_t *obj);
+void mpu6050_SetAccelZSelfTest(Imu_t *obj, uint8_t enabled);
+
+/** Get and set functions for self-test enabled
+ * bits for the accelerometer axis.
+ * @see MPU6050_RA_GYRO_CONFIG
+ */
+uint8_t mpu6050_GetGyroXSelfTest(Imu_t *obj);
+void mpu6050_SetGyroXSelfTest(Imu_t *obj, uint8_t enabled);
+uint8_t mpu6050_GetGyroYSelfTest(Imu_t *obj);
+void mpu6050_SetGyroYSelfTest(Imu_t *obj, uint8_t enabled);
+uint8_t mpu6050_GetGyroZSelfTest(Imu_t *obj);
+void mpu6050_SetGyroZSelfTest(Imu_t *obj, uint8_t enabled);
+
+
 void mpu6050_setClockSource(Imu_t * obj, uint8_t source);
+void mpu6050_getFullScaleGyroRange(Imu_t *obj, uint8_t *buffer );
 void mpu6050_setFullScaleGyroRange(Imu_t * obj, uint8_t range);
 void mpu6050_getFullScaleAccelRange(Imu_t * obj, uint8_t *buffer);
 void mpu6050_setFullScaleAccelRange(Imu_t * obj, uint8_t range);
@@ -388,4 +491,8 @@ uint8_t mpu6050_getDLPFMode(Imu_t * obj, uint8_t *buffer);
 void mpu6050_setDLPFMode(Imu_t * obj, uint8_t mode);
 void mpu6050_reset(Imu_t * obj);
 
+#define MPU6050_ST_GYRO_LOW_LIMIT      (-0.14) // % Change from factory trim
+#define MPU6050_ST_GYRO_HIGH_LIMIT     (0.14)  // % Change from factory trim
+#define MPU6050_ST_ACCEL_LOW_LIMIT     (-0.14) // % Change from factory trim
+#define MPU6050_ST_ACCEL_HIGH_LIMIT    (0.14)  // % Change from factory trim
 #endif /* MPU6050_H_ */

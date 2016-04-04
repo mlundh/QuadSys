@@ -32,28 +32,33 @@
 #include "Utilities/inc/common_types.h"
 #include "Parameters/inc/parameters.h"
 #include "QuadFC/QuadFC_IMU.h"
-#include "QuadFC/QuadFC_IMUInternal.h"
+#include "QuadFC/src/QuadFC_IMUInternal.h"
 
 
 #define SIGN(x) ((x > 0) - (x < 0))
 
 Imu_t * Imu_Create()
 {
-  Imu_t *tmp = Imu_CreateInternal();
+  Imu_t *obj = Imu_CreateInternal();
   SemaphoreHandle_t xMutex = xSemaphoreCreateMutex();
 
-  tmp->Orient.x_sign = 1;
-  tmp->Orient.y_sign = 1;
-  tmp->Orient.z_sign = 1;
+  obj->Orient.x_sign = 1;
+  obj->Orient.y_sign = 1;
+  obj->Orient.z_sign = 1;
+  obj->Orient.x_to_y = 0;
 
   param_obj_t * ImuOriRoot = Param_CreateObj(10, NoType, readOnly, NULL, "IMU_Ori", Param_GetRoot(), NULL);
   Param_CreateObj(0, int8_variable_type, readWrite,
-      &tmp->Orient.x_sign, "x_sign", ImuOriRoot, xMutex);
+      &obj->Orient.x_sign, "x_sign", ImuOriRoot, xMutex);
   Param_CreateObj(0, int8_variable_type, readWrite,
-      &tmp->Orient.y_sign, "y_sign", ImuOriRoot, xMutex);
+      &obj->Orient.y_sign, "y_sign", ImuOriRoot, xMutex);
   Param_CreateObj(0, int8_variable_type, readWrite,
-      &tmp->Orient.z_sign, "z_sign", ImuOriRoot, xMutex);
-  return tmp;
+      &obj->Orient.z_sign, "z_sign", ImuOriRoot, xMutex);
+
+  Param_CreateObj(0, int8_variable_type, readWrite,
+      &obj->Orient.x_to_y, "x_to_y", ImuOriRoot, xMutex);
+
+  return obj;
 }
 
 uint8_t Imu_Init(Imu_t *obj)
@@ -68,13 +73,28 @@ uint8_t Imu_GetData(Imu_t *obj)
   {
     return 0;
   }
+  // ImuData is in copter coordinates. tempData is in IMU coordinates.
   // Get sign of orientation parameter. Uses branch-less operations to extract sign.
-  obj->ImuData.imu_data[accl_x] = SIGN(obj->Orient.x_sign) * obj->tempData.imu_data[accl_x];
-  obj->ImuData.imu_data[accl_y] = SIGN(obj->Orient.y_sign) * obj->tempData.imu_data[accl_y];
-  obj->ImuData.imu_data[accl_z] = SIGN(obj->Orient.z_sign) * obj->tempData.imu_data[accl_z];
-  obj->ImuData.imu_data[gyro_x] = SIGN(obj->Orient.x_sign) * obj->tempData.imu_data[gyro_x];
-  obj->ImuData.imu_data[gyro_y] = SIGN(obj->Orient.y_sign) * obj->tempData.imu_data[gyro_y];
-  obj->ImuData.imu_data[gyro_z] = SIGN(obj->Orient.z_sign) * obj->tempData.imu_data[gyro_z];
+  uint8_t x_accl_copter = accl_x;
+  uint8_t y_accl_copter= accl_y;
+  uint8_t x_gyro_copter = gyro_x;
+  uint8_t y_gyro_copter= gyro_y;
+  if(obj->Orient.x_to_y)
+  {
+    x_accl_copter = accl_y;
+    y_accl_copter= accl_x;
+    x_gyro_copter = gyro_y;
+    y_gyro_copter= gyro_x;
+  }
+  obj->ImuData.imu_data[x_accl_copter] = SIGN(obj->Orient.x_sign) * obj->tempData.imu_data[accl_x];
+  obj->ImuData.imu_data[y_accl_copter] = SIGN(obj->Orient.y_sign) * obj->tempData.imu_data[accl_y];
+  obj->ImuData.imu_data[accl_z]        = SIGN(obj->Orient.z_sign) * obj->tempData.imu_data[accl_z];
+  obj->ImuData.imu_data[x_gyro_copter] = SIGN(obj->Orient.x_sign) * obj->tempData.imu_data[gyro_x];
+  obj->ImuData.imu_data[y_gyro_copter] = SIGN(obj->Orient.y_sign) * obj->tempData.imu_data[gyro_y];
+  obj->ImuData.imu_data[gyro_z]        = SIGN(obj->Orient.z_sign) * obj->tempData.imu_data[gyro_z];
+
+
+
   return 1;
 
 }

@@ -23,6 +23,7 @@
  */
 
 #include "QuadFC/QuadFC_MotorControl.h"
+#include "Utilities/inc/common_types.h"
 #include <pwm.h>
 #include <pio.h>
 #include <board.h>
@@ -31,6 +32,21 @@
 #include "semphr.h"
 #include <string.h>
 #include "Parameters/inc/parameters.h"
+
+/**
+ * control signal resolution 100% = 1 << 16.
+ *
+ * throttle motor control, 100% = 2380.
+ *
+ * First step is to shift down from fixed point to integer:
+ * thrust_from_state_v >> THRUST_SHIFT_FACTOR
+ *
+ * converting from control signal u thrust to motor setpoint y:
+ *
+ * y = x*2380/65536
+ */
+
+
 /** Required resolution = 2000 usable steps. */
 
 /** PWM frequency in Hz */
@@ -306,25 +322,34 @@ uint8_t MotorCtrl_UpdateSetpoint(MotorControlObj *obj)
     return 0;
   }
 
+  int32_t l_setpoint[obj->nr_init_motors];
 
   for (int i = 0; i < obj->nr_init_motors; i++ )
   {
+
+  }
+
+  for (int i = 0; i < obj->nr_init_motors; i++ )
+  {
+    //Scale back to integer resolution.
+    l_setpoint[i] = ((obj->motorSetpoint[i]*595)/16384);
     /*Add armed duty value to make to propellers spin.*/
-    obj->motorSetpoint[i] += internals->armed_duty_value;
+    l_setpoint[i] += internals->armed_duty_value;
     
-    if ( obj->motorSetpoint[i] < internals->armed_duty_value )
+    //Limit output.
+    if ( l_setpoint[i] < internals->armed_duty_value )
     {
-      obj->motorSetpoint[i] = internals->armed_duty_value;
+      l_setpoint[i] = internals->armed_duty_value;
     }
-    else if ( obj->motorSetpoint[i] > MAX_SETPOINT )
+    else if ( l_setpoint[i] > MAX_SETPOINT )
 		{
-      obj->motorSetpoint[i] = MAX_SETPOINT;
+      l_setpoint[i] = MAX_SETPOINT;
 		}
 	}
 	 for(int i = 0; i < obj->nr_init_motors; i++)
 	 {
 	   internals->pwm_channels.channel = internals->pwm_parameters[i].pwm_channel;
-		 pwm_channel_update_duty(PWM, &internals->pwm_channels, (obj->motorSetpoint[i]));
+		 pwm_channel_update_duty(PWM, &internals->pwm_channels, (l_setpoint[i]));
 	 }
 	 pwm_sync_unlock_update(PWM);
 

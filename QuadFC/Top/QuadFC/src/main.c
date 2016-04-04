@@ -41,6 +41,7 @@
 
 /*Include task communication modules*/
 #include "InternalStateHandler/inc/state_handler.h"
+#include "FlightController/inc/control_mode_handler.h"
 
 /*
  * FreeRTOS hook (or callback) functions that are defined in this file.
@@ -63,16 +64,17 @@ int main( void )
   prvSetupHardware();
 
   /*Create cross-task communication utilities.*/
-  SpObj_t* SetpointHandler = SpHandl_Create();
+  SpHandler_t* SetpointHandler = SpHandl_Create();
   StateHandler_t* stateHandler = State_CreateStateHandler();
+  CtrlModeHandler_t * CtrlModeHandler = Ctrl_CreateModeHandler();
 
   /* Create all tasks used in the application.*/
-  create_main_control_task(stateHandler, SetpointHandler);
-  Satellite_CreateReceiverTask(stateHandler, SetpointHandler);
+  create_main_control_task(stateHandler, SetpointHandler, CtrlModeHandler);
+  Satellite_CreateReceiverTask(stateHandler, SetpointHandler, CtrlModeHandler);
   Led_CreateLedControlTask();
 
   /*Should always be created last as it loads the parameters*/
-  Com_CreateTasks(); // Creates two tasks, RX and TX.
+  Com_CreateTasks(stateHandler); // Creates two tasks, RX and TX.
 
   /* Start the RTOS scheduler. */
   vTaskStartScheduler();

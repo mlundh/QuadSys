@@ -32,6 +32,7 @@
 #include "HMI/inc/led_control_task.h"
 #include "Utilities/inc/globals.h"
 #include "Utilities/inc/run_time_stats.h"
+#include "InternalStateHandler/inc/state_handler.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
@@ -60,6 +61,7 @@ typedef struct RxCom
   uint8_t *receive_buffer;
   param_helper_t *helper;
   param_helper_t *saveHelper;
+  StateHandler_t* stateHandler;
 }RxCom_t;
 
 typedef struct TxCom
@@ -78,7 +80,7 @@ TxCom_t* Com_InitTx(void);
  * Initialize the communication module.
  * @return    1 if OK, 0 otherwise.
  */
-RxCom_t* Com_InitRx(void);
+RxCom_t* Com_InitRx(StateHandler_t* stateHandler);
 
 
 /**
@@ -150,7 +152,7 @@ TxCom_t* Com_InitTx()
 }
 
 
-RxCom_t* Com_InitRx()
+RxCom_t* Com_InitRx(StateHandler_t* stateHandler)
 {
   /* Create the queue used to pass things to the display task*/
   RxCom_t* taskParam = pvPortMalloc(sizeof(RxCom_t));
@@ -160,7 +162,7 @@ RxCom_t* Com_InitRx()
   taskParam->QspRespPacket = QSP_Create(QSP_MAX_PACKET_SIZE);
   taskParam->SLIP =  Slip_Create(COM_PACKET_LENGTH_MAX);
   taskParam->receive_buffer = pvPortMalloc(sizeof(uint8_t) * COM_RECEIVE_BUFFER_LENGTH );
-
+  taskParam->stateHandler = stateHandler;
 
   if( !taskParam || !taskParam->helper || !taskParam->saveHelper || !taskParam->QspPacket
       || !taskParam->QspRespPacket || !taskParam->SLIP || !taskParam->receive_buffer )
@@ -180,12 +182,12 @@ RxCom_t* Com_InitRx()
   return taskParam;
 }
 
-void Com_CreateTasks( )
+void Com_CreateTasks( StateHandler_t* stateHandler )
 {
   uint8_t* receive_buffer_driver = pvPortMalloc(
       sizeof(uint8_t) * COM_PACKET_LENGTH_MAX );
 
-  RxCom_t *paramRx = Com_InitRx();
+  RxCom_t *paramRx = Com_InitRx(stateHandler);
   TxCom_t *paramTx = Com_InitTx();
   crcTable =  pvPortMalloc( sizeof(crc_data_t) * CRC_ARRAY_SIZE ); // TODO move to util init!
 
@@ -308,8 +310,12 @@ void Com_RxTask( void *pvParameters )
 
   /*The already allocated data is passed to the task.*/
   RxCom_t * obj = (RxCom_t *) pvParameters;
-
-  /*Load parameters.*/
+  
+  // Wait untill FC is initialized. 
+  while(State_GetCurrent(obj->stateHandler) == state_init)
+  {
+    vTaskDelay(2);
+  }
   Com_ParamLoad(obj);
   if( QSP_StatusAck != QSP_GetControl(obj->QspRespPacket))
   {

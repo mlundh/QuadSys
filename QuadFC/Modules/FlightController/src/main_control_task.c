@@ -34,9 +34,10 @@
 #include "queue.h"
 #include "timers.h"
 
-/*include drivers*/
+/*include drivers TODO remove from here!*/
 #include <gpio.h>
 #include <pio.h>
+#include "../../StateEstimator/inc/signal_processing.h"
 
 /* Task includes. */
 #include "HMI/inc/led_control_task.h"
@@ -47,13 +48,15 @@
 #include "InternalStateHandler/inc/state_handler.h"
 
 #include "StateEstimator/inc/state_estimator.h"
-#include "StateEstimator/inc/imu_signal_processing.h"
 #include "QuadFC/QuadFC_MotorControl.h"
 #include "Parameters/inc/parameters.h"
 #include "SetpointHandler/inc/setpoint_handler.h"
 
 /*Include Utilities*/
 #include "Utilities/inc/globals.h"
+
+//TODO remove
+#include "Parameters/inc/parameters.h"
 
 const static uint16_t SpTimeoutTimeMs = 500;
 
@@ -68,7 +71,8 @@ typedef struct mainTaskParams
   MotorControlObj *motorControl;
   StateHandler_t* stateHandler;
   StateEst_t* stateEst;
-  SpObj_t* setPointHandler;
+  SpHandler_t* setPointHandler;
+  CtrlModeHandler_t * CtrlModeHandler;
   TimerHandle_t xTimer;
 }MaintaskParams_t;
 
@@ -88,19 +92,20 @@ void main_TimerCallback( TimerHandle_t pxTimer );
  * void create_main_control_task(void)
  */
 
-void create_main_control_task(  StateHandler_t* stateHandler, SpObj_t* setpointHandler )
+void create_main_control_task(  StateHandler_t* stateHandler, SpHandler_t* setpointHandler, CtrlModeHandler_t * CtrlModeHandler)
 {
   /*Create the task*/
 
   MaintaskParams_t * taskParam = pvPortMalloc(sizeof(MaintaskParams_t));
-  taskParam->ctrl = Ctrl_Create();
+  taskParam->ctrl = Ctrl_Create(CtrlModeHandler);
   taskParam->setpoint = pvPortMalloc( sizeof(state_data_t) );
   taskParam->state = pvPortMalloc( sizeof(state_data_t) );
   taskParam->control_signal = pvPortMalloc( sizeof(control_signal_t) );
   taskParam->motorControl = MotorCtrl_CreateAndInit(4);
   taskParam->stateHandler = stateHandler;
-  taskParam->stateEst = StateEst_Create();
+  taskParam->stateEst = StateEst_Create(CtrlModeHandler);
   taskParam->setPointHandler = setpointHandler;
+  taskParam->CtrlModeHandler = CtrlModeHandler;
   taskParam->xTimer = xTimerCreate("Tmain", SpTimeoutTimeMs / portTICK_PERIOD_MS, pdFALSE, ( void * ) taskParam, main_TimerCallback);
 
   /*Ensure that all mallocs returned valid pointers*/
@@ -140,9 +145,6 @@ void create_main_control_task(  StateHandler_t* stateHandler, SpObj_t* setpointH
  */
 void main_control_task( void *pvParameters )
 {
-  /*main_control_task execute at 500Hz*/
-  static const TickType_t mainPeriodTimeMs = (2UL / portTICK_PERIOD_MS );
-
   MaintaskParams_t * param = (MaintaskParams_t*)(pvParameters);
 
   /*Initialize modules*/
@@ -153,9 +155,13 @@ void main_control_task( void *pvParameters )
   TickType_t arming_counter = 0;
   uint32_t heartbeat_counter = 0;
 
+  Param_CreateObj(0, int32_variable_type, readWrite, &param->state->state_bf[pitch_bf], "pitch_bf", Param_GetRoot(), NULL);
+  Param_CreateObj(0, int32_variable_type, readWrite, &param->state->state_bf[roll_bf], "roll_bf", Param_GetRoot(), NULL);
+
   /*The main control loop*/
 
   unsigned portBASE_TYPE xLastWakeTime = xTaskGetTickCount();
+
 
   for ( ;; )
   {
@@ -170,7 +176,7 @@ void main_control_task( void *pvParameters )
        * Initialize all modules then set the fc to dissarmed state.
        */
 
-      if(!StateEst_init(param->stateEst, raw_data_rate))
+      if(!StateEst_init(param->stateEst))
       {
         main_fault(param);
       }
@@ -207,7 +213,7 @@ void main_control_task( void *pvParameters )
       MotorCtrl_Enable( param->motorControl );
       Ctrl_On(param->ctrl);
 
-      if ( arming_counter >= ( 1000 / mainPeriodTimeMs ) ) // Be in arming state for 1s.
+      if ( arming_counter >= ( 1000 / CTRL_TIME ) ) // Be in arming state for 1s.
       {
         arming_counter = 0;
         if( !State_Change(param->stateHandler, state_armed) )
@@ -251,10 +257,13 @@ void main_control_task( void *pvParameters )
         }
       }
 
+      // Get the estimated physical state of the copter.
       if(!StateEst_getState(param->stateEst, param->state))
       {
         main_fault(param);
       }
+      //Execute the control, allocate the control signals to the different
+      // motors, and then update the motor setpoint.
       Ctrl_Execute(param->ctrl, param->state, param->setpoint, param->control_signal);
       Ctrl_Allocate(param->control_signal, param->motorControl->motorSetpoint);
       MotorCtrl_UpdateSetpoint( param->motorControl);
@@ -289,7 +298,7 @@ void main_control_task( void *pvParameters )
       break;
     }
 
-    vTaskDelayUntil( &xLastWakeTime, mainPeriodTimeMs );
+    vTaskDelayUntil( &xLastWakeTime, CTRL_TIME );
 
     /*-------------------Heartbeat----------------------
      * Toggle an led to indicate that the FC is operational.

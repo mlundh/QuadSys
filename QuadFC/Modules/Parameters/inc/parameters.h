@@ -64,7 +64,7 @@
 /**
  * Definitions used by the module.
  */
-#define MAX_LOG_NAME_LENGTH (8)
+#define MAX_LOG_NAME_LENGTH (9) // 8 bytes for name, 1 for null.
 #define MAX_EXTRA (5)
 #define MAX_DIGITS_INT32 (11)
 #define MAX_VALUE_TYPE_LENGTH (2)

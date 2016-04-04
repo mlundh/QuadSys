@@ -56,7 +56,7 @@ include $(INCLUDE_MAKEFILES)
 .SECONDEXPANSION:
 
 # Add categories here if needed.
-CATEGORIES := Modules PortLayer Top
+CATEGORIES := Modules PortLayer Top Test HAL
 CATEGORIES_R := ThirdParty
 ALL_CATEGORIES := $(CATEGORIES) $(CATEGORIES_R)
 

@@ -1,7 +1,7 @@
 /*
- * communication_tasks.h
+ * signal_processing_tester.h
  *
- * Copyright (C) 2015 Martin Lundh
+ * Copyright (C) 2016 Martin Lundh
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,27 +22,17 @@
  * THE SOFTWARE.
  */
 
+#ifndef SIGNAL_PROCESSING_TESTER_H_
+#define SIGNAL_PROCESSING_TESTER_H_
 
+#include "Test/TestFW/test_framework.h"
 
-#ifndef COMMUNICATION_TASKS_H_
-#define COMMUNICATION_TASKS_H_
+void SigProsses_GetTCs(TestFw_t* obj);
 
-#include <stdint.h>
-#include "Communication/inc/quad_serial_packet.h"
-#include "Utilities/inc/common_types.h"
-/**
- * Create the communication tasks. These tasks are responsible for
- * communication with external components such as QuadGS. They are
- * also responsible for setting parameters.
- */
-void Com_CreateTasks( StateHandler_t* stateHandler );
+uint8_t SigProsses_TestImuToRate(TestFw_t* obj);
+uint8_t SigProsses_TestAngleAccl(TestFw_t* obj);
+uint8_t SigProsses_TestImuToAngle(TestFw_t* obj);
+uint8_t SigProsses_TestImuToAngle2(TestFw_t* obj);
+uint8_t SigProcess_TestSpectrumToState(TestFw_t* obj);
 
-/**
- * Interface function for sending a QSP to the external component (QuadGS).
- * @param packet  QSP to send.
- * @return        1 if sucessful, 0 otherwise.
- */
-uint8_t Com_SendQSP( QSP_t *packet );
-
-
-#endif /* COMMUNICATION-TASKS-H- */
+#endif /* SIGNAL_PROCESSING_TESTER_H_ */

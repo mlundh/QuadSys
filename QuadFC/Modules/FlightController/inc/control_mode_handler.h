@@ -28,11 +28,11 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "semphr.h"
+#include "Utilities/inc/common_types.h"
 
-typedef struct CtrlModeHandler CtrlModeHandler_t;
 
 
-typedef enum state{
+typedef enum CtrlModeState{
   Control_mode_not_available = 0,
   Control_mode_rate = 1,
   Control_mode_attitude = 2

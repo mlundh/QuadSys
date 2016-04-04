@@ -24,17 +24,19 @@
 #ifndef MODULES_FLIGHTCONTROLLER_INC_CONTROL_SYSTEM_H_
 #define MODULES_FLIGHTCONTROLLER_INC_CONTROL_SYSTEM_H_
 #include "Utilities/inc/common_types.h"
-
+#include "../inc/control_mode_handler.h"
 typedef struct CtrlObj CtrlObj_t;
 
 /**
  * Create a Control system object.
  * @return    Control system object containing everything needed by the controller.
  */
-CtrlObj_t *Ctrl_Create();
+CtrlObj_t *Ctrl_Create(CtrlModeHandler_t* CtrlModeHandler);
 
 /**
- * Initialize the control object.
+ * The constants (Kp, Ki and Kd) does not have a unit, but are expressed as 16.16 fixed point.
+ * Output of the controller should lie in [0, 1<<16] where 1<<16 represent 100% control signal.
+ *
  * @param obj Control object.
  * @return    0 if fail, 1 otherwise.
  */
@@ -48,6 +50,16 @@ uint8_t Ctrl_init(CtrlObj_t *obj);
  * @param u_signal  Output, control signal.
  */
 void Ctrl_Execute(CtrlObj_t *internals, state_data_t *state, state_data_t *setpoint, control_signal_t *u_signal);
+
+/**
+ * Switch between the control schemes.
+ *
+ * @param param     Current control object.
+ * @param newMode   Mode to change to.
+ * @param state     Measurement.
+ * @param u_signal  Control signal.
+ */
+void Ctrl_Switch(CtrlObj_t * param, CtrlMode_t newMode, state_data_t *state, control_signal_t *u_signal);
 
 /**
  * Turn control on.

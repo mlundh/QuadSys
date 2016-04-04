@@ -27,8 +27,8 @@
 
 struct pidInternal
 {
-  int32_t lastMeasurement;    //!<Last measurment is saved, shifted by SHIFT_EXP.
-  int32_t Iterm;              //!<Iterm is saved, shifted by SHIFT_EXP.
+  int32_t lastMeasurement;    //!<Last measurment is saved.
+  int32_t IError;             //!<Iterm is saved.
   Pid_mode_t mode;            //!<Mode of the pid, on or off.
 };
 /**
@@ -37,7 +37,7 @@ struct pidInternal
  * min and max limits.
  * @param pidConfig     PID controller object.
  */
-void Pid_LimitOutputAndIterm(pidConfig_t *pidConfig, int32_t *output, int32_t shiftedOutput);
+void Pid_LimitOutputAndIterm(pidConfig_t *pidConfig, int32_t *output);
 
 /**
  * Initialization function used to initialize the PID controller
@@ -50,7 +50,7 @@ void Pid_LimitOutputAndIterm(pidConfig_t *pidConfig, int32_t *output, int32_t sh
 void Pid_Initialize(pidConfig_t *pidConfig, int32_t output, int32_t Measurement);
 
 
-pidConfig_t* Pid_Create(int32_t kp, int32_t ki, int32_t kd, int32_t OutMin, int32_t OutMax)
+pidConfig_t* Pid_Create(int32_t kp, int32_t ki, int32_t kd, int32_t OutMin, int32_t OutMax, uint32_t shiftFactor, uint32_t timeInterval)
 {
   pidConfig_t * ptr = pvPortMalloc(sizeof(pidConfig_t));
   ptr->kp = kp;
@@ -58,18 +58,18 @@ pidConfig_t* Pid_Create(int32_t kp, int32_t ki, int32_t kd, int32_t OutMin, int3
   ptr->kd = kd;
   ptr->OutMin = OutMin;
   ptr->OutMax = OutMax;
-  ptr->shift_factor = 6;
+  ptr->shift_factor = shiftFactor;
+  ptr->timeInterval = timeInterval;
 
   ptr->internal = pvPortMalloc(sizeof(pidInternal_t));
   ptr->internal->lastMeasurement = 0;
-  ptr->internal->Iterm = 0;
+  ptr->internal->IError = 0;
   ptr->internal->mode = pid_off;
 
   return ptr;
 }
 
 /*Possibly add a feed-forward term.*/
-//TODO check fixed point handling.
 
 void Pid_Compute(pidConfig_t *pidConfig, int32_t Measurement, int32_t Setpoint, int32_t *output)
 {
@@ -77,48 +77,41 @@ void Pid_Compute(pidConfig_t *pidConfig, int32_t Measurement, int32_t Setpoint, 
   {
     return;
   }
-  // Preparation for fixed point calculation.
-  Measurement = Measurement << pidConfig->shift_factor;
-  Setpoint = Setpoint << pidConfig->shift_factor;
 
   /*Compute all the working error variables*/
    int32_t error = Setpoint - Measurement;
 
-   /*Save (ki * error) in Iterm to ensure that a change
+   /*Save (ki * error * timeInterval) in Iterm to ensure that a change
     * in ki does not create a bump in the control action.
     */
-   pidConfig->internal->Iterm += my_mult2(pidConfig->ki, error, pidConfig->shift_factor);
+   pidConfig->internal->IError += my_mult(pidConfig->ki, my_mult(error, pidConfig->timeInterval, pidConfig->shift_factor), pidConfig->shift_factor);
 
-   /*Use derivative of measurement to avoid derivative kick.*/
-   int32_t dInput = (Measurement - pidConfig->internal->lastMeasurement);
+   /*Use derivative of measurement to avoid derivative kick. dError = (error - last_error) / timeInterval*/
+   int32_t dError = my_div((Measurement - pidConfig->internal->lastMeasurement), pidConfig->timeInterval, pidConfig->shift_factor);
 
    /*Remember some variables for next time*/
    pidConfig->internal->lastMeasurement = Measurement;
 
    /*Compute PID Output*/
-   int32_t shiftedOutput = my_mult2(pidConfig->kp, error, pidConfig->shift_factor)
-                           + (pidConfig->internal->Iterm)
-                           - my_mult2(pidConfig->kd, dInput, pidConfig->shift_factor);
+   *output = my_mult(pidConfig->kp, error, pidConfig->shift_factor)
+                           + (pidConfig->internal->IError)
+                           - my_mult(pidConfig->kd, dError, pidConfig->shift_factor);
 
-   /*Shift output back to its correct range.*/
-   *output = shiftedOutput >> pidConfig->shift_factor;
    /*Make sure the output stays within the given range.*/
-   Pid_LimitOutputAndIterm(pidConfig, output, shiftedOutput);
+   Pid_LimitOutputAndIterm(pidConfig, output);
 }
 
-void Pid_LimitOutputAndIterm(pidConfig_t *pidConfig, int32_t *output, int32_t shiftedOutput)
+void Pid_LimitOutputAndIterm(pidConfig_t *pidConfig, int32_t *output)
 {
    if(*output > pidConfig->OutMax)
    {
+     pidConfig->internal->IError -= (*output  - pidConfig->OutMax);
      *output = pidConfig->OutMax;
-     // internal->Iterm is shifted thus outMax has to be shifted to.
-     pidConfig->internal->Iterm -= (shiftedOutput  - (pidConfig->OutMax << pidConfig->shift_factor));
    }
    else if(*output < pidConfig->OutMin)
    {
+     pidConfig->internal->IError += (pidConfig->OutMin -* output);
      *output = pidConfig->OutMin;
-     // internal->Iterm is shifted thus outMin has to be shifted to.
-     pidConfig->internal->Iterm += ((pidConfig->OutMin << pidConfig->shift_factor) - shiftedOutput);
    }
 }
 
@@ -126,8 +119,11 @@ void Pid_LimitOutputAndIterm(pidConfig_t *pidConfig, int32_t *output, int32_t sh
 void Pid_Initialize(pidConfig_t *pidConfig, int32_t output, int32_t Measurement)
 {
   pidConfig->internal->lastMeasurement = Measurement;
-  pidConfig->internal->Iterm = output;
-  Pid_LimitOutputAndIterm(pidConfig, &output, output << pidConfig->shift_factor);
+  if(pidConfig->ki != 0)
+  {
+    pidConfig->internal->IError = output;
+  }
+  Pid_LimitOutputAndIterm(pidConfig, &output);
 }
 
 void Pid_SetMode(pidConfig_t *pidConfig, Pid_mode_t Mode, int32_t output, int32_t Measurement)

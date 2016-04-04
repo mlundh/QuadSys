@@ -1,7 +1,7 @@
 /*
- * communication_tasks.h
+ * ParameterTester.c
  *
- * Copyright (C) 2015 Martin Lundh
+ * Copyright (C) 2016 Martin Lundh
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,27 +22,3 @@
  * THE SOFTWARE.
  */
 
-
-
-#ifndef COMMUNICATION_TASKS_H_
-#define COMMUNICATION_TASKS_H_
-
-#include <stdint.h>
-#include "Communication/inc/quad_serial_packet.h"
-#include "Utilities/inc/common_types.h"
-/**
- * Create the communication tasks. These tasks are responsible for
- * communication with external components such as QuadGS. They are
- * also responsible for setting parameters.
- */
-void Com_CreateTasks( StateHandler_t* stateHandler );
-
-/**
- * Interface function for sending a QSP to the external component (QuadGS).
- * @param packet  QSP to send.
- * @return        1 if sucessful, 0 otherwise.
- */
-uint8_t Com_SendQSP( QSP_t *packet );
-
-
-#endif /* COMMUNICATION-TASKS-H- */

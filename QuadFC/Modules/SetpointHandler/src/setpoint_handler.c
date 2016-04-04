@@ -52,9 +52,9 @@ const static uint8_t timerBlockTimeMs = 1;
 
 
 
-SpObj_t *SpHandl_Create()
+SpHandler_t *SpHandl_Create()
 {
-  SpObj_t* obj = pvPortMalloc(sizeof(SpObj_t));
+  SpHandler_t* obj = pvPortMalloc(sizeof(SpHandler_t));
   obj->xQueue_Sp_Handl = xQueueCreate( SP_HANDL_QUEUE_LENGTH, SP_HANDL_QUEUE_ITEM_SIZE );
   obj->xTimer = xTimerCreate("Timer", 1, pdFALSE, ( void * ) obj, SPHandl_TimerCallback);
 
@@ -65,12 +65,12 @@ SpObj_t *SpHandl_Create()
   return obj;
 }
 
-uint8_t SpHandl_init(SpObj_t *obj)
+uint8_t SpHandl_init(SpHandler_t *obj)
 {
   return 1;
 }
 
-uint8_t SpHandl_SetSetpoint(SpObj_t* obj, state_data_t* setpoint, uint8_t valid_for_ms, uint8_t prio )
+uint8_t SpHandl_SetSetpoint(SpHandler_t* obj, state_data_t* setpoint, uint8_t valid_for_ms, uint8_t prio )
 {
   uint8_t result = 1;
   SetpointData_t setpointdata = {
@@ -117,7 +117,7 @@ uint8_t SpHandl_SetSetpoint(SpObj_t* obj, state_data_t* setpoint, uint8_t valid_
   return result;
 }
 
-uint8_t SpHandl_GetSetpoint(SpObj_t *obj, state_data_t *setpoint, uint8_t timeout_ms )
+uint8_t SpHandl_GetSetpoint(SpHandler_t *obj, state_data_t *setpoint, uint8_t timeout_ms )
 {
   if(!uxQueueMessagesWaiting(obj->xQueue_Sp_Handl))
   {
@@ -133,7 +133,7 @@ uint8_t SpHandl_GetSetpoint(SpObj_t *obj, state_data_t *setpoint, uint8_t timeou
 
 void SPHandl_TimerCallback( TimerHandle_t pxTimer )
 {
-  SpObj_t *obj = ( SpObj_t * ) pvTimerGetTimerID( pxTimer );
+  SpHandler_t *obj = ( SpHandler_t * ) pvTimerGetTimerID( pxTimer );
   xQueueReset(obj->xQueue_Sp_Handl);
   //TODO write error message!
 }

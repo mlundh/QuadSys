@@ -23,25 +23,29 @@
  */
 
 #include <stddef.h>
+#include "FreeRTOS.h"
+
 #include "StateEstimator/inc/state_estimator.h"
-#include "StateEstimator/inc/imu_signal_processing.h"
+#include "FlightController/inc/control_mode_handler.h"
+
+#include "../inc/signal_processing.h"
 #include "QuadFC/QuadFC_IMU.h"
 
 struct StateEst
 {
   Imu_t * imu;
-  estimation_types_t est_type;
+  CtrlModeHandler_t* CtrlModeHandler;
 };
 
-StateEst_t *StateEst_Create()
+StateEst_t *StateEst_Create(CtrlModeHandler_t* CtrlModeHandler)
 {
   StateEst_t * stateEstObj = pvPortMalloc(sizeof(StateEst_t));
   if(!stateEstObj)
   {
     return NULL;
   }
+  stateEstObj->CtrlModeHandler = CtrlModeHandler;
   stateEstObj->imu = Imu_Create();
-  stateEstObj->est_type = type_not_availible;
 
   if(!stateEstObj->imu)
   {
@@ -51,20 +55,48 @@ StateEst_t *StateEst_Create()
 }
 
 
-uint8_t StateEst_init(StateEst_t *obj, estimation_types_t type)
+uint8_t StateEst_init(StateEst_t *obj)
 {
-  obj->est_type = type;
   uint8_t result = Imu_Init(obj->imu);
   return result;
 }
 
 uint8_t StateEst_getState(StateEst_t *obj, state_data_t *state_vector)
 {
-  Imu_GetData(obj->imu);
-  switch (obj->est_type)
+  if(!Imu_GetData(obj->imu))
   {
-  case raw_data_rate:
-    get_rate_gyro( state_vector, &obj->imu->ImuData );
+    return 0;
+  }
+  state_vector->state_valid_bf = 0;
+  switch (Ctrl_GetCurrentMode(obj->CtrlModeHandler))
+  {
+  case Control_mode_rate:
+    Signal_getRateGyro( state_vector, &obj->imu->ImuData );
+    break;
+  case Control_mode_attitude:
+  {
+    // Variables to hold intermediate angles based on only imu data.
+    state_data_t gyroStateTmp = {{0}};
+    state_data_t accStateTmp = {{0}};
+    //Get the sample time from the main control loop timeing.
+    control_time_t sampleTime;
+    sampleTime.value = CTRL_TIME_FP;
+
+    Signal_getEulerAnglesGyro(&gyroStateTmp, &obj->imu->ImuData, &sampleTime);
+    Signal_getEulerAnglesAccel(&accStateTmp, &obj->imu->ImuData);
+    // Do the complementary filtering. This takes the high-frequency behavior from
+    // the gyro, and the low frequency behavior from the accelerometer.
+    Signal_complemetaryFilter(&accStateTmp, &gyroStateTmp, state_vector);
+
+    // The complementary filter only estimates the pitch and roll angles, for yaw
+    // we must use the rate, so get that too.
+    Signal_getRateGyro( state_vector, &obj->imu->ImuData );
+  }
+    break;
+  case Control_mode_not_available:
+    /*----------------------------Mode not available------------
+     * Something is very wrong, we have an unknown state.
+     */
     break;
   default:
     return 0;
@@ -72,13 +104,3 @@ uint8_t StateEst_getState(StateEst_t *obj, state_data_t *state_vector)
   return 1;
 }
 
-uint8_t StateEst_SetEstType(StateEst_t *obj, estimation_types_t est)
-{
-  obj->est_type = est;
-  return 1;
-}
-
-estimation_types_t StateEst_GetEstType(StateEst_t *obj)
-{
-  return obj->est_type;
-}

@@ -35,14 +35,14 @@
  * Create a setpointGenerator object.
  * @return    Control system object containing everything needed by the controller.
  */
-SpObj_t *SpHandl_Create();
+SpHandler_t *SpHandl_Create();
 
 /**
  * Initialize the setpointGenerator object.
  * @param obj Control object.
  * @return    0 if fail, 1 otherwise.
  */
-uint8_t SpHandl_init(SpObj_t *obj);
+uint8_t SpHandl_init(SpHandler_t *obj);
 
 /**
  * Interface function for sending setpoints.If a still valid, higher setpoint
@@ -53,7 +53,7 @@ uint8_t SpHandl_init(SpObj_t *obj);
  * @param prio          Priority of setpoint.
  * @return          1 if successful, 0 otherwise.
  */
-uint8_t SpHandl_SetSetpoint(SpObj_t *obj, state_data_t* setpoint, uint8_t valid_for_ms, uint8_t prio );
+uint8_t SpHandl_SetSetpoint(SpHandler_t *obj, state_data_t* setpoint, uint8_t valid_for_ms, uint8_t prio );
 
 /**
  * Interface function for getting new setpoints.
@@ -61,6 +61,6 @@ uint8_t SpHandl_SetSetpoint(SpObj_t *obj, state_data_t* setpoint, uint8_t valid_
  * @param setpoint  Setpoint struct that will get populated.
  * @return          1 if successful, 0 otherwise.
  */
-uint8_t SpHandl_GetSetpoint(SpObj_t *obj, state_data_t *setpoint, uint8_t timeout_ms );
+uint8_t SpHandl_GetSetpoint(SpHandler_t *obj, state_data_t *setpoint, uint8_t timeout_ms );
 
 #endif /* MODULES_SETPOINTGENERATOR_INC_SETPOINT_GENERATOR_H_ */

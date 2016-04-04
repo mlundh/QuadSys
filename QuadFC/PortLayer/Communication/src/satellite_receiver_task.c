@@ -42,13 +42,12 @@
 #include "PortLayer/Communication/inc/satellite_receiver_public.h"
 #include "QuadFC/QuadFC_Peripherals.h"
 #include "HMI/inc/led_control_task.h"
-#include "InternalStateHandler/inc/state_handler.h"
 #include "SetpointHandler/inc/setpoint_handler.h"
 
 /*Include utilities*/
 #include "Utilities/inc/my_math.h"
 
-Satellite_t* Satellite_Init(StateHandler_t* stateHandler, SpObj_t* setpointHandler)
+Satellite_t* Satellite_Init(StateHandler_t* stateHandler, SpHandler_t* setpointHandler, CtrlModeHandler_t * CtrlModeHandler)
 {
   /* Create the queue used to pass things to the display task*/
   Satellite_t* taskParam = pvPortMalloc(sizeof(Satellite_t));
@@ -57,16 +56,22 @@ Satellite_t* Satellite_Init(StateHandler_t* stateHandler, SpObj_t* setpointHandl
   taskParam->setpoint = pvPortMalloc(sizeof(state_data_t));
   taskParam->satellite_receive_buffer = pvPortMalloc(SATELLITE_MESSAGE_LENGTH * 2);
   taskParam->setpointHandler = setpointHandler;
+  taskParam->CtrlModeHandler = CtrlModeHandler;
   taskParam->stateHandler = stateHandler;
   taskParam->divisor = 1;
   taskParam->multiplier = 1;
+  taskParam->throMult = 1;
   taskParam->xMutexParam = xSemaphoreCreateMutex();
+  taskParam->current_state = state_not_available;
+  taskParam->current_control_mode = Control_mode_not_available;
 
-  param_obj_t * ReceiverRoot = Param_CreateObj(2, NoType, readOnly, NULL, "Rcver", Param_GetRoot(), NULL);
+  param_obj_t * ReceiverRoot = Param_CreateObj(3, NoType, readOnly, NULL, "Rcver", Param_GetRoot(), NULL);
 
-   // Enable receiver sensitivity adjustment.
+  // Enable receiver sensitivity adjustment.
   Param_CreateObj(0, int32_variable_type, readWrite, &taskParam->multiplier, "mult", ReceiverRoot, taskParam->xMutexParam);
   Param_CreateObj(0, int32_variable_type, readWrite, &taskParam->divisor, "div", ReceiverRoot, taskParam->xMutexParam);
+
+  Param_CreateObj(0, int32_variable_type, readWrite, &taskParam->throMult, "TMult", ReceiverRoot, taskParam->xMutexParam);
 
   if( !taskParam || !taskParam->decoded_data || !taskParam->configuration || !taskParam->setpoint
       || !taskParam->satellite_receive_buffer || !taskParam->xMutexParam)
@@ -93,12 +98,12 @@ Satellite_t* Satellite_Init(StateHandler_t* stateHandler, SpObj_t* setpointHandl
  * Spectrum satellite receiver task. Initialize the USART instance
  * and create the task.
  */ 
-void Satellite_CreateReceiverTask(  StateHandler_t* stateHandler, SpObj_t* setPointHandler )
+void Satellite_CreateReceiverTask(  StateHandler_t* stateHandler, SpHandler_t* setPointHandler, CtrlModeHandler_t * CtrlModeHandler)
 {
   uint8_t* receiver_buffer_driver = pvPortMalloc(
       sizeof(uint8_t) * SATELLITE_MESSAGE_LENGTH*2 );
 
-  Satellite_t *SatelliteParam = Satellite_Init(stateHandler, setPointHandler);
+  Satellite_t *SatelliteParam = Satellite_Init(stateHandler, setPointHandler, CtrlModeHandler);
 
 
   if(!SatelliteParam || !receiver_buffer_driver)
@@ -160,7 +165,7 @@ void Satellite_ReceiverTask(void *pvParameters)
   spectrum_config_t* configuration = param->configuration;
   state_data_t* setpoint = param->setpoint;
   uint8_t *satellite_receive_buffer = param->satellite_receive_buffer;
-  SpObj_t* setpointHandler = param->setpointHandler;
+  SpHandler_t* setpointHandler = param->setpointHandler;
 
   /*Like most tasks this is realized by a never-ending loop*/
   for ( ;; )
@@ -184,9 +189,10 @@ void Satellite_ReceiverTask(void *pvParameters)
         if (decoded_data->channels_merged == configuration->channels_available)
         {
           // We have a complete set of channels.
-          Satellite_MapToSetpointRate(param, decoded_data, setpoint);
+          Satellite_MapToSetpoint(param, decoded_data, setpoint);
           SpHandl_SetSetpoint(setpointHandler, setpoint, MESSAGE_VALID_FOR_MS, 1);
           Satellite_UpdateState(param, decoded_data);
+          Satellite_UpdateControlMode(param, decoded_data);
 
         }
       }
@@ -375,20 +381,27 @@ uint8_t Satellite_LockFrameType(spectrum_config_t* configuration, uint16_t chann
   return ret;
 }
 
-void Satellite_MapToSetpointRate(Satellite_t* obj, spektrum_data_t *reciever_data, state_data_t *setpoint)
+void Satellite_MapToSetpoint(Satellite_t* obj, spektrum_data_t *reciever_data, state_data_t *setpoint)
 {
   if( xSemaphoreTake( obj->xMutexParam, ( TickType_t )(1UL / portTICK_PERIOD_MS) ) == pdTRUE )
   {
-    setpoint->state_vector[z_vel]               = reciever_data->ch[0].value; // THRO
-    setpoint->state_vector[yaw_rate]            = ((reciever_data->ch[3].value - SATELLITE_CH_CENTER) * obj->multiplier); // YAW
-    setpoint->state_vector[pitch_rate]          = ((reciever_data->ch[2].value - SATELLITE_CH_CENTER) * obj->multiplier); // PITCH
-    setpoint->state_vector[roll_rate]           = ((reciever_data->ch[1].value - SATELLITE_CH_CENTER) * obj->multiplier); // ROLL
+    //subtract center point and convert to State scale.
+
+    setpoint->state_bf[thrust_sp]              = (my_mult((int32_t)(reciever_data->ch[0].value), SPECTRUM_TO_CTRL_THROTTLE, 0) * obj->throMult); // THRO
+    setpoint->state_bf[yaw_rate_bf]            = (my_mult((reciever_data->ch[3].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_RATE, ANGLE_SHIFT_FACTOR) * obj->multiplier); // YAW
+    setpoint->state_bf[pitch_rate_bf]          = (my_mult((reciever_data->ch[2].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_RATE, ANGLE_SHIFT_FACTOR) * obj->multiplier); // PITCH
+    setpoint->state_bf[roll_rate_bf]           = (my_mult((reciever_data->ch[1].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_RATE, ANGLE_SHIFT_FACTOR) * obj->multiplier); // ROLL
+
+    setpoint->state_bf[pitch_bf]          = (my_mult((reciever_data->ch[2].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_ANGLE, ANGLE_SHIFT_FACTOR) * obj->multiplier); // PITCH
+    setpoint->state_bf[roll_bf]           = (my_mult((reciever_data->ch[1].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_ANGLE, ANGLE_SHIFT_FACTOR) * obj->multiplier); // ROLL
 
     if(obj->divisor > 0)
     {
-      setpoint->state_vector[yaw_rate]  = (setpoint->state_vector[yaw_rate]  / obj->divisor);
-      setpoint->state_vector[pitch_rate]= (setpoint->state_vector[pitch_rate]/ obj->divisor);
-      setpoint->state_vector[roll_rate] = (setpoint->state_vector[roll_rate] / obj->divisor);
+      setpoint->state_bf[yaw_rate_bf]  = (setpoint->state_bf[yaw_rate_bf]  / obj->divisor);
+      setpoint->state_bf[pitch_rate_bf]= (setpoint->state_bf[pitch_rate_bf]/ obj->divisor);
+      setpoint->state_bf[roll_rate_bf] = (setpoint->state_bf[roll_rate_bf] / obj->divisor);
+      setpoint->state_bf[pitch_bf] = (setpoint->state_bf[pitch_bf]  / obj->divisor);
+      setpoint->state_bf[roll_bf] = (setpoint->state_bf[roll_bf]  / obj->divisor);
     }
     xSemaphoreGive(obj->xMutexParam);
   }
@@ -398,20 +411,71 @@ void Satellite_MapToSetpointRate(Satellite_t* obj, spektrum_data_t *reciever_dat
 uint8_t Satellite_UpdateState(Satellite_t* obj, spektrum_data_t *merged_data)
 {
   /*Disarm requested*/
+  state_t current_state = State_GetCurrent(obj->stateHandler);
+  if(current_state == state_init || current_state == state_not_available)
+  {
+    return 0; // Dont do anyting during init or fault condition.
+  }
+
   uint8_t ret = 1;
   if ((merged_data->ch[4].value > SATELLITE_CH_CENTER) // Flap is on
       && (merged_data->ch[0].value < 40)) // throttle is low
   {
-    if(pdTRUE == State_Change(obj->stateHandler, state_disarming))
+    if(obj->current_state != state_disarming)
     {
+      if(pdTRUE == State_Change(obj->stateHandler, state_disarming))
+      {
+        obj->current_state = state_disarming;
+      }
     }
   }
   /*Arming request*/
   else if ((merged_data->ch[4].value < SATELLITE_CH_CENTER) // Flap is off
       && (merged_data->ch[0].value < 40)) // throttle is low
   {
-    if(pdTRUE == State_Change(obj->stateHandler, state_arming))
+    if(obj->current_state != state_arming)
     {
+      if(pdTRUE == State_Change(obj->stateHandler, state_arming))
+      {
+        obj->current_state = state_arming;
+      }
+    }
+  }
+  return ret;
+}
+
+
+uint8_t Satellite_UpdateControlMode(Satellite_t* obj, spektrum_data_t *merged_data)
+{
+  state_t current_state = State_GetCurrent(obj->stateHandler);
+  if(current_state == state_init || current_state == state_not_available)
+  {
+    return 0; // Dont do anyting during init or fault condition.
+  }
+  /*Change to attitude mode requested.*/
+  if(Ctrl_GetCurrentMode(obj->CtrlModeHandler));
+  uint8_t ret = 1;
+  if ((merged_data->ch[5].value > SATELLITE_CH_CENTER) // gear is on
+      && (merged_data->ch[0].value < 40)) // throttle is low
+  {
+    if(obj->current_control_mode != Control_mode_attitude)
+    {
+      if(pdTRUE ==  Ctrl_ChangeMode(obj->CtrlModeHandler, Control_mode_attitude))
+      {
+        obj->current_control_mode = Control_mode_attitude;
+      }
+    }
+  }
+  /*Change to rate mode requested.*/
+  else if ((merged_data->ch[5].value < SATELLITE_CH_CENTER) // gear is off
+      && (merged_data->ch[0].value < 40)) // throttle is low
+  {
+    if(obj->current_control_mode != Control_mode_rate)
+    {
+      if(pdTRUE == Ctrl_ChangeMode(obj->CtrlModeHandler, Control_mode_rate))
+      {
+        obj->current_control_mode = Control_mode_rate;
+      }
     }
   }
   return ret;

@@ -45,6 +45,7 @@ typedef struct pidConfig
   int32_t OutMin;
   int32_t OutMax;
   uint32_t shift_factor;      //!<Shift factor for fixed point arithmetic.
+  uint32_t timeInterval;
   pidInternal_t *internal;
 
 }pidConfig_t;
@@ -61,7 +62,7 @@ typedef enum PidMode
  * management and initialization.
  * @return pointer to new object.
  */
-pidConfig_t* Pid_Create(int32_t kp, int32_t ki, int32_t kd, int32_t OutMin, int32_t OutMax);
+pidConfig_t* Pid_Create(int32_t kp, int32_t ki, int32_t kd, int32_t OutMin, int32_t OutMax, uint32_t shiftFactor, uint32_t timeInterval);
 /**
  * @brief Compute the output based on the input and parameters.
  *
@@ -70,12 +71,11 @@ pidConfig_t* Pid_Create(int32_t kp, int32_t ki, int32_t kd, int32_t OutMin, int3
  *
  * It will also clamp the output to min/max limits if needed.
  *
- * Observe that it uses fixed point internally, and uses SHIFT_EXP in
- * internal calculations.
+ * Observe that it uses fixed point internally.
  *
  * @param pidConfig       pid controller object, includes output for now.
- * @param Measurement     Measurement from sensors. 16 bit resolution.
- * @param Setpoint        Desired setpoint. 16 bit resolution.
+ * @param Measurement     Measurement from sensors. 32 bit fixed point with shiftFactor decimal bits.
+ * @param Setpoint        Desired setpoint. 32 bit fixed point with shiftFactor decimal bits.
  */
 void Pid_Compute(pidConfig_t *pidConfig, int32_t Measurement, int32_t Setpoint, int32_t *output);
 
