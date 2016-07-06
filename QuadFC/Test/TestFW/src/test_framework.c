@@ -36,6 +36,7 @@
 
 
 #define MAX_NR_TEST_FUNCTIONS (16)
+#define MAX_NR_INTERNALS (16)
 #define REPORT_SIZE (0x4000)
 #define TC_Name_LENGTH (16)
 #define REPORT_ENTRY_MAX (64)
@@ -53,7 +54,7 @@ struct TestFwInternal
   TC_t testFcns[MAX_NR_TEST_FUNCTIONS];
   char name[TC_Name_LENGTH];
   char report[REPORT_SIZE];
-  void* testSuiteInternal;
+  void* testSuiteInternal[MAX_NR_INTERNALS];
 };
 
 void TestFW_CreateMainTestTask(TestFW_mainTestFunction_t mainFcn)
@@ -86,7 +87,8 @@ TestFw_t* TestFW_Create(char* name)
   ptr->report[0] = '\0';
   strncpy( ptr->name, name, TC_Name_LENGTH);
   ptr->name[TC_Name_LENGTH-1] = '\0';
-  ptr->testSuiteInternal = NULL;
+  void* tmp[MAX_NR_INTERNALS] = {NULL};
+  ptr->testSuiteInternal[0] = tmp;
   return ptr;
 }
 
@@ -103,16 +105,23 @@ uint8_t TestFW_RegisterTest(TestFw_t* obj, const char* nameTC, TestFW_TestFuncti
   return 1;
 }
 
-void* TestFW_SetTestSuiteInternal(TestFw_t* obj, void* ptr)
+void* TestFW_SetTestSuiteInternal(TestFw_t* obj, void* ptr, uint8_t idx)
 {
-  obj->testSuiteInternal = ptr;
+  if(idx >= MAX_NR_INTERNALS)
+  {
+    return NULL;
+  }
+  obj->testSuiteInternal[idx] = ptr;
   return ptr;
 }
 
-void* TestFW_GetTestSuiteInternal(TestFw_t* obj)
+void* TestFW_GetTestSuiteInternal(TestFw_t* obj, uint8_t idx)
 {
-
-  return obj->testSuiteInternal;
+  if(idx >= MAX_NR_INTERNALS)
+  {
+    return NULL;
+  }
+  return obj->testSuiteInternal[idx];
 }
 
 uint8_t TestFW_Report(TestFw_t* obj, const char* string)

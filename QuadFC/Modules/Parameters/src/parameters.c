@@ -929,7 +929,7 @@ param_obj_t * Param_FindNext(param_obj_t *current, uint8_t *moduleBuffer, uint32
   }
   uint8_t bufferName[MAX_LOG_NAME_LENGTH];
   bufferName[0] = '\0';
-  bufferName[MAX_LOG_NAME_LENGTH] = '\0';
+  bufferName[MAX_LOG_NAME_LENGTH -1] = '\0';
 
   //The buffer has to contain a valid name.
   if(!Param_GetNameString(bufferName, MAX_LOG_NAME_LENGTH , moduleBuffer, moduleBufferLength))

@@ -29,6 +29,8 @@ typedef struct SpObj SpHandler_t;
 typedef struct StateHandler StateHandler_t;
 typedef struct CtrlModeHandler CtrlModeHandler_t;
 
+typedef struct eventData eventData_t;
+typedef struct eventHandler eventHandler_t;
 
 #define TIME_SHIFT_FACTOR (14)
 #define ONE_MS_FP (16)

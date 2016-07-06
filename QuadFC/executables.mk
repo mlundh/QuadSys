@@ -35,7 +35,7 @@
 EXECUTABLES := QuadFC TestFC_RTOS TestFC_Utilities
 
 QuadFC_DEPS:= Top/QuadFC HAL/QuadFC
-QuadFC_DEPS+= $(addprefix Modules/, Communication FlightController HMI Parameters)
+QuadFC_DEPS+= $(addprefix Modules/, Communication FlightController HMI Parameters EventHandler)
 QuadFC_DEPS+= $(addprefix Modules/, StateEstimator Utilities SetpointHandler InternalStateHandler)
 QuadFC_DEPS+= $(addprefix PortLayer/, Actuators Board Communication HMI Memory Sensors)
 QuadFC_DEPS+= $(addprefix ThirdParty/, asf freertos asf_freertos)
@@ -45,7 +45,7 @@ TestFC_Utilities_DEPS+= $(addprefix Test/,TestFW Math)
 TestFC_Utilities_DEPS+= $(addprefix Modules/, Utilities )
 
 TestFC_RTOS_DEPS:= Top/TestFC_RTOS HAL/QuadFC
-TestFC_RTOS_DEPS+= $(addprefix Test/,TestFW DummyI2C SignalProcessing)
-TestFC_RTOS_DEPS+= $(addprefix Modules/, Utilities StateEstimator Parameters FlightController HMI)
+TestFC_RTOS_DEPS+= $(addprefix Test/,TestFW DummyI2C SignalProcessing EventHandler)
+TestFC_RTOS_DEPS+= $(addprefix Modules/, Utilities StateEstimator Parameters EventHandler FlightController HMI)
 TestFC_RTOS_DEPS+= $(addprefix PortLayer/, Sensors Communication HMI)
 TestFC_RTOS_DEPS+= $(addprefix ThirdParty/, asf freertos)

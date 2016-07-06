@@ -33,7 +33,7 @@
 //Include testers
 #include "Test/TestFW/test_framework.h"
 #include "Test/SignalProcessing/signal_processing_tester.h"
-
+#include "Test/EventHandler/event_handler_tester.h"
 #include "HMI/inc/led_control_task.h"
 
 /**
@@ -80,6 +80,9 @@ void mainTester(void *pvParameters)
   TestFw_t* testFW = TestFW_Create("Suite1");
   /**************Add test module instantiation here***************/
   SigProsses_GetTCs(testFW);
+  EventHandler_GetTCs(testFW);
+
+
   /***************************************************************/
 
   uint8_t result = TestFW_ExecuteTests(testFW);

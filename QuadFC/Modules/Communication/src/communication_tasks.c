@@ -141,10 +141,14 @@ uint8_t Com_HandleDebug(RxCom_t* obj);
 TxCom_t* Com_InitTx()
 {
   TxCom_t* taskParam = pvPortMalloc(sizeof(TxCom_t));
+  if(!taskParam)
+  {
+    return NULL;
+  }
   taskParam->txSLIP =  Slip_Create(COM_PACKET_LENGTH_MAX);
   xQueue_Com = xQueueCreate( COM_QUEUE_LENGTH, COM_QUEUE_ITEM_SIZE );
 
-  if(! taskParam || !xQueue_Com || !taskParam->txSLIP)
+  if( !xQueue_Com || !taskParam->txSLIP)
   {
     return NULL;
   }
@@ -156,6 +160,10 @@ RxCom_t* Com_InitRx(StateHandler_t* stateHandler)
 {
   /* Create the queue used to pass things to the display task*/
   RxCom_t* taskParam = pvPortMalloc(sizeof(RxCom_t));
+  if(!taskParam)
+  {
+    return NULL;
+  }
   taskParam->helper = pvPortMalloc(sizeof(param_helper_t));
   taskParam->saveHelper = pvPortMalloc(sizeof(param_helper_t));
   taskParam->QspPacket = QSP_Create(QSP_MAX_PACKET_SIZE);
@@ -164,7 +172,7 @@ RxCom_t* Com_InitRx(StateHandler_t* stateHandler)
   taskParam->receive_buffer = pvPortMalloc(sizeof(uint8_t) * COM_RECEIVE_BUFFER_LENGTH );
   taskParam->stateHandler = stateHandler;
 
-  if( !taskParam || !taskParam->helper || !taskParam->saveHelper || !taskParam->QspPacket
+  if( !taskParam->helper || !taskParam->saveHelper || !taskParam->QspPacket
       || !taskParam->QspRespPacket || !taskParam->SLIP || !taskParam->receive_buffer )
   {
     return NULL;
@@ -337,7 +345,6 @@ void Com_RxTask( void *pvParameters )
     result = SLIP_Parser(obj->receive_buffer, nr_bytes_received,
         obj->SLIP, &ParserIndex);
 
-    uint8_t rxRespComplete;
     switch ( result )
     {
     case SLIP_StatusCont:
@@ -347,7 +354,7 @@ void Com_RxTask( void *pvParameters )
       if(Slip_DePacketize(QSP_GetPacketPtr(obj->QspPacket), QSP_GetAvailibleSize(obj->QspPacket),
           obj->SLIP))
       {
-        rxRespComplete = Com_HandleQSP(obj);
+        uint8_t rxRespComplete = Com_HandleQSP(obj);
         if(rxRespComplete)
         {
           Com_SendQSP(obj->QspRespPacket);

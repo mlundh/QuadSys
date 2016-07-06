@@ -76,15 +76,17 @@ uint8_t TestFW_RegisterTest(TestFw_t* obj,const char* nameTC, TestFW_TestFunctio
  * Set the test suite internal data.
  * @param obj           Test framework object.
  * @param ptr           Pointer to test suite data.
+ * @param idx           Index in the array of internal data.
  */
-void*  TestFW_SetTestSuiteInternal(TestFw_t* obj, void* ptr);
+void*  TestFW_SetTestSuiteInternal(TestFw_t* obj, void* ptr, uint8_t idx);
 
 /**
  * Get the test suite internal data.
  * @param obj           Test framework object.
+ * @param idx           Index in the array of internal data.
  * @return              Pointer to test suite internal data.
  */
-void* TestFW_GetTestSuiteInternal(TestFw_t* obj);
+void* TestFW_GetTestSuiteInternal(TestFw_t* obj, uint8_t idx);
 
 /**
  *

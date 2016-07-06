@@ -43,6 +43,7 @@ typedef struct SigProcessTester
   StateEst_t* stateEst;
 } SigProcessTester_t;
 
+#define SIG_PROCESS_INTENRNAL_IDX (1)
 
 uint8_t SigProsses_InitMpu6050(TestFw_t* obj);
 
@@ -54,23 +55,36 @@ void SigProsses_GetTCs(TestFw_t* obj)
   TestFW_RegisterTest(obj, "ImuToAngle2", SigProsses_TestImuToAngle2);
   TestFW_RegisterTest(obj, "SpectrumToState", SigProcess_TestSpectrumToState);
 
+  char tmpstr[40] = {0};
   // Initialize the handlers and the imu.
   SigProcessTester_t* SigProcessTester = pvPortMalloc(sizeof(SigProcessTester_t));
+  if(!SigProcessTester)
+  {
+    snprintf (tmpstr, 40,"Failed to create state SigProcessTester.\n");
+    TestFW_Report(obj, tmpstr);
+    return;
+  }
   SigProcessTester->CtrlModeHandler = Ctrl_CreateModeHandler();
   if(!SigProcessTester->CtrlModeHandler)
   {
+    snprintf (tmpstr, 40,"Failed to create state CtrlModeHandler.\n");
+    TestFW_Report(obj, tmpstr);
     return;
   }
   SigProcessTester->stateEst = StateEst_Create(SigProcessTester->CtrlModeHandler);
   if(!SigProcessTester->stateEst)
   {
+    snprintf (tmpstr, 40,"Failed to create stateEst.\n");
+    TestFW_Report(obj, tmpstr);
     return;
   }
   Ctrl_InitModeHandler(SigProcessTester->CtrlModeHandler);
 
-  TestFW_SetTestSuiteInternal(obj, (void*)SigProcessTester);
+  TestFW_SetTestSuiteInternal(obj, (void*)SigProcessTester, SIG_PROCESS_INTENRNAL_IDX);
   if(!SigProsses_InitMpu6050(obj))
   {
+    snprintf (tmpstr, 40,"Failed to create SigProsses_InitMpu6050.\n");
+    TestFW_Report(obj, tmpstr);
     return;
   }
 
@@ -92,8 +106,17 @@ QuadFC_I2C_t* SigProcess_GetI2cPtr(uint8_t internalAddr, uint8_t bufferSize, uin
 
 uint8_t SigProsses_InitMpu6050(TestFw_t* obj)
 {
-  SigProcessTester_t* SigProcessTester =  (SigProcessTester_t*)TestFW_GetTestSuiteInternal(obj);
+  char tmpstr[100] = {0};
+  snprintf (tmpstr, 100,"- Initializing MPU6050.\n");
+  TestFW_Report(obj, tmpstr);
+  SigProcessTester_t* SigProcessTester =  (SigProcessTester_t*)TestFW_GetTestSuiteInternal(obj, SIG_PROCESS_INTENRNAL_IDX);
 
+  if(!SigProcessTester)
+  {
+    snprintf (tmpstr, 100,"- Got NULL pointer.\n");
+    TestFW_Report(obj, tmpstr);
+    return 0;
+  }
 
 
   // Add enough data to initialize the imu used (mpu6050 here). Null data
@@ -174,15 +197,23 @@ uint8_t SigProsses_InitMpu6050(TestFw_t* obj)
   //TODO add data for factory trim.
   if(!StateEst_init(SigProcessTester->stateEst))
   {
+    snprintf (tmpstr, 100,"- Failed to initialize state estimator.\n");
+    TestFW_Report(obj, tmpstr);
     return 0;
   }
+  snprintf (tmpstr, 100,"- Initializing MPU6050 done.\n");
+  TestFW_Report(obj, tmpstr);
   return 1;
 }
 
 uint8_t SigProsses_TestImuToRate(TestFw_t* obj)
 {
-  SigProcessTester_t* SigProcessTester =  (SigProcessTester_t*)TestFW_GetTestSuiteInternal(obj);
+  SigProcessTester_t* SigProcessTester =  (SigProcessTester_t*)TestFW_GetTestSuiteInternal(obj, SIG_PROCESS_INTENRNAL_IDX);
 
+  if(!SigProcessTester)
+  {
+    return 0;
+  }
   StateEst_t* stateEst = SigProcessTester->stateEst;
   if(!stateEst)
   {
@@ -263,7 +294,7 @@ uint8_t SigProsses_TestAngleAccl(TestFw_t* obj)
 
 uint8_t SigProsses_TestImuToAngle(TestFw_t* obj)
 {
-  SigProcessTester_t* SigProcessTester =  (SigProcessTester_t*)TestFW_GetTestSuiteInternal(obj);
+  SigProcessTester_t* SigProcessTester =  (SigProcessTester_t*)TestFW_GetTestSuiteInternal(obj, SIG_PROCESS_INTENRNAL_IDX);
 
   StateEst_t* stateEst = SigProcessTester->stateEst;
   if(!stateEst)
@@ -334,7 +365,7 @@ uint8_t SigProsses_TestImuToAngle(TestFw_t* obj)
 
 uint8_t SigProsses_TestImuToAngle2(TestFw_t* obj)
 {
-  SigProcessTester_t* SigProcessTester =  (SigProcessTester_t*)TestFW_GetTestSuiteInternal(obj);
+  SigProcessTester_t* SigProcessTester =  (SigProcessTester_t*)TestFW_GetTestSuiteInternal(obj, SIG_PROCESS_INTENRNAL_IDX);
 
   StateEst_t* stateEst = SigProcessTester->stateEst;
   if(!stateEst)
