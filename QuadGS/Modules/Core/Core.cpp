@@ -42,24 +42,24 @@ Core::~Core()
 
 }
 
-Core::ptr Core::create()
+Core* Core::create()
 {
-    ptr tmp = ptr(new Core);
+	Core* tmp = new Core;
     return tmp;
 }
 
-void Core::bind(std::shared_ptr<IoBase> IoPtr)
+void Core::bind(IoBase* IoPtr)
 {
     mIo = IoPtr;
-    IoPtr->setReadCallback(std::bind(&QuadGS::Core::msgHandler,shared_from_this(), std::placeholders::_1));
+    IoPtr->setReadCallback(std::bind(&QuadGS::Core::msgHandler, this, std::placeholders::_1));
 
 }
-void Core::bind(std::shared_ptr<UiBase> UiPtr)
+void Core::bind(UiBase* UiPtr)
 {
     mUi = UiPtr;
-    mParameters->RegisterWriteFcn(std::bind(&QuadGS::Core::write, shared_from_this(), std::placeholders::_1));
+    mParameters->RegisterWriteFcn(std::bind(&QuadGS::Core::write, this, std::placeholders::_1));
     UiPtr->registerCommands(getCommands());
-    UiPtr->SetCore(getThis());
+    UiPtr->SetCore(this);
 }
 
 
@@ -103,14 +103,9 @@ std::vector< Command::ptr > Core::getCommands()
     std::vector<std::shared_ptr < Command > > mCommands;
     mCommands = mParameters->getCommands();
     mCommands.push_back(std::make_shared<Command> ("getRuntimeStats",
-            std::bind(&Core::getRuntimeStats, shared_from_this(), std::placeholders::_1),
+            std::bind(&Core::getRuntimeStats, this, std::placeholders::_1),
             "Get runtime stats.", Command::ActOn::IO));
     return mCommands;
-}
-
-Core::ptr Core::getThis()
-{
-    return shared_from_this();
 }
 
 void Core::write( QuadSerialPacket::Ptr packet)

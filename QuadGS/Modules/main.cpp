@@ -65,7 +65,8 @@ namespace QuadGS
 struct program_args
 {
   program_args():
-  logLevel()
+  logLevel(),
+  lvl()
   {}
     string logLevel;
     severity_level lvl;
@@ -87,19 +88,23 @@ int main(int ac, char* av[])
         std::cerr << "Error: " << e.what() << "\n";
         return 1;
     }
-    
+
     QuadGS::Log::Init("app_log", "msg_log", std::clog, args.lvl);
     // Create the modules.
-    QuadGS::IoBase::ptr mIO = std::static_pointer_cast<QuadGS::IoBase>(QuadGS::Serial_Manager::create());
-    QuadGS::UiBase::ptr mUI = std::static_pointer_cast<QuadGS::UiBase>(QuadGS::QuadCLI::create());
-    QuadGS::Core::ptr mCore = QuadGS::Core::create();
+    QuadGS::IoBase* mIO = QuadGS::Serial_Manager::create();
+    QuadGS::UiBase* mUI = QuadGS::QuadCLI::create();
+    QuadGS::Core* mCore = QuadGS::Core::create();
 
     mCore->bind(mUI);
     mCore->bind(mIO);
     mUI->bind(mIO);
-    
+
     // Read input.
     while(mUI->RunUI());
+
+    delete mIO;
+    delete mUI;
+    delete mCore;
     return 0;
 }
 

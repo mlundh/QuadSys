@@ -70,40 +70,32 @@ public:
 
 
 class Core
-        : public std::enable_shared_from_this<Core>
 {
 public:
-    typedef std::shared_ptr<Core> ptr;
     virtual ~Core();
 
     /**
      * Static create method. Use this to create an instance of Core.
      * @return  Pointer to instance of core.
      */
-    static ptr create();
+    static Core* create();
 
     /**
      * Bind method connecting a core object to an IoBase(Input/output) object.
      * @param IoPtr IoObject pointer.
      */
-    void bind(std::shared_ptr<IoBase> IoPtr);
+    void bind(IoBase* IoPtr);
     /**
      * Bind method connecting a core object to a UiBase(user interface) object.
      * @param UiPtr Pointer to an UiObject.
      */
-    void bind(std::shared_ptr<UiBase> UiPtr);
+    void bind(UiBase* UiPtr);
 
     /**
      * Function to get all commands availible to the User Interface.
      * @return  A vector of commands, with descriptions.
      */
     std::vector<Command::ptr> getCommands();
-
-    /**
-     * Get a pointer to this instance.
-     * @return  Shared pointer to this.
-     */
-    ptr getThis();
 
     /**
      * Internal write function. All writes to IO module passes this function.
@@ -139,8 +131,8 @@ public:
 private:
     Core();
     Log logger;
-    std::shared_ptr<IoBase> mIo;
-    std::shared_ptr<UiBase> mUi;
+    IoBase* mIo;
+    UiBase* mUi;
 };
 
 } /* namespace QuadGS */

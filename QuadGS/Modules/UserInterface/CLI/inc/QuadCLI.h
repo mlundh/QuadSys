@@ -35,19 +35,18 @@ namespace QuadGS {
 class QuadCLI : public Log, public UiBase
 {
 public:
-  typedef std::shared_ptr<QuadCLI> ptr;
   
-  static ptr create();
+  static UiBase* create();
   
   virtual ~QuadCLI();
   
   virtual bool RunUI();
 
-  virtual void bind(std::shared_ptr<IoBase> IoPtr);
+  virtual void bind(IoBase* IoPtr);
 
   virtual void registerCommands(std::vector< Command::ptr > commands);
   
-  virtual void SetCore(Core::ptr ptr);
+  virtual void SetCore(Core* ptr);
 
   virtual void Display(std::string str);
 private:
@@ -76,7 +75,7 @@ private:
 
 public:
   static std::vector< Command::ptr > mCommands;
-  static Core::ptr mCore;
+  static Core* mCore;
   std::string mPromptStatus;
   std::string mPromptBase;
   std::string mPrompt;

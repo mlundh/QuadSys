@@ -49,10 +49,8 @@ namespace QuadGS {
  */
 class Serial_Manager:
           public IoBase
-        , public std::enable_shared_from_this<Serial_Manager>
 {
 public:
-    typedef std::shared_ptr<Serial_Manager> ptr;
 
     virtual ~Serial_Manager();
 
@@ -65,7 +63,7 @@ public:
      * Create an instance of the Serial_Manager class.
      * @return  A pointer to the instance.
      */
-    static ptr create();
+    static IoBase* create();
 
     /**
      * Write function used by users of the Io module.

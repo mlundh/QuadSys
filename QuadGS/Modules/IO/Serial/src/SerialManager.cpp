@@ -30,6 +30,7 @@ namespace QuadGS {
 Serial_Manager::Serial_Manager():
         mIo_service()
        ,mWork(new boost::asio::io_service::work(mIo_service))
+	   ,mThread_io(NULL)
        ,mFifo(10, 1000)
        ,mRetries(0)
        ,mOngoing(false)
@@ -41,16 +42,22 @@ void Serial_Manager::Start()
 {
   mThread_io = new std::thread(std::bind(&Serial_Manager::RunThread, this));
   mPort = QuadGS::SerialPort::create(mIo_service);
-  mPort->setReadCallback( std::bind(&Serial_Manager::messageHandler, shared_from_this(), std::placeholders::_1) );
-  mPort->setReadTimeoutCallback( std::bind(&Serial_Manager::timeoutHandler, shared_from_this()) );
+  mPort->setReadCallback( std::bind(&Serial_Manager::messageHandler, this, std::placeholders::_1) );
+  mPort->setReadTimeoutCallback( std::bind(&Serial_Manager::timeoutHandler, this) );
 
 }
 
 
-Serial_Manager::ptr Serial_Manager::create()
+IoBase* Serial_Manager::create()
 {
-    ptr tmp = ptr(new Serial_Manager);
-    tmp->Start();
+	IoBase* tmp = new Serial_Manager;
+	Serial_Manager* manager = dynamic_cast<Serial_Manager*>(tmp);
+
+    if(!manager)
+    {
+    	throw std::runtime_error("Not able to create Serial Manager.");
+    }
+    manager->Start();
     return tmp;
 }
 
@@ -121,25 +128,25 @@ std::vector<Command::ptr> Serial_Manager::getCommands( )
 {
   std::vector<std::shared_ptr < Command > > Commands;
   Commands.push_back(std::make_shared<Command> ("setPort",
-          std::bind(&Serial_Manager::setNameCmd, shared_from_this(), std::placeholders::_1),
+          std::bind(&Serial_Manager::setNameCmd, this, std::placeholders::_1),
           "Set the port name.", Command::ActOn::File));
   Commands.push_back(std::make_shared<Command> ("setBaudRate",
-          std::bind(&Serial_Manager::setBaudRateCmd, shared_from_this(), std::placeholders::_1),
+          std::bind(&Serial_Manager::setBaudRateCmd, this, std::placeholders::_1),
           "Set the baud rate of the port, default 57600 baud.", Command::ActOn::IO));
   Commands.push_back(std::make_shared<Command> ("setFlowControl",
-          std::bind(&Serial_Manager::setFlowControlCmd, shared_from_this(), std::placeholders::_1),
+          std::bind(&Serial_Manager::setFlowControlCmd, this, std::placeholders::_1),
           "Set flow control, default None.", Command::ActOn::IO));
   Commands.push_back(std::make_shared<Command> ("setParity",
-          std::bind(&Serial_Manager::setParityCmd, shared_from_this(), std::placeholders::_1),
+          std::bind(&Serial_Manager::setParityCmd, this, std::placeholders::_1),
           "Set parity, default none.", Command::ActOn::IO));
   Commands.push_back(std::make_shared<Command> ("setStopBits",
-          std::bind(&Serial_Manager::setStopBitsCmd, shared_from_this(), std::placeholders::_1),
+          std::bind(&Serial_Manager::setStopBitsCmd, this, std::placeholders::_1),
           "Set number of stop bits to be used, default one.", Command::ActOn::IO));
   Commands.push_back(std::make_shared<Command> ("openPort",
-          std::bind(&Serial_Manager::openCmd, shared_from_this(), std::placeholders::_1),
+          std::bind(&Serial_Manager::openCmd, this, std::placeholders::_1),
           "Open the serial port.", Command::ActOn::File));
   Commands.push_back(std::make_shared<Command> ("startReadPort",
-          std::bind(&Serial_Manager::startReadCmd, shared_from_this(), std::placeholders::_1),
+          std::bind(&Serial_Manager::startReadCmd, this, std::placeholders::_1),
           "Start the read operation.", Command::ActOn::IO));
 
   return Commands;

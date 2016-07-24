@@ -42,7 +42,6 @@ public:
   typedef std::function<void( std::shared_ptr<QspPayloadRaw> )> MessageHandlerRawFcn;
   typedef std::function<void( void )> TimeoutHandlerFcn;
 
-  typedef std::shared_ptr<IoBase> ptr;
   IoBase(){}
   virtual ~IoBase(){}
   virtual void write( std::shared_ptr<QspPayloadRaw> ptr) = 0;

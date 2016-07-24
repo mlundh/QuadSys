@@ -38,13 +38,13 @@
 namespace QuadGS {
 
 std::vector<std::shared_ptr < Command > > QuadCLI::mCommands;
-Core::ptr QuadCLI::mCore;
-char QuadCLI::WordBreakPath[] = " \t\n\"\\'`@$><=;|&{(/";
-char QuadCLI::WordBreak[] = " \t\n\"\\'`@$><=;|&{(";
+Core* QuadCLI::mCore;
+char  QuadCLI::WordBreakPath[] = " \t\n\"\\'`@$><=;|&{(/";
+char  QuadCLI::WordBreak[] = " \t\n\"\\'`@$><=;|&{(";
 
-QuadCLI::ptr QuadCLI::create()
+UiBase* QuadCLI::create()
 {
-    ptr tmp = ptr(new QuadCLI);
+	UiBase* tmp = new QuadCLI;
     return tmp;
 }
 
@@ -68,7 +68,7 @@ QuadCLI::~QuadCLI()
   history_truncate_file(NULL, 100);
 }
 
-void QuadCLI::bind(std::shared_ptr<IoBase> IoPtr)
+void QuadCLI::bind(IoBase* IoPtr)
 {
     registerCommands(IoPtr->getCommands());
 }
@@ -122,7 +122,7 @@ std::string QuadCLI::ExecuteLine(std::string line)
   return "";
 }
 
-void QuadCLI::SetCore(Core::ptr ptr)
+void QuadCLI::SetCore(Core* ptr)
 {
   mCore = ptr;
 }
