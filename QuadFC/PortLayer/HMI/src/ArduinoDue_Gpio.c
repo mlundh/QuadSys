@@ -1,7 +1,7 @@
 /*
- * globals.h
+ * ArduinoDue_Gpio.c
  *
- * Copyright (C) 2014 martin
+ * Copyright (C) 2016 Martin Lundh
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,9 +21,40 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef GLOBALS_H_
-#define GLOBALS_H_
 
-#define mainDONT_BLOCK                          (0)
+#include "HAL/QuadFC/QuadFC_Gpio.h"
+#include <gpio.h>
+#include <pio.h>
+#include <board.h>
+#define NR_PINS (6)
 
-#endif /* GLOBALS_H_ */
+uint8_t pins[] = {
+    PIN_31_GPIO,
+    PIN_33_GPIO,
+    PIN_35_GPIO,
+    PIN_37_GPIO,
+    PIN_39_GPIO,
+    PIN_41_GPIO
+};
+
+void Gpio_SetPinLow(GpioName_t pin)
+{
+  if(pin < NR_PINS)
+  {
+    gpio_set_pin_low( pins[pin] );
+  }
+}
+void Gpio_SetPinHigh(GpioName_t pin)
+{
+  if(pin < NR_PINS)
+  {
+    gpio_set_pin_high( pins[pin] );
+  }
+}
+void Gpio_TogglePin(GpioName_t pin)
+{
+  if(pin < NR_PINS)
+  {
+    gpio_toggle_pin( pins[pin] );
+  }
+}

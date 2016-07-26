@@ -38,9 +38,10 @@ CtrlObj_t *Ctrl_Create(CtrlModeHandler_t* CtrlModeHandler);
  * Output of the controller should lie in [0, 1<<16] where 1<<16 represent 100% control signal.
  *
  * @param obj Control object.
+ * @param evHandler event handler. Will only be used to initialize the internal mode handler.
  * @return    0 if fail, 1 otherwise.
  */
-uint8_t Ctrl_init(CtrlObj_t *obj);
+uint8_t Ctrl_init(CtrlObj_t *obj, eventHandler_t* evHandler);
 
 /**
  * Execute the control system.

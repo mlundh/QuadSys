@@ -28,32 +28,28 @@
  */
 
 #include "FlightController/inc/main_control_task.h"
-/* Kernel includes. */
+
+#include "FlightModeHandler/inc/flight_mode_handler.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
 #include "timers.h"
 
-/*include drivers TODO remove from here!*/
-#include <gpio.h>
-#include <pio.h>
-#include "../../StateEstimator/inc/signal_processing.h"
+
+#include "HAL/QuadFC/QuadFC_Gpio.h"
+
+#include "Modules/StateEstimator/inc/signal_processing.h"
 
 /* Task includes. */
-#include "HMI/inc/led_control_task.h"
 #include "Communication/inc/communication_tasks.h"
 
 /* Modules */
 #include "FlightController/inc/control_system.h"
-#include "InternalStateHandler/inc/state_handler.h"
-
+#include "EventHandler/inc/event_handler.h"
 #include "StateEstimator/inc/state_estimator.h"
 #include "QuadFC/QuadFC_MotorControl.h"
 #include "Parameters/inc/parameters.h"
 #include "SetpointHandler/inc/setpoint_handler.h"
-
-/*Include Utilities*/
-#include "Utilities/inc/globals.h"
 
 //TODO remove
 #include "Parameters/inc/parameters.h"
@@ -69,10 +65,11 @@ typedef struct mainTaskParams
   CtrlObj_t *ctrl;
   control_signal_t *control_signal;
   MotorControlObj *motorControl;
-  StateHandler_t* stateHandler;
+  FlightModeHandler_t* flightModeHandler;
   StateEst_t* stateEst;
   SpHandler_t* setPointHandler;
   CtrlModeHandler_t * CtrlModeHandler;
+  eventHandler_t* evHandler;
   TimerHandle_t xTimer;
 }MaintaskParams_t;
 
@@ -92,7 +89,7 @@ void main_TimerCallback( TimerHandle_t pxTimer );
  * void create_main_control_task(void)
  */
 
-void create_main_control_task(  StateHandler_t* stateHandler, SpHandler_t* setpointHandler, CtrlModeHandler_t * CtrlModeHandler)
+void create_main_control_task(eventHandler_t* evHandler,  FlightModeHandler_t* flightModeHandler, SpHandler_t* setpointHandler, CtrlModeHandler_t * CtrlModeHandler)
 {
   /*Create the task*/
 
@@ -102,16 +99,17 @@ void create_main_control_task(  StateHandler_t* stateHandler, SpHandler_t* setpo
   taskParam->state = pvPortMalloc( sizeof(state_data_t) );
   taskParam->control_signal = pvPortMalloc( sizeof(control_signal_t) );
   taskParam->motorControl = MotorCtrl_CreateAndInit(4);
-  taskParam->stateHandler = stateHandler;
+  taskParam->flightModeHandler = flightModeHandler;
   taskParam->stateEst = StateEst_Create(CtrlModeHandler);
   taskParam->setPointHandler = setpointHandler;
   taskParam->CtrlModeHandler = CtrlModeHandler;
+  taskParam->evHandler = evHandler;
   taskParam->xTimer = xTimerCreate("Tmain", SpTimeoutTimeMs / portTICK_PERIOD_MS, pdFALSE, ( void * ) taskParam, main_TimerCallback);
 
   /*Ensure that all mallocs returned valid pointers*/
    if (   !taskParam || !taskParam->ctrl || !taskParam->setpoint
        || !taskParam->state || !taskParam->control_signal
-       || !taskParam->motorControl || !taskParam->stateHandler
+       || !taskParam->motorControl || !taskParam->flightModeHandler
        || !taskParam->stateEst || !taskParam->setPointHandler)
    {
      for ( ;; )
@@ -119,6 +117,14 @@ void create_main_control_task(  StateHandler_t* stateHandler, SpHandler_t* setpo
        // TODO error handling!
      }
    }
+
+   // Main_ctrl_task does not need events for new flight mode, it sets flight mode itself,
+   // and therefore has a flight mode handler itself.
+
+   // Event_RegisterCallback(taskParam->evHandler, ePeripheralError  ,Led_HandlePeripheralError);
+
+  //taskParam->evHandler->subscriptions |= 0;
+
 
   portBASE_TYPE create_result;
   create_result = xTaskCreate( main_control_task,   /* The function that implements the task.  */
@@ -133,7 +139,6 @@ void create_main_control_task(  StateHandler_t* stateHandler, SpHandler_t* setpo
     /*Error - Could not create task.*/
     for ( ;; )
     {
-
     }
   }
 
@@ -146,56 +151,79 @@ void create_main_control_task(  StateHandler_t* stateHandler, SpHandler_t* setpo
 void main_control_task( void *pvParameters )
 {
   MaintaskParams_t * param = (MaintaskParams_t*)(pvParameters);
+  // Initialize event handler.
+  uint8_t evInitResult = Event_InitHandler(param->evHandler);
+  if(!evInitResult)
+  {
+    for(;;)
+    {
+      // ERROR!
+    }
+  }
+
+  if(!Event_SendAndWaitForAll(param->evHandler, param, eInitialize))
+   {
+     for(;;)
+     {
+     }
+   }
+  // Do initializations here.
 
   /*Initialize modules*/
-  State_InitStateHandler(param->stateHandler);
-  Ctrl_init(param->ctrl);
+  FMode_InitFModeHandler(param->flightModeHandler, param->evHandler);
+  Ctrl_init(param->ctrl, param->evHandler);
 
+  if(!StateEst_init(param->stateEst))
+  {
+    main_fault(param);
+  }
   /*Utility variables*/
   TickType_t arming_counter = 0;
   uint32_t heartbeat_counter = 0;
 
+  //TODO remove
   Param_CreateObj(0, int32_variable_type, readWrite, &param->state->state_bf[pitch_bf], "pitch_bf", Param_GetRoot(), NULL);
   Param_CreateObj(0, int32_variable_type, readWrite, &param->state->state_bf[roll_bf], "roll_bf", Param_GetRoot(), NULL);
 
+
   /*The main control loop*/
 
+  if(!Event_SendAndWaitForAll(param->evHandler, param, eInitializeDone))
+   {
+     for(;;)
+     {
+     }
+   }
+   
   unsigned portBASE_TYPE xLastWakeTime = xTaskGetTickCount();
-
-
   for ( ;; )
   {
-
    /*
     * Main state machine. Controls the state of the flight controller.
     */
-    switch (State_GetCurrent(param->stateHandler))
+    switch (FMode_GetCurrent(param->flightModeHandler))
     {
-    case state_init:
+    case fmode_init:
       /*---------------------------------------Initialize mode------------------------
        * Initialize all modules then set the fc to dissarmed state.
        */
 
-      if(!StateEst_init(param->stateEst))
-      {
-        main_fault(param);
-      }
       // StateEst_init Might take time, reset the last wake time to avoid errors.
       xLastWakeTime = xTaskGetTickCount();
 
-      if(pdTRUE != State_Change(param->stateHandler, state_disarming))
+      if(pdTRUE != FMode_Change(param->flightModeHandler, param->evHandler, fmode_disarming))
       {
         main_fault(param);
       }
 
       break;
-    case state_disarmed:
+    case fmode_disarmed:
       /*---------------------------------------Disarmed mode--------------------------
        * Nothing will happen in disarmed mode. Allowed to change to configure mode,
        * arming mode and fault mode.
        */
       break;
-    case state_config:
+    case fmode_config:
       /*---------------------------------------Configure mode-------------------------
        * Configure mode is used to update parameters used in the control of the copter.
        * The copter has to be disarmed before entering configure mode. To enter a specific
@@ -204,7 +232,7 @@ void main_control_task( void *pvParameters )
        * channel.
        */
       break;
-    case state_arming:
+    case fmode_arming:
       /*-----------------------------------------arming mode--------------------------
        * Before transition into armed mode the fc always passes through arming state to
        * ensure that all systems are available and ready. Use the counter method rather
@@ -216,7 +244,7 @@ void main_control_task( void *pvParameters )
       if ( arming_counter >= ( 1000 / CTRL_TIME ) ) // Be in arming state for 1s.
       {
         arming_counter = 0;
-        if( !State_Change(param->stateHandler, state_armed) )
+        if( !FMode_Change(param->flightModeHandler, param->evHandler, fmode_armed) )
         {
           main_fault(param);
         }
@@ -226,7 +254,7 @@ void main_control_task( void *pvParameters )
         arming_counter++;
       }
       break;
-    case state_armed:
+    case fmode_armed:
       /*-----------------------------------------armed mode---------------------------
        * The FC is armed and operational. The main control loop only handles
        * the Control system.
@@ -268,28 +296,32 @@ void main_control_task( void *pvParameters )
       Ctrl_Allocate(param->control_signal, param->motorControl->motorSetpoint);
       MotorCtrl_UpdateSetpoint( param->motorControl);
       break;
-    case state_disarming:
+    case fmode_disarming:
       /*---------------------------------------Disarming mode--------------------------
        * Transitional state. Only executed once.
        */
       MotorCtrl_Disable(param->motorControl);
       xTimerStop( param->xTimer, 0 ); // if this fails we end up in fault mode, acceptable.
       Ctrl_Off(param->ctrl);
-      if( !State_Change(param->stateHandler, state_disarmed) )
+      if( !FMode_Change(param->flightModeHandler, param->evHandler, fmode_disarmed) )
       {
         main_fault(param);
       }
+
       break;
-    case state_fault:
+    case fmode_fault:
       /*-----------------------------------------fault mode---------------------------
        *  Something has gone wrong and caused the FC to go into fault mode. Nothing
        *  happens in fault mode. Only allowed transition is to disarmed mode.
        *
        *  TODO save reason for fault mode.
        */
-
+    {
+      static int i = 0;
+      i++;
+    }
       break;
-    case state_not_available:
+    case fmode_not_available:
       /*-----------------------------------------state not available mode----------------
        * Something is very wrong if the FC is in state_not_available.
        */
@@ -297,6 +329,10 @@ void main_control_task( void *pvParameters )
     default:
       break;
     }
+
+    //Process incoming events.
+    while(Event_Receive(param->evHandler, param, 0) == 1)
+    {}
 
     vTaskDelayUntil( &xLastWakeTime, CTRL_TIME );
 
@@ -306,7 +342,7 @@ void main_control_task( void *pvParameters )
     heartbeat_counter++;
     if ( heartbeat_counter >= 500 )
     {
-      gpio_toggle_pin( PIN_31_GPIO );
+      Gpio_TogglePin( ledGreen1 );
       heartbeat_counter = 0;
     }
   }
@@ -315,7 +351,7 @@ void main_control_task( void *pvParameters )
 
 void main_fault(MaintaskParams_t *param)
 {
-  State_Fault(param->stateHandler);
+  FMode_Fault(param->flightModeHandler, param->evHandler);
   MotorCtrl_Disable(param->motorControl);
   Ctrl_Off(param->ctrl);
 }

@@ -24,7 +24,7 @@
 #include "../inc/control_mode_handler.h"
 
 
-#include "HMI/inc/led_control_task.h"
+#include "EventHandler/inc/event_handler.h"
 
 
 
@@ -32,11 +32,7 @@ struct CtrlModeHandler
 {
   SemaphoreHandle_t xMutex;
   QueueHandle_t Mode_current_queue;
-  CtrlMode_t current_mode;
-  SemaphoreHandle_t xMutexParam;
 };
-
-/*Semaphore for access control.*/
 
 
 /**
@@ -47,8 +43,8 @@ struct CtrlModeHandler
 #define MODE_CURRENT_QUEUE_ITEM_SIZE        (sizeof(CtrlMode_t))
 
 
-static BaseType_t Ctrl_ModeChangeAllowed(CtrlModeHandler_t* obj, CtrlMode_t mode_req);
-static void Ctrl_UpdateLed(CtrlModeHandler_t* obj);
+static uint8_t Ctrl_ModeChangeAllowed(CtrlModeHandler_t* obj, CtrlMode_t mode_req);
+void Ctrl_SendEvent(CtrlModeHandler_t*  obj, eventHandler_t* evHandler);
 
 CtrlModeHandler_t* Ctrl_CreateModeHandler()
 {
@@ -71,15 +67,15 @@ CtrlModeHandler_t* Ctrl_CreateModeHandler()
 }
 
 
-void Ctrl_InitModeHandler(CtrlModeHandler_t* obj)
+void Ctrl_InitModeHandler(CtrlModeHandler_t* obj, eventHandler_t* evHandler)
 {
 
-  obj->current_mode = Control_mode_rate;
-  if(xQueueSendToBack(obj->Mode_current_queue, &obj->current_mode, 2) != pdPASS)
+  CtrlMode_t current_mode = Control_mode_rate;
+  if(xQueueSendToBack(obj->Mode_current_queue, &current_mode, 2) != pdPASS)
   {
     //TODO send error!
   }
-  Ctrl_UpdateLed(obj);
+  Ctrl_SendEvent(obj, evHandler);
 
 }
 
@@ -97,28 +93,28 @@ CtrlMode_t Ctrl_GetCurrentMode(CtrlModeHandler_t* obj)
 }
 
 // TODO add fault text readable from remote.
-BaseType_t Ctrl_FaultMode(CtrlModeHandler_t* obj)
+uint8_t Ctrl_FaultMode(CtrlModeHandler_t* obj, eventHandler_t* evHandler)
 {
   if( xSemaphoreTake( obj->xMutex, ( TickType_t )(10UL / portTICK_PERIOD_MS) ) == pdTRUE )
   {
     CtrlMode_t mode_req = Control_mode_not_available;
     xQueueOverwrite(obj->Mode_current_queue, &mode_req);
-    Ctrl_UpdateLed(obj);
+    Ctrl_SendEvent(obj, evHandler);
     xSemaphoreGive(obj->xMutex);
   }
-  return pdTRUE;
+  return 1;
 
 }
 
-BaseType_t Ctrl_ChangeMode(CtrlModeHandler_t* obj, CtrlMode_t mode_req)
+uint8_t Ctrl_ChangeMode(CtrlModeHandler_t* obj, eventHandler_t* evHandler, CtrlMode_t mode_req)
 {
-  BaseType_t result = pdFALSE;
+  uint8_t result = 0;
   if( xSemaphoreTake( obj->xMutex, ( TickType_t )(2UL / portTICK_PERIOD_MS) ) == pdTRUE )
   {
     if(Ctrl_ModeChangeAllowed(obj, mode_req) == pdTRUE)
     {
       result = xQueueOverwrite(obj->Mode_current_queue, &mode_req);
-      Ctrl_UpdateLed(obj);
+      Ctrl_SendEvent(obj, evHandler);
     }
     xSemaphoreGive(obj->xMutex);
   }
@@ -126,49 +122,49 @@ BaseType_t Ctrl_ChangeMode(CtrlModeHandler_t* obj, CtrlMode_t mode_req)
   return result;
 }
 
-
-static BaseType_t Ctrl_ModeChangeAllowed(CtrlModeHandler_t* obj, CtrlMode_t mode_req)
+static uint8_t Ctrl_ModeChangeAllowed(CtrlModeHandler_t* obj, CtrlMode_t mode_req)
 {
   switch ( Ctrl_GetCurrentMode(obj) )
   {
   case Control_mode_rate:
     if(    (mode_req == Control_mode_attitude) )
     {
-      return pdTRUE;
+      return 1;
     }
     break;
   case Control_mode_attitude:
     if(    (mode_req == Control_mode_rate))
     {
-      return pdTRUE;
+      return 1;
     }
     break;
   default:
-    return pdFALSE;
+    return 1;
     break;
   }
 
-  return pdFALSE;
+  return 0;
 }
 
-static void Ctrl_UpdateLed(CtrlModeHandler_t* obj)
+void Ctrl_SendEvent(CtrlModeHandler_t*  obj, eventHandler_t* evHandler)
 {
-
-  switch ( Ctrl_GetCurrentMode(obj) )
+  if(evHandler && obj)
   {
-  case Control_mode_rate:
-    Led_Set(led_control_mode_rate);
-    return;
-    break;
-
-  case Control_mode_attitude:
-    Led_Set(led_control_mode_attitude);
-    return;
-    break;
-
-  default:
-    break;
+    eventData_t event;
+    event.eventNumber = eNewCtrlMode;
+    event.data = obj;
+    Event_Send(evHandler, event);
   }
 }
 
+FMode_t Ctrl_GetEventData(eventData_t* data)
+{
+  if(data && data->data)
+  {
+    CtrlModeHandler_t* ControlModeHanler = (CtrlModeHandler_t*)data->data;
+    CtrlMode_t ctrlMode = Ctrl_GetCurrentMode(ControlModeHanler);
+    return ctrlMode;
+  }
+  return Control_mode_not_available;
+}
 

@@ -34,7 +34,7 @@
 #include "PortLayer/Sensors/inc/range_meter.h"
 #include "freertos_uart_serial.h"
 #include "Utilities/inc/string_utils.h"
-#include "Utilities/inc/globals.h"
+#include "Utilities/inc/common_types.h"
 
 int32_t moving_average( int32_t *buffer, int32_t new, uint8_t *i,
     int32_t length );

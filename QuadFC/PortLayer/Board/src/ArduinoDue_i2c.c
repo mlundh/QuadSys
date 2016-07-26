@@ -58,7 +58,6 @@ uint8_t Init_Twi(int index)
 
   if ( twi == NULL )
   {
-    Led_Set(led_error_TWI);
     return 0;
   }
   freeRTOS_twi[index] = twi;
@@ -72,12 +71,10 @@ uint8_t QuadFC_i2cWrite(QuadFC_I2C_t *i2c_data, uint8_t busIndex, TickType_t blo
 {
   if(busIndex > (sizeof(twi_instances)/sizeof(twi_instances[0])))
   {
-    Led_Set(led_error_TWI);
     return 0;
   }
   if(!twi_Init[busIndex])
   {
-    Led_Set(led_error_TWI);
     if(!Init_Twi(busIndex))
     {
       return 0;
@@ -99,7 +96,7 @@ uint8_t QuadFC_i2cWrite(QuadFC_I2C_t *i2c_data, uint8_t busIndex, TickType_t blo
 
   if (twi_status != STATUS_OK)
   {
-    Led_Set(led_error_TWI);
+    // TODO Led_Set(led_error_TWI);
     return 0;
   }
   return 1;
@@ -109,14 +106,13 @@ uint8_t QuadFC_i2cRead(QuadFC_I2C_t *i2c_data, uint8_t busIndex, TickType_t bloc
 {
   if(busIndex > (sizeof(twi_instances)/sizeof(twi_instances[0])))
   {
-    Led_Set(led_error_TWI);
+    // TODO Led_Set(led_error_TWI);
     return 0;
   }
   if(!twi_Init[busIndex])
   {
     if(!Init_Twi(busIndex))
     {
-      Led_Set(led_error_TWI);
       return 0;
     }
   }
@@ -135,7 +131,6 @@ uint8_t QuadFC_i2cRead(QuadFC_I2C_t *i2c_data, uint8_t busIndex, TickType_t bloc
 
   if (twi_status != STATUS_OK)
   {
-    Led_Set(led_error_TWI);
     return 0;
   }
   return 1;

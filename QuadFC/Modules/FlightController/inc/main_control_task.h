@@ -26,6 +26,6 @@
 #define MAIN_CONTROL_TASK_H_
 #include "Utilities/inc/common_types.h"
 
-void create_main_control_task(  StateHandler_t* stateHandler, SpHandler_t* setpointHandler, CtrlModeHandler_t * CtrlModeHandler);
+void create_main_control_task(eventHandler_t* evHandler, FlightModeHandler_t* flightModeHandler, SpHandler_t* setpointHandler, CtrlModeHandler_t * CtrlModeHandler);
 
 #endif /* MAIN_CONTROL_TASK_H_ */

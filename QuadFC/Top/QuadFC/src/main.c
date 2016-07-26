@@ -23,7 +23,7 @@
  */
 #include <sysclk.h>
 #include <board.h>
-/* Kernel includes. */
+#include "../../../Modules/FlightModeHandler/inc/flight_mode_handler.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
@@ -36,12 +36,11 @@
 #include "PortLayer/Communication/inc/satellite_receiver_public.h"
 
 /*include utilities*/
-#include "Utilities/inc/globals.h"
 #include "Utilities/inc/common_types.h"
 
 /*Include task communication modules*/
-#include "InternalStateHandler/inc/state_handler.h"
 #include "FlightController/inc/control_mode_handler.h"
+#include "EventHandler/inc/event_handler.h"
 
 /*
  * FreeRTOS hook (or callback) functions that are defined in this file.
@@ -65,16 +64,21 @@ int main( void )
 
   /*Create cross-task communication utilities.*/
   SpHandler_t* SetpointHandler = SpHandl_Create();
-  StateHandler_t* stateHandler = State_CreateStateHandler();
+  FlightModeHandler_t* stateHandler = FMode_CreateStateHandler();
   CtrlModeHandler_t * CtrlModeHandler = Ctrl_CreateModeHandler();
 
   /* Create all tasks used in the application.*/
-  create_main_control_task(stateHandler, SetpointHandler, CtrlModeHandler);
-  Satellite_CreateReceiverTask(stateHandler, SetpointHandler, CtrlModeHandler);
-  Led_CreateLedControlTask();
+  eventHandler_t* evHandler = Event_CreateHandler(NULL, 5);
+  if(!evHandler)
+  {
+    for(;;); //Error!
+  }
+  create_main_control_task(evHandler, stateHandler, SetpointHandler, CtrlModeHandler);
 
-  /*Should always be created last as it loads the parameters*/
-  Com_CreateTasks(stateHandler); // Creates two tasks, RX and TX.
+  Satellite_CreateReceiverTask(evHandler->eventQueue, stateHandler, SetpointHandler, CtrlModeHandler);
+  Led_CreateLedControlTask(evHandler->eventQueue);
+  /*Should always be created last as it loads the parameters - TODO Init state! */
+  Com_CreateTasks(evHandler->eventQueue, stateHandler); // Creates two tasks, RX and TX.
 
   /* Start the RTOS scheduler. */
   vTaskStartScheduler();

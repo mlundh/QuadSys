@@ -28,7 +28,7 @@
 #include "../inc/pid.h"
 #include "../inc/control_mode_handler.h"
 #include "Parameters/inc/parameters.h"
-#include "HMI/inc/led_control_task.h" // TODO refactor LED
+#include "EventHandler/inc/event_handler.h"
 
 struct CtrlObj
 {
@@ -41,6 +41,7 @@ struct CtrlObj
   SemaphoreHandle_t xMutexParam;
   CtrlModeHandler_t* ModeHandler;
   CtrlMode_t current_mode;
+  eventHandler_t* evHandler;
 };
 
 uint8_t Ctrl_InitializeRate(CtrlObj_t *internals);
@@ -55,13 +56,14 @@ CtrlObj_t *Ctrl_Create(CtrlModeHandler_t* CtrlModeHandler)
   return internals;
 }
 
-uint8_t Ctrl_init(CtrlObj_t *obj)
+uint8_t Ctrl_init(CtrlObj_t *obj, eventHandler_t* evHandler)
 {
   obj->xMutexParam = xSemaphoreCreateMutex();
   obj->current_mode = Control_mode_not_available;
+  obj->evHandler = evHandler;
   Ctrl_InitializeRate(obj);
   Ctrl_InitializeAttitude(obj);
-  Ctrl_InitModeHandler(obj->ModeHandler);
+  Ctrl_InitModeHandler(obj->ModeHandler, obj->evHandler);
   return 1;
 }
 
@@ -231,7 +233,7 @@ void Ctrl_Execute(CtrlObj_t *internals, state_data_t *state, state_data_t *setpo
   }
   else
   {
-    Led_Set(led_main_blocked);
+    // TODO Led_Set(led_main_blocked);
 
   }
 }

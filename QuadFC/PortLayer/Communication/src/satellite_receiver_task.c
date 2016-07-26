@@ -41,13 +41,13 @@
 #include "PortLayer/Communication/inc/satellite_receiver_task.h"
 #include "PortLayer/Communication/inc/satellite_receiver_public.h"
 #include "QuadFC/QuadFC_Peripherals.h"
-#include "HMI/inc/led_control_task.h"
 #include "SetpointHandler/inc/setpoint_handler.h"
+#include "EventHandler/inc/event_handler.h"
 
 /*Include utilities*/
 #include "Utilities/inc/my_math.h"
 
-Satellite_t* Satellite_Init(StateHandler_t* stateHandler, SpHandler_t* setpointHandler, CtrlModeHandler_t * CtrlModeHandler)
+Satellite_t* Satellite_Init(QueueHandle_t eventMaster, FlightModeHandler_t* stateHandler, SpHandler_t* setpointHandler, CtrlModeHandler_t * CtrlModeHandler)
 {
   /* Create the queue used to pass things to the display task*/
   Satellite_t* taskParam = pvPortMalloc(sizeof(Satellite_t));
@@ -62,8 +62,9 @@ Satellite_t* Satellite_Init(StateHandler_t* stateHandler, SpHandler_t* setpointH
   taskParam->multiplier = 1;
   taskParam->throMult = 1;
   taskParam->xMutexParam = xSemaphoreCreateMutex();
-  taskParam->current_state = state_not_available;
+  taskParam->current_state = fmode_not_available;
   taskParam->current_control_mode = Control_mode_not_available;
+  taskParam->evHandler = Event_CreateHandler(eventMaster,0);
 
   param_obj_t * ReceiverRoot = Param_CreateObj(3, NoType, readOnly, NULL, "Rcver", Param_GetRoot(), NULL);
 
@@ -74,7 +75,7 @@ Satellite_t* Satellite_Init(StateHandler_t* stateHandler, SpHandler_t* setpointH
   Param_CreateObj(0, int32_variable_type, readWrite, &taskParam->throMult, "TMult", ReceiverRoot, taskParam->xMutexParam);
 
   if( !taskParam || !taskParam->decoded_data || !taskParam->configuration || !taskParam->setpoint
-      || !taskParam->satellite_receive_buffer || !taskParam->xMutexParam)
+      || !taskParam->satellite_receive_buffer || !taskParam->xMutexParam || !taskParam->evHandler)
   {
     return NULL;
   }
@@ -98,12 +99,12 @@ Satellite_t* Satellite_Init(StateHandler_t* stateHandler, SpHandler_t* setpointH
  * Spectrum satellite receiver task. Initialize the USART instance
  * and create the task.
  */ 
-void Satellite_CreateReceiverTask(  StateHandler_t* stateHandler, SpHandler_t* setPointHandler, CtrlModeHandler_t * CtrlModeHandler)
+void Satellite_CreateReceiverTask(  QueueHandle_t eventMaster, FlightModeHandler_t* stateHandler, SpHandler_t* setPointHandler, CtrlModeHandler_t * CtrlModeHandler)
 {
   uint8_t* receiver_buffer_driver = pvPortMalloc(
       sizeof(uint8_t) * SATELLITE_MESSAGE_LENGTH*2 );
 
-  Satellite_t *SatelliteParam = Satellite_Init(stateHandler, setPointHandler, CtrlModeHandler);
+  Satellite_t *SatelliteParam = Satellite_Init(eventMaster, stateHandler, setPointHandler, CtrlModeHandler);
 
 
   if(!SatelliteParam || !receiver_buffer_driver)
@@ -132,8 +133,14 @@ void Satellite_CreateReceiverTask(  StateHandler_t* stateHandler, SpHandler_t* s
     }
   }
 
+  // Event_RegisterCallback(SatelliteParam->evHandler, ePeripheralError  ,Led_HandlePeripheralError);
+
+  SatelliteParam->evHandler->subscriptions |= 0;
+
+
+
   /*Create the worker task*/
-  xTaskCreate(	Satellite_ReceiverTask,   /* The task that implements the test. */
+  xTaskCreate(  Satellite_ReceiverTask,   /* The task that implements the test. */
       "Satellite",                        /* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
       500,                                /* The size of the stack allocated to the task. */
       (void *) SatelliteParam,            /* The parameter is used to pass the already configured USART port into the task. */
@@ -161,6 +168,32 @@ void Satellite_ReceiverTask(void *pvParameters)
   uint8_t bytes_read = 0;
 
   Satellite_t* param = (Satellite_t*)pvParameters;
+
+  // Initialize event handler.
+  uint8_t evInitResult = Event_InitHandler(param->evHandler);
+  if(!evInitResult)
+  {
+    for(;;)
+    {
+      // ERROR!
+    }
+  }
+
+  if(!Event_SendAndWaitForAll(param->evHandler, param, eInitialize))
+   {
+     for(;;)
+     {
+     }
+   }
+
+  // Do initializations here.
+  if(!Event_SendAndWaitForAll(param->evHandler, param, eInitializeDone))
+   {
+     for(;;)
+     {
+     }
+   }
+
   spektrum_data_t* decoded_data = param->decoded_data;
   spectrum_config_t* configuration = param->configuration;
   state_data_t* setpoint = param->setpoint;
@@ -170,6 +203,10 @@ void Satellite_ReceiverTask(void *pvParameters)
   /*Like most tasks this is realized by a never-ending loop*/
   for ( ;; )
   {
+    //Process incoming events.
+    while(Event_Receive(param->evHandler, param, 0) == 1)
+    {}
+
     /*Read data from the satellite receiver, wait longer than the period of the frames.*/
 
     QuadFC_Serial_t serialData;
@@ -411,8 +448,8 @@ void Satellite_MapToSetpoint(Satellite_t* obj, spektrum_data_t *reciever_data, s
 uint8_t Satellite_UpdateState(Satellite_t* obj, spektrum_data_t *merged_data)
 {
   /*Disarm requested*/
-  state_t current_state = State_GetCurrent(obj->stateHandler);
-  if(current_state == state_init || current_state == state_not_available)
+  FMode_t current_state = FMode_GetCurrent(obj->stateHandler);
+  if(current_state == fmode_init || current_state == fmode_not_available)
   {
     return 0; // Dont do anyting during init or fault condition.
   }
@@ -421,11 +458,11 @@ uint8_t Satellite_UpdateState(Satellite_t* obj, spektrum_data_t *merged_data)
   if ((merged_data->ch[4].value > SATELLITE_CH_CENTER) // Flap is on
       && (merged_data->ch[0].value < 40)) // throttle is low
   {
-    if(obj->current_state != state_disarming)
+    if(obj->current_state != fmode_disarming)
     {
-      if(pdTRUE == State_Change(obj->stateHandler, state_disarming))
+      if(pdTRUE == FMode_Change(obj->stateHandler, obj->evHandler, fmode_disarming))
       {
-        obj->current_state = state_disarming;
+        obj->current_state = fmode_disarming;
       }
     }
   }
@@ -433,11 +470,11 @@ uint8_t Satellite_UpdateState(Satellite_t* obj, spektrum_data_t *merged_data)
   else if ((merged_data->ch[4].value < SATELLITE_CH_CENTER) // Flap is off
       && (merged_data->ch[0].value < 40)) // throttle is low
   {
-    if(obj->current_state != state_arming)
+    if(obj->current_state != fmode_arming)
     {
-      if(pdTRUE == State_Change(obj->stateHandler, state_arming))
+      if(pdTRUE == FMode_Change(obj->stateHandler, obj->evHandler, fmode_arming))
       {
-        obj->current_state = state_arming;
+        obj->current_state = fmode_arming;
       }
     }
   }
@@ -447,8 +484,8 @@ uint8_t Satellite_UpdateState(Satellite_t* obj, spektrum_data_t *merged_data)
 
 uint8_t Satellite_UpdateControlMode(Satellite_t* obj, spektrum_data_t *merged_data)
 {
-  state_t current_state = State_GetCurrent(obj->stateHandler);
-  if(current_state == state_init || current_state == state_not_available)
+  FMode_t current_state = FMode_GetCurrent(obj->stateHandler);
+  if(current_state == fmode_init || current_state == fmode_not_available)
   {
     return 0; // Dont do anyting during init or fault condition.
   }
@@ -460,7 +497,7 @@ uint8_t Satellite_UpdateControlMode(Satellite_t* obj, spektrum_data_t *merged_da
   {
     if(obj->current_control_mode != Control_mode_attitude)
     {
-      if(pdTRUE ==  Ctrl_ChangeMode(obj->CtrlModeHandler, Control_mode_attitude))
+      if(pdTRUE ==  Ctrl_ChangeMode(obj->CtrlModeHandler, obj->evHandler, Control_mode_attitude))
       {
         obj->current_control_mode = Control_mode_attitude;
       }
@@ -472,7 +509,7 @@ uint8_t Satellite_UpdateControlMode(Satellite_t* obj, spektrum_data_t *merged_da
   {
     if(obj->current_control_mode != Control_mode_rate)
     {
-      if(pdTRUE == Ctrl_ChangeMode(obj->CtrlModeHandler, Control_mode_rate))
+      if(pdTRUE == Ctrl_ChangeMode(obj->CtrlModeHandler, obj->evHandler, Control_mode_rate))
       {
         obj->current_control_mode = Control_mode_rate;
       }

@@ -48,7 +48,6 @@
 #include "QuadFC/QuadFC_Peripherals.h"
 #include "QuadFC/src/QuadFC_IMUInternal.h"
 #include "Parameters/inc/parameters.h"
-#include "Utilities/inc/globals.h"
 #include "Utilities/inc/my_math.h"
 
 #define MPU6050_BUSS                  (0x0)

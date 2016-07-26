@@ -1,7 +1,7 @@
 /*
- * led_interface.h
+ * QuadFC_Gpio.h
  *
- * Copyright (C) 2015 martin
+ * Copyright (C) 2016 Martin Lundh
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,23 +21,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef LED_INTERFACE_H_
-#define LED_INTERFACE_H_
-#include <stdint.h>
+#ifndef HAL_QUADFC_QUADFC_GPIO_H_
+#define HAL_QUADFC_QUADFC_GPIO_H_
+#include "Utilities/inc/common_types.h"
 
-typedef enum led_mode
-{
-  led_off = 0,
-  led_blink_fast = 1,
-  led_blink_slow = 2,
-  led_double_blink = 3,
-  led_const_on = 4,
-} led_mode_t;
+void Gpio_SetPinLow(GpioName_t pin);
+void Gpio_SetPinHigh(GpioName_t pin);
+void Gpio_TogglePin(GpioName_t pin);
+void Gpio_SetPinLow(GpioName_t pin);
 
 
-void led_handler( uint8_t mode, uint8_t pin, uint32_t *counter,
-    uint8_t *on_off );
-void toggle_led( uint8_t pin, uint8_t* on_off );
-
-
-#endif /* LED_INTERFACE_H_ */
+#endif /* HAL_QUADFC_QUADFC_GPIO_H_ */

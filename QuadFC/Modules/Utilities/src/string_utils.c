@@ -96,8 +96,9 @@ int32_t my_atoi( uint8_t *buffer, uint8_t length )
   for ( ; index < length; ++index )
   {
     if ( isNumericChar( buffer[index] ) == 0 )
+    {
       return 0;
-    //TODO error!
+    }
     res = res * 10 + buffer[index] - '0';
   }
 

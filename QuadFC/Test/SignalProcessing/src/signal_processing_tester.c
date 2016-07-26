@@ -78,7 +78,7 @@ void SigProsses_GetTCs(TestFw_t* obj)
     TestFW_Report(obj, tmpstr);
     return;
   }
-  Ctrl_InitModeHandler(SigProcessTester->CtrlModeHandler);
+  Ctrl_InitModeHandler(SigProcessTester->CtrlModeHandler, NULL);
 
   TestFW_SetTestSuiteInternal(obj, (void*)SigProcessTester, SIG_PROCESS_INTENRNAL_IDX);
   if(!SigProsses_InitMpu6050(obj))
@@ -301,7 +301,7 @@ uint8_t SigProsses_TestImuToAngle(TestFw_t* obj)
   {
     return 0;
   }
-  Ctrl_ChangeMode(SigProcessTester->CtrlModeHandler, Control_mode_attitude);
+  Ctrl_ChangeMode(SigProcessTester->CtrlModeHandler, NULL, Control_mode_attitude);
 
 
   // We have successfully initialized the fake IMU. Now do testing to
@@ -372,7 +372,7 @@ uint8_t SigProsses_TestImuToAngle2(TestFw_t* obj)
   {
     return 0;
   }
-  Ctrl_ChangeMode(SigProcessTester->CtrlModeHandler, Control_mode_attitude);
+  Ctrl_ChangeMode(SigProcessTester->CtrlModeHandler, NULL, Control_mode_attitude);
 
 
   // We have successfully initialized the fake IMU. Now do testing to

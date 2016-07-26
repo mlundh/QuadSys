@@ -28,6 +28,7 @@
 #include "task.h"
 #include "semphr.h"
 #include "Utilities/inc/common_types.h"
+#include "Modules/EventHandler/inc/event_circular_buffer.h"
 
 /**
  * @file event_handler.h
@@ -40,14 +41,21 @@
  * mesh is set up in the initialization of the event handlers. It
  * is necessary that all event handlers are created at task startup,
  * and that the total number of handlers in the system is given to
- * the master event handler.
+ * the master event handler. The handler then needs to be initialized
+ * by a call to Event_InitHandler(), that will return when all
+ * handlers in the system are initialized.
+ *
+ *
+ * eInitialize and eInitializeDone has default handlers that do nothing.
+ * The main purpose of these events is to synchronize between tasks
+ * using Event_WaitForEvent(). They are also default subscribed.
  */
 
 
 
 
 #define NR_QUEUES_MAX (8)
-#define EVENT_QUEUE_LENGTH (8)
+#define EVENT_QUEUE_LENGTH (16)
 #define EVENT_QUEUE_ITEM_SIZE ((sizeof(eventData_t)))
 
 #define EVENT_BLOCK_TIME (0)
@@ -60,11 +68,23 @@ typedef enum events
   eMeshComplete,   //!< eMeshComplete    Mesh is complete, it is safe to use the mesh data structure.
   eSubscribe,      //!< eSubscribe       New subscription.
   eUnsubscribe,    //!< eUnsubscribe     New unsubscription.
+
+  eNewCtrlMode,    //!< eNewCtrlMode     New flight control mode.
+  eNewFlightMode,  //!< eNewFlightMode   New flight mode (initializing, unarmed, armed etc.).
+
+  eInitialize,     //!< eInitialize      Start of initialization for tasks.
+  eInitializeDone, //!< eInitializeDone  Initialization is done.
+
   eNewSetpoint,    //!< eNewSetpoint     New setpoint has arrived.
   eNewCtrlSignal,  //!< eNewCtrlSignal   New control signal has been calculated.
   eNewState,       //!< eNewState        New state vector has been calculated.
-  eInitialize,     //!< eInitialize      Start of initialization for tasks.
-  eInitializeDone, //!< eInitializeDone  Initialization is done.
+
+  eFcFault,        //!< eFcFault         FC fault. Serious error condition.
+  ePeripheralError,//!< ePeripheralError Not able to interact with a peripheral.
+
+  eTestEvent1,     //!< eTestEvent1      Test event 1.
+  eTestEvent2,     //!< eTestEvent2      Test event 2.
+
   eNrEvents        //!< eNrEvents
 }event_t;
 
@@ -107,6 +127,7 @@ struct eventHandler
   uint8_t           nrHandlers;
   uint8_t           registeredHandlers;
   uint8_t           meshComplete;
+  eventCircBuffer_t* cBuffer;
 };
 
 /**
@@ -118,7 +139,7 @@ struct eventHandler
  *                          used by the master handler.
  * @return
  */
-eventHandler_t* createEventHandler(QueueHandle_t* masterQueue, uint8_t nr_handlers);
+eventHandler_t* Event_CreateHandler(QueueHandle_t* masterQueue, uint8_t nr_handlers);
 
 /**
  * Initialize the event handler. This might take some time
@@ -128,7 +149,7 @@ eventHandler_t* createEventHandler(QueueHandle_t* masterQueue, uint8_t nr_handle
  * @param obj     Current handler.
  * @return
  */
-uint8_t initEventHandler(eventHandler_t* obj);
+uint8_t Event_InitHandler(eventHandler_t* obj);
 
 /**
  * Subscribe to an event type. Events of this type will be put into
@@ -137,7 +158,7 @@ uint8_t initEventHandler(eventHandler_t* obj);
  * @param events  Event to subscribe to.
  * @return        1 if successful, 0 otherwise.
  */
-uint8_t subscribeEvents(eventHandler_t* obj, uint32_t events);
+uint8_t Event_Subscribe(eventHandler_t* obj, uint32_t events);
 
 /**
  * Unsubscribe to an event type. Events of this type will not be
@@ -146,7 +167,7 @@ uint8_t subscribeEvents(eventHandler_t* obj, uint32_t events);
  * @param events  Event to unsubscribe from.
  * @return        1 if successful, 0 otherwise.
  */
-uint8_t unsubscribeEvents(eventHandler_t* obj, uint32_t events);
+uint8_t Event_Unsubscribe(eventHandler_t* obj, uint32_t events);
 
 /**
  * Send event nr event to all event handlers that has registered for
@@ -155,16 +176,40 @@ uint8_t unsubscribeEvents(eventHandler_t* obj, uint32_t events);
  * @param event   Event to be sent.
  * @return        1 if successful, 0 otherwise.
  */
-uint8_t sendEvent(eventHandler_t* obj, eventData_t event);
+uint8_t Event_Send(eventHandler_t* obj, eventData_t event);
 
 /**
- * Process events from the mailbox.
+ * Process events from the mailbox. The events are processed as they arrive. If there
+ * are no events to handle then the function will return 0 after blockTime.
  * @param obj           Current handler.
  * @param taskParam     Task parameters, could store internal task state.
  * @param blockTime     Time the task can block. 0 for no block.
- * @return
+ * @return              1 if the task processed an event, 0 if timeout.
  */
-uint8_t receiveEvent(eventHandler_t* obj, void* taskParam, uint32_t blockTime);
+uint8_t Event_Receive(eventHandler_t* obj, void* taskParam, uint32_t blockTime);
+
+/**
+ * Wait for the event specified by the event parameter. The function can either
+ * queue up to BUFFER_SIZE number of events, or process them as they come. It will only
+ * return once the event it is waiting for has arrived.
+ * @param obj           Current handler.
+ * @param taskParam     Task parameters, could store internal task state.
+ * @param event         Event to wait for.
+ * @param waitForNr     Set to number of events of the type to wait for. If set
+ *                      to 0 the call will return without doing anything.
+ * @param bufferEvents  set to 1 to buffer events, and 0 if the events should be
+ * processed as they arrive.
+ * @return              1 if the event waited for was properly handled, 0 if an error occured.
+ */
+uint8_t Event_WaitForEvent(eventHandler_t* obj, void* taskParam, event_t event, uint8_t waitForNr, uint8_t bufferEvents);
+
+/**
+ * Handle events buffered by Event_WaitForEvent if buffering was enabled.
+ * @param obj           Current handler.
+ * @param taskParam     Task parameters, could store internal task state.
+ * @return              1 if an event was successfully handled, 0 otherwise.
+ */
+uint8_t Event_HandleBufferedEvents(eventHandler_t* obj, void* taskParam);
 
 /**
  * Register a callback function for a specific event. Only events
@@ -177,6 +222,16 @@ uint8_t receiveEvent(eventHandler_t* obj, void* taskParam, uint32_t blockTime);
  * @param fcn           Callback function.
  * @return
  */
-uint8_t registerEventCallback(eventHandler_t* obj, event_t eventNumber, eventHandlerFcn fcn);
+uint8_t Event_RegisterCallback(eventHandler_t* obj, event_t eventNumber, eventHandlerFcn fcn);
+
+/**
+ * Send the specified event to all handlers, and wait for the same event from all other handlers.
+ * Observe that ALL handlers need to subscribe to the event for this function to ever return.
+ * @param obj         Current handler
+ * @param taskParam   Task parameters, could store an internal task state. Null for no state.
+ * @param event       The event to send and wait for.
+ * @return
+ */
+uint8_t Event_SendAndWaitForAll(eventHandler_t* obj, void* taskParam, event_t event);
 
 #endif /* MODULES_EVENTHANDLER_INC_EVENT_HANDLER_H_ */

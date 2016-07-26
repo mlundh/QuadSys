@@ -176,7 +176,8 @@ int32_t my_div( int32_t numerator, int32_t denominator, uint32_t shift_factor)
 {
   if ( denominator == 0 )
   {
-    // TODO ERROR!
+    // ERROR
+    return 0xFFFFFFFF;
   }
   return (int32_t)(((int64_t)numerator << shift_factor) / denominator);
 }

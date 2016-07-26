@@ -35,7 +35,7 @@
  * communication with external components such as QuadGS. They are
  * also responsible for setting parameters.
  */
-void Com_CreateTasks( StateHandler_t* stateHandler );
+void Com_CreateTasks(QueueHandle_t eventMaster, FlightModeHandler_t* stateHandler );
 
 /**
  * Interface function for sending a QSP to the external component (QuadGS).

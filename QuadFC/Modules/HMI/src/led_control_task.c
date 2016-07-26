@@ -23,17 +23,51 @@
  */
 
 #include "../inc/led_control_task.h"
-#include "../inc/led_interface.h"
 #include <stdint.h>
 #include <stddef.h>
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
+#include "EventHandler/inc/event_handler.h"
+#include "FlightModeHandler/inc/flight_mode_handler.h"
+#include "FlightController/inc/control_mode_handler.h"
+#include "HAL/QuadFC/QuadFC_Gpio.h"
 
-/*LED queue*/
-#define LED_QUEUE_LENGTH      (5)
-#define LED_QUEUE_ITEM_SIZE        (sizeof(uint8_t))
-QueueHandle_t xQueue_led;
+#define NR_LEDS (6)
+#define LED_TASK_DELAY (20UL / portTICK_PERIOD_MS)
+
+typedef enum led_mode
+{
+  led_off,
+  led_blink_fast,
+  led_blink_slow,
+  led_double_blink,
+  led_const_on,
+} led_mode_t;
+
+typedef enum ledBlinkState
+{
+  first,
+  second,
+  third,
+  fourth,
+} ledBlinkState;
+
+typedef struct ledState
+{
+  led_mode_t    mode;
+  uint32_t      counter;
+  ledBlinkState currentState;
+}ledState_t;
+
+
+
+typedef struct ledTaskParams
+{
+  ledState_t      ledState[NR_LEDS];
+  eventHandler_t* evHandler;
+}ledTaskParams;
+
 
 /**
  * The control task.
@@ -41,20 +75,51 @@ QueueHandle_t xQueue_led;
  */
 void Led_ControlTask( void *pvParameters );
 
-void Led_CreateLedControlTask( void )
+
+void Led_update( ledState_t* ledState, GpioName_t pin);
+
+uint8_t Led_HandleFlightMode(eventHandler_t* obj, void* taskParam, eventData_t* data);
+uint8_t Led_HandleCtrltMode(eventHandler_t* obj, void* taskParam, eventData_t* data);
+uint8_t Led_HandlePeripheralError(eventHandler_t* obj, void* taskParam, eventData_t* data);
+
+void Led_toggleLed(ledState_t* ledState, GpioName_t pin);
+
+void Led_resetLeds(ledTaskParams * param);
+
+void Led_CreateLedControlTask( QueueHandle_t eventMaster )
 {
 
   /*Create the task*/
-  xQueue_led = xQueueCreate( LED_QUEUE_LENGTH, LED_QUEUE_ITEM_SIZE );
-  if(!xQueue_led)
+  ledTaskParams* ledParams = pvPortMalloc(sizeof(ledTaskParams));
+  if(!ledParams)
   {
     for(;;); //Error!
   }
+  ledParams->evHandler = Event_CreateHandler(eventMaster, 0);
+  if(!ledParams->evHandler)
+  {
+    for(;;); //Error!
+  }
+
+  ledState_t tmp = {0};
+  for(int i = 0; i < NR_LEDS; i++)
+  {
+    ledParams->ledState[i] = tmp;
+  }
+
+  Event_RegisterCallback(ledParams->evHandler, eNewFlightMode    ,Led_HandleFlightMode);
+  Event_RegisterCallback(ledParams->evHandler, eNewCtrlMode      ,Led_HandleCtrltMode);
+  Event_RegisterCallback(ledParams->evHandler, ePeripheralError  ,Led_HandlePeripheralError);
+
+  // Subscribe to the events that should cause led-state change.
+  ledParams->evHandler->subscriptions |= (1 << eNewFlightMode) | (1 << eNewCtrlMode)
+                                      | (1 << ePeripheralError);
+
   portBASE_TYPE create_result;
-  create_result = xTaskCreate( Led_ControlTask,  /* The function that implements the task.  */
-      (const char *const) "Led_Ctrl",      /* The name of the task. This is not used by the kernel, only aids in debugging*/
+  create_result = xTaskCreate( Led_ControlTask,   /* The function that implements the task.  */
+      (const char *const) "Led_Ctrl",             /* The name of the task. This is not used by the kernel, only aids in debugging*/
       500,                                        /* The stack size for the task*/
-      NULL,                                       /* No input parameters*/
+      ledParams,                                  /* Send the task parameter to the task.*/
       configMAX_PRIORITIES-4,                     /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
       NULL );                                     /* Handle to the task. Not used here and therefore NULL*/
 
@@ -71,113 +136,214 @@ void Led_CreateLedControlTask( void )
 
 void Led_ControlTask( void *pvParameters )
 {
-  /*led_control_task execute at 10Hz*/
-  static const TickType_t xPeriod = (20UL / portTICK_PERIOD_MS);
+  ledTaskParams * param = (ledTaskParams*)(pvParameters);
 
-  static uint8_t ctrl = 0;
+  uint8_t evInitResult = Event_InitHandler(param->evHandler);
+  if(!evInitResult)
+  {
+    for(;;)
+    {
+      // ERROR!
+    }
+  }
 
-  static uint8_t mode_state_led_1 = 0;
-  static uint32_t counter_state_led_1 = 0;
-  static uint8_t on_off_state_led_1 = 0;
+  if(!Event_SendAndWaitForAll(param->evHandler, param, eInitialize))
+  {
+    for(;;)
+    {
+    }
+  }
+  // Do initializations here.
 
-  static uint8_t mode_state_led_2 = 0;
-  static uint32_t counter_state_led_2 = 0;
-  static uint8_t on_off_state_led_2 = 0;
+  if(!Event_SendAndWaitForAll(param->evHandler, param, eInitializeDone))
+  {
+    for(;;)
+    {
+    }
+  }
 
-  static uint8_t mode_error_led_1 = 0;
-  static uint32_t counter_error_led_1 = 0;
-  static uint8_t on_off_error_led_1 = 0;
-
-  static uint8_t mode_error_led_2 = 0;
-  static uint32_t counter_error_led_2 = 0;
-  static uint8_t on_off_error_led_2 = 0;
 
   unsigned portBASE_TYPE xLastWakeTime = xTaskGetTickCount();
   for ( ;; )
   {
-
-    xQueueReceive( xQueue_led, &ctrl, 0 );
-
-    switch ( ctrl )
+    vTaskDelayUntil( &xLastWakeTime, LED_TASK_DELAY );
+    while(Event_Receive(param->evHandler, param, 0) == 1)
+    {}
+    for(int i = 0; i < NR_LEDS; i++)
     {
-
-    case led_initializing:
-      mode_state_led_1 = led_blink_fast;
-      break;
-
-    case led_disarmed:
-      mode_state_led_1 = led_double_blink;
-      break;
-
-    case led_configure:
-      mode_state_led_1 = led_const_on;
-      break;
-
-    case led_arming:
-      mode_state_led_1 = led_blink_fast;
-      break;
-
-    case led_armed:
-      mode_state_led_1 = led_blink_slow;
-      break;
-
-    case led_fault:
-      mode_error_led_1 = led_const_on;
-      mode_error_led_2 = led_const_on;
-      mode_state_led_1 = led_off;
-      break;
-
-    case led_control_mode_rate:
-      mode_state_led_2 = led_double_blink;
-      break;
-
-    case led_control_mode_attitude:
-      mode_state_led_2 = led_blink_slow;
-      break;
-
-    case led_error_alloc:
-      mode_error_led_1 = led_double_blink;
-      break;
-
-    case led_error_rc_link:
-      mode_error_led_2 = led_const_on;
-      break;
-
-    case led_error_TWI:
-      mode_error_led_2 = led_blink_slow;
-      break;
-
-    case led_warning_lost_com_message:
-      mode_error_led_2 = led_const_on;
-      break;
-
-    case led_clear_error:
-      mode_error_led_1 = led_off;
-      mode_error_led_2 = led_off;
-      break;
-
-    default:
-      break;
+      if(i != ledGreen1) // ledGreen1 is heart beat, controlled by main task.
+      {
+        Led_update(&param->ledState[i], i);
+      }
     }
-
-    led_handler( mode_state_led_1, PIN_35_GPIO, &counter_state_led_1, &on_off_state_led_1 );
-    led_handler( mode_state_led_2, PIN_37_GPIO, &counter_state_led_2, &on_off_state_led_2 );
-    led_handler( mode_error_led_1, PIN_39_GPIO, &counter_error_led_1, &on_off_error_led_1 );
-    led_handler( mode_error_led_2, PIN_41_GPIO, &counter_error_led_2, &on_off_error_led_2 );
-
-    //TODO add more led pins!
-
-    vTaskDelayUntil( &xLastWakeTime, xPeriod );
   }
 
 }
 
-
-
-BaseType_t Led_Set(LED_control_t led_control)
+void Led_update( ledState_t* ledState, GpioName_t pin)
 {
-  return xQueueSendToBack( xQueue_led, &led_control, 0 );
-  //TODO force send if not successful?
+  ledState->counter++;
+  switch ( ledState->mode )
+  {
+  case led_off:
+    Gpio_SetPinLow( pin );
+    ledState->counter = 0;
+    break;
+
+  case led_const_on:
+    Gpio_SetPinHigh( pin );
+    ledState->counter = 0;
+    break;
+
+  case led_blink_fast:
+    if ( ledState->counter >= 2 )
+    {
+      Led_toggleLed( ledState, pin );
+      ledState->counter = 0;
+    }
+    break;
+  case led_blink_slow:
+
+    if ( ledState->counter >= 10 )
+    {
+      Led_toggleLed( ledState, pin );
+      ledState->counter = 0;
+    }
+    break;
+
+  case led_double_blink:
+    if ( ledState->currentState == first )
+    {
+      if ( ledState->counter >= 20 )
+      {
+        Gpio_SetPinHigh( pin );
+        ledState->counter = 0;
+        ledState->currentState = second;
+      }
+    }
+    else if ( ledState->currentState == second )
+    {
+      if ( ledState->counter >= 4 )
+      {
+        Gpio_SetPinLow( pin );
+        ledState->counter = 0;
+        ledState->currentState = third;
+      }
+    }
+    else if ( ledState->currentState == third )
+    {
+      if ( ledState->counter >= 2 )
+      {
+        Gpio_SetPinHigh( pin );
+        ledState->counter = 0;
+        ledState->currentState = fourth;
+      }
+    }
+    else
+    {
+      if ( ledState->counter >= fourth )
+      {
+        Gpio_SetPinLow( pin );
+        ledState->counter = 0;
+        ledState->currentState = first;
+      }
+    }
+    break;
+
+  default:
+    break;
+  }
 }
 
+void Led_toggleLed(ledState_t* ledState, GpioName_t pin )
+{
 
+  if ( ledState->currentState != first )
+  {
+    Gpio_SetPinHigh( pin );
+    ledState->currentState = first;
+  }
+  else
+  {
+    Gpio_SetPinLow( pin );
+    ledState->currentState = second;
+  }
+}
+
+uint8_t Led_HandleFlightMode(eventHandler_t* obj, void* taskParam, eventData_t* data)
+{
+  ledTaskParams * param = (ledTaskParams*)(taskParam);
+  FMode_t flightMode = FMode_GetEventData(data);
+
+  switch(flightMode)
+  {
+  case fmode_init:
+    param->ledState[ledYellow1].mode = led_blink_fast;
+    break;
+  case fmode_disarmed:
+    param->ledState[ledRed1].mode    = led_off;
+    param->ledState[ledRed2].mode    = led_off;
+    param->ledState[ledYellow1].mode = led_blink_slow;
+    break;
+  case fmode_config:
+    param->ledState[ledYellow1].mode = led_const_on;
+    break;
+  case fmode_arming:
+    param->ledState[ledYellow1].mode = led_blink_fast;
+    break;
+  case fmode_armed:
+    param->ledState[ledYellow1].mode = led_double_blink;
+    break;
+  case fmode_disarming:
+    param->ledState[ledYellow1].mode = led_blink_fast;
+    break;
+  case fmode_fault:
+    param->ledState[ledRed1].mode    = led_const_on;
+    param->ledState[ledRed2].mode    = led_const_on;
+    param->ledState[ledYellow1].mode = led_const_on;
+
+    break;
+  case fmode_not_available:
+    break;
+  default:
+    break;
+  }
+  return 1;
+}
+uint8_t Led_HandleCtrltMode(eventHandler_t* obj, void* taskParam, eventData_t* data)
+{
+  ledTaskParams * param = (ledTaskParams*)(taskParam);
+  CtrlMode_t flightState = Ctrl_GetEventData(data);
+  switch(flightState)
+  {
+  case Control_mode_not_available:
+    param->ledState[ledYellow2].mode = led_off;
+    break;
+  case Control_mode_rate:
+    param->ledState[ledYellow2].mode = led_blink_fast;
+    break;
+  case Control_mode_attitude:
+    param->ledState[ledYellow2].mode = led_blink_slow;
+    break;
+  default:
+    break;
+  }
+  return 0;
+}
+
+uint8_t Led_HandlePeripheralError(eventHandler_t* obj, void* taskParam, eventData_t* data)
+{
+  ledTaskParams * param = (ledTaskParams*)(taskParam);
+  param->ledState[ledRed2].mode    = led_const_on;
+  return 0;
+}
+
+void Led_resetLeds(ledTaskParams * param)
+{
+  param->ledState[ledRed1].mode    = led_off;
+  param->ledState[ledRed2].mode    = led_off;
+  param->ledState[ledYellow1].mode = led_off;
+  param->ledState[ledYellow2].mode = led_off;
+  param->ledState[ledGreen1].mode  = led_off;
+  param->ledState[ledGreen2].mode  = led_off;
+}

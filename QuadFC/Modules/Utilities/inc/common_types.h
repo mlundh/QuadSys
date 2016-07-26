@@ -25,19 +25,50 @@
 #define COMMON_TYPES_H_
 #include "stdint.h"
 
+#define mainDONT_BLOCK                          (0)
+
 typedef struct SpObj SpHandler_t;
-typedef struct StateHandler StateHandler_t;
+typedef struct FlightModeHandler FlightModeHandler_t;
 typedef struct CtrlModeHandler CtrlModeHandler_t;
 
 typedef struct eventData eventData_t;
+
 typedef struct eventHandler eventHandler_t;
+
+typedef enum GpioName
+{
+  ledGreen1,
+  ledGreen2,
+  ledYellow1,
+  ledYellow2,
+  ledRed1,
+  ledRed2,
+  ledNrGpio,
+}GpioName_t;
+
+typedef enum CtrlModeState{
+  Control_mode_rate,
+  Control_mode_attitude,
+  Control_mode_not_available,
+}CtrlMode_t;
+
+typedef enum mode{
+  fmode_init,          // FC is initializing.
+  fmode_disarmed,      // Disarmed mode, no action except changing to another state.
+  fmode_config,        // Configuration. FC can be configured.
+  fmode_arming,        // Motors are arming. No action other than change to error, disarmed or armed state.
+  fmode_armed,         // Armed state, FC is flight ready.
+  fmode_disarming,     // Disarming.
+  fmode_fault,         // FC has encountered a serious problem and has halted.
+  fmode_not_available, // state information not available.
+}FMode_t;
+
 
 #define TIME_SHIFT_FACTOR (14)
 #define ONE_MS_FP (16)
 #define TWO_MS_FP (33)
 
 // Update both macros at the same time!
-
 /*main_control_task execute at 500Hz, period of 2ms*/
 #define CTRL_TIME    (2UL / portTICK_PERIOD_MS )
 #define CTRL_TIME_FP (TWO_MS_FP)

@@ -31,28 +31,20 @@
 #include "semphr.h"
 #include "Utilities/inc/common_types.h"
 
-typedef enum state{
-  state_init = 1,      // FC is initializing.
-  state_disarmed = 2,  // Disarmed state, no action except changing to another state.
-  state_config = 3,    // Configuration state. FC can be configured.
-  state_arming = 4,    // Motors are arming. No action other than change to error, disarmed or armed state.
-  state_armed = 5,     // Armed state, FC is flight ready.
-  state_disarming = 6, // Disarming.
-  state_fault = 7,     // FC has encountered a serious problem and has halted.
-  state_not_available = 0, // state information not available.
-}state_t;
+
 
 //typedef struct StateHandler StateHandler_t;
 /**
  * Create the state handler object.
  * @return Handle to the created object.
  */
-StateHandler_t* State_CreateStateHandler();
+FlightModeHandler_t* FMode_CreateStateHandler();
 
 /**
  * Initialize the state handler. This will set the state to a fixed initial state.
+ * @param evHandler   Event handler handle. Use if the call should send events, set to NULL otherwise.
  */
-void State_InitStateHandler(StateHandler_t*);
+void FMode_InitFModeHandler(FlightModeHandler_t* obj, eventHandler_t* evHandler);
 
 /**
  * Get the current state. Returns state_not_availible if it is not
@@ -60,19 +52,7 @@ void State_InitStateHandler(StateHandler_t*);
  *
  * @return Current state. State_not_availible if fail.
  */
-state_t State_GetCurrent(StateHandler_t*);
-
-/**
- * Lock the state, do not allow change.
- * @return pdTrue if success.
- */
-BaseType_t State_Lock(StateHandler_t*);
-
-/**
- * Unlock state, allow a state transition.
- * @return pdTrue if success.
- */
-BaseType_t State_Unlock(StateHandler_t*);
+FMode_t FMode_GetCurrent(FlightModeHandler_t* obj);
 
 /**
  * Set state to fault. Use this in case of a serious problem
@@ -81,10 +61,10 @@ BaseType_t State_Unlock(StateHandler_t*);
  *
  * If the vehicle is airborne at the time of call to State_Fault,
  * the vehicle will crash.
- *
+ * @param evHandler   Event handler handle. Use if the call should send events, set to NULL otherwise.
  * @return
  */
-BaseType_t State_Fault(StateHandler_t*);
+BaseType_t FMode_Fault(FlightModeHandler_t* obj, eventHandler_t* evHandler);
 
 /**
  * @brief Request a state change.
@@ -93,9 +73,16 @@ BaseType_t State_Fault(StateHandler_t*);
  * state transition is not allowed.
  *
  * @param state_req   New state beeing requested.
+ * @param evHandler   Event handler handle. Use if the call should send events, set to NULL otherwise.
  * @return            pdTrue if ok, pdFalse otherwise.
  */
-BaseType_t State_Change(StateHandler_t*, state_t state_req);
+BaseType_t FMode_Change(FlightModeHandler_t* obj, eventHandler_t* evHandler, FMode_t state_req);
 
+/**
+ * Get event data from a flight mode event.
+ * @param data    Flight mode event data.
+ * @return        Current flight mode.
+ */
+FMode_t FMode_GetEventData(eventData_t* data);
 
 #endif /* STATE_HANDLER_H_ */

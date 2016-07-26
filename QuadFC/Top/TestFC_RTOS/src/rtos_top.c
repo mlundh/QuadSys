@@ -66,7 +66,7 @@ int main( void )
   /* Prepare the hardware to run QuadFC. */
   prvSetupHardware();
   TestFW_CreateMainTestTask(mainTester);
-  Led_CreateLedControlTask();
+  //Led_CreateLedControlTask();
   /* Start the RTOS scheduler. */
   vTaskStartScheduler();
   for ( ;; )

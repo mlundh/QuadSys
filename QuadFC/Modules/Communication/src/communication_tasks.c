@@ -24,15 +24,15 @@
 #include "string.h"
 
 #include "Communication/inc/communication_tasks.h"
+
+#include "../../FlightModeHandler/inc/flight_mode_handler.h"
 #include "Communication/inc/slip_packet.h"
 #include "Communication/inc/crc.h"
 #include "Parameters/inc/parameters.h"
 #include "QuadFC/QuadFC_Memory.h"
 #include "QuadFC/QuadFC_Peripherals.h"
-#include "HMI/inc/led_control_task.h"
-#include "Utilities/inc/globals.h"
 #include "Utilities/inc/run_time_stats.h"
-#include "InternalStateHandler/inc/state_handler.h"
+#include "EventHandler/inc/event_handler.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
@@ -61,12 +61,14 @@ typedef struct RxCom
   uint8_t *receive_buffer;
   param_helper_t *helper;
   param_helper_t *saveHelper;
-  StateHandler_t* stateHandler;
+  FlightModeHandler_t* stateHandler;
+  eventHandler_t* evHandler;
 }RxCom_t;
 
 typedef struct TxCom
 {
   SLIP_t *txSLIP;              //!< Handle for SLIP packet, frame that will be transmitted.
+  eventHandler_t* evHandler;
 }TxCom_t;
 
 
@@ -74,13 +76,13 @@ typedef struct TxCom
  * Initialize the communication module.
  * @return    1 if OK, 0 otherwise.
  */
-TxCom_t* Com_InitTx(void);
+TxCom_t* Com_InitTx(QueueHandle_t eventMaster);
 
 /**
  * Initialize the communication module.
  * @return    1 if OK, 0 otherwise.
  */
-RxCom_t* Com_InitRx(StateHandler_t* stateHandler);
+RxCom_t* Com_InitRx(QueueHandle_t eventMaster, FlightModeHandler_t* stateHandler);
 
 
 /**
@@ -138,7 +140,7 @@ uint8_t Com_HandleStatus(RxCom_t* obj);
  */
 uint8_t Com_HandleDebug(RxCom_t* obj);
 
-TxCom_t* Com_InitTx()
+TxCom_t* Com_InitTx(QueueHandle_t eventMaster)
 {
   TxCom_t* taskParam = pvPortMalloc(sizeof(TxCom_t));
   if(!taskParam)
@@ -147,16 +149,22 @@ TxCom_t* Com_InitTx()
   }
   taskParam->txSLIP =  Slip_Create(COM_PACKET_LENGTH_MAX);
   xQueue_Com = xQueueCreate( COM_QUEUE_LENGTH, COM_QUEUE_ITEM_SIZE );
-
-  if( !xQueue_Com || !taskParam->txSLIP)
+  taskParam->evHandler = Event_CreateHandler(eventMaster, 0);
+  if( !xQueue_Com || !taskParam->txSLIP || !taskParam->evHandler)
   {
     return NULL;
   }
+
+  // Subscribe to the events that the task is interested in. None right now.
+
+  //Event_RegisterCallback(taskParam->evHandler, eFcFault          ,Led_HandleFcFault);
+  //taskParam->evHandler->subscriptions |= 0;
+
   return taskParam;
 }
 
 
-RxCom_t* Com_InitRx(StateHandler_t* stateHandler)
+RxCom_t* Com_InitRx(QueueHandle_t eventMaster, FlightModeHandler_t* stateHandler)
 {
   /* Create the queue used to pass things to the display task*/
   RxCom_t* taskParam = pvPortMalloc(sizeof(RxCom_t));
@@ -171,9 +179,10 @@ RxCom_t* Com_InitRx(StateHandler_t* stateHandler)
   taskParam->SLIP =  Slip_Create(COM_PACKET_LENGTH_MAX);
   taskParam->receive_buffer = pvPortMalloc(sizeof(uint8_t) * COM_RECEIVE_BUFFER_LENGTH );
   taskParam->stateHandler = stateHandler;
-
+  taskParam->evHandler = Event_CreateHandler(eventMaster, 0);
   if( !taskParam->helper || !taskParam->saveHelper || !taskParam->QspPacket
-      || !taskParam->QspRespPacket || !taskParam->SLIP || !taskParam->receive_buffer )
+      || !taskParam->QspRespPacket || !taskParam->SLIP || !taskParam->receive_buffer
+      || !taskParam->evHandler)
   {
     return NULL;
   }
@@ -187,17 +196,23 @@ RxCom_t* Com_InitRx(StateHandler_t* stateHandler)
   taskParam->saveHelper->sequence = 0;
 
 
+
+  // Subscribe to the events that the task is interested in. None right now.
+
+  //Event_RegisterCallback(taskParam->evHandler, eFcFault          ,Led_HandleFcFault);
+  //taskParam->evHandler->subscriptions |= 0;
+
   return taskParam;
 }
 
-void Com_CreateTasks( StateHandler_t* stateHandler )
+void Com_CreateTasks(QueueHandle_t eventMaster, FlightModeHandler_t* stateHandler )
 {
   uint8_t* receive_buffer_driver = pvPortMalloc(
       sizeof(uint8_t) * COM_PACKET_LENGTH_MAX );
 
-  RxCom_t *paramRx = Com_InitRx(stateHandler);
-  TxCom_t *paramTx = Com_InitTx();
-  crcTable =  pvPortMalloc( sizeof(crc_data_t) * CRC_ARRAY_SIZE ); // TODO move to util init!
+  RxCom_t *paramRx = Com_InitRx(eventMaster, stateHandler);
+  TxCom_t *paramTx = Com_InitTx(eventMaster);
+  crcTable =  pvPortMalloc( sizeof(crc_data_t) * CRC_ARRAY_SIZE );
 
 
   crcInit();
@@ -270,10 +285,39 @@ void Com_TxTask( void *pvParameters )
    */
   TxCom_t * obj = (TxCom_t *) pvParameters;
 
+  // Initialize event handler.
+  uint8_t evInitResult = Event_InitHandler(obj->evHandler);
+  if(!evInitResult)
+  {
+    for(;;)
+    {
+      // ERROR!
+    }
+  }
+
+  if(!Event_SendAndWaitForAll(obj->evHandler, obj, eInitialize))
+   {
+     for(;;)
+     {
+     }
+   }
+
   QSP_t *txPacket;            //!< Handle for a QSP packet, used for receiving from queue.
+
+  if(!Event_SendAndWaitForAll(obj->evHandler, obj, eInitializeDone))
+   {
+     for(;;)
+     {
+     }
+   }
 
   for ( ;; )
   {
+
+    //Process incoming events.
+    while(Event_Receive(obj->evHandler, obj, 0) == 1)
+    {}
+
     /* Wait blocking for items in the queue and transmit the data
       as soon as it arrives. Pack into a crc protected slip frame.*/
     if (xQueueReceive(xQueue_Com, &txPacket, portMAX_DELAY) != pdPASS )
@@ -319,11 +363,31 @@ void Com_RxTask( void *pvParameters )
   /*The already allocated data is passed to the task.*/
   RxCom_t * obj = (RxCom_t *) pvParameters;
   
-  // Wait untill FC is initialized. 
-  while(State_GetCurrent(obj->stateHandler) == state_init)
+  // Initialize event handler.
+  uint8_t evInitResult = Event_InitHandler(obj->evHandler);
+  if(!evInitResult)
   {
-    vTaskDelay(2);
+    for(;;)
+    {
+      // ERROR!
+    }
   }
+
+
+  if(!Event_SendAndWaitForAll(obj->evHandler, obj, eInitialize))
+   {
+     for(;;)
+     {
+     }
+   }
+
+  if(!Event_SendAndWaitForAll(obj->evHandler, obj, eInitializeDone))
+   {
+     for(;;)
+     {
+     }
+   }
+  // TODO change timeout in mem_read and move this to the init phase.
   Com_ParamLoad(obj);
   if( QSP_StatusAck != QSP_GetControl(obj->QspRespPacket))
   {
@@ -333,6 +397,9 @@ void Com_RxTask( void *pvParameters )
   for ( ;; )
   {
 
+    //Process incoming events.
+    while(Event_Receive(obj->evHandler, obj, 0) == 1)
+    {}
     /*--------------------------Receive the packet---------------------*/
 
     QuadFC_Serial_t serialData;

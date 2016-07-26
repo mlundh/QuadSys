@@ -30,15 +30,6 @@
 #include "semphr.h"
 #include "Utilities/inc/common_types.h"
 
-
-
-typedef enum CtrlModeState{
-  Control_mode_not_available = 0,
-  Control_mode_rate = 1,
-  Control_mode_attitude = 2
-}CtrlMode_t;
-
-
 /**
  * Create the mode handler object.
  * @return Handle to the created object.
@@ -49,8 +40,10 @@ CtrlModeHandler_t* Ctrl_CreateModeHandler();
  * Initialize the state handler. This will create queues used
  * in the implementation, and unlock the handler.
  * @param   obj Handle to the current mode handler object.
+ * @param evHandler   Event handler handle. Use if the call should send events, set to NULL otherwise.
+ *
  */
-void Ctrl_InitModeHandler(CtrlModeHandler_t* obj);
+void Ctrl_InitModeHandler(CtrlModeHandler_t* obj, eventHandler_t* evHandler);
 
 /**
  * Get the current state. Returns Ctrl_not_availible if it is not
@@ -68,9 +61,10 @@ CtrlMode_t Ctrl_GetCurrentMode(CtrlModeHandler_t* obj);
  * If the vehicle is airborne at the time of call to Ctrl_Fault,
  * the vehicle will crash.
  * @param   obj Handle to the current mode handler object.
+ * @param evHandler   Event handler handle. Use if the call should send events, set to NULL otherwise.
  * @return
  */
-BaseType_t Ctrl_FaultMode(CtrlModeHandler_t* obj);
+uint8_t Ctrl_FaultMode(CtrlModeHandler_t* obj, eventHandler_t* evHandler);
 
 /**
  * @brief Request a state change.
@@ -79,10 +73,18 @@ BaseType_t Ctrl_FaultMode(CtrlModeHandler_t* obj);
  * state transition is not allowed.
  *
  * @param   obj Handle to the current mode handler object.
+ * @param evHandler   Event handler handle. Use if the call should send events, set to NULL otherwise.
  * @param Ctrl_req   New state beeing requested.
- * @return            pdTrue if ok, pdFalse otherwise.
+ * @return            1 if ok, 0 otherwise.
  */
-BaseType_t Ctrl_ChangeMode(CtrlModeHandler_t* obj, CtrlMode_t mode_req);
+uint8_t Ctrl_ChangeMode(CtrlModeHandler_t* obj, eventHandler_t* evHandler, CtrlMode_t mode_req);
+
+/**
+ * Get event data from a control mode event.
+ * @param data    Control mode event data.
+ * @return        Current control mode.
+ */
+FMode_t Ctrl_GetEventData(eventData_t* data);
 
 
 #endif /* MODULES_FLIGHTCONTROLLER_INC_CONTROL_MODE_HANDLER_H_ */

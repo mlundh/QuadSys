@@ -106,12 +106,10 @@ uint8_t QuadFC_SerialWrite(QuadFC_Serial_t *serial_data, uint8_t busIndex, TickT
 {
   if(busIndex > (sizeof(usart_inst)/sizeof(usart_inst[0])))
   {
-    Led_Set(led_error_TWI); // TODO change to serial specific error.
     return 0;
   }
   if(!usart_init[busIndex])
   {
-    Led_Set(led_error_TWI); // TODO change to serial specific error.
     return 0;
   }
   TickType_t blockTimeTicks = (blockTimeMs / portTICK_PERIOD_MS);
@@ -122,7 +120,6 @@ uint8_t QuadFC_SerialWrite(QuadFC_Serial_t *serial_data, uint8_t busIndex, TickT
 
   if ( result != STATUS_OK )
   {
-    Led_Set(led_error_TWI); // TODO change to serial specific error.
     return 0;
   }
   return 1;
@@ -131,12 +128,10 @@ uint32_t QuadFC_SerialRead(QuadFC_Serial_t *serial_data, uint8_t busIndex, TickT
 {
   if(busIndex > (sizeof(usart_inst)/sizeof(usart_inst[0])))
   {
-    Led_Set(led_error_TWI); // TODO change to serial specific error.
     return 0;
   }
   if(!usart_init[busIndex])
   {
-    Led_Set(led_error_TWI); // TODO change to serial specific error.
     return 0;
   }
 
