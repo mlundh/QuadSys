@@ -164,7 +164,7 @@ ${BUILD_DIR}/QuadGS:$(OBJS) $(OBJS_C)
 	then                                                 \
 		echo "  C++    ${<}";                            \
 	else                                                 \
-		echo ${CXX} -o $(@) $(OBJS) $(OBJS_C)  $(LDFLAGS) $(LDLIBS) $(LOADLIBES);  		 \
+		echo ${CXX} -o $(@) $(OBJS) $(OBJS_C)  $(LDFLAGS) $(LDLIBS) $(LOADLIBS);  		 \
 	fi
 	@${CXX} -o $(@) $(OBJS) $(OBJS_C) $(LDFLAGS) $(LDLIBS) $(LOADLIBS)
 
