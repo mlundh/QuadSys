@@ -25,6 +25,7 @@
 #ifndef QUADGS_MODULES_USERINTERFACE_IOBASE_H_
 #define QUADGS_MODULES_USERINTERFACE_IOBASE_H_
 #include <memory>
+#include <functional>
 namespace QuadGS {
 
 class Core;

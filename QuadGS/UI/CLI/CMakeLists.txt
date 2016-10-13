@@ -1,5 +1,6 @@
 list(APPEND src "QuadCLI.cpp")
 list(APPEND dep "log"
                 "Parameters"
-                "Core")
+                "Core"
+		"readline")
 qgs_make_shared_lib( cli src dep)

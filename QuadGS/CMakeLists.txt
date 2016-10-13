@@ -1,8 +1,15 @@
 # cmake needs this line
 cmake_minimum_required(VERSION 3.1)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+
 include(CMakePrintHelpers)
+
+# Include all our helper functions and macros.
+include(cmake/QuadGSUtils.cmake)
+
 # Define project name
 project(QuadGS VERSION 0.1)
+
 # Set project properties
 set(CMAKE_CXX_STANDARD 11) # C++11...
 set(CMAKE_CXX_STANDARD_REQUIRED ON) #...is required...
@@ -20,12 +27,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -pedantic -Werror")
 # Fix boost linking for log.
 add_definitions(-DBOOST_LOG_DYN_LINK)
 
-# Include all our helper functions and macros.
-include(QuadGSUtils.cmake)
-
 # Print header
 message(STATUS "QuadGS - Ground station for quad copter system based on QuadFC.")
-
 # Find boost
 find_package(Boost 1.58.0 REQUIRED COMPONENTS 
                     thread
@@ -38,6 +41,8 @@ find_package(Boost 1.58.0 REQUIRED COMPONENTS
                     regex
                     date_time)
 include_directories(${Boost_INCLUDE_DIRS})
+
+find_package(Readline REQUIRED)
 
 # All libs will be built as shared due to this.
 SET(BUILD_SHARED_LIBS ON)
