@@ -31,17 +31,16 @@
 #include <vector>
 #include "QuadGSTree.h"
 #include "Log.h"
-
+#include "QuadParamPacket.h"
 
 namespace QuadGS {
 class Command;
-class QspPayloadRaw;
-class QuadSerialPacket;
+class QCMsgHeader;
 
 class Parameters
         : public std::enable_shared_from_this<Parameters>
 {
-    typedef std::function<void(std::shared_ptr<QuadSerialPacket>) > WriteFcn;
+    typedef std::function<void(std::shared_ptr<QCMsgHeader>, std::shared_ptr<QuadGSMsg>) > WriteFcn;
 
     /**
      * Default contstructor is private, we are using shared pointers instead.
@@ -71,7 +70,7 @@ public:
      * Handler function for parameter messages.
      * @param packetPtr Message.
      */
-    void ParameterHandler(std::shared_ptr<QuadSerialPacket> packetPtr);
+    void ParameterHandler(std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadParamPacket> payload);
 
     /**
      * Update the temp branch to point at path. mTmpBranch will point at

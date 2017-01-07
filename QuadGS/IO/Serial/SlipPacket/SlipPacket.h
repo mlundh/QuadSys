@@ -26,20 +26,15 @@
 #define _SLIPPACKET_H_
 #include <memory>
 #include <string.h>
-#include <stdexcept>
-
-#include <memory>
-#include <functional>
-#include <string>
 #include <vector>
-#include "QuadGSTree.h"
-#include "QspPayloadRaw.h"
+
 namespace QuadGS {
+
 
 class SlipPacket
 {
 public:
-  
+
   enum SlipControlOctets
   {
     frame_boundary_octet = 0x7E,
@@ -50,34 +45,34 @@ public:
     /**
      * typedefed handle to a slip packet.
      */
-    typedef std::shared_ptr<SlipPacket> SlipPacketPtr;
-
+    typedef std::shared_ptr<SlipPacket> ptr;
+    typedef std::vector<unsigned char> data_t;
     /**
      * @brief Create and decode a slip packet from a raw message.
      * @param Payload The raw slip packet.
      * @param PayloadLength The length of the packet.
      * @return A pointer to the Slip packet.
      */
-    static SlipPacketPtr Create(const uint8_t* data, uint8_t dataLength, bool isPayload);
+    static ptr Create(const uint8_t* data, uint8_t dataLength, bool isPayload);
 
     /**
      * @brief Create slip packet from data.
      * @param Payload The payload that should be packetized.
      * @return a pointer to the Slip packet.
      */
-    static SlipPacketPtr Create(QspPayloadRaw::Ptr data, bool isPayload);
+    static ptr Create(const data_t& data, bool isPayload);
 
     /**
      * @brief Get the Payload carried in the packet.
      * @return A pointer to the decoded payload.
      */
-    QspPayloadRaw::Ptr GetPayload();
+    data_t& GetPayload();
 
     /**
      * @brief Get the slip packet that contains the payload.
      * @return A pointer to the encoded packet.
      */
-    QspPayloadRaw::Ptr GetPacket();
+    data_t& GetPacket();
 
     /**
      * @brief destructor.
@@ -86,7 +81,7 @@ public:
 
 private:
     SlipPacket(const uint8_t* data, uint8_t dataLength, bool isPayload);
-    SlipPacket(QspPayloadRaw::Ptr data, bool isPayload);
+    SlipPacket(const data_t& data, bool isPayload);
     void initCrc();
     /**
      * @brief Encode the payload.
@@ -101,11 +96,11 @@ private:
     bool Decode();
 
     void addChecksumToPayload();
-    void verifyChecksum();
+    bool verifyChecksum();
 
     static bool mCrcInit;
-    QspPayloadRaw::Ptr mPayload;
-    QspPayloadRaw::Ptr mPacket;
+    data_t mPayload;
+    data_t mPacket;
     
     
 

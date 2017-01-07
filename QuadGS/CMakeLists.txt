@@ -7,6 +7,8 @@ include(CMakePrintHelpers)
 # Include all our helper functions and macros.
 include(cmake/QuadGSUtils.cmake)
 
+SET(BUILD_TESTS "TRUE" CACHE BOOL "Build Tests")
+
 # Define project name
 project(QuadGS VERSION 0.1)
 
@@ -30,7 +32,7 @@ add_definitions(-DBOOST_LOG_DYN_LINK)
 # Print header
 message(STATUS "QuadGS - Ground station for quad copter system based on QuadFC.")
 # Find boost
-find_package(Boost 1.58.0 REQUIRED COMPONENTS 
+find_package(Boost 1.60.0 REQUIRED COMPONENTS 
                     thread
                     program_options
                     system
@@ -44,6 +46,27 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 find_package(Readline REQUIRED)
 
+# Include gtest if tests will be built
+if(BUILD_TESTS)
+    # Download and unpack googletest at configure time
+    configure_file("${CMAKE_CURRENT_LIST_DIR}/cmake/CMakeLists.txt.in" googletest-download/CMakeLists.txt)
+    execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+      RESULT_VARIABLE result
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
+    if(result)
+      message(FATAL_ERROR "CMake step for googletest failed: ${result}")
+    endif()
+    execute_process(COMMAND ${CMAKE_COMMAND} --build .
+      RESULT_VARIABLE result
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
+    if(result)
+      message(FATAL_ERROR "Build step for googletest failed: ${result}")
+    endif()
+    # Add googletest directly to our build. This defines
+    # the gtest and gtest_main targets.
+    add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
+                     ${CMAKE_BINARY_DIR}/googletest-build)
+endif()
 # All libs will be built as shared due to this.
 SET(BUILD_SHARED_LIBS ON)
 
@@ -75,9 +98,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/UI)
 enable_testing()
 add_subdirectory(Core)
 add_subdirectory(IO)
-add_subdirectory(Log)
-add_subdirectory(test)
 add_subdirectory(UI)
 add_subdirectory(top)
+add_subdirectory(test)
 
 

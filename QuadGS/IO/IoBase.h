@@ -26,31 +26,111 @@
 #define QUADGS_MODULES_USERINTERFACE_IOBASE_H_
 #include <memory>
 #include <functional>
+#include <vector>
 namespace QuadGS {
 
 class Core;
 class Command;
-class QuadSerialPacket;
-class QspPayloadRaw;
+class QCMsgHeader;
+class QuadGSMsg;
 
 class IoBase
 {
 public:
-  /**
-  * @brief Callback typedefs.
-  */
-  typedef std::function<void( std::shared_ptr<QuadSerialPacket> )> MessageHandlerFcn;
-  typedef std::function<void( std::shared_ptr<QspPayloadRaw> )> MessageHandlerRawFcn;
-  typedef std::function<void( void )> TimeoutHandlerFcn;
+	/**
+	 * @brief Callback typedefs.
+	 */
+	typedef std::function<void( std::shared_ptr<QCMsgHeader>, std::shared_ptr<QuadGSMsg> )> MessageHandlerFcn;
+	typedef std::function<void( void )> TimeoutHandlerFcn;
 
-  IoBase(){}
-  virtual ~IoBase(){}
-  virtual void write( std::shared_ptr<QspPayloadRaw> ptr) = 0;
-  virtual void startRead( void ) = 0;
-  virtual void setReadCallback( MessageHandlerFcn ) = 0;
-  virtual std::vector< std::shared_ptr<Command> > getCommands( ) = 0;
-  virtual std::string getStatus( ) = 0;
+	IoBase(){}
+	virtual ~IoBase(){}
+
+	/**
+	 * Write a message consisting of a header and payload to the io module.
+	 * @param header	Header data
+	 * @param data		Payload data.
+	 */
+	virtual void write( std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadGSMsg> payload) = 0;
+
+	/**
+	 * Start a read operation. The read operation will continue until the program
+	 * is closed, or an error occurs.
+	 */
+	virtual void startRead( void ) = 0;
+
+	/**
+	 * Set the function to be called when a new message has arrived.
+	 * @param The fuction to be called.
+	 */
+	virtual void setMessageCallback( MessageHandlerFcn ) = 0;
+
+	/**
+	 * Get the available commands of the io module. These are for human interaction
+	 * usage only.
+	 * @return A vector with pointer to commands.
+	 */
+	virtual std::vector< std::shared_ptr<Command> > getCommands( ) = 0;
+
+
+	virtual std::string getStatus( ) = 0;
 };
+
+/**
+ * @class ParserBase
+ * Abstract base to all parsers that the i/o module should use.
+ */
+class ParserBase
+{
+public:
+	/**
+	 * The parser should always be passed by shared ptr.
+	 */
+	typedef std::shared_ptr<ParserBase> ptr;
+
+	/**
+	 * Default constructor
+	 */
+	ParserBase(){}
+
+	/**
+	 * Virtual destructor
+	 */
+	virtual ~ParserBase(){}
+
+	/**
+	 * Parse the data in the given vector.
+	 * Return: 0 if everything is ok.
+	 * 		   negative if there is not enough data in the vector.
+	 * 		   positive if there is still data in the vector.
+	 * @param data	buffer of raw data.
+	 * @return	according to above.
+	 */
+	virtual int parse( std::shared_ptr<std::vector<unsigned char> > data) = 0;
+
+	/**
+	 * Get the shared ptr of the header. Will return a NULL ptr if no data has
+	 * been parsed, or if there was no header data. After the function is called
+	 * the internal shared ptr is reset so that another call to getHeader will
+	 * return a null ptr.
+	 * @return pointer to a header.
+	 */
+	virtual std::shared_ptr<QCMsgHeader> getHeader( void ) = 0;
+
+	/**
+	 * Get the shared ptr of the payload. Will return a NULL ptr if no data has
+	 * been parsed, or if there was no payload data. After the function is called
+	 * the internal shared ptr is reset so that another call to getPayload will
+	 * return a null ptr.
+	 * @return
+	 */
+	virtual std::shared_ptr<QuadGSMsg> getPayload( void ) = 0;
+
+protected:
+	std::shared_ptr<QCMsgHeader> mHeader;
+	std::shared_ptr<QuadGSMsg> mPayload;
+};
+
 
 } /* namespace QuadGS */
 

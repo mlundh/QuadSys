@@ -42,6 +42,8 @@
 using namespace boost::asio;
 namespace QuadGS {
 
+class QCMsgHeader;
+class QuadGSMsg;
 /**
  * @class Serial_Manager
  *
@@ -58,7 +60,7 @@ public:
     /**
      * Start the serial manager. This creates and starts the internal handler threads.
      */
-    void Start();
+    void start();
 
     /**
      * Create an instance of the Serial_Manager class.
@@ -70,7 +72,7 @@ public:
      * Write function used by users of the Io module.
      * @param ptr   The QSP that should be sent.
      */
-    virtual void write( QspPayloadRaw::Ptr ptr);
+    virtual void write( std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadGSMsg> payload);
 
     /**
      * Start the read operation. Can be used as soon as the serial
@@ -83,7 +85,7 @@ public:
      * I/O module has received a complete QSP.
      * @param fcn   The callback function.
      */
-    virtual void setReadCallback( IoBase::MessageHandlerFcn fcn );
+    virtual void setMessageCallback( MessageHandlerFcn fcn );
 
     /**
      * Get the user commands available for the module.
@@ -116,7 +118,7 @@ private:
      * Method that is run in a separate thread. Will handle all async
      * operations from the serial port.
      */
-    void RunThread();
+    void runThread();
 
     /**
      * Handler for timeouts. Will get called when there is no response from
@@ -129,7 +131,7 @@ private:
      * registered message handler. Also handles logging of messages.
      * @param ptr   The received message.
      */
-    void messageHandler( QspPayloadRaw::Ptr ptr);
+    void messageHandler(std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadGSMsg> payload);
 
     /**
      * Internal write message. This is the only function allowed to write to the
@@ -138,12 +140,11 @@ private:
     void doWrite();
 
 
-
     QuadGS::SerialPort::ptr mPort;
     boost::asio::io_service mIo_service;
     std::unique_ptr<boost::asio::io_service::work> mWork;
     std::thread *mThread_io;
-    TimedFifo<QspPayloadRaw::Ptr> mFifo;
+    TimedFifo<std::pair< std::shared_ptr<QCMsgHeader>, std::shared_ptr<QuadGSMsg> > >mOutgoingFifo;
     IoBase::MessageHandlerFcn mMessageHandler;
     int mRetries;
     bool mOngoing;

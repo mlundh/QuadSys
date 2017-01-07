@@ -21,19 +21,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
+#include <memory>
 #include "Core.h"
 
+#include "QCMsgHeader.h"
+#include "QuadParamPacket.h"
+#include "QuadDebugMsg.h"
+#include "QuadGSMsg.h"
 #include "UiBase.h"
 #include "IoBase.h"
-#include "QspPayloadRaw.h"
-#include "QuadSerialPacket.h"
-#include "QuadParamPacket.h"
 
 namespace QuadGS {
 
-Core::Core():
-              logger("Core")
+Core::Core()
+:logger("Core")
+,mIo()
+,mUi()
 {
     mParameters = Parameters::create();
 }
@@ -52,13 +55,13 @@ Core* Core::create()
 void Core::bind(IoBase* IoPtr)
 {
     mIo = IoPtr;
-    IoPtr->setReadCallback(std::bind(&QuadGS::Core::msgHandler, this, std::placeholders::_1));
+    IoPtr->setMessageCallback(std::bind(&QuadGS::Core::msgHandler, this, std::placeholders::_1, std::placeholders::_2));
 
 }
 void Core::bind(UiBase* UiPtr)
 {
     mUi = UiPtr;
-    mParameters->RegisterWriteFcn(std::bind(&QuadGS::Core::write, this, std::placeholders::_1));
+    mParameters->RegisterWriteFcn(std::bind(&QuadGS::Core::write, this, std::placeholders::_1, std::placeholders::_2));
     UiPtr->registerCommands(getCommands());
     UiPtr->SetCore(this);
 }
@@ -66,10 +69,9 @@ void Core::bind(UiBase* UiPtr)
 
 std::string Core::getRuntimeStats(std::string )
 {
-    QuadSerialPacket::Ptr tmpPacket = QuadSerialPacket::Create(NULL, 0 );
-    tmpPacket->SetAddress(QuadSerialPacket::addresses::Debug);
-    tmpPacket->SetControl(QuadSerialPacket::DebugControl::GetRuntimeStats);
-    write( tmpPacket );
+	QCMsgHeader::ptr tmpPacket = QCMsgHeader::Create(QCMsgHeader::addresses::Debug, QCMsgHeader::DebugControl::GetRuntimeStats, 0, 0);
+    std::shared_ptr<QuadGSMsg> Payload;
+    write( tmpPacket, Payload);
     return "";
 }
 
@@ -109,25 +111,25 @@ std::vector< Command::ptr > Core::getCommands()
     return mCommands;
 }
 
-void Core::write( QuadSerialPacket::Ptr packet)
+void Core::write( QCMsgHeader::ptr header, QuadGSMsg::QuadGSMsgPtr payload)
 {
-    mIo->write( packet->GetRawData() );
+    mIo->write( header, payload );
 }
 
-void Core::StatusHandler(QuadSerialPacket::Ptr packetPtr)
+void Core::StatusHandler(QCMsgHeader::ptr packetPtr)
 {
     uint8_t control = packetPtr->GetControl();
     switch (control){
-    case QuadSerialPacket::StatusControl::Ack:
+    case QCMsgHeader::StatusControl::Ack:
         break;
-    case QuadSerialPacket::StatusControl::Cont:
-    case QuadSerialPacket::StatusControl::BufferOverrun:
-    case QuadSerialPacket::StatusControl::Error:
-    case QuadSerialPacket::StatusControl::Nack:
-    case QuadSerialPacket::StatusControl::NotAllowed:
-    case QuadSerialPacket::StatusControl::NotImplemented:
-    case QuadSerialPacket::StatusControl::NotValidSlipPacket:
-    case QuadSerialPacket::StatusControl::UnexpectedSequence:
+    case QCMsgHeader::StatusControl::Cont:
+    case QCMsgHeader::StatusControl::BufferOverrun:
+    case QCMsgHeader::StatusControl::Error:
+    case QCMsgHeader::StatusControl::Nack:
+    case QCMsgHeader::StatusControl::NotAllowed:
+    case QCMsgHeader::StatusControl::NotImplemented:
+    case QCMsgHeader::StatusControl::NotValidSlipPacket:
+    case QCMsgHeader::StatusControl::UnexpectedSequence:
         logger.QuadLog(QuadGS::error, "Not valid status response: " + std::to_string(packetPtr->GetControl()));
         break;
 
@@ -135,16 +137,16 @@ void Core::StatusHandler(QuadSerialPacket::Ptr packetPtr)
         break;
     }
 }
-void Core::DebugHandler(QuadSerialPacket::Ptr packetPtr)
+void Core::DebugHandler(QCMsgHeader::ptr header, QuadDebugMsg::ptr payload)
 {
-    uint8_t control = packetPtr->GetControl();
+    uint8_t control = header->GetControl();
     switch (control){
-    case QuadSerialPacket::DebugControl::GetRuntimeStats:
-    case QuadSerialPacket::DebugControl::SetRuntimeStats:
-        mUi->Display(FormatRuntimeStats(packetPtr->GetPayload()->toString()));
+    case QCMsgHeader::DebugControl::GetRuntimeStats:
+    case QCMsgHeader::DebugControl::SetRuntimeStats:
+        mUi->Display(FormatRuntimeStats(payload->GetPayload()));
         break;
-    case QuadSerialPacket::DebugControl::GetErrorMessages:
-        logger.QuadLog(QuadGS::error, "DebugErrorMessage: " + std::to_string(packetPtr->GetControl()));
+    case QCMsgHeader::DebugControl::GetErrorMessages:
+        logger.QuadLog(QuadGS::error, "DebugErrorMessage: " + std::to_string(header->GetControl()));
 
         break;
     default:
@@ -152,27 +154,27 @@ void Core::DebugHandler(QuadSerialPacket::Ptr packetPtr)
     }
 }
 
-void Core::msgHandler(QuadGS::QuadSerialPacket::Ptr ptr)
+void Core::msgHandler(std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadGSMsg> payload)
 {
-    uint8_t address = ptr->GetAddress();
+    uint8_t address = header->GetAddress();
     switch (address){
-    case QuadSerialPacket::Parameters:
-        mParameters->ParameterHandler(ptr);
+    case QCMsgHeader::addresses::Parameters:
+        mParameters->ParameterHandler(header, std::dynamic_pointer_cast<QuadParamPacket>(payload));
         break;
-    case QuadSerialPacket::FunctionCall:
+    case QCMsgHeader::addresses::FunctionCall:
         // FunctionCallHandler();
         break;
-    case QuadSerialPacket::Log:
+    case QCMsgHeader::addresses::Log:
         // LogHandler();
         break;
-    case QuadSerialPacket::Status:
-        StatusHandler(ptr);
+    case QCMsgHeader::addresses::Status:
+        StatusHandler(header);
         break;
-    case QuadSerialPacket::Debug:
-        DebugHandler(ptr);
+    case QCMsgHeader::addresses::Debug:
+        DebugHandler(header, std::dynamic_pointer_cast<QuadDebugMsg>(payload));
         break;
     default:
-        logger.QuadLog(severity_level::warning, "Unhandled message: " + std::to_string(address) + " with data: \n" + ptr->GetRawData()->toString());
+        logger.QuadLog(severity_level::warning, "Unhandled message: " + std::to_string(address) + " with data: \n" + payload->toString());
         break;
     }
 }

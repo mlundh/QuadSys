@@ -30,13 +30,14 @@
 #include <cstddef>
 #include <memory>
 
-#include "QspPayloadRaw.h"
+#include "QuadGSMsg.h"
 #include "Log.h"
 #include "IoBase.h"
 
 typedef boost::asio::serial_port b_a_sp;
 
 namespace QuadGS {
+
 /**
  * @brief Helper class to boost async_read_untill
  */
@@ -45,7 +46,7 @@ class transferUntil
 public:
   typedef std::size_t result_type;
 
-  explicit transferUntil(uint8_t delimiter, uint8_t* buffer)
+  explicit transferUntil(uint8_t delimiter, std::vector<unsigned char>& buffer)
     : mDelimiter(delimiter)
     , mBuffer(buffer)
   {
@@ -63,8 +64,13 @@ public:
 
 private:
   uint8_t mDelimiter;
-  uint8_t* mBuffer;
+  std::vector<unsigned char>& mBuffer;
 };
+
+/**
+ * Forward declarations
+ */
+class SlipPacket;
 
 /**
  * Class containing everything to do with serial communication
@@ -75,15 +81,11 @@ class SerialPort
         , public Log
 {
 public:
-
-
-
     /**
      * @brief pointer type to the serial port.
      */
     typedef std::shared_ptr< SerialPort > ptr;
 
-public:
     /**
      * @brief Destructor.
      */
@@ -100,15 +102,19 @@ public:
      * @brief start an async read operation on the configured
      * and opened serial port.
      */
-    void Read( void );
+    void read( void );
 
     /**
      * @brief Start an async write operation on the configured
      * and opened serial port.
      * @param ptr to a QSP instance to be transmitted.
      */
-    void Write( QspPayloadRaw::Ptr ptr);
+    void write( std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadGSMsg> payload);
 
+    /**
+     * Start the read timer. If timeout occurs then the read will be considered failed.
+     * @param timeout
+     */
    void startReadTimer(int timeout = 1000);
 
     /**
@@ -142,8 +148,22 @@ public:
     
     void setStopBits( b_a_sp::stop_bits::type stop_bits );
     
-    void setReadCallback(  IoBase::MessageHandlerRawFcn fcn  );
+    /**
+     * Set the parser that parses raw data into messages.
+     * @param fcn
+     */
+    void setParser(  ParserBase::ptr parser  );
 
+    /**
+     * Set the function to be called when a message is ready.
+     * @param fcn
+     */
+    void setReadCallback( IoBase::MessageHandlerFcn fcn  );
+
+    /**
+     * Set the function to be called when a read has timed out.
+     * @param fcn
+     */
     void setReadTimeoutCallback(  IoBase::TimeoutHandlerFcn fcn  );
 
 private:
@@ -178,13 +198,13 @@ private:
             std::size_t bytes_transferred );
 
     /**
-     * @brief Read timeout timer callback.
+     * @brief read timeout timer callback.
      * @param error
      */
     void timerReadCallback( const boost::system::error_code& error );
 
     /**
-     * @brief Write timeout timer callback.
+     * @brief write timeout timer callback.
      * @param error
      */
     void timerWriteCallback( const boost::system::error_code& error );
@@ -200,9 +220,10 @@ private:
     boost::system::error_code mError;
     boost::asio::deadline_timer mTimeoutRead;
     boost::asio::deadline_timer mTimeoutWrite;
-    QspPayloadRaw::Ptr mPayloadWrite;
-    QspPayloadRaw::Ptr mPayloadRead;
-    IoBase::MessageHandlerRawFcn mMessageHandler;
+    std::shared_ptr<std::vector<unsigned char> > mWriteBuff;
+    std::shared_ptr<std::vector<unsigned char> > mReadBuff;
+    ParserBase::ptr mParser;
+    IoBase::MessageHandlerFcn mMessageHandler;
     IoBase::TimeoutHandlerFcn mReadTimeoutHandler;
 };
 

@@ -3,8 +3,14 @@
 set timeout 5
 variable id
 
-proc printArguments {args} {
-        puts $args
+proc handleArguments {argc argv} {
+        if {[llength $argv] == 1 } {
+           variable program
+           set program [lindex $argv 0]
+        } else {
+        	puts "The path to QuadGS should be given as the sigle argument." 
+        	abort
+        }  
 }
 proc abort {} {
     puts "Aborting."
@@ -22,8 +28,9 @@ proc expectPrompt {} {
 
 proc startQuadGS {} {
     variable id
+    variable program
     puts {Starting QuadGS}
-    spawn ../out/QuadGS
+    spawn $program
     set id $spawn_id
     expectPrompt
 }
@@ -37,8 +44,7 @@ proc exitQuadGS {} {
 	-i $id eof 
     }
 }
-
-
+handleArguments $argc $argv
 startQuadGS 
 exitQuadGS
 puts "Test OK!\r"

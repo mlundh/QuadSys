@@ -46,19 +46,20 @@ endfunction()
 
 # Add a test to the QuadGS project
 function(qgs_add_test test_name test_files test_deps)
-
-        # Every library has unit tests, of course
-    add_executable(${test_name}
-        ${${test_files}})
-
-    target_include_directories(${test_name} PRIVATE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-        PRIVATE src)
+    if(BUILD_TESTS)
+            # Every library has unit tests, of course
+        add_executable(${test_name}
+            ${${test_files}})
     
-    target_link_libraries(${test_name}
-        ${${test_deps}})
-
-    add_test(${test_name} ${test_name})
+        target_include_directories(${test_name} PRIVATE
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+            PRIVATE test)
+        
+        target_link_libraries(${test_name}
+            ${${test_deps}})
+    
+        add_test(${test_name} ${test_name})
+    endif()
 endfunction()
 
 # Add a executable to the QuadGS project

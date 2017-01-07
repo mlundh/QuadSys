@@ -39,7 +39,7 @@ public:
     ~TimedFifo()
     {}
 
-    void push(T& item)
+    void push(T item)
     {
         if (mTimedMutex.try_lock_for(Ms(1000)))
         {

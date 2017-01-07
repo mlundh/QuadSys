@@ -1,4 +1,6 @@
-QuadGS/out
+QuadGS/out/
+QuadGS/build/
+QuadGS/make/
 *.d
 *.log
 # Eclipse project
@@ -6,7 +8,6 @@ QuadGS/out
 *.project
 *.settings
 *~
-
 
 # Compiled Object files
 *.slo
@@ -36,3 +37,4 @@ QuadGS/out
 *.exe
 *.out
 *.app
+

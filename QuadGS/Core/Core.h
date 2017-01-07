@@ -36,9 +36,8 @@ namespace QuadGS {
 //Forward declarations
 class IoBase;
 class UiBase;
-class QspPayloadRaw;
-class QuadSerialPacket;
-
+class QuadGSMsg;
+class QuadDebugMsg;
 class Command
 {
 public:
@@ -101,7 +100,7 @@ public:
      * Internal write function. All writes to IO module passes this function.
      * @param  A pointer to a QSP that should be passed to the IO module.
      */
-    void write( std::shared_ptr<QuadSerialPacket>);
+    void write( std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadGSMsg> payload);
 
 
     std::string getRuntimeStats(std::string path);
@@ -112,19 +111,19 @@ public:
      * Handler function for status messages.
      * @param packetPtr Message.
      */
-    void StatusHandler(std::shared_ptr<QuadSerialPacket> packetPtr);
+    void StatusHandler(std::shared_ptr<QCMsgHeader> packetPtr);
 
     /**
      * Handler function for debug messages.
      * @param packetPtr Message.
      */
-    void DebugHandler(std::shared_ptr<QuadSerialPacket> packetPtr);
+    void DebugHandler(std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadDebugMsg> payload);
 
     /**
      * Message handler. Dispatches messages based on the address of the message.
      * @param ptr   Message.
      */
-    void msgHandler(std::shared_ptr<QuadSerialPacket> ptr);
+    void msgHandler(std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadGSMsg> payload);
 
     std::shared_ptr<Parameters> mParameters;
 

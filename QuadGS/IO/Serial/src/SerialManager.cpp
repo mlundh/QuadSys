@@ -24,27 +24,31 @@
 #include "SerialManager.h"
 
 #include "SlipPacket.h"
-#include "QuadSerialPacket.h"
 #include <boost/algorithm/string.hpp>
+
+#include "QCMsgHeader.h"
+#include "QuadGSMsg.h"
+#include "FcParser.h"
 
 namespace QuadGS {
 Serial_Manager::Serial_Manager():
-        mIo_service()
-       ,mWork(new boost::asio::io_service::work(mIo_service))
-	   ,mThread_io(NULL)
-       ,mFifo(10, 1000)
-       ,mRetries(0)
-       ,mOngoing(false)
-       ,mLog("SerialManager")
+        		mIo_service()
+,mWork(new boost::asio::io_service::work(mIo_service))
+,mThread_io(NULL)
+,mOutgoingFifo(10, 1000)
+,mRetries(0)
+,mOngoing(false)
+,mLog("SerialManager")
 {
 }
 
-void Serial_Manager::Start()
+void Serial_Manager::start()
 {
-  mThread_io = new std::thread(std::bind(&Serial_Manager::RunThread, this));
-  mPort = QuadGS::SerialPort::create(mIo_service);
-  mPort->setReadCallback( std::bind(&Serial_Manager::messageHandler, this, std::placeholders::_1) );
-  mPort->setReadTimeoutCallback( std::bind(&Serial_Manager::timeoutHandler, this) );
+	mThread_io = new std::thread(std::bind(&Serial_Manager::runThread, this));
+	mPort = QuadGS::SerialPort::create(mIo_service);
+	mPort->setReadCallback( std::bind(&Serial_Manager::messageHandler, this, std::placeholders::_1, std::placeholders::_2) );
+	mPort->setReadTimeoutCallback( std::bind(&Serial_Manager::timeoutHandler, this) );
+	mPort->setParser(std::make_shared<FcParser>());
 
 }
 
@@ -54,195 +58,193 @@ IoBase* Serial_Manager::create()
 	IoBase* tmp = new Serial_Manager;
 	Serial_Manager* manager = dynamic_cast<Serial_Manager*>(tmp);
 
-    if(!manager)
-    {
-    	throw std::runtime_error("Not able to create Serial Manager.");
-    }
-    manager->Start();
-    return tmp;
+	if(!manager)
+	{
+		throw std::runtime_error("Not able to create Serial Manager.");
+	}
+	manager->start();
+	return tmp;
 }
 
 void Serial_Manager::startRead()
 {
-  mPort->Read();
+	mPort->read();
 }
 
-void Serial_Manager::write( QspPayloadRaw::Ptr ptr)
+void Serial_Manager::write( QCMsgHeader::ptr header, QuadGSMsg::QuadGSMsgPtr payload)
 {
-  mFifo.push(ptr);
-  doWrite();
+	mOutgoingFifo.push(std::make_pair(header, payload));
+	doWrite();
 }
 
-void Serial_Manager::setReadCallback(  IoBase::MessageHandlerFcn fcn )
+void Serial_Manager::setMessageCallback(  IoBase::MessageHandlerFcn fcn )
 {
-    mMessageHandler = fcn;
+	mMessageHandler = fcn;
 }
 
 std::string Serial_Manager::openCmd(std::string path)
 {
-    mPort->open( path );
-    startRead();
-    return "";
+	mPort->open( path );
+	startRead();
+	return "";
 }
 
 std::string Serial_Manager::setNameCmd( std::string port_name )
 {
-  mPort->setName(port_name);
-  return "";
+	mPort->setName(port_name);
+	return "";
 }
 
 std::string Serial_Manager::setBaudRateCmd( std::string baud )
 {
-  int baudInt = std::stoi(baud);
-  mPort->setBaudRate(baudInt);
-  return "";
+	int baudInt = std::stoi(baud);
+	mPort->setBaudRate(baudInt);
+	return "";
 }
 
 std::string Serial_Manager::setFlowControlCmd(  std::string flow_ctrl )
 {
-  int flowCtrl = std::stoi(flow_ctrl);
-  mPort->setFlowControl(static_cast<b_a_sp::flow_control::type>(flowCtrl));
-  return "";
+	int flowCtrl = std::stoi(flow_ctrl);
+	mPort->setFlowControl(static_cast<b_a_sp::flow_control::type>(flowCtrl));
+	return "";
 }
 
 std::string Serial_Manager::setParityCmd( std::string parity )
 {
-  int par = std::stoi(parity);
-  mPort->setParity(static_cast<b_a_sp::parity::type>(par));
-  return "";
+	int par = std::stoi(parity);
+	mPort->setParity(static_cast<b_a_sp::parity::type>(par));
+	return "";
 }
 
 std::string Serial_Manager::setStopBitsCmd( std::string stop_bits )
 {
-  int stopBits = std::stoi(stop_bits);
-  mPort->setStopBits(static_cast<b_a_sp::stop_bits::type>(stopBits));
-  return "";
+	int stopBits = std::stoi(stop_bits);
+	mPort->setStopBits(static_cast<b_a_sp::stop_bits::type>(stopBits));
+	return "";
 }
 
 std::string Serial_Manager::startReadCmd(std::string)
 {
-  startRead();
-  return "";
+	startRead();
+	return "";
 }
 
 std::vector<Command::ptr> Serial_Manager::getCommands( )
 {
-  std::vector<std::shared_ptr < Command > > Commands;
-  Commands.push_back(std::make_shared<Command> ("setPort",
-          std::bind(&Serial_Manager::setNameCmd, this, std::placeholders::_1),
-          "Set the port name.", Command::ActOn::File));
-  Commands.push_back(std::make_shared<Command> ("setBaudRate",
-          std::bind(&Serial_Manager::setBaudRateCmd, this, std::placeholders::_1),
-          "Set the baud rate of the port, default 57600 baud.", Command::ActOn::IO));
-  Commands.push_back(std::make_shared<Command> ("setFlowControl",
-          std::bind(&Serial_Manager::setFlowControlCmd, this, std::placeholders::_1),
-          "Set flow control, default None.", Command::ActOn::IO));
-  Commands.push_back(std::make_shared<Command> ("setParity",
-          std::bind(&Serial_Manager::setParityCmd, this, std::placeholders::_1),
-          "Set parity, default none.", Command::ActOn::IO));
-  Commands.push_back(std::make_shared<Command> ("setStopBits",
-          std::bind(&Serial_Manager::setStopBitsCmd, this, std::placeholders::_1),
-          "Set number of stop bits to be used, default one.", Command::ActOn::IO));
-  Commands.push_back(std::make_shared<Command> ("openPort",
-          std::bind(&Serial_Manager::openCmd, this, std::placeholders::_1),
-          "Open the serial port.", Command::ActOn::File));
-  Commands.push_back(std::make_shared<Command> ("startReadPort",
-          std::bind(&Serial_Manager::startReadCmd, this, std::placeholders::_1),
-          "Start the read operation.", Command::ActOn::IO));
+	std::vector<std::shared_ptr < Command > > Commands;
+	Commands.push_back(std::make_shared<Command> ("setPort",
+			std::bind(&Serial_Manager::setNameCmd, this, std::placeholders::_1),
+			"Set the port name.", Command::ActOn::File));
+	Commands.push_back(std::make_shared<Command> ("setBaudRate",
+			std::bind(&Serial_Manager::setBaudRateCmd, this, std::placeholders::_1),
+			"Set the baud rate of the port, default 57600 baud.", Command::ActOn::IO));
+	Commands.push_back(std::make_shared<Command> ("setFlowControl",
+			std::bind(&Serial_Manager::setFlowControlCmd, this, std::placeholders::_1),
+			"Set flow control, default None.", Command::ActOn::IO));
+	Commands.push_back(std::make_shared<Command> ("setParity",
+			std::bind(&Serial_Manager::setParityCmd, this, std::placeholders::_1),
+			"Set parity, default none.", Command::ActOn::IO));
+	Commands.push_back(std::make_shared<Command> ("setStopBits",
+			std::bind(&Serial_Manager::setStopBitsCmd, this, std::placeholders::_1),
+			"Set number of stop bits to be used, default one.", Command::ActOn::IO));
+	Commands.push_back(std::make_shared<Command> ("openPort",
+			std::bind(&Serial_Manager::openCmd, this, std::placeholders::_1),
+			"Open the serial port.", Command::ActOn::File));
+	Commands.push_back(std::make_shared<Command> ("startReadPort",
+			std::bind(&Serial_Manager::startReadCmd, this, std::placeholders::_1),
+			"Start the read operation.", Command::ActOn::IO));
 
-  return Commands;
+	return Commands;
 }
 
 
 std::string Serial_Manager::getStatus()
 {
-  std::string s("N/A");
-  return s;
+	std::string s("N/A");
+	return s;
 }
-
-
 
 Serial_Manager::~Serial_Manager() 
 {
-    mWork.reset();
-    mPort.reset();
-    mIo_service.stop();
-    mThread_io->join();
+	mWork.reset();
+	mPort.reset();
+	mIo_service.stop();
+	mThread_io->join();
 }
 
-void Serial_Manager::RunThread()
+void Serial_Manager::runThread()
 {
-  try
-  {
-    mIo_service.run();
-  }
-  catch(const std::exception &exc)
-  {
-      std::string exception(exc.what());
-      mLog.QuadLog(severity_level::error, "Exception from  io service: " + exception );
-  }
-  catch(...)
-  {
-      mLog.QuadLog(severity_level::error, "Unknown exception from  io service! " );
-  }
+	try
+	{
+		mIo_service.run();
+	}
+	catch(const std::exception &exc)
+	{
+		std::string exception(exc.what());
+		mLog.QuadLog(severity_level::error, "Exception from  io service: " + exception );
+	}
+	catch(...)
+	{
+		mLog.QuadLog(severity_level::error, "Unknown exception from  io service! " );
+	}
 }
 
 void Serial_Manager::timeoutHandler()
 {
-    if(mRetries < 2)
-    {
-        mRetries++;
-        mLog.QuadLog(severity_level::warning, "No reply, retrying");
+	if(mRetries < 2)
+	{
+		mRetries++;
+		mLog.QuadLog(severity_level::warning, "No reply, retrying");
 
-    }
-    else
-    {
-        mRetries = 0;
-        mFifo.pop();
-        mLog.QuadLog(severity_level::error, "Transmission failed.");
-    }
-    // Poll doWrite to see if there is more to be written.
-    mOngoing = false;
-    doWrite();
+	}
+	else
+	{
+		mRetries = 0;
+		mOutgoingFifo.pop();
+		mLog.QuadLog(severity_level::error, "Transmission failed.");
+	}
+	// Poll doWrite to see if there is more to be written.
+	mOngoing = false;
+	doWrite();
 }
 
-void Serial_Manager::messageHandler( QspPayloadRaw::Ptr ptr)
+void Serial_Manager::messageHandler(QCMsgHeader::ptr header, QuadGSMsg::QuadGSMsgPtr payload)
 {
-    // Transmission ok, pop from fifo and set ok to send again.
-    if(!mFifo.empty())
-    {
-        mFifo.pop();
-    }
-    mOngoing = false;
+	// Transmission ok, pop from fifo and set ok to send again.
+	if(!mOutgoingFifo.empty())
+	{
+		mOutgoingFifo.pop();
+	}
+	mOngoing = false;
 
-    // Log message.
-    QuadSerialPacket::Ptr packetPtr = QuadSerialPacket::Create(ptr);
-    mLog.QuadLog(severity_level::message_trace, "Received: " + packetPtr->ToString());
+	// Log message.
+	mLog.QuadLog(severity_level::message_trace, "Received: " + (header ? header->toString() : "")  + (payload?payload->toString():"") );
 
-    doWrite();
+	doWrite();
 
-    if( mMessageHandler )
-    {
-        mMessageHandler( packetPtr );
-    }
+	if( mMessageHandler )
+	{
+		mMessageHandler( header, payload );
+	}
 
 }
 void Serial_Manager::doWrite()
 {
-    if(mOngoing)
-    {
-        return;
-    }
-    if(mFifo.empty())
-    {
-        mLog.QuadLog(severity_level::warning, "doWrite callec without anything to write.");
-        return;
-    }
-    QuadSerialPacket::Ptr packetPtr = QuadSerialPacket::Create(mFifo.front());
-    mLog.QuadLog(severity_level::message_trace, "Transmitting: " + packetPtr->ToString() + " DataLength = " + std::to_string(packetPtr->GetPayloadLength()));
+	if(mOngoing)
+	{
+		return;
+	}
+	if(mOutgoingFifo.empty())
+	{
+		mLog.QuadLog(severity_level::warning, "doWrite called without anything to write.");
+		return;
+	}
+	QCMsgHeader::ptr header = mOutgoingFifo.front().first;
+	QuadGSMsg::QuadGSMsgPtr payload = mOutgoingFifo.front().second;
+	mLog.QuadLog(severity_level::message_trace, "Transmitting: " + (header ? header->toString() : "")  + (payload?payload->toString():""));
 
-    mOngoing = true;
-    mPort->Write( mFifo.front() );
+	mOngoing = true;
+	mPort->write( header, payload );
 }
 
 
