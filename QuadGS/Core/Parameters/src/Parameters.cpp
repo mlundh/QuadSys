@@ -420,40 +420,37 @@ std::string Parameters::writeRawCmd(std::string data)
 
 std::string Parameters::writeCmd(std::string path_dump)
 {
-    bool cont = true;
-    std::vector<size_t> StartPosition(QuadGSTree::mMaxDepth,0);
-    uint8_t SequenceNumber = 0;
-    while(cont)
-    {
-        UpdateTmp(path_dump);
-        std::string Path;
-        QuadGSTree* tmp = mTmpBranch->GetParent();
-        while(tmp)
-        {
-            std::string parentString = tmp->GetNodeString();
-            Path = QuadGSTree::mBranchDelimiter + parentString + Path;
-            tmp = tmp->GetParent();
-        }
-        unsigned int Depth = 0;
-        cont = !(mTmpBranch->DumpTree(Path, StartPosition, Depth, 256));
-        Path += "/";
-        QuadParamPacket::ptr payload = QuadParamPacket::Create(reinterpret_cast<const uint8_t*>(Path.c_str()),
-                static_cast<uint16_t>(Path.length()),
-                0,
-                0);
-        payload->SetSequenceNumber(SequenceNumber++);
-        uint16_t length = payload->GetPayload().length()+1;		// +1 since there is an extra byte of data in the beginning of a param payload.
-        QCMsgHeader::ptr header = QCMsgHeader::Create(QCMsgHeader::addresses::Parameters, QCMsgHeader::addresses::Parameters, false, length);
-        if(mWriteFcn)
-        {
-            mWriteFcn( header, std::static_pointer_cast<QuadGSMsg>(payload) );
-        }
-        else
-        {
-            logger.QuadLog(QuadGS::error, "No write function registered!");
-        }
-    }
-    return "";
+	bool cont = true;
+	std::vector<size_t> StartPosition(QuadGSTree::mMaxDepth,0);
+	uint8_t SequenceNumber = 0;
+	while(cont)
+	{
+		UpdateTmp(path_dump);
+		std::string Path;
+		QuadGSTree* tmp = mTmpBranch->GetParent();
+		while(tmp)
+		{
+			std::string parentString = tmp->GetNodeString();
+			Path = QuadGSTree::mBranchDelimiter + parentString + Path;
+			tmp = tmp->GetParent();
+		}
+		unsigned int Depth = 0;
+		cont = !(mTmpBranch->DumpTree(Path, StartPosition, Depth, 256));
+		Path += "/";
+		QuadParamPacket::ptr payload = QuadParamPacket::Create(reinterpret_cast<const uint8_t*>(Path.c_str()),static_cast<uint16_t>(Path.length()) );
+		payload->SetSequenceNumber(SequenceNumber++);
+
+		QCMsgHeader::ptr header = QCMsgHeader::Create(QCMsgHeader::addresses::Parameters, QCMsgHeader::addresses::Parameters, false, payload->GetPayload().length());
+		if(mWriteFcn)
+		{
+			mWriteFcn( header, std::static_pointer_cast<QuadGSMsg>(payload) );
+		}
+		else
+		{
+			logger.QuadLog(QuadGS::error, "No write function registered!");
+		}
+	}
+	return "";
 }
 
 std::string Parameters::requestUpdateCmd(std::string )
