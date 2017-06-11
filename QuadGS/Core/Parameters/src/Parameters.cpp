@@ -414,10 +414,13 @@ std::string Parameters::writeCmd(std::string path_dump)
 		unsigned int Depth = 0;
 		cont = !(mTmpBranch->DumpTree(Path, StartPosition, Depth, 256));
 		Path += "/";
-		QuadParamPacket::ptr payload = QuadParamPacket::Create(reinterpret_cast<const uint8_t*>(Path.c_str()),static_cast<uint16_t>(Path.length()) );
+		QuadParamPacket::ptr payload = QuadParamPacket::Create(reinterpret_cast<const uint8_t*>(Path.c_str()),
+				static_cast<uint16_t>(Path.length()),
+				0,
+				0);
 		payload->SetSequenceNumber(SequenceNumber++);
-
-		QCMsgHeader::ptr header = QCMsgHeader::Create(QCMsgHeader::addresses::Parameters, QCMsgHeader::addresses::Parameters, false, 0);
+		uint16_t length = payload->GetPayload().length()+1;		// +1 since there is an extra byte of data in the beginning of a param payload.
+		QCMsgHeader::ptr header = QCMsgHeader::Create(QCMsgHeader::addresses::Parameters, QCMsgHeader::addresses::Parameters, false, length);
 		if(mWriteFcn)
 		{
 			mWriteFcn( header, std::static_pointer_cast<QuadGSMsg>(payload) );

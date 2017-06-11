@@ -3,8 +3,9 @@ list(APPEND dep "crc")
 
 qgs_make_shared_lib( SlipPacket src dep)
 
-list(APPEND src_DataMsgTest "test/SlipPacketTest.cpp")
-list(APPEND dep_DataMsgTest "gtest_main"
-                            "SlipPacket")
+list(APPEND src_SlipTest "SlipPacketTest.cpp")
+list(APPEND dep_SlipTest "gtest_main"
+                         "SlipPacket"
+                         "DataMsg")
 
-qgs_add_test(SlipPacketTest src_DataMsgTest dep_DataMsgTest)
+qgs_add_test(SlipPacketTest src_SlipTest dep_SlipTest)

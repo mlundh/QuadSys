@@ -12,3 +12,10 @@ set(dep "CommandTree"
         "Parameters" )
 
 qgs_make_shared_lib( Core src dep)
+
+
+set(src_MockCore MockCore.cpp)
+set(dep_MockCore "gtest"
+				 "gmock"
+			 	 "Core" )
+qgs_make_mock_shared_lib( MockCore src_MockCore dep_MockCore)

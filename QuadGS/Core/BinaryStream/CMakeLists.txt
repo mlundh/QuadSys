@@ -3,7 +3,7 @@ list(APPEND dep "")
 qgs_make_shared_lib( BinaryStream src dep)
 
 
-list(APPEND src_BinaryStreamTest "test/BinaryStreamTest.cpp")
+list(APPEND src_BinaryStreamTest "BinaryStreamTest.cpp")
 list(APPEND dep_BinaryStreamTest "gtest_main"
                                  "BinaryStream")
 

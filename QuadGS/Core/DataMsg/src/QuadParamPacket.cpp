@@ -113,8 +113,9 @@ QuadParamPacket::QuadParamPacket(const uint8_t* data, uint16_t length, uint8_t s
 	: QuadGSMsg()
 	, mSequenceNumber(sequenceNr)
 	, mLastInSequence(lastInSequence)
-	, mPayload()
+	, mPayload((const char*)data, (size_t)length)
 {
+
 }
 
 

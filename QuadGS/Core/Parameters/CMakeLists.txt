@@ -6,7 +6,7 @@ set(dep "CommandTree"
 qgs_make_shared_lib( Parameters src dep)
 
 
-list(APPEND src_ParametersTest   "test/ParametersTest.cpp")
+list(APPEND src_ParametersTest   "ParametersTest.cpp")
 list(APPEND dep_ParametersTest   "gtest_main"
                                  "Parameters")
 

@@ -165,7 +165,11 @@ bool SlipPacket::Encode()
 		}
 	}
 	mPacket.push_back(frame_boundary_octet);
-	verifyChecksum();
+
+	if(!verifyChecksum())
+	{
+		throw std::runtime_error("Crc error!");
+	}
 
 	return true;
 }
@@ -204,7 +208,10 @@ bool SlipPacket::Decode()
 			mPayload.push_back(mPacket[k]);
 		}
 	}
-	verifyChecksum();
+	if(!verifyChecksum())
+	{
+		throw std::runtime_error("Crc error!");
+	}
 	return true;
 }
 

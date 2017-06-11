@@ -6,7 +6,7 @@ list(APPEND src "QCMsgHeader.cpp"
 list(APPEND dep "BinaryStream" )
 qgs_make_shared_lib( DataMsg src dep)
 
-list(APPEND src_DataMsgTest "test/DataMsgTest.cpp")
+list(APPEND src_DataMsgTest "DataMsgTest.cpp")
 list(APPEND dep_DataMsgTest "gtest_main"
                             "DataMsg")
 

@@ -44,9 +44,45 @@ function(qgs_make_shared_lib lib_name lib_files lib_deps)
 
 endfunction()
 
+
+# Function to build and install a shared library in QuadGS
+function(qgs_make_mock_shared_lib lib_name lib_files lib_deps)
+    if(BUILD_TESTS)
+
+	    # Define library. Only source files here!
+	    project(${lib_name} VERSION 0.1 LANGUAGES CXX)
+	    
+	    qgs_list_add_prefix(${lib_files} test/)
+	    
+	    add_library(${lib_name} SHARED
+	        ${${lib_files}})
+	    
+	    # Define headers for this library. PUBLIC headers are used for
+	    # compiling the library, and will be added to consumers' build
+	    # paths.
+	    target_include_directories(${lib_name} PUBLIC
+	        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+	        PRIVATE test)
+	    
+	    # Depend on a library that we defined in the top-level file
+	    target_link_libraries(${lib_name}
+	        ${${lib_deps}})
+	    
+	    
+	    #Useful debugging commands
+	    #cmake_print_variables(lib_name ${lib_deps} ${lib_files})
+	    #cmake_print_properties(TARGETS ${lib_name} PROPERTIES
+	    #            INTERFACE_INCLUDE_DIRECTORIES INCLUDE_DIRECTORIES LINK_LIBRARIES INTERFACE_LINK_LIBRARIES)
+	    
+    endif()
+endfunction()
+
+
 # Add a test to the QuadGS project
 function(qgs_add_test test_name test_files test_deps)
     if(BUILD_TESTS)
+    	    qgs_list_add_prefix(${test_files} test/)
+    
             # Every library has unit tests, of course
         add_executable(${test_name}
             ${${test_files}})

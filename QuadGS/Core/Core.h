@@ -83,25 +83,26 @@ public:
      * Bind method connecting a core object to an IoBase(Input/output) object.
      * @param IoPtr IoObject pointer.
      */
-    void bind(IoBase* IoPtr);
+    virtual void bind(IoBase* IoPtr);
     /**
      * Bind method connecting a core object to a UiBase(user interface) object.
      * @param UiPtr Pointer to an UiObject.
      */
-    void bind(UiBase* UiPtr);
+    virtual void bind(UiBase* UiPtr);
 
     /**
      * Function to get all commands availible to the User Interface.
      * @return  A vector of commands, with descriptions.
      */
-    std::vector<Command::ptr> getCommands();
+    virtual std::vector<Command::ptr> getCommands();
 
     /**
      * Internal write function. All writes to IO module passes this function.
      * @param  A pointer to a QSP that should be passed to the IO module.
      */
-    void write( std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadGSMsg> payload);
+    virtual void write( std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadGSMsg> payload);
 
+private:
 
     std::string getRuntimeStats(std::string path);
 
@@ -111,20 +112,21 @@ public:
      * Handler function for status messages.
      * @param packetPtr Message.
      */
-    void StatusHandler(std::shared_ptr<QCMsgHeader> packetPtr);
+    virtual void StatusHandler(std::shared_ptr<QCMsgHeader> packetPtr);
 
     /**
      * Handler function for debug messages.
      * @param packetPtr Message.
      */
-    void DebugHandler(std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadDebugMsg> payload);
+    virtual void DebugHandler(std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadDebugMsg> payload);
 
     /**
      * Message handler. Dispatches messages based on the address of the message.
      * @param ptr   Message.
      */
-    void msgHandler(std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadGSMsg> payload);
+    virtual void msgHandler(std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadGSMsg> payload);
 
+public:// TODO should be private
     std::shared_ptr<Parameters> mParameters;
 
 private:

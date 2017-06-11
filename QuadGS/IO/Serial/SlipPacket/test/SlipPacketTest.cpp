@@ -26,7 +26,9 @@
 #include <vector>
 #include "gtest/gtest.h"
 #include "SlipPacket.h"
-
+#include "QuadParamPacket.h"
+#include "QCMsgHeader.h"
+#include "BinaryStream.h"
 
 using namespace QuadGS;
 
@@ -78,4 +80,27 @@ TEST(SlipPacketTest, TestEscapeChar)
     EXPECT_EQ(encode->GetPacket(), decode->GetPacket());
     EXPECT_EQ(encode->GetPayload(), decode->GetPayload());
 
+}
+
+TEST(SlipPacketTest, TestParamPacketSlip)
+{
+
+	std::string payload = "/root/tmp<5>[8]/test[3]";
+	QuadParamPacket::ptr paramPacket = QuadParamPacket::Create(payload,1,0);
+	QCMsgHeader::ptr header = QCMsgHeader::Create(QCMsgHeader::addresses::Parameters, QCMsgHeader::addresses::Parameters, false, paramPacket->GetPayload().length());
+
+
+    BinaryOStream os;
+
+    os << *header;
+
+    os << *paramPacket;
+
+	SlipPacket::ptr encode = SlipPacket::Create(os.get_internal_vec(), true);
+
+	SlipPacket::ptr decode = SlipPacket::Create(encode->GetPacket(), false);
+
+
+    EXPECT_EQ(encode->GetPacket(), decode->GetPacket());
+    EXPECT_EQ(encode->GetPayload(), decode->GetPayload());
 }

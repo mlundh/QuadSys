@@ -8,7 +8,9 @@ include(CMakePrintHelpers)
 include(cmake/QuadGSUtils.cmake)
 
 SET(BUILD_TESTS "TRUE" CACHE BOOL "Build Tests")
+SET(WITH_VISION "TRUE" CACHE BOOL "Build with vision support.")
 
+#SET(CMAKE_VERBOSE_MAKEFILE ON)
 # Define project name
 project(QuadGS VERSION 0.1)
 
@@ -23,11 +25,18 @@ if ("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
   message(SEND_ERROR "In-source builds are not allowed.")
 endif ()
 
+IF(CMAKE_COMPILER_IS_GNUCC)
+  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fmessage-length=0")
+ENDIF(CMAKE_COMPILER_IS_GNUCC)
+IF(CMAKE_COMPILER_IS_GNUCXX)
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fmessage-length=0")
+ENDIF(CMAKE_COMPILER_IS_GNUCXX)
+
 # Set some warning flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -pedantic -Werror")
 
 # Fix boost linking for log.
-add_definitions(-DBOOST_LOG_DYN_LINK)
+add_definitions(-D BOOST_LOG_DYN_LINK)
 
 # Print header
 message(STATUS "QuadGS - Ground station for quad copter system based on QuadFC.")
@@ -45,6 +54,17 @@ find_package(Boost 1.60.0 REQUIRED COMPONENTS
 include_directories(${Boost_INCLUDE_DIRS})
 
 find_package(Readline REQUIRED)
+
+if(WITH_VISION)
+    message(STATUS "Building with vision support.")
+
+    SET(VERSION_REQ_CUDA "8.0")
+    SET(VERSION_REQ_OCV "3.1")
+    find_package(OpenCV ${VERSION_REQ_OCV} REQUIRED)
+    find_package(CUDA ${VERSION_REQ_CUDA} REQUIRED)
+    include_directories(${CUDA_INCLUDE_DIRS})
+endif()
+
 
 # Include gtest if tests will be built
 if(BUILD_TESTS)
