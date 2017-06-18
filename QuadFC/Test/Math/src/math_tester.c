@@ -80,7 +80,7 @@ uint8_t MathTest_TestTan2(TestFw_t* obj)
       int32_t result_dut = atan2Lerp ( DOUBLE_TO_FIXED(y_i,MAX16f),DOUBLE_TO_FIXED(x_i,MAX16f),16);
       double resDutFloat = FIXED_TO_DOUBLE(result_dut, MAX16f) * 3.1415; // Times pi due to scaling from atan2Lerp
 
-      //Calculate absolut difference.
+      //Calculate absolute difference.
       double difference = result_ref - resDutFloat;
       difference *= SIGN(difference);
       if(difference > 0.001) // 0.001 rad = 0,057 deg

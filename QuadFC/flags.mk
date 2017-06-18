@@ -56,7 +56,7 @@ ENTRY_QuadFC:=Reset_Handler
 ifdef DEBUG
 CFLAGS += -g -O0
 else
-CFLAGS += -O1
+CFLAGS += -O3
 endif
 
 ifdef QUADFC_STATS

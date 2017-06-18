@@ -485,6 +485,11 @@ uint8_t Param_GetNodeValue(param_obj_t *current, uint8_t *buffer, uint32_t buffe
     strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_DIGITS_INT32);
     result = 1;
     break;
+  case fp_16_16_variable_type:
+    snprintf((char *) pTemp, MAX_DIGITS_INT32, "%li", (*(int32_t*)current->value));
+    strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_DIGITS_INT32);
+    result = 1;
+    break;
   case last_variable_type:
     break;
   default:
@@ -562,6 +567,13 @@ uint8_t Param_SettNodeValue(param_obj_t *current, uint8_t *buffer)
     }
     break;
   case int32_variable_type:
+    if(value < INT32_MAX)
+    {
+      *((int32_t*)current->value) = (int32_t)value;
+      result = 1;
+    }
+    break;
+  case fp_16_16_variable_type:
     if(value < INT32_MAX)
     {
       *((int32_t*)current->value) = (int32_t)value;

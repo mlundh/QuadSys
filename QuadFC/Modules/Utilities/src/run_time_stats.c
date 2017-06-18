@@ -92,7 +92,7 @@ void QuadFC_RuntimeStats( uint8_t * buffer , uint16_t bufferLength)
     vPortFree( pxTaskStatusArray );
   }
 #else
-  snprintf((char *) buffer, bufferLength , "Run time statistics is not available");
+  snprintf((char *) buffer, bufferLength , "\nRun time statistics is not available");
 #endif
 }
 

@@ -87,7 +87,8 @@ typedef enum variable_type
     int8_variable_type   =            4,//!< int8_variable_type
     int16_variable_type  =            5,//!< int16_variable_type
     int32_variable_type  =            6,//!< int32_variable_type
-    last_variable_type  =             7,//!< last_variable_type
+    fp_16_16_variable_type  =         7,//!< fp_16_16_variable_type
+    last_variable_type  =             8,//!< last_variable_type
 }Log_variable_type_t;
 
 typedef enum variable_access
