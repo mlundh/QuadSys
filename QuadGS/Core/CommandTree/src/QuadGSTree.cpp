@@ -350,7 +350,7 @@ std::string QuadGSTree::DumpTreeFormatted(size_t depth)
     ss << std::setw(20) << (GetName() + "<" + std::to_string(mValue.mNodeType) + ">");
     if(QuadGSTreeValue::NodeType_t::NoType != mValue.mNodeType)
     {
-        ss << std::setw(10) << "[" + mValue.GetValue() + "]" << std::endl;
+        ss << std::setw(10) << "[" + mValue.GetValue(true) + "]" << std::endl;
     }
     else
     {
