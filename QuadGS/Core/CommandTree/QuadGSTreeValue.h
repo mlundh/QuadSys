@@ -28,7 +28,7 @@
 #include <memory>
 #include <vector>
 #include <iostream>
-
+#include <cmath>
 
 namespace QuadGS {
 
@@ -76,6 +76,44 @@ public:
 
     }
 
+    /**
+     * Function to translate a string to a fixed point or integer type.
+     * @param value  The string containing the number.
+     * @return       the resulting value. Converted to 16.16 if the value contains a decimal point.
+     */
+    uint32_t StringToIntFixed(std::string value)
+    {
+        size_t found = value.find('.');
+        if(found != std::string::npos)
+        {
+            std::string decimal_part = value.substr(0,found);
+            std::string fractional_part = value.substr(found+1);
+            int fractional = std::stoi(fractional_part);
+            int decimal    = std::stoi(decimal_part);
+            int fractionalLength = 0;
+            for(int i = fractional; i != 0; i /= 10, fractionalLength++);
+            if(decimal < 0)
+            {
+                fractional = -fractional;
+            }
+            double value_d = ((double)decimal) + ((double)fractional)/(double)(pow(10,fractionalLength));
+            int32_t fpVal = DOUBLE_TO_FIXED(value_d, MAX16f);
+            if(fpVal > INT32_MAX)
+            {
+                throw std::runtime_error("Set: Overflow. Value not set.");
+            }
+            return static_cast<int32_t>(fpVal);
+        }
+        else
+        {
+            int tmp = std::stoi(value);
+            if(tmp > INT32_MAX)
+            {
+                throw std::runtime_error("Set: Overflow. Value not set.");
+            }
+            return static_cast<int32_t>(tmp);
+        }
+    }
     std::string SetValue(std::string value)
     {
         try
@@ -84,37 +122,7 @@ public:
             {
             case NodeType_t::fp_16_16_variable_type:
             {
-                size_t found = value.find('.');
-                if(found != std::string::npos)
-                {
-                    std::string decimal_part = value.substr(0,found);
-                    std::string fractional_part = value.substr(found+1);
-                    int fractional = std::stoi(fractional_part);
-                    int decimal    = std::stoi(decimal_part);
-                    int fractionalLength = 0;
-
-                    for(int i = fractional; i != 0; i /= 10, fractionalLength++);
-                    double value_d = ((double)decimal) + ((double)fractional)/(double)(pow(10,fractionalLength));
-                    int32_t fpVal = DOUBLE_TO_FIXED(value_d, MAX16f);
-                    std::cout << "setting value: " << value << "int part is: " << decimal_part << std::endl;
-                    std::cout << "setting value: " << value << "fractional part is: " << fractional << std::endl;
-                    std::cout << "setting value: " << value << " And converted to double it is: " << value_d << std::endl;
-                    std::cout << "setting value: " << value << " And converted to fp it is: " << fpVal << std::endl;
-                    if(fpVal > INT32_MAX)
-                    {
-                        throw std::runtime_error("Set: Overflow. Value not set.");
-                    }
-                    mfp_16_16_t = static_cast<int32_t>(fpVal);
-                }
-                else
-                {
-                    int tmp = std::stoi(value);
-                    if(tmp > INT32_MAX)
-                    {
-                        throw std::runtime_error("Set: Overflow. Value not set.");
-                    }
-                    mfp_16_16_t = static_cast<int32_t>(tmp);
-                }
+                mfp_16_16_t = StringToIntFixed(value);
                 break;
             }
             case NodeType_t::int32_variable_type:
@@ -248,6 +256,97 @@ public:
             throw e;
         }
         return value;
+    }
+
+    std::string ModifyValue(std::string value)
+    {
+        uint32_t incWith = StringToIntFixed(value);
+        switch (mNodeType)
+        {
+        case NodeType_t::fp_16_16_variable_type:
+        {
+            int tmp = mfp_16_16_t + incWith;
+            if(tmp > INT32_MAX)
+            {
+                throw std::runtime_error("Set: Overflow. Value not set.");
+            }
+            mfp_16_16_t = static_cast<int32_t>(tmp);
+            break;
+        }
+        case NodeType_t::int32_variable_type:
+        {
+            int tmp = mInt32_t + incWith;
+            if(tmp > INT32_MAX)
+            {
+                throw std::runtime_error("Set: Overflow. Value not set.");
+            }
+            mInt32_t = static_cast<int32_t>(tmp);
+            break;
+        }
+        case NodeType_t::int16_variable_type:
+        {
+            int tmp = mInt16_t + incWith;
+            if(tmp > INT16_MAX)
+            {
+                throw std::runtime_error("Set: Overflow. Value not set.");
+            }
+            mInt16_t = static_cast<int16_t>(tmp);
+            break;
+        }
+        case NodeType_t::int8_variable_type:
+        {
+            int tmp = mInt8_t + incWith;
+            if(tmp > INT8_MAX)
+            {
+                throw std::runtime_error("Set: Overflow. Value not set.");
+            }
+            mInt8_t = static_cast<int8_t>(tmp);
+            break;
+        }
+        case NodeType_t::uint32_variable_type:
+        {
+            int tmp = mUint32_t + incWith;
+            if(static_cast<uint32_t>(tmp) > UINT32_MAX)
+            {
+                throw std::runtime_error("Set: Overflow. Value not set.");
+            }
+            mUint32_t = static_cast<uint32_t>(tmp);
+            break;
+        }
+        case NodeType_t::uint16_variable_type:
+        {
+            int tmp = mUint16_t + incWith;
+            if(tmp > UINT16_MAX)
+            {
+                throw std::runtime_error("Set: Overflow. Value not set.");
+            }
+            mUint16_t = static_cast<uint16_t>(tmp);
+            break;
+        }
+        case NodeType_t::uint8_variable_type:
+        {
+            int tmp = mUint8_t + incWith;
+            if(tmp > UINT8_MAX)
+            {
+                throw std::runtime_error("Set: Overflow. Value not set.");
+            }
+            mUint8_t = static_cast<uint8_t>(tmp);
+            break;
+        }
+        case NodeType_t::NoType:
+            throw std::runtime_error("Set: Node has no value type.");
+        default:
+            throw std::runtime_error("Set: Node has no value type.");
+            break;
+        }
+        return GetValue(true);
+    }
+
+    std::string DecValue(std::string value)
+    {
+        //uint32_t decWith = StringToIntFixed(value);
+
+        return "";
     }
 
     NodeType_t mNodeType;

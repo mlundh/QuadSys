@@ -115,6 +115,13 @@ public:
     virtual std::string GetValue();
 
     /**
+     * Increase the value of the node by "value".
+     * @param value Increase by this much.
+     * @return
+     */
+    std::string ModifyValue(std::string value);
+
+    /**
      * Get a shared pointer to this node.
      * @return  Pointer.
      */

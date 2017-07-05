@@ -164,7 +164,12 @@ std::string QuadGSTree::SetValue(const std::string path)
 
 std::string QuadGSTree::GetValue()
 {
-    return mValue.GetValue();
+    return mValue.GetValue(true);
+}
+
+std::string QuadGSTree::ModifyValue(std::string value)
+{
+    return mValue.ModifyValue(value);
 }
 
 QuadGSTree::ptr QuadGSTree::GetSelf()

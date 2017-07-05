@@ -108,6 +108,7 @@ public:
     std::string list(std::string path);
     std::string get(std::string path);
     std::string set(std::string path);
+    std::string add(std::string path);
     std::string SetAndRegister(std::string path);
     std::string writeRawCmd(std::string data);
     std::string writeCmd(std::string path_dump);

@@ -76,6 +76,9 @@ std::vector< Command::ptr > Parameters::getCommands()
     mCommands.push_back(std::make_shared<Command> ("get",
             std::bind(&Parameters::get, shared_from_this(), std::placeholders::_1),
             "Get value of the command tree.", Command::ActOn::Core));
+    mCommands.push_back(std::make_shared<Command> ("add",
+            std::bind(&Parameters::add, shared_from_this(), std::placeholders::_1),
+            "Add the given value to the specified node.", Command::ActOn::Core));
     mCommands.push_back(std::make_shared<Command> ("RegisterTree",
             std::bind(&Parameters::SetAndRegister, shared_from_this(), std::placeholders::_1),
             "SetAndRegister a new value in the tree.", Command::ActOn::Core));
@@ -117,24 +120,6 @@ void Parameters::ParameterHandler(QCMsgHeader::ptr header, QuadParamPacket::ptr 
             lastSequenceNo = 0;
             RequestTree(); // We have not yet got the whole tree, continue!
             return;
-        }
-        if(!mTree)
-        {
-            size_t pos = path.find(QuadGSTree::mBranchDelimiter);
-            if (pos == 0)
-            {
-                path.erase(0, pos + QuadGSTree::mBranchDelimiter.length());
-                mTree = QuadGSTree::ptr(new QuadGSTree(path));
-                mCurrentBranch = mTree;
-                mTmpBranch = mTree;
-                mSavedBranch = mTree;
-                QuadGSTree::RemoveModuleString(path);
-            }
-            else
-            {
-                logger.QuadLog(QuadGS::error, "Packet not relative root: " + path );
-                return;
-            }
         }
 
         SetAndRegister(payload->GetPayload());
@@ -304,9 +289,45 @@ std::string Parameters::set(std::string path)
     return "";
 }
 
+std::string Parameters::add(std::string path)
+{
+    std::vector<std::string> args;
+    boost::split( args, path, boost::is_any_of(" ") );
+
+
+    if(args.size() != 2)
+    {
+        throw std::runtime_error("inc takes two parameters!");
+    }
+    UpdateTmp(args[0]);
+
+    std::string value = mTmpBranch->ModifyValue(args[1]);
+
+    writeCmd(args[0]);
+    return value;
+}
+
 
 std::string Parameters::SetAndRegister(std::string path)
 {
+    if(!mTree)
+    {
+        size_t pos = path.find(QuadGSTree::mBranchDelimiter);
+        if (pos == 0)
+        {
+            path.erase(0, pos + QuadGSTree::mBranchDelimiter.length());
+            mTree = QuadGSTree::ptr(new QuadGSTree(path));
+            mCurrentBranch = mTree;
+            mTmpBranch = mTree;
+            mSavedBranch = mTree;
+            QuadGSTree::RemoveModuleString(path);
+        }
+        else
+        {
+            logger.QuadLog(QuadGS::error, "Packet not relative root: " + path );
+            return "";
+        }
+    }
     std::exception_ptr eptr;
     SaveBranch();
     try
