@@ -182,8 +182,8 @@ void main_control_task( void *pvParameters )
   uint32_t heartbeat_counter = 0;
 
   //TODO remove
-  Param_CreateObj(0, int32_variable_type, readWrite, &param->state->state_bf[pitch_bf], "pitch_bf", Param_GetRoot(), NULL);
-  Param_CreateObj(0, int32_variable_type, readWrite, &param->state->state_bf[roll_bf], "roll_bf", Param_GetRoot(), NULL);
+  Param_CreateObj(0, fp_16_16_variable_type, readWrite, &param->state->state_bf[pitch_bf], "pitch_bf", Param_GetRoot(), NULL);
+  Param_CreateObj(0, fp_16_16_variable_type, readWrite, &param->state->state_bf[roll_bf], "roll_bf", Param_GetRoot(), NULL);
 
 
   /*The main control loop*/
@@ -270,6 +270,7 @@ void main_control_task( void *pvParameters )
           if( xTimerStart( param->xTimer, 0 ) != pdPASS )
           {
             //TODO add warning message to log.
+            main_fault(param);
           }
         }
 
@@ -281,6 +282,7 @@ void main_control_task( void *pvParameters )
           if( xTimerStop( param->xTimer, 0 ) == pdPASS )
           {
             //TODO add warning message to log.
+            main_fault(param);
           }
         }
       }

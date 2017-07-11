@@ -80,8 +80,8 @@ typedef struct pwm_internals
 {
   quad_pwm_parameters_t *pwm_parameters;
   pwm_channel_t pwm_channels;
-  uint32_t arming_duty_value;
-  uint32_t armed_duty_value;
+  int32_t arming_duty_value;
+  int32_t armed_duty_value;
   SemaphoreHandle_t xMutex;
 } pwm_internals_t;
 
@@ -206,9 +206,9 @@ MotorControlObj * MotorCtrl_CreateAndInit(uint32_t nr_motors )
   internals->xMutex = xSemaphoreCreateMutex();
   param_obj_t * PwmRoot = Param_CreateObj(10, NoType, readOnly, NULL, "PWM", Param_GetRoot(), NULL);
 
-  Param_CreateObj(0, uint32_variable_type, readWrite,
+  Param_CreateObj(0, int32_variable_type, readWrite,
       &internals->armed_duty_value, "dtyOn", PwmRoot, internals->xMutex);
-  Param_CreateObj(0, uint32_variable_type, readWrite,
+  Param_CreateObj(0, int32_variable_type, readWrite,
       &internals->arming_duty_value, "dtyArm", PwmRoot, internals->xMutex);
 
 
@@ -326,14 +326,12 @@ uint8_t MotorCtrl_UpdateSetpoint(MotorControlObj *obj)
 
   for (int i = 0; i < obj->nr_init_motors; i++ )
   {
+    // Convert from FP to PWM output scale. The factor (MAX_SETPOINT - arming_duty_value) scales the setpoint
+    // from 0-1 in FP to 0-(MAX_SETPOINT-arming_duty_value). This value is then converted to an integer, and
+    // this causes the setpoint to always act in the range that will cause a difference in rotation of the motors.
 
-  }
-
-  for (int i = 0; i < obj->nr_init_motors; i++ )
-  {
-    //Scale back to integer resolution.
-    l_setpoint[i] = ((obj->motorSetpoint[i]*595)/16384);
-    /*Add armed duty value to make to propellers spin.*/
+    l_setpoint[i] = FIXED_TO_INT(obj->motorSetpoint[i]* (MAX_SETPOINT-internals->arming_duty_value), FP_16_16_SHIFT);
+    /*Add armed duty value to shift the setpoint into a valid range, i.e into [arming_duty_value, MAX_SETPOINT].*/
     l_setpoint[i] += internals->armed_duty_value;
     
     //Limit output.

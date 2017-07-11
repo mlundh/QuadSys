@@ -27,9 +27,6 @@
 
 #define SIGN(x) ((x > 0) - (x < 0))
 
-
-#define SHIFT_FACTOR (14)
-
 void Signal_getEulerAnglesAccel( state_data_t *state, ImuData_t *measurments )
 {
   int32_t numerator = 0;
@@ -41,10 +38,10 @@ void Signal_getEulerAnglesAccel( state_data_t *state, ImuData_t *measurments )
 
   denominator = SIGN(measurments->imu_data[accl_z])
       * (int32_t) my_square_root(
-          my_square( measurments->imu_data[accl_z], ANGLE_SHIFT_FACTOR) +
-          my_mult( my_square( measurments->imu_data[accl_x], ANGLE_SHIFT_FACTOR), MY, ANGLE_SHIFT_FACTOR),
-          ANGLE_SHIFT_FACTOR );
-  state->state_bf[roll_bf] = atan2Lerp( numerator, denominator, ANGLE_SHIFT_FACTOR);
+          my_square( measurments->imu_data[accl_z], FP_16_16_SHIFT) +
+          my_mult( my_square( measurments->imu_data[accl_x], FP_16_16_SHIFT), MY, FP_16_16_SHIFT),
+          FP_16_16_SHIFT );
+  state->state_bf[roll_bf] = atan2Lerp( numerator, denominator, FP_16_16_SHIFT);
   // Since atan2Lerp has a domain of [0,2pi), and we want a domain of (-pi,pi) we need
   // to remove 2pi if value > pi.
   if(state->state_bf[roll_bf] > BRAD_PI)
@@ -55,9 +52,9 @@ void Signal_getEulerAnglesAccel( state_data_t *state, ImuData_t *measurments )
   // pitch calculation
   // tan(pitch) = -x / sqrt(y² + z²)
   numerator = (int32_t) (-measurments->imu_data[accl_x]);
-  denominator = (int32_t) my_square_root( my_square( measurments->imu_data[accl_y], ANGLE_SHIFT_FACTOR ) +
-      my_square( measurments->imu_data[accl_z], ANGLE_SHIFT_FACTOR ) , ANGLE_SHIFT_FACTOR);
-  state->state_bf[pitch_bf] = atan2Lerp( numerator, denominator, ANGLE_SHIFT_FACTOR);
+  denominator = (int32_t) my_square_root( my_square( measurments->imu_data[accl_y], FP_16_16_SHIFT ) +
+      my_square( measurments->imu_data[accl_z], FP_16_16_SHIFT ) , FP_16_16_SHIFT);
+  state->state_bf[pitch_bf] = atan2Lerp( numerator, denominator, FP_16_16_SHIFT);
   // Since atan2Lerp has a domain of [0,2pi), and we want a domain of (-pi,pi) we need
   // to remove 2pi if value > pi.
   if(state->state_bf[pitch_bf] > BRAD_PI)
@@ -94,16 +91,15 @@ void Signal_getRateGyro( state_data_t *state, ImuData_t *measurments )
 
 void Signal_complemetaryFilter( state_data_t *state_accel, state_data_t *state_gyro, state_data_t *state )
 {
-  /* Update gyro state to reduce accumulatory errors.
-   * We are updating gyro before computation since the the gyro state
-   * is not saved*/
-  state_gyro->state_bf[pitch_bf] = state->state_bf[pitch_bf];
-  state_gyro->state_bf[roll_bf] = state->state_bf[roll_bf];
+  /* Update gyro state to reduce accumulatory errors.*/
 
   state->state_bf[pitch_bf] = my_mult( (int32_t) state_gyro->state_bf[pitch_bf], (int32_t) FILTER_COEFFICENT_GYRO_FP, FP_16_16_SHIFT ) +
       my_mult( (int32_t) state_accel->state_bf[pitch_bf], (int32_t) FILTER_COEFFICENT_ACCEL_FP, FP_16_16_SHIFT );
   state->state_bf[roll_bf] = my_mult( (int32_t) state_gyro->state_bf[roll_bf], (int32_t) FILTER_COEFFICENT_GYRO_FP, FP_16_16_SHIFT ) +
       my_mult( (int32_t) state_accel->state_bf[roll_bf], (int32_t) FILTER_COEFFICENT_ACCEL_FP, FP_16_16_SHIFT );
+
+  state_gyro->state_bf[pitch_bf] = state->state_bf[pitch_bf];
+  state_gyro->state_bf[roll_bf] = state->state_bf[roll_bf];
 
 
   // Indicate which fields are updated and valid.

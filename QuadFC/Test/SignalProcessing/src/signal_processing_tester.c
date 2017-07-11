@@ -50,7 +50,9 @@ uint8_t SigProsses_InitMpu6050(TestFw_t* obj);
 void SigProsses_GetTCs(TestFw_t* obj)
 {
   TestFW_RegisterTest(obj, "ImuToRate", SigProsses_TestImuToRate);
-  TestFW_RegisterTest(obj, "Angle", SigProsses_TestAngleAccl);
+  TestFW_RegisterTest(obj, "RateGyro", SigProsses_TestRateGyro);
+  TestFW_RegisterTest(obj, "EulerGyro", SigProsses_TestEulerAngleGyro);
+  TestFW_RegisterTest(obj, "EulerAccel", SigProsses_TestEulerAngleAccl);
   TestFW_RegisterTest(obj, "ImuToAngle", SigProsses_TestImuToAngle);
   TestFW_RegisterTest(obj, "ImuToAngle2", SigProsses_TestImuToAngle2);
   TestFW_RegisterTest(obj, "SpectrumToState", SigProcess_TestSpectrumToState);
@@ -270,26 +272,244 @@ uint8_t SigProsses_TestImuToRate(TestFw_t* obj)
   return 0;
 }
 
-uint8_t SigProsses_TestAngleAccl(TestFw_t* obj)
+
+uint8_t SigProsses_TestRateGyro(TestFw_t* obj)
 {
 
+  uint8_t result = 1;
   ImuData_t imuData = {{0}};
-  imuData.imu_data[accl_x] = 880;
-  imuData.imu_data[accl_y] = 672;
-  imuData.imu_data[accl_z] = 64624;
+  state_data_t state = {{0}};
+
+  imuData.imu_data[gyro_x] = INT_TO_FIXED(1, FP_16_16_SHIFT);
+  imuData.imu_data[gyro_y] = INT_TO_FIXED(1, FP_16_16_SHIFT);
+  imuData.imu_data[gyro_z] = INT_TO_FIXED(1, FP_16_16_SHIFT);
+
+
+  Signal_getRateGyro(&state, &imuData);
+
+  char tmpstr[50] = {0};
+
+  int32_t expectedPitchRate = DOUBLE_TO_FIXED(1.0,MAX16f);
+  int32_t expectedRollRate = DOUBLE_TO_FIXED(1.0,MAX16f);
+  int32_t expectedYawRate = DOUBLE_TO_FIXED(1.0,MAX16f);
+  int32_t margin = 2;
+
+  if(!(state.state_bf[roll_rate_bf]  >= (expectedPitchRate-margin) &&
+      state.state_bf[roll_rate_bf]   <= (expectedPitchRate+margin) &&
+      state.state_bf[pitch_rate_bf]  >= (expectedRollRate-margin) &&
+      state.state_bf[pitch_rate_bf]  <= (expectedRollRate+margin) &&
+      state.state_bf[yaw_rate_bf]    >= (expectedYawRate-margin) &&
+      state.state_bf[yaw_rate_bf]    <= (expectedYawRate+margin)))
+  {
+    snprintf (tmpstr, 50,"Pitch rate: %d expected value: %d +- %d.\n", (int)state.state_bf[pitch_rate_bf], (int)expectedPitchRate, (int)margin);
+    TestFW_Report(obj, tmpstr);
+    snprintf (tmpstr, 50,"Roll rate: %d expected value: %d +- %d.\n", (int)state.state_bf[roll_rate_bf], (int)expectedRollRate, (int)margin);
+    TestFW_Report(obj, tmpstr);
+    snprintf (tmpstr, 50,"Yaw rate: %d expected value: %d +- %d.\n", (int)state.state_bf[yaw_rate_bf], (int)expectedYawRate, (int)margin);
+    TestFW_Report(obj, tmpstr);
+    result = 0; // We are not within limits.
+  }
+
+  state.state_bf[roll_rate_bf] = 0;
+  state.state_bf[pitch_rate_bf] = 0;
+  state.state_bf[yaw_rate_bf] = 0;
+
+  imuData.imu_data[gyro_x] = INT_TO_FIXED(-1, FP_16_16_SHIFT);
+  imuData.imu_data[gyro_y] = INT_TO_FIXED(-1, FP_16_16_SHIFT);
+  imuData.imu_data[gyro_z] = INT_TO_FIXED(-1, FP_16_16_SHIFT);
+
+
+  Signal_getRateGyro(&state, &imuData);
+
+  expectedPitchRate = DOUBLE_TO_FIXED(-1.0,MAX16f);
+  expectedRollRate = DOUBLE_TO_FIXED(-1.0,MAX16f);
+  expectedYawRate = DOUBLE_TO_FIXED(-1.0,MAX16f);
+  margin = 2;
+
+  if(!(state.state_bf[roll_rate_bf]  >= (expectedPitchRate-margin) &&
+      state.state_bf[roll_rate_bf]   <= (expectedPitchRate+margin) &&
+      state.state_bf[pitch_rate_bf]  >= (expectedRollRate-margin) &&
+      state.state_bf[pitch_rate_bf]  <= (expectedRollRate+margin) &&
+      state.state_bf[yaw_rate_bf]    >= (expectedYawRate-margin) &&
+      state.state_bf[yaw_rate_bf]    <= (expectedYawRate+margin)))
+  {
+    snprintf (tmpstr, 50,"Pitch rate: %d expected value: %d +- %d.\n", (int)state.state_bf[pitch_rate_bf], (int)expectedPitchRate, (int)margin);
+    TestFW_Report(obj, tmpstr);
+    snprintf (tmpstr, 50,"Roll rate: %d expected value: %d +- %d.\n", (int)state.state_bf[roll_rate_bf], (int)expectedRollRate, (int)margin);
+    TestFW_Report(obj, tmpstr);
+    snprintf (tmpstr, 50,"Yaw rate: %d expected value: %d +- %d.\n", (int)state.state_bf[yaw_rate_bf], (int)expectedYawRate, (int)margin);
+    TestFW_Report(obj, tmpstr);
+    result = 0; // We are not within limits.
+  }
+
+
+
+  return result;
+}
+
+uint8_t SigProsses_TestEulerAngleGyro(TestFw_t* obj)
+{
+
+  uint8_t result = 1;
+  ImuData_t imuData = {{0}};
+  state_data_t state = {{0}};
+  state.state_bf[roll_bf] = 0;
+  state.state_bf[pitch_bf] = 0;
+  state.state_bf[yaw_bf] = 0;
+
+  control_time_t time;
+  time.value = ONE_MS_FP;
+  imuData.imu_data[gyro_x] = INT_TO_FIXED(1, FP_16_16_SHIFT);
+  imuData.imu_data[gyro_y] = INT_TO_FIXED(1, FP_16_16_SHIFT);
+  imuData.imu_data[gyro_z] = INT_TO_FIXED(1, FP_16_16_SHIFT);
+
+
+  Signal_getEulerAnglesGyro(&state, &imuData, &time);
+
+  char tmpstr[50] = {0};
+  //Compare with expected state.
+  int32_t expectedPitch = DOUBLE_TO_FIXED(0.001,MAX16f);
+  int32_t expectedRoll = DOUBLE_TO_FIXED(0.001,MAX16f);
+  int32_t expectedYaw = DOUBLE_TO_FIXED(0.001,MAX16f);
+  int32_t margin = 2;
+
+  if(!(state.state_bf[roll_bf]  >= (expectedPitch-margin) &&
+      state.state_bf[roll_bf]   <= (expectedPitch+margin) &&
+      state.state_bf[pitch_bf]  >= (expectedRoll-margin) &&
+      state.state_bf[pitch_bf]  <= (expectedRoll+margin) &&
+      state.state_bf[yaw_bf]    >= (expectedYaw-margin) &&
+      state.state_bf[yaw_bf]    <= (expectedYaw+margin)))
+  {
+    snprintf (tmpstr, 50,"Pitch: %d expected value: %d +- %d.\n", (int)state.state_bf[pitch_bf], (int)expectedPitch, (int)margin);
+    TestFW_Report(obj, tmpstr);
+    snprintf (tmpstr, 50,"Roll: %d expected value: %d +- %d.\n", (int)state.state_bf[roll_bf], (int)expectedRoll, (int)margin);
+    TestFW_Report(obj, tmpstr);
+    snprintf (tmpstr, 50,"Yaw: %d expected value: %d +- %d.\n", (int)state.state_bf[yaw_bf], (int)expectedYaw, (int)margin);
+    TestFW_Report(obj, tmpstr);
+    result = 0; // We are not within limits.
+  }
+
+  state.state_bf[roll_bf] = 0;
+  state.state_bf[pitch_bf] = 0;
+  state.state_bf[yaw_bf] = 0;
+
+  imuData.imu_data[gyro_x] = INT_TO_FIXED(-1, FP_16_16_SHIFT);
+  imuData.imu_data[gyro_y] = INT_TO_FIXED(-1, FP_16_16_SHIFT);
+  imuData.imu_data[gyro_z] = INT_TO_FIXED(-1, FP_16_16_SHIFT);
+
+
+  Signal_getEulerAnglesGyro(&state, &imuData, &time);
+
+  expectedPitch = DOUBLE_TO_FIXED(-0.001,MAX16f);
+  expectedRoll = DOUBLE_TO_FIXED(-0.001,MAX16f);
+  expectedYaw = DOUBLE_TO_FIXED(-0.001,MAX16f);
+  margin = 2;
+
+  if(!(state.state_bf[roll_bf]  >= (expectedPitch-margin) &&
+      state.state_bf[roll_bf]   <= (expectedPitch+margin) &&
+      state.state_bf[pitch_bf]  >= (expectedRoll-margin) &&
+      state.state_bf[pitch_bf]  <= (expectedRoll+margin) &&
+      state.state_bf[yaw_bf]    >= (expectedYaw-margin) &&
+      state.state_bf[yaw_bf]    <= (expectedYaw+margin)))
+  {
+    snprintf (tmpstr, 50,"Pitch: %d expected value: %d +- %d.\n", (int)state.state_bf[pitch_bf], (int)expectedPitch, (int)margin);
+    TestFW_Report(obj, tmpstr);
+    snprintf (tmpstr, 50,"Roll: %d expected value: %d +- %d.\n", (int)state.state_bf[roll_bf], (int)expectedRoll, (int)margin);
+    TestFW_Report(obj, tmpstr);
+    snprintf (tmpstr, 50,"Yaw: %d expected value: %d +- %d.\n", (int)state.state_bf[yaw_bf], (int)expectedYaw, (int)margin);
+    TestFW_Report(obj, tmpstr);
+    result = 0; // We are not within limits.
+  }
+
+  return result;
+}
+
+uint8_t SigProsses_TestEulerAngleAccl(TestFw_t* obj)
+{
+
+  uint8_t result = 1;
+  ImuData_t imuData = {{0}};
+  //First test no angle
+  imuData.imu_data[accl_x] = 0;
+  imuData.imu_data[accl_y] = 0;
+  imuData.imu_data[accl_z] = INT_TO_FIXED(1, FP_16_16_SHIFT);
 
   state_data_t state = {{0}};
+  state_data_t stateReset = {{0}};
   Signal_getEulerAnglesAccel( &state, &imuData);
 
-  //Compare with expected state, 0 rad.
-  if(state.state_bf[pitch_bf] >= (0-300) &&
-      state.state_bf[pitch_bf] <= (0+300) &&
-      state.state_bf[roll_bf]  >= -(0+300) &&
-      state.state_bf[roll_bf]  <= -(0+300));
+  char tmpstr[50] = {0};
+  int32_t expectedPitch = DOUBLE_TO_FIXED(0.0,MAX16f);
+  int32_t expectedRoll = DOUBLE_TO_FIXED(0.0,MAX16f);
+  int32_t margin = 2;
+  if(!(state.state_bf[pitch_bf] >= (expectedPitch-margin) &&
+       state.state_bf[pitch_bf] <= (expectedPitch+margin) &&
+       state.state_bf[roll_bf]  >= (expectedRoll-margin) &&
+       state.state_bf[roll_bf]  <= (expectedRoll+margin)))
   {
-    return 1; // We are within limits.
+    snprintf (tmpstr, 40,"Pitch: %d expected : %d +- %d.\n", (int)state.state_bf[pitch_bf], (int)expectedRoll, (int)margin);
+    TestFW_Report(obj, tmpstr);
+    snprintf (tmpstr, 40,"Roll: %d expected: %d +- %d.\n", (int)state.state_bf[roll_bf], (int)expectedRoll, (int)margin);
+
+    TestFW_Report(obj, tmpstr);
+    result = 0; // We are not within limits.
   }
-  return 0;
+
+  // Then test 45 deg pitch.
+  imuData.imu_data[accl_x] = DOUBLE_TO_FIXED(0.707, MAX16f);
+  imuData.imu_data[accl_y] = DOUBLE_TO_FIXED(0.0, MAX16f);
+  imuData.imu_data[accl_z] = DOUBLE_TO_FIXED(0.707, MAX16f);
+
+  state = stateReset;
+  state.state_bf[roll_bf] = 0;
+  state.state_bf[pitch_bf] = 0;
+  state.state_bf[yaw_bf] = 0;
+
+  Signal_getEulerAnglesAccel( &state, &imuData);
+
+  // 45 deg in state scale = 0,785rad => 0.25piRad
+  expectedPitch = DOUBLE_TO_FIXED(-0.25,MAX16f);
+  expectedRoll = DOUBLE_TO_FIXED(0.0,MAX16f);
+  margin = 200;
+
+  if(!(state.state_bf[pitch_bf] >= (expectedPitch-margin) &&
+       state.state_bf[pitch_bf] <= (expectedPitch+margin) &&
+       state.state_bf[roll_bf]  >= (expectedRoll-margin) &&
+       state.state_bf[roll_bf]  <= (expectedRoll+margin)))
+  {
+    snprintf (tmpstr, 50,"Pitch: %d expected: %d +- %d.\n", (int)state.state_bf[pitch_bf], (int)expectedPitch, (int)margin);
+    TestFW_Report(obj, tmpstr);
+    snprintf (tmpstr, 50,"Roll: %d expected: %d +- %d.\n", (int)state.state_bf[roll_bf], (int)expectedRoll, (int)margin);
+
+    TestFW_Report(obj, tmpstr);
+    result = 0; // We are not within limits.
+  }
+
+
+  // Then test 45 deg roll.
+  imuData.imu_data[accl_x] = DOUBLE_TO_FIXED(0.0, MAX16f);
+  imuData.imu_data[accl_y] = DOUBLE_TO_FIXED(0.707, MAX16f);;
+  imuData.imu_data[accl_z] = DOUBLE_TO_FIXED(0.707, MAX16f);
+
+  state = stateReset;
+  Signal_getEulerAnglesAccel( &state, &imuData);
+
+  // 45 deg in state scale = 0,785rad => 0.25piRad
+  expectedRoll = DOUBLE_TO_FIXED(0.25,MAX16f);
+  expectedPitch = DOUBLE_TO_FIXED(0.0,MAX16f);
+
+  if(!(state.state_bf[pitch_bf] >= (expectedPitch-margin) &&
+       state.state_bf[pitch_bf] <= (expectedPitch+margin) &&
+       state.state_bf[roll_bf]  >= (expectedRoll-margin) &&
+       state.state_bf[roll_bf]  <= (expectedRoll+margin)))
+  {
+    snprintf (tmpstr, 50,"Pitch: %d expected value: %d +- %d.\n", (int)state.state_bf[pitch_bf], (int)expectedPitch, (int)margin);
+    TestFW_Report(obj, tmpstr);
+    snprintf (tmpstr, 50,"Roll: %d expected value: %d +- %d.\n", (int)state.state_bf[roll_bf], (int)expectedRoll, (int)margin);
+    TestFW_Report(obj, tmpstr);
+    result = 0; // We are not within limits.
+  }
+  return result;
 }
 
 uint8_t SigProsses_TestImuToAngle(TestFw_t* obj)
@@ -308,7 +528,7 @@ uint8_t SigProsses_TestImuToAngle(TestFw_t* obj)
   // make sure that the data path from IMU to state vector works
   // correctly for attitude mode.
 
-  state_data_t* state = pvPortMalloc( sizeof(state_data_t) );
+  state_data_t state = {{0}};
   // Add data describing the IMU response to a read.
   QuadFC_I2C_t* i2c_data = malloc(sizeof(QuadFC_I2C_t));
   uint8_t* dataptr = malloc(14);
@@ -345,7 +565,7 @@ uint8_t SigProsses_TestImuToAngle(TestFw_t* obj)
 
   DummyI2C_AddResponse(1, i2c_data, i2c_data);
 
-  if(!StateEst_getState(stateEst, state))
+  if(!StateEst_getState(stateEst, &state))
   {
     return 0;
   }
@@ -353,10 +573,10 @@ uint8_t SigProsses_TestImuToAngle(TestFw_t* obj)
   // errors and since real values was used. 300 in state scale is
   // approximately 0.014 rad ~ 0.8 deg
 
-  if(state->state_bf[pitch_bf] >= (0-300) &&
-      state->state_bf[pitch_bf] <= (0+300) &&
-      state->state_bf[roll_bf]  >= (0-300) &&
-      state->state_bf[roll_bf]  <= (0+300));
+  if(state.state_bf[pitch_bf] >= (0-300) &&
+      state.state_bf[pitch_bf] <= (0+300) &&
+      state.state_bf[roll_bf]  >= (0-300) &&
+      state.state_bf[roll_bf]  <= (0+300));
   {
     return 1; // We are within limits.
   }
@@ -444,7 +664,6 @@ uint8_t SigProcess_TestSpectrumToState(TestFw_t* obj)
   // Here we only use the divisor and multiplier fields, so we populate them
   // Separately.
   Satellite_t satelite_obj = {0};
-  satelite_obj.divisor = 1;
   satelite_obj.multiplier = 1;
   satelite_obj.throMult = 1;
   satelite_obj.xMutexParam = xSemaphoreCreateMutex();

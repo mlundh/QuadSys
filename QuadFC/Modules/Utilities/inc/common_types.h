@@ -88,9 +88,15 @@ typedef struct Control_time
 }control_time_t;
 
 #define FP_16_16_SHIFT (16)
-#define ANGLE_SHIFT_FACTOR (16)
-#define ANGLE_VEL_SHIFT_FACTOR (16)
-#define CTRL_SIG_SHIFT_FACTOR (16)
+#define MAX16f (65536.0)
+// y is the shift factor.
+#define INT_TO_FIXED(x,y)         ((x) << (y))
+// y is max number of the integer part of the fṕ.
+#define DOUBLE_TO_FIXED(x, y)     ((int32_t)(x * y + 0.5))
+// y is the shift factor
+#define FIXED_TO_INT(x,y)         ((x) >> (y))
+// y is the max number of the integer part of the fp.
+#define FIXED_TO_DOUBLE(x, y)     (((double)x) / (y))
 
 /**
  * @brief state vector describing the copters position and attitude in
@@ -187,7 +193,7 @@ typedef struct state_data
  * Control signal struct. Values in 16.16 fixed point.
  * 100% = 1<<16. Resolution = 0,0000015259
  */
-#define MAX_U_SIGNAL (1<<16)
+#define MAX_U_SIGNAL INT_TO_FIXED(2, FP_16_16_SHIFT)
 typedef enum control_signal_names
 {
   u_pitch = 0,
@@ -212,7 +218,7 @@ typedef struct control_signal
  *
  *
  * gyro:
- * Angular velocity: 16.16 fixed point with 1 as pi rad.
+ * Angular velocity: 16.16 fixed point with 1 as pi rad per sec.
  *
  *
  * magnetometer:
@@ -244,10 +250,18 @@ typedef struct ImuData
 
 typedef struct ImuOrientation
 {
-  int8_t x_sign;
-  int8_t y_sign;
-  int8_t z_sign;
-  uint8_t x_to_y;
+  int32_t r_0_0;
+  int32_t r_0_1;
+  int32_t r_0_2;
+  int32_t r_1_0;
+  int32_t r_1_1;
+  int32_t r_1_2;
+  int32_t r_2_0;
+  int32_t r_2_1;
+  int32_t r_2_2;
+  int8_t acc_sign;
+  int8_t gyro_sign;
+
 }ImuOrientation_t;
 
 typedef struct Imu

@@ -73,15 +73,15 @@ uint8_t Ctrl_InitializeRate(CtrlObj_t *internals)
    * The constants (Kp, Ki and Kd) does not have a unit, but are expressed as 16.16 fixed point.
    * Output of the controller should lie in [0, 1<<16] where 1<<16 represent 100% control signal.
    */
-  uint32_t KpInitial  = 8 << 12;
-  uint32_t KiInitial  = 0 << (ANGLE_SHIFT_FACTOR-2);
-  uint32_t KDInitial  = 0 << (ANGLE_SHIFT_FACTOR-4);
-  uint32_t maxOutputInit = MAX_U_SIGNAL;
-  uint32_t minOutputInit = -MAX_U_SIGNAL;
+  int32_t KpInitial  = 8 << 12;
+  int32_t KiInitial  = 0 << (FP_16_16_SHIFT-2);
+  int32_t KDInitial  = 0 << (FP_16_16_SHIFT-4);
+  int32_t maxOutputInit = MAX_U_SIGNAL;
+  int32_t minOutputInit = -MAX_U_SIGNAL;
 
-  internals->RatePitch = Pid_Create(KpInitial, KiInitial, KDInitial, minOutputInit, maxOutputInit, ANGLE_SHIFT_FACTOR, CTRL_TIME_FP);
-  internals->RateRoll  = Pid_Create(KpInitial, KiInitial, KDInitial, minOutputInit, maxOutputInit, ANGLE_SHIFT_FACTOR, CTRL_TIME_FP);
-  internals->RateYaw   = Pid_Create(KpInitial, KiInitial, KDInitial, minOutputInit, maxOutputInit, ANGLE_SHIFT_FACTOR, CTRL_TIME_FP);
+  internals->RatePitch = Pid_Create(KpInitial, KiInitial, KDInitial, minOutputInit, maxOutputInit, FP_16_16_SHIFT, CTRL_TIME_FP);
+  internals->RateRoll  = Pid_Create(KpInitial, KiInitial, KDInitial, minOutputInit, maxOutputInit, FP_16_16_SHIFT, CTRL_TIME_FP);
+  internals->RateYaw   = Pid_Create(KpInitial, KiInitial, KDInitial, minOutputInit, maxOutputInit, FP_16_16_SHIFT, CTRL_TIME_FP);
 
   if(!internals->RatePitch || !internals->RateRoll || !internals->RateYaw)
   {
@@ -124,15 +124,15 @@ uint8_t Ctrl_InitializeAttitude(CtrlObj_t *internals)
    * The constants (Kp, Ki and Kd) does not have a unit, but are expressed as 16.16 fixed point.
    * Output of the controller should lie in [0, 1<<16] where 1<<16 represent 100% control signal.
    */
-  uint32_t KpInitial  = 8 << 12;
-  uint32_t KiInitial  = 0 << (ANGLE_SHIFT_FACTOR-2);
-  uint32_t KDInitial  = 0 << (ANGLE_SHIFT_FACTOR-4);
-  uint32_t maxOutputInit = MAX_U_SIGNAL;
-  uint32_t minOutputInit = -MAX_U_SIGNAL;
+  int32_t KpInitial  = 8 << 12;
+  int32_t KiInitial  = 0 << (FP_16_16_SHIFT-2);
+  int32_t KDInitial  = 0 << (FP_16_16_SHIFT-4);
+  int32_t maxOutputInit = MAX_U_SIGNAL;
+  int32_t minOutputInit = -MAX_U_SIGNAL;
 
-  internals->AttitudePitch = Pid_Create(KpInitial, KiInitial, KDInitial, minOutputInit, maxOutputInit, ANGLE_SHIFT_FACTOR, CTRL_TIME_FP);
-  internals->AttitudeRoll  = Pid_Create(KpInitial, KiInitial, KDInitial, minOutputInit, maxOutputInit, ANGLE_SHIFT_FACTOR, CTRL_TIME_FP);
-  internals->AttitudeYaw   = Pid_Create(KpInitial, KiInitial, KDInitial, minOutputInit, maxOutputInit, ANGLE_SHIFT_FACTOR, CTRL_TIME_FP);
+  internals->AttitudePitch = Pid_Create(KpInitial, KiInitial, KDInitial, minOutputInit, maxOutputInit, FP_16_16_SHIFT, CTRL_TIME_FP);
+  internals->AttitudeRoll  = Pid_Create(KpInitial, KiInitial, KDInitial, minOutputInit, maxOutputInit, FP_16_16_SHIFT, CTRL_TIME_FP);
+  internals->AttitudeYaw   = Pid_Create(KpInitial, KiInitial, KDInitial, minOutputInit, maxOutputInit, FP_16_16_SHIFT, CTRL_TIME_FP);
 
   if(!internals->AttitudePitch || !internals->AttitudeRoll || !internals->AttitudeYaw)
   {
@@ -346,10 +346,10 @@ void Ctrl_Off(CtrlObj_t * param)
 
 void Ctrl_Allocate( control_signal_t *ctrl_signal, int32_t motor_setpoint[] )
 {
-  motor_setpoint[0] = ((int32_t) ( ctrl_signal->control_signal[u_thrust] -  ctrl_signal->control_signal[u_roll] / 4 - ctrl_signal->control_signal[u_pitch] / 4 + ctrl_signal->control_signal[u_yaw] / 4));
-  motor_setpoint[1] = ((int32_t) ( ctrl_signal->control_signal[u_thrust] +  ctrl_signal->control_signal[u_roll] / 4 - ctrl_signal->control_signal[u_pitch] / 4 - ctrl_signal->control_signal[u_yaw] / 4));
-  motor_setpoint[2] = ((int32_t) ( ctrl_signal->control_signal[u_thrust] +  ctrl_signal->control_signal[u_roll] / 4 + ctrl_signal->control_signal[u_pitch] / 4 + ctrl_signal->control_signal[u_yaw] / 4));
-  motor_setpoint[3] = ((int32_t) ( ctrl_signal->control_signal[u_thrust] -  ctrl_signal->control_signal[u_roll] / 4 + ctrl_signal->control_signal[u_pitch] / 4 - ctrl_signal->control_signal[u_yaw] / 4));
+  motor_setpoint[0] = ((int32_t) ( ctrl_signal->control_signal[u_thrust] -  ctrl_signal->control_signal[u_roll] / 4 - ctrl_signal->control_signal[u_pitch] / 4 - ctrl_signal->control_signal[u_yaw] / 4));
+  motor_setpoint[1] = ((int32_t) ( ctrl_signal->control_signal[u_thrust] +  ctrl_signal->control_signal[u_roll] / 4 - ctrl_signal->control_signal[u_pitch] / 4 + ctrl_signal->control_signal[u_yaw] / 4));
+  motor_setpoint[2] = ((int32_t) ( ctrl_signal->control_signal[u_thrust] +  ctrl_signal->control_signal[u_roll] / 4 + ctrl_signal->control_signal[u_pitch] / 4 - ctrl_signal->control_signal[u_yaw] / 4));
+  motor_setpoint[3] = ((int32_t) ( ctrl_signal->control_signal[u_thrust] -  ctrl_signal->control_signal[u_roll] / 4 + ctrl_signal->control_signal[u_pitch] / 4 + ctrl_signal->control_signal[u_yaw] / 4));
 
   int i;
   for ( i = 0; i < 4; i++ )

@@ -302,7 +302,7 @@ param_obj_t * Param_FindNext(param_obj_t *current, uint8_t *moduleBuffer, uint32
 
 void Param_Init()
 {
-  mRoot = Param_CreateObj(8, NoType, readOnly, NULL, "QuadFC", NULL, NULL );
+  mRoot = Param_CreateObj(12, NoType, readOnly, NULL, "QuadFC", NULL, NULL );
 }
 
 param_obj_t *Param_GetRoot()

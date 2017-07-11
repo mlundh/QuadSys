@@ -19,7 +19,9 @@
 #define MY (6554)
 
 /**
-
+ * Pitch = y
+ * Roll = x
+ * Yaw = z
  */
 /**
  * @brief Get euler angles from IMU measurements.
@@ -40,10 +42,11 @@ void Signal_getEulerAnglesAccel( state_data_t *state, ImuData_t *measurments );
  *
  * The function uses the time step to integrate the angle from measurements from angular
  * velocity. This means that it will drift.
- * @param state         The function updates the appropriate states in the state data.
+ * @param state         The function updates the appropriate states in the state data. The integration result is stored in this variable.
  * @param measurments   IMU data.
+ * @param sampleTime    The time since last sample.
  */
-void Signal_getEulerAnglesGyro( state_data_t *state, ImuData_t *measurments, control_time_t* time);
+void Signal_getEulerAnglesGyro( state_data_t *state, ImuData_t *measurments, control_time_t* sampleTime);
 
 /**
  * @brief Update the state vector with current rotational velocities based on imu

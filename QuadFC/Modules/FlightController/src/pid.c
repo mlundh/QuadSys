@@ -31,13 +31,21 @@ struct pidInternal
   int32_t IError;             //!<Iterm is saved.
   Pid_mode_t mode;            //!<Mode of the pid, on or off.
 };
+
 /**
- * Internal function used to limit the Iterm and output
+ * Internal function for limiting the I term summation. It will
+ * Clamp the I term to the max value.
+ * @param pidConfig
+ */
+void Pid_LimitIterm(pidConfig_t *pidConfig);
+
+/**
+ * Internal function used to limit the output
  * of the PID controller according to the configured
  * min and max limits.
  * @param pidConfig     PID controller object.
  */
-void Pid_LimitOutputAndIterm(pidConfig_t *pidConfig, int32_t *output);
+void Pid_LimitOutput(pidConfig_t *pidConfig, int32_t *output);
 
 /**
  * Initialization function used to initialize the PID controller
@@ -53,6 +61,10 @@ void Pid_Initialize(pidConfig_t *pidConfig, int32_t output, int32_t Measurement)
 pidConfig_t* Pid_Create(int32_t kp, int32_t ki, int32_t kd, int32_t OutMin, int32_t OutMax, uint32_t shiftFactor, uint32_t timeInterval)
 {
   pidConfig_t * ptr = pvPortMalloc(sizeof(pidConfig_t));
+  if(!ptr)
+  {
+    return NULL;
+  }
   ptr->kp = kp;
   ptr->ki = ki;
   ptr->kd = kd;
@@ -62,6 +74,10 @@ pidConfig_t* Pid_Create(int32_t kp, int32_t ki, int32_t kd, int32_t OutMin, int3
   ptr->timeInterval = timeInterval;
 
   ptr->internal = pvPortMalloc(sizeof(pidInternal_t));
+  if(!ptr->internal)
+  {
+    return NULL;
+  }
   ptr->internal->lastMeasurement = 0;
   ptr->internal->IError = 0;
   ptr->internal->mode = pid_off;
@@ -85,6 +101,9 @@ void Pid_Compute(pidConfig_t *pidConfig, int32_t Measurement, int32_t Setpoint, 
     * in ki does not create a bump in the control action.
     */
    pidConfig->internal->IError += my_mult(pidConfig->ki, my_mult(error, pidConfig->timeInterval, pidConfig->shift_factor), pidConfig->shift_factor);
+   // Limit I term.
+   Pid_LimitIterm(pidConfig);
+
 
    /*Use derivative of measurement to avoid derivative kick. dError = (error - last_error) / timeInterval*/
    int32_t dError = my_div((Measurement - pidConfig->internal->lastMeasurement), pidConfig->timeInterval, pidConfig->shift_factor);
@@ -98,19 +117,29 @@ void Pid_Compute(pidConfig_t *pidConfig, int32_t Measurement, int32_t Setpoint, 
                            - my_mult(pidConfig->kd, dError, pidConfig->shift_factor);
 
    /*Make sure the output stays within the given range.*/
-   Pid_LimitOutputAndIterm(pidConfig, output);
+   Pid_LimitOutput(pidConfig, output);
 }
 
-void Pid_LimitOutputAndIterm(pidConfig_t *pidConfig, int32_t *output)
+void Pid_LimitIterm(pidConfig_t *pidConfig)
+{
+  if(pidConfig->internal->IError > pidConfig->OutMax)
+  {
+    pidConfig->internal->IError = pidConfig->OutMax;
+  }
+  else if(pidConfig->internal->IError < pidConfig->OutMin)
+  {
+    pidConfig->internal->IError = pidConfig->OutMin;
+  }
+}
+
+void Pid_LimitOutput(pidConfig_t *pidConfig, int32_t *output)
 {
    if(*output > pidConfig->OutMax)
    {
-     pidConfig->internal->IError -= (*output  - pidConfig->OutMax);
      *output = pidConfig->OutMax;
    }
    else if(*output < pidConfig->OutMin)
    {
-     pidConfig->internal->IError += (pidConfig->OutMin -* output);
      *output = pidConfig->OutMin;
    }
 }
@@ -119,11 +148,15 @@ void Pid_LimitOutputAndIterm(pidConfig_t *pidConfig, int32_t *output)
 void Pid_Initialize(pidConfig_t *pidConfig, int32_t output, int32_t Measurement)
 {
   pidConfig->internal->lastMeasurement = Measurement;
-  if(pidConfig->ki != 0)
+  if(pidConfig->ki == 0)
+  {
+    pidConfig->internal->IError = 0;
+  }
+  else
   {
     pidConfig->internal->IError = output;
   }
-  Pid_LimitOutputAndIterm(pidConfig, &output);
+  Pid_LimitOutput(pidConfig, &output);
 }
 
 void Pid_SetMode(pidConfig_t *pidConfig, Pid_mode_t Mode, int32_t output, int32_t Measurement)

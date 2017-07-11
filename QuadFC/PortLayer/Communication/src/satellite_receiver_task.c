@@ -43,7 +43,7 @@
 #include "QuadFC/QuadFC_Peripherals.h"
 #include "SetpointHandler/inc/setpoint_handler.h"
 #include "EventHandler/inc/event_handler.h"
-
+#include "Utilities/inc/common_types.h"
 /*Include utilities*/
 #include "Utilities/inc/my_math.h"
 
@@ -58,9 +58,8 @@ Satellite_t* Satellite_Init(QueueHandle_t eventMaster, FlightModeHandler_t* stat
   taskParam->setpointHandler = setpointHandler;
   taskParam->CtrlModeHandler = CtrlModeHandler;
   taskParam->stateHandler = stateHandler;
-  taskParam->divisor = 1;
-  taskParam->multiplier = 1;
-  taskParam->throMult = 1;
+  taskParam->multiplier = INT_TO_FIXED(1, FP_16_16_SHIFT);
+  taskParam->throMult = INT_TO_FIXED(1, FP_16_16_SHIFT);
   taskParam->xMutexParam = xSemaphoreCreateMutex();
   taskParam->current_state = fmode_not_available;
   taskParam->current_control_mode = Control_mode_not_available;
@@ -69,10 +68,9 @@ Satellite_t* Satellite_Init(QueueHandle_t eventMaster, FlightModeHandler_t* stat
   param_obj_t * ReceiverRoot = Param_CreateObj(3, NoType, readOnly, NULL, "Rcver", Param_GetRoot(), NULL);
 
   // Enable receiver sensitivity adjustment.
-  Param_CreateObj(0, int32_variable_type, readWrite, &taskParam->multiplier, "mult", ReceiverRoot, taskParam->xMutexParam);
-  Param_CreateObj(0, int32_variable_type, readWrite, &taskParam->divisor, "div", ReceiverRoot, taskParam->xMutexParam);
+  Param_CreateObj(0, fp_16_16_variable_type, readWrite, &taskParam->multiplier, "mult", ReceiverRoot, taskParam->xMutexParam);
 
-  Param_CreateObj(0, int32_variable_type, readWrite, &taskParam->throMult, "TMult", ReceiverRoot, taskParam->xMutexParam);
+  Param_CreateObj(0, fp_16_16_variable_type, readWrite, &taskParam->throMult, "TMult", ReceiverRoot, taskParam->xMutexParam);
 
   if( !taskParam || !taskParam->decoded_data || !taskParam->configuration || !taskParam->setpoint
       || !taskParam->satellite_receive_buffer || !taskParam->xMutexParam || !taskParam->evHandler)
@@ -424,22 +422,14 @@ void Satellite_MapToSetpoint(Satellite_t* obj, spektrum_data_t *reciever_data, s
   {
     //subtract center point and convert to State scale.
 
-    setpoint->state_bf[thrust_sp]              = (my_mult((int32_t)(reciever_data->ch[0].value), SPECTRUM_TO_CTRL_THROTTLE, 0) * obj->throMult); // THRO
-    setpoint->state_bf[yaw_rate_bf]            = (my_mult((reciever_data->ch[3].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_RATE, ANGLE_SHIFT_FACTOR) * obj->multiplier); // YAW
-    setpoint->state_bf[pitch_rate_bf]          = (my_mult((reciever_data->ch[2].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_RATE, ANGLE_SHIFT_FACTOR) * obj->multiplier); // PITCH
-    setpoint->state_bf[roll_rate_bf]           = (my_mult((reciever_data->ch[1].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_RATE, ANGLE_SHIFT_FACTOR) * obj->multiplier); // ROLL
+    setpoint->state_bf[thrust_sp]              = (my_mult(my_mult((reciever_data->ch[0].value), SPECTRUM_TO_CTRL_THROTTLE, 0), obj->throMult, FP_16_16_SHIFT)); // THRO
+    setpoint->state_bf[yaw_rate_bf]            = (my_mult(my_mult((reciever_data->ch[3].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_RATE, FP_16_16_SHIFT), obj->multiplier, FP_16_16_SHIFT)); // YAW
+    setpoint->state_bf[pitch_rate_bf]          = (my_mult(my_mult((reciever_data->ch[2].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_RATE, FP_16_16_SHIFT), obj->multiplier, FP_16_16_SHIFT)); // PITCH
+    setpoint->state_bf[roll_rate_bf]           = (my_mult(my_mult((reciever_data->ch[1].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_RATE, FP_16_16_SHIFT), obj->multiplier, FP_16_16_SHIFT)); // ROLL
 
-    setpoint->state_bf[pitch_bf]          = (my_mult((reciever_data->ch[2].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_ANGLE, ANGLE_SHIFT_FACTOR) * obj->multiplier); // PITCH
-    setpoint->state_bf[roll_bf]           = (my_mult((reciever_data->ch[1].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_ANGLE, ANGLE_SHIFT_FACTOR) * obj->multiplier); // ROLL
+    setpoint->state_bf[pitch_bf]          = (my_mult(my_mult((reciever_data->ch[2].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_ANGLE, FP_16_16_SHIFT), obj->multiplier, FP_16_16_SHIFT)); // PITCH
+    setpoint->state_bf[roll_bf]           = (my_mult(my_mult((reciever_data->ch[1].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_ANGLE, FP_16_16_SHIFT), obj->multiplier, FP_16_16_SHIFT)); // ROLL
 
-    if(obj->divisor > 0)
-    {
-      setpoint->state_bf[yaw_rate_bf]  = (setpoint->state_bf[yaw_rate_bf]  / obj->divisor);
-      setpoint->state_bf[pitch_rate_bf]= (setpoint->state_bf[pitch_rate_bf]/ obj->divisor);
-      setpoint->state_bf[roll_rate_bf] = (setpoint->state_bf[roll_rate_bf] / obj->divisor);
-      setpoint->state_bf[pitch_bf] = (setpoint->state_bf[pitch_bf]  / obj->divisor);
-      setpoint->state_bf[roll_bf] = (setpoint->state_bf[roll_bf]  / obj->divisor);
-    }
     xSemaphoreGive(obj->xMutexParam);
   }
   return;

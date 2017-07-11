@@ -24,6 +24,16 @@
 
 /**
  * @file Generic implementation of the QuadFC_IMU interface.
+ *
+ * The rotation matrix is denoted as follows:
+ *
+ * +-          -+
+ * |0_0 0_1 0_2 |
+ * |1_0 1_1 1_2 |
+ * |2_0 2_1 2_2 |
+ * +-          -+
+ *
+ *
  */
 
 #include <stdint.h>
@@ -33,6 +43,7 @@
 #include "Parameters/inc/parameters.h"
 #include "QuadFC/QuadFC_IMU.h"
 #include "QuadFC/src/QuadFC_IMUInternal.h"
+#include "Utilities/inc/my_math.h"
 
 
 #define SIGN(x) ((x > 0) - (x < 0))
@@ -42,21 +53,55 @@ Imu_t * Imu_Create()
   Imu_t *obj = Imu_CreateInternal();
   SemaphoreHandle_t xMutex = xSemaphoreCreateMutex();
 
-  obj->Orient.x_sign = 1;
-  obj->Orient.y_sign = 1;
-  obj->Orient.z_sign = 1;
-  obj->Orient.x_to_y = 0;
+  ImuOrientation_t tmp = {0};
+  obj->Orient = tmp;
+  obj->Orient.r_0_0 = 1;
+  obj->Orient.r_1_1 = 1;
+  obj->Orient.r_2_2 = 1;
+  obj->Orient.acc_sign = 1;
+  obj->Orient.gyro_sign = 1;
 
-  param_obj_t * ImuOriRoot = Param_CreateObj(10, NoType, readOnly, NULL, "IMU_Ori", Param_GetRoot(), NULL);
-  Param_CreateObj(0, int8_variable_type, readWrite,
-      &obj->Orient.x_sign, "x_sign", ImuOriRoot, xMutex);
-  Param_CreateObj(0, int8_variable_type, readWrite,
-      &obj->Orient.y_sign, "y_sign", ImuOriRoot, xMutex);
-  Param_CreateObj(0, int8_variable_type, readWrite,
-      &obj->Orient.z_sign, "z_sign", ImuOriRoot, xMutex);
+
+  param_obj_t * ImuOriRoot = Param_CreateObj(12, NoType, readOnly, NULL, "IMU_Rot", Param_GetRoot(), NULL);
+  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+      &obj->Orient.r_0_0, "r_0_0", ImuOriRoot, xMutex);
+  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+      &obj->Orient.r_0_1, "r_0_1", ImuOriRoot, xMutex);
+  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+      &obj->Orient.r_0_2, "r_0_2", ImuOriRoot, xMutex);
+  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+      &obj->Orient.r_1_0, "r_1_0", ImuOriRoot, xMutex);
+  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+      &obj->Orient.r_1_1, "r_1_1", ImuOriRoot, xMutex);
+  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+      &obj->Orient.r_1_2, "r_1_2", ImuOriRoot, xMutex);
+  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+      &obj->Orient.r_2_0, "r_2_0", ImuOriRoot, xMutex);
+  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+      &obj->Orient.r_2_1, "r_2_1", ImuOriRoot, xMutex);
+  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+      &obj->Orient.r_2_2, "r_2_2", ImuOriRoot, xMutex);
 
   Param_CreateObj(0, int8_variable_type, readWrite,
-      &obj->Orient.x_to_y, "x_to_y", ImuOriRoot, xMutex);
+      &obj->Orient.acc_sign, "accSign", ImuOriRoot, xMutex);
+  Param_CreateObj(0, int8_variable_type, readWrite,
+      &obj->Orient.gyro_sign, "gyroSign", ImuOriRoot, xMutex);
+
+  param_obj_t * ImuCurrent = Param_CreateObj(10, NoType, readOnly, NULL, "IMU_Current", Param_GetRoot(), NULL);
+
+  Param_CreateObj(0, fp_16_16_variable_type, readOnly,
+      &obj->ImuData.imu_data[accl_x], "accl_x", ImuCurrent, xMutex);
+  Param_CreateObj(0, fp_16_16_variable_type, readOnly,
+      &obj->ImuData.imu_data[accl_y], "accl_y", ImuCurrent, xMutex);
+  Param_CreateObj(0, fp_16_16_variable_type, readOnly,
+      &obj->ImuData.imu_data[accl_z], "accl_z", ImuCurrent, xMutex);
+
+  Param_CreateObj(0, fp_16_16_variable_type, readOnly,
+      &obj->ImuData.imu_data[gyro_x], "gyro_x", ImuCurrent, xMutex);
+  Param_CreateObj(0, fp_16_16_variable_type, readOnly,
+      &obj->ImuData.imu_data[gyro_y], "gyro_y", ImuCurrent, xMutex);
+  Param_CreateObj(0, fp_16_16_variable_type, readOnly,
+      &obj->ImuData.imu_data[gyro_z], "gyro_z", ImuCurrent, xMutex);
 
   return obj;
 }
@@ -73,28 +118,38 @@ uint8_t Imu_GetData(Imu_t *obj)
   {
     return 0;
   }
-  // ImuData is in copter coordinates. tempData is in IMU coordinates.
-  // Get sign of orientation parameter. Uses branch-less operations to extract sign.
-  uint8_t x_accl_copter = accl_x;
-  uint8_t y_accl_copter= accl_y;
-  uint8_t x_gyro_copter = gyro_x;
-  uint8_t y_gyro_copter= gyro_y;
-  if(obj->Orient.x_to_y)
-  {
-    x_accl_copter = accl_y;
-    y_accl_copter= accl_x;
-    x_gyro_copter = gyro_y;
-    y_gyro_copter= gyro_x;
-  }
-  obj->ImuData.imu_data[x_accl_copter] = SIGN(obj->Orient.x_sign) * obj->tempData.imu_data[accl_x];
-  obj->ImuData.imu_data[y_accl_copter] = SIGN(obj->Orient.y_sign) * obj->tempData.imu_data[accl_y];
-  obj->ImuData.imu_data[accl_z]        = SIGN(obj->Orient.z_sign) * obj->tempData.imu_data[accl_z];
-  obj->ImuData.imu_data[x_gyro_copter] = SIGN(obj->Orient.x_sign) * obj->tempData.imu_data[gyro_x];
-  obj->ImuData.imu_data[y_gyro_copter] = SIGN(obj->Orient.y_sign) * obj->tempData.imu_data[gyro_y];
-  obj->ImuData.imu_data[gyro_z]        = SIGN(obj->Orient.z_sign) * obj->tempData.imu_data[gyro_z];
 
+  obj->ImuData.imu_data[accl_x] = my_mult(obj->tempData.imu_data[accl_x], obj->Orient.r_0_0, FP_16_16_SHIFT) +
+                                  my_mult(obj->tempData.imu_data[accl_y], obj->Orient.r_0_1, FP_16_16_SHIFT) +
+                                  my_mult(obj->tempData.imu_data[accl_z], obj->Orient.r_0_2, FP_16_16_SHIFT);
 
+  obj->ImuData.imu_data[accl_y] = my_mult(obj->tempData.imu_data[accl_x], obj->Orient.r_1_0, FP_16_16_SHIFT) +
+                                  my_mult(obj->tempData.imu_data[accl_y], obj->Orient.r_1_1, FP_16_16_SHIFT) +
+                                  my_mult(obj->tempData.imu_data[accl_z], obj->Orient.r_1_2, FP_16_16_SHIFT);
 
+  obj->ImuData.imu_data[accl_z] = my_mult(obj->tempData.imu_data[accl_x], obj->Orient.r_2_0, FP_16_16_SHIFT) +
+                                  my_mult(obj->tempData.imu_data[accl_y], obj->Orient.r_2_1, FP_16_16_SHIFT) +
+                                  my_mult(obj->tempData.imu_data[accl_z], obj->Orient.r_2_2, FP_16_16_SHIFT);
+
+  obj->ImuData.imu_data[accl_x] *= SIGN(obj->Orient.acc_sign);
+  obj->ImuData.imu_data[accl_y] *= SIGN(obj->Orient.acc_sign);
+  obj->ImuData.imu_data[accl_z] *= SIGN(obj->Orient.acc_sign);
+
+  obj->ImuData.imu_data[gyro_x] = my_mult(obj->tempData.imu_data[gyro_x], obj->Orient.r_0_0, FP_16_16_SHIFT) +
+                                  my_mult(obj->tempData.imu_data[gyro_y], obj->Orient.r_0_1, FP_16_16_SHIFT) +
+                                  my_mult(obj->tempData.imu_data[gyro_z], obj->Orient.r_0_2, FP_16_16_SHIFT);
+
+  obj->ImuData.imu_data[gyro_y] = my_mult(obj->tempData.imu_data[gyro_x], obj->Orient.r_1_0, FP_16_16_SHIFT) +
+                                  my_mult(obj->tempData.imu_data[gyro_y], obj->Orient.r_1_1, FP_16_16_SHIFT) +
+                                  my_mult(obj->tempData.imu_data[gyro_z], obj->Orient.r_1_2, FP_16_16_SHIFT);
+
+  obj->ImuData.imu_data[gyro_z] = my_mult(obj->tempData.imu_data[gyro_x], obj->Orient.r_2_0, FP_16_16_SHIFT) +
+                                  my_mult(obj->tempData.imu_data[gyro_y], obj->Orient.r_2_1, FP_16_16_SHIFT) +
+                                  my_mult(obj->tempData.imu_data[gyro_z], obj->Orient.r_2_2, FP_16_16_SHIFT);
+
+  obj->ImuData.imu_data[gyro_x] *= SIGN(obj->Orient.gyro_sign);
+  obj->ImuData.imu_data[gyro_y] *= SIGN(obj->Orient.gyro_sign);
+  obj->ImuData.imu_data[gyro_z] *= SIGN(obj->Orient.gyro_sign);
   return 1;
 
 }

@@ -34,6 +34,7 @@
 struct StateEst
 {
   Imu_t * imu;
+  state_data_t * gyroState;
   CtrlModeHandler_t* CtrlModeHandler;
 };
 
@@ -46,11 +47,13 @@ StateEst_t *StateEst_Create(CtrlModeHandler_t* CtrlModeHandler)
   }
   stateEstObj->CtrlModeHandler = CtrlModeHandler;
   stateEstObj->imu = Imu_Create();
-
-  if(!stateEstObj->imu)
+  stateEstObj->gyroState = pvPortMalloc(sizeof(state_data_t));
+  if(!stateEstObj->imu || !stateEstObj->gyroState)
   {
     return NULL;
   }
+  state_data_t stateTmp = {{0}};
+  *stateEstObj->gyroState = stateTmp;
   return stateEstObj;
 }
 
@@ -76,17 +79,17 @@ uint8_t StateEst_getState(StateEst_t *obj, state_data_t *state_vector)
   case Control_mode_attitude:
   {
     // Variables to hold intermediate angles based on only imu data.
-    state_data_t gyroStateTmp = {{0}};
+
     state_data_t accStateTmp = {{0}};
     //Get the sample time from the main control loop timeing.
     control_time_t sampleTime;
     sampleTime.value = CTRL_TIME_FP;
 
-    Signal_getEulerAnglesGyro(&gyroStateTmp, &obj->imu->ImuData, &sampleTime);
+    Signal_getEulerAnglesGyro(obj->gyroState, &obj->imu->ImuData, &sampleTime);
     Signal_getEulerAnglesAccel(&accStateTmp, &obj->imu->ImuData);
     // Do the complementary filtering. This takes the high-frequency behavior from
     // the gyro, and the low frequency behavior from the accelerometer.
-    Signal_complemetaryFilter(&accStateTmp, &gyroStateTmp, state_vector);
+    Signal_complemetaryFilter(&accStateTmp, obj->gyroState, state_vector);
 
     // The complementary filter only estimates the pitch and roll angles, for yaw
     // we must use the rate, so get that too.

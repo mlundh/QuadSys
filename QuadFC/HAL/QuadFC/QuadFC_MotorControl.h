@@ -28,8 +28,7 @@
 
 /**
  * Motor control struct. Setpoint for control allocated control
- * should have a max value of 1<<16. Expressed in fixed point
- * this translates to 1<<30, (16+14).
+ * should have a max value of 1<<16.
  */
 
 typedef struct MotorControl
