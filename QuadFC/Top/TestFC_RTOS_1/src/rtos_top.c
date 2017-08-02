@@ -78,10 +78,11 @@ int main( void )
 
 void mainTester(void *pvParameters)
 {
-  TestFw_t* testFW = TestFW_Create("Sig & event");
+  TestFw_t* testFW = TestFW_Create("Log");
   /**************Add test module instantiation here***************/
-  SigProsses_GetTCs(testFW);
-  EventHandler_GetTCs(testFW);
+  Log_GetTCs(testFW);
+  LogEv_GetTCs(testFW);
+
   /***************************************************************/
 
   uint8_t result = TestFW_ExecuteTests(testFW);

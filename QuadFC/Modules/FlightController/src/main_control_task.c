@@ -161,7 +161,7 @@ void main_control_task( void *pvParameters )
     }
   }
 
-  if(!Event_SendAndWaitForAll(param->evHandler, param, eInitialize))
+  if(!Event_SendAndWaitForAll(param->evHandler, eInitialize))
    {
      for(;;)
      {
@@ -182,13 +182,13 @@ void main_control_task( void *pvParameters )
   uint32_t heartbeat_counter = 0;
 
   //TODO remove
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite, &param->state->state_bf[pitch_bf], "pitch_bf", Param_GetRoot(), NULL);
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite, &param->state->state_bf[roll_bf], "roll_bf", Param_GetRoot(), NULL);
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite, &param->state->state_bf[pitch_bf], "pitch_bf", Param_GetRoot(), NULL);
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite, &param->state->state_bf[roll_bf], "roll_bf", Param_GetRoot(), NULL);
 
 
   /*The main control loop*/
 
-  if(!Event_SendAndWaitForAll(param->evHandler, param, eInitializeDone))
+  if(!Event_SendAndWaitForAll(param->evHandler, eInitializeDone))
    {
      for(;;)
      {
@@ -333,7 +333,7 @@ void main_control_task( void *pvParameters )
     }
 
     //Process incoming events.
-    while(Event_Receive(param->evHandler, param, 0) == 1)
+    while(Event_Receive(param->evHandler, 0) == 1)
     {}
 
     vTaskDelayUntil( &xLastWakeTime, CTRL_TIME );

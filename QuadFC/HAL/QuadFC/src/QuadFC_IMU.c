@@ -55,52 +55,52 @@ Imu_t * Imu_Create()
 
   ImuOrientation_t tmp = {0};
   obj->Orient = tmp;
-  obj->Orient.r_0_0 = 1;
-  obj->Orient.r_1_1 = 1;
-  obj->Orient.r_2_2 = 1;
+  obj->Orient.r_0_0 = INT_TO_FIXED(1,FP_16_16_SHIFT);
+  obj->Orient.r_1_1 = INT_TO_FIXED(1,FP_16_16_SHIFT);
+  obj->Orient.r_2_2 = INT_TO_FIXED(1,FP_16_16_SHIFT);
   obj->Orient.acc_sign = 1;
   obj->Orient.gyro_sign = 1;
 
 
-  param_obj_t * ImuOriRoot = Param_CreateObj(12, NoType, readOnly, NULL, "IMU_Rot", Param_GetRoot(), NULL);
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  param_obj_t * ImuOriRoot = Param_CreateObj(12, variable_type_NoType, readOnly, NULL, "IMU_Rot", Param_GetRoot(), NULL);
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &obj->Orient.r_0_0, "r_0_0", ImuOriRoot, xMutex);
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &obj->Orient.r_0_1, "r_0_1", ImuOriRoot, xMutex);
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &obj->Orient.r_0_2, "r_0_2", ImuOriRoot, xMutex);
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &obj->Orient.r_1_0, "r_1_0", ImuOriRoot, xMutex);
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &obj->Orient.r_1_1, "r_1_1", ImuOriRoot, xMutex);
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &obj->Orient.r_1_2, "r_1_2", ImuOriRoot, xMutex);
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &obj->Orient.r_2_0, "r_2_0", ImuOriRoot, xMutex);
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &obj->Orient.r_2_1, "r_2_1", ImuOriRoot, xMutex);
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &obj->Orient.r_2_2, "r_2_2", ImuOriRoot, xMutex);
 
-  Param_CreateObj(0, int8_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_int8, readWrite,
       &obj->Orient.acc_sign, "accSign", ImuOriRoot, xMutex);
-  Param_CreateObj(0, int8_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_int8, readWrite,
       &obj->Orient.gyro_sign, "gyroSign", ImuOriRoot, xMutex);
 
-  param_obj_t * ImuCurrent = Param_CreateObj(10, NoType, readOnly, NULL, "IMU_Current", Param_GetRoot(), NULL);
+  param_obj_t * ImuCurrent = Param_CreateObj(10, variable_type_NoType, readOnly, NULL, "IMU_Current", Param_GetRoot(), NULL);
 
-  Param_CreateObj(0, fp_16_16_variable_type, readOnly,
+  Param_CreateObj(0, variable_type_fp_16_16, readOnly,
       &obj->ImuData.imu_data[accl_x], "accl_x", ImuCurrent, xMutex);
-  Param_CreateObj(0, fp_16_16_variable_type, readOnly,
+  Param_CreateObj(0, variable_type_fp_16_16, readOnly,
       &obj->ImuData.imu_data[accl_y], "accl_y", ImuCurrent, xMutex);
-  Param_CreateObj(0, fp_16_16_variable_type, readOnly,
+  Param_CreateObj(0, variable_type_fp_16_16, readOnly,
       &obj->ImuData.imu_data[accl_z], "accl_z", ImuCurrent, xMutex);
 
-  Param_CreateObj(0, fp_16_16_variable_type, readOnly,
+  Param_CreateObj(0, variable_type_fp_16_16, readOnly,
       &obj->ImuData.imu_data[gyro_x], "gyro_x", ImuCurrent, xMutex);
-  Param_CreateObj(0, fp_16_16_variable_type, readOnly,
+  Param_CreateObj(0, variable_type_fp_16_16, readOnly,
       &obj->ImuData.imu_data[gyro_y], "gyro_y", ImuCurrent, xMutex);
-  Param_CreateObj(0, fp_16_16_variable_type, readOnly,
+  Param_CreateObj(0, variable_type_fp_16_16, readOnly,
       &obj->ImuData.imu_data[gyro_z], "gyro_z", ImuCurrent, xMutex);
 
   return obj;

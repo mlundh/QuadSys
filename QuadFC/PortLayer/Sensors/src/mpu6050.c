@@ -120,19 +120,19 @@ Imu_t * Imu_CreateInternal()
 
   internals->xMutexParam = xSemaphoreCreateMutex();
 
-  param_obj_t * ImuRoot = Param_CreateObj(6, NoType, readOnly, NULL, "IMU_Off", Param_GetRoot(), NULL);
+  param_obj_t * ImuRoot = Param_CreateObj(6, variable_type_NoType, readOnly, NULL, "IMU_Off", Param_GetRoot(), NULL);
 
-  Param_CreateObj(0, int16_variable_type, readOnly,
+  Param_CreateObj(0, variable_type_int16, readOnly,
       &ImuObj->ImuOffset.imu_data[accl_x], "accl_x", ImuRoot, internals->xMutexParam);
-  Param_CreateObj(0, int16_variable_type, readOnly,
+  Param_CreateObj(0, variable_type_int16, readOnly,
       &ImuObj->ImuOffset.imu_data[accl_y], "accl_y", ImuRoot, internals->xMutexParam);
-  Param_CreateObj(0, int16_variable_type, readOnly,
+  Param_CreateObj(0, variable_type_int16, readOnly,
       &ImuObj->ImuOffset.imu_data[accl_z], "accl_z", ImuRoot, internals->xMutexParam);
-  Param_CreateObj(0, int16_variable_type, readOnly,
+  Param_CreateObj(0, variable_type_int16, readOnly,
       &ImuObj->ImuOffset.imu_data[gyro_x], "gyro_x", ImuRoot, internals->xMutexParam);
-  Param_CreateObj(0, int16_variable_type, readOnly,
+  Param_CreateObj(0, variable_type_int16, readOnly,
       &ImuObj->ImuOffset.imu_data[gyro_y], "gyro_y", ImuRoot, internals->xMutexParam);
-  Param_CreateObj(0, int16_variable_type, readOnly,
+  Param_CreateObj(0, variable_type_int16, readOnly,
       &ImuObj->ImuOffset.imu_data[gyro_z], "gyro_z", ImuRoot, internals->xMutexParam);
 
   return ImuObj;

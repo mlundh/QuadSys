@@ -87,32 +87,32 @@ uint8_t Ctrl_InitializeRate(CtrlObj_t *internals)
   {
     return 0;
   }
-  param_obj_t * RateRoot = Param_CreateObj(3, NoType, readOnly, NULL, "PID_R", Param_GetRoot(), NULL);
+  param_obj_t * RateRoot = Param_CreateObj(3, variable_type_NoType, readOnly, NULL, "PID_R", Param_GetRoot(), NULL);
 
   // Enable tuning of the pid parameters.
-  param_obj_t * pitchRateObj = Param_CreateObj(5, NoType, readOnly, NULL, "Pitch", RateRoot, NULL);
-  param_obj_t * rollRateObj  = Param_CreateObj(5, NoType, readOnly, NULL, "Roll", RateRoot, NULL);
-  param_obj_t * yawRateObj   = Param_CreateObj(5, NoType, readOnly, NULL, "Yaw", RateRoot, NULL);
+  param_obj_t * pitchRateObj = Param_CreateObj(5, variable_type_NoType, readOnly, NULL, "Pitch", RateRoot, NULL);
+  param_obj_t * rollRateObj  = Param_CreateObj(5, variable_type_NoType, readOnly, NULL, "Roll", RateRoot, NULL);
+  param_obj_t * yawRateObj   = Param_CreateObj(5, variable_type_NoType, readOnly, NULL, "Yaw", RateRoot, NULL);
 
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &internals->RatePitch->kp, "Kp", pitchRateObj, internals->xMutexParam);
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &internals->RatePitch->ki, "Ki", pitchRateObj, internals->xMutexParam);
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &internals->RatePitch->kd, "Kd", pitchRateObj, internals->xMutexParam);
 
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &internals->RateRoll->kp, "Kp", rollRateObj, internals->xMutexParam);
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &internals->RateRoll->ki, "Ki", rollRateObj, internals->xMutexParam);
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &internals->RateRoll->kd, "Kd", rollRateObj, internals->xMutexParam);
 
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &internals->RateYaw->kp, "Kp", yawRateObj, internals->xMutexParam);
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &internals->RateYaw->ki, "Ki", yawRateObj, internals->xMutexParam);
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &internals->RateYaw->kd, "Kd", yawRateObj, internals->xMutexParam);
 
   return 1;
@@ -139,32 +139,32 @@ uint8_t Ctrl_InitializeAttitude(CtrlObj_t *internals)
     return 0;
   }
 
-  param_obj_t * AttitudeRoot = Param_CreateObj(3, NoType, readOnly, NULL, "PID_A", Param_GetRoot(), NULL);
+  param_obj_t * AttitudeRoot = Param_CreateObj(3, variable_type_NoType, readOnly, NULL, "PID_A", Param_GetRoot(), NULL);
 
   // Enable tuning of the pid parameters.
-  param_obj_t * pitchObj = Param_CreateObj(5, NoType, readOnly, NULL, "Pitch", AttitudeRoot, NULL);
-  param_obj_t * rollObj  = Param_CreateObj(5, NoType, readOnly, NULL, "Roll", AttitudeRoot, NULL);
-  param_obj_t * yawObj   = Param_CreateObj(5, NoType, readOnly, NULL, "Yaw", AttitudeRoot, NULL);
+  param_obj_t * pitchObj = Param_CreateObj(5, variable_type_NoType, readOnly, NULL, "Pitch", AttitudeRoot, NULL);
+  param_obj_t * rollObj  = Param_CreateObj(5, variable_type_NoType, readOnly, NULL, "Roll", AttitudeRoot, NULL);
+  param_obj_t * yawObj   = Param_CreateObj(5, variable_type_NoType, readOnly, NULL, "Yaw", AttitudeRoot, NULL);
 
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &internals->AttitudePitch->kp, "Kp", pitchObj, internals->xMutexParam);
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &internals->AttitudePitch->ki, "Ki", pitchObj, internals->xMutexParam);
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &internals->AttitudePitch->kd, "Kd", pitchObj, internals->xMutexParam);
 
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &internals->AttitudeRoll->kp, "Kp", rollObj, internals->xMutexParam);
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &internals->AttitudeRoll->ki, "Ki", rollObj, internals->xMutexParam);
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &internals->AttitudeRoll->kd, "Kd", rollObj, internals->xMutexParam);
 
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &internals->AttitudeYaw->kp, "Kp", yawObj, internals->xMutexParam);
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &internals->AttitudeYaw->ki, "Ki", yawObj, internals->xMutexParam);
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite,
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &internals->AttitudeYaw->kd, "Kd", yawObj, internals->xMutexParam);
 
   return 1;

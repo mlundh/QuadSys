@@ -664,7 +664,7 @@ uint8_t SigProcess_TestSpectrumToState(TestFw_t* obj)
   // Here we only use the divisor and multiplier fields, so we populate them
   // Separately.
   Satellite_t satelite_obj = {0};
-  satelite_obj.multiplier = 1;
+  satelite_obj.multiplier = INT_TO_FIXED(1, FP_16_16_SHIFT);
   satelite_obj.throMult = 1;
   satelite_obj.xMutexParam = xSemaphoreCreateMutex();
   //Populate the receiver_data with known data.

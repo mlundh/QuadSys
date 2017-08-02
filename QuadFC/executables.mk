@@ -32,7 +32,7 @@
 # <nameOfExec>_DEPS. Add all dependencies to this variable.
 #
 
-EXECUTABLES := QuadFC TestFC_RTOS TestFC_Utilities
+EXECUTABLES := QuadFC TestFC_RTOS TestFC_RTOS_1 TestFC_Utilities
 
 QuadFC_DEPS:= Top/QuadFC HAL/QuadFC
 QuadFC_DEPS+= $(addprefix Modules/, Communication FlightController HMI Parameters EventHandler)
@@ -45,7 +45,14 @@ TestFC_Utilities_DEPS+= $(addprefix Test/,TestFW Math)
 TestFC_Utilities_DEPS+= $(addprefix Modules/, Utilities )
 
 TestFC_RTOS_DEPS:= Top/TestFC_RTOS HAL/QuadFC
-TestFC_RTOS_DEPS+= $(addprefix Test/,TestFW DummyI2C SignalProcessing EventHandler)
+TestFC_RTOS_DEPS+= $(addprefix Test/,TestFW DummyI2C SignalProcessing EventHandler Log LogTestBackend)
 TestFC_RTOS_DEPS+= $(addprefix Modules/, Utilities StateEstimator Parameters EventHandler FlightController HMI)
 TestFC_RTOS_DEPS+= $(addprefix PortLayer/, Sensors Communication HMI)
 TestFC_RTOS_DEPS+= $(addprefix ThirdParty/, asf freertos)
+
+TestFC_RTOS_1_DEPS:= Top/TestFC_RTOS_1 HAL/QuadFC
+TestFC_RTOS_1_DEPS+= $(addprefix Test/,TestFW DummyI2C EventHandler Log LogTestBackend)
+TestFC_RTOS_1_DEPS+= $(addprefix Modules/, Utilities Parameters EventHandler HMI)
+TestFC_RTOS_1_DEPS+= $(addprefix Modules/, Log)
+TestFC_RTOS_1_DEPS+= $(addprefix PortLayer/, Sensors Communication HMI)
+TestFC_RTOS_1_DEPS+= $(addprefix ThirdParty/, asf freertos)

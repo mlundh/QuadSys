@@ -25,7 +25,7 @@
 
 #include "Communication/inc/communication_tasks.h"
 
-#include "../../FlightModeHandler/inc/flight_mode_handler.h"
+#include "FlightModeHandler/inc/flight_mode_handler.h"
 #include "Communication/inc/slip_packet.h"
 #include "Communication/inc/crc.h"
 #include "Parameters/inc/parameters.h"
@@ -295,7 +295,7 @@ void Com_TxTask( void *pvParameters )
     }
   }
 
-  if(!Event_SendAndWaitForAll(obj->evHandler, obj, eInitialize))
+  if(!Event_SendAndWaitForAll(obj->evHandler, eInitialize))
    {
      for(;;)
      {
@@ -304,7 +304,7 @@ void Com_TxTask( void *pvParameters )
 
   QSP_t *txPacket;            //!< Handle for a QSP packet, used for receiving from queue.
 
-  if(!Event_SendAndWaitForAll(obj->evHandler, obj, eInitializeDone))
+  if(!Event_SendAndWaitForAll(obj->evHandler, eInitializeDone))
    {
      for(;;)
      {
@@ -315,7 +315,7 @@ void Com_TxTask( void *pvParameters )
   {
 
     //Process incoming events.
-    while(Event_Receive(obj->evHandler, obj, 0) == 1)
+    while(Event_Receive(obj->evHandler, 0) == 1)
     {}
 
     /* Wait blocking for items in the queue and transmit the data
@@ -374,14 +374,14 @@ void Com_RxTask( void *pvParameters )
   }
 
 
-  if(!Event_SendAndWaitForAll(obj->evHandler, obj, eInitialize))
+  if(!Event_SendAndWaitForAll(obj->evHandler, eInitialize))
    {
      for(;;)
      {
      }
    }
 
-  if(!Event_SendAndWaitForAll(obj->evHandler, obj, eInitializeDone))
+  if(!Event_SendAndWaitForAll(obj->evHandler, eInitializeDone))
    {
      for(;;)
      {
@@ -398,7 +398,7 @@ void Com_RxTask( void *pvParameters )
   {
 
     //Process incoming events.
-    while(Event_Receive(obj->evHandler, obj, 0) == 1)
+    while(Event_Receive(obj->evHandler, 0) == 1)
     {}
     /*--------------------------Receive the packet---------------------*/
 

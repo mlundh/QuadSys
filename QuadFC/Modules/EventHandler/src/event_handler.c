@@ -30,70 +30,68 @@
  * Internal function. Will fire the event in event_data if it matches event, or if bufferEvents is set to 0. If
  * the event is not fired then it will be written to the back of the circular buffer.
  * @param obj           Current event handler object.
- * @param taskParam     Optional parameters from the task.
  * @param event         Event to compare with.
  * @param found         Number of events found, external counter passed by pointer.
  * @param event_data    The event data to process.
  * @param bufferEvents  1 if events should be buffered, 0 otherwise.
  * @return              1 if ok, 0 otherwise.
  */
-uint8_t Event_FireOrBufferEvent(eventHandler_t* obj, void* taskParam, event_t event, uint8_t* found, eventData_t event_data, uint8_t bufferEvents);
+uint8_t Event_FireOrBufferEvent(eventHandler_t* obj, event_t event, uint8_t* found, eventData_t event_data, uint8_t bufferEvents);
 
 
 /**
  * Fire the callback registered to the event in event_data.
  * @param obj         Current event handler object.
- * @param taskParam   Optional parameters from the task.
  * @param event_data  event number and data.
  * @return            1 of ok, 0 of no handler was registered.
  */
 
-uint8_t Event_FireCB(eventHandler_t* obj, void* taskParam, eventData_t* event_data);
+uint8_t Event_FireCB(eventHandler_t* obj, eventData_t* event_data);
 
 /**
  * Handler function for subscription request event. This is a default handler.
  * @param obj         Current event handler object.
- * @param taskParam   Optional parameters from the task.
- * @param data        Event data.
+ * @param data        Optional data to be used by the handler when firing the event.
+ * @param eData        Event data.
  * @return            1 if ok, 0 otherwise.
  */
-uint8_t Event_SubscriptionReq(eventHandler_t* obj, void* taskParam, eventData_t* data);
+uint8_t Event_SubscriptionReq(eventHandler_t* obj, void* data, eventData_t* eData);
 
 /**
  * Handler function for subscription request event. This is a default handler.
  * @param obj         Current event handler object.
- * @param taskParam   Optional parameters from the task.
- * @param data        Event data.
+ * @param data        Optional data to be used by the handler when firing the event.
+ * @param eData        Event data.
  * @return            1 if ok, 0 otherwise.
  */
-uint8_t Event_RegHandlerReq(eventHandler_t* obj, void* taskParam, eventData_t* data);
+uint8_t Event_RegHandlerReq(eventHandler_t* obj, void* data, eventData_t* eData);
 
 /**
  * Handler function for subscription request event. This is a default handler.
  * @param obj         Current event handler object.
- * @param taskParam   Optional parameters from the task.
- * @param data        Event data.
+ * @param data        Optional data to be used by the handler when firing the event.
+ * @param eData        Event data.
  * @return            1 if ok, 0 otherwise.
  */
-uint8_t Event_MeshComplete(eventHandler_t* obj, void* taskParam, eventData_t* data);
+uint8_t Event_MeshComplete(eventHandler_t* obj, void* data, eventData_t* eData);
 
 /**
  * Default implementation of initialize that does nothing.
  * @param obj         Current event handler object.
- * @param taskParam   Optional parameters from the task.
- * @param data        Event data.
+ * @param data        Optional data to be used by the handler when firing the event.
+ * @param eData        Event data.
  * @return            1.
  */
-uint8_t Event_Initialize(eventHandler_t* obj, void* taskParam, eventData_t* data);
+uint8_t Event_Initialize(eventHandler_t* obj, void* data, eventData_t* eData);
 
 /**
  * Default implementation of initialize done cb that does nothing.
  * @param obj         Current event handler object.
- * @param taskParam   Optional parameters from the task.
- * @param data        Event data.
+ * @param data        Optional data to be used by the handler when firing the event.
+ * @param eData        Event data.
  * @return            1.
  */
-uint8_t Event_InitializeDone(eventHandler_t* obj, void* taskParam, eventData_t* data);
+uint8_t Event_InitializeDone(eventHandler_t* obj, void* data, eventData_t* eData);
 
 
 /**
@@ -119,6 +117,10 @@ eventHandler_t* Event_CreateHandler(QueueHandle_t* masterQueue, uint8_t nr_handl
   obj->cBuffer = Event_CreateCBuff();
   obj->registeredHandlers = 0;
   obj->meshComplete = 0;
+  for(int i = 0; i < eNrEvents; i++)
+  {
+    obj->eventDataBinding[i] = NULL;
+  }
   obj->eventFcns[eRegisterHandler] = Event_RegHandlerReq;
   obj->eventFcns[eSubscribe] = Event_SubscriptionReq;
   obj->eventFcns[eUnsubscribe] = Event_SubscriptionReq;
@@ -152,7 +154,7 @@ uint8_t Event_InitHandler(eventHandler_t* obj)
     // Wait for all normal handlers to register. -1 since we are a handler ourselfs.
     while((obj->nrHandlers-1) != obj->registeredHandlers)
     {
-      uint8_t result = Event_Receive(obj, NULL, portMAX_DELAY);
+      uint8_t result = Event_Receive(obj, portMAX_DELAY);
       if(!result)
       {
         return 0;
@@ -200,13 +202,13 @@ uint8_t Event_InitHandler(eventHandler_t* obj)
       return 0;
     }
     // Handle the response from the master.
-    if(!Event_Receive(obj, NULL, portMAX_DELAY))
+    if(!Event_Receive(obj, portMAX_DELAY))
     {
       return 0;
     }
 
     // Handle the meshComplete event.
-    if(!Event_Receive(obj, NULL, portMAX_DELAY))
+    if(!Event_Receive(obj, portMAX_DELAY))
     {
       return 0;
     }
@@ -319,7 +321,7 @@ uint8_t Event_Send(eventHandler_t* obj, eventData_t event)
 }
 
 
-uint8_t Event_Receive(eventHandler_t* obj, void* taskParam, uint32_t blockTime)
+uint8_t Event_Receive(eventHandler_t* obj, uint32_t blockTime)
 {
   if(!obj)
   {
@@ -330,7 +332,7 @@ uint8_t Event_Receive(eventHandler_t* obj, void* taskParam, uint32_t blockTime)
   if(xQueueReceive(obj->eventQueue, &event_data, blockTime) == pdTRUE)
   {
     //If there is a handler for an event, then handle the event.
-    if(!Event_FireCB(obj, taskParam, &event_data))
+    if(!Event_FireCB(obj, &event_data))
     {
       return 0;
     }
@@ -342,7 +344,7 @@ uint8_t Event_Receive(eventHandler_t* obj, void* taskParam, uint32_t blockTime)
   return 1;
 }
 
-uint8_t Event_WaitForEvent(eventHandler_t* obj, void* taskParam, event_t event, uint8_t waitForNr, uint8_t bufferEvents)
+uint8_t Event_WaitForEvent(eventHandler_t* obj, event_t event, uint8_t waitForNr, uint8_t bufferEvents)
 {
   if(!obj)
   {
@@ -359,7 +361,7 @@ uint8_t Event_WaitForEvent(eventHandler_t* obj, void* taskParam, event_t event, 
   {
     if(Event_CBuffPopFront(obj->cBuffer, &event_data))
     {
-      if(!Event_FireOrBufferEvent(obj, taskParam, event, &nr_found, event_data, bufferEvents))
+      if(!Event_FireOrBufferEvent(obj, event, &nr_found, event_data, bufferEvents))
       {
         return 0;
       }
@@ -375,7 +377,7 @@ uint8_t Event_WaitForEvent(eventHandler_t* obj, void* taskParam, event_t event, 
   {
     if(xQueueReceive(obj->eventQueue, &event_data, portMAX_DELAY) == pdTRUE)
     {
-      if(!Event_FireOrBufferEvent(obj, taskParam, event, &nr_found, event_data, bufferEvents))
+      if(!Event_FireOrBufferEvent(obj, event, &nr_found, event_data, bufferEvents))
       {
         return 0;
       }
@@ -389,13 +391,13 @@ uint8_t Event_WaitForEvent(eventHandler_t* obj, void* taskParam, event_t event, 
   return 1;
 }
 
-uint8_t Event_FireOrBufferEvent(eventHandler_t* obj, void* taskParam, event_t event, uint8_t* nr_found, eventData_t event_data, uint8_t bufferEvents)
+uint8_t Event_FireOrBufferEvent(eventHandler_t* obj, event_t event, uint8_t* nr_found, eventData_t event_data, uint8_t bufferEvents)
 {
   // handle the expected event.
   if(event_data.eventNumber == event)
   {
     (*nr_found)++;
-    if(!Event_FireCB(obj, taskParam, &event_data))
+    if(!Event_FireCB(obj, &event_data))
     {
       return 0;
     }
@@ -404,7 +406,7 @@ uint8_t Event_FireOrBufferEvent(eventHandler_t* obj, void* taskParam, event_t ev
   else if(!bufferEvents)
   {
     //If there is a handler for an event, then handle the event.
-    if(!Event_FireCB(obj, taskParam, &event_data))
+    if(!Event_FireCB(obj, &event_data))
     {
       return 0;
     }
@@ -420,7 +422,7 @@ uint8_t Event_FireOrBufferEvent(eventHandler_t* obj, void* taskParam, event_t ev
 }
 
 
-uint8_t Event_SendAndWaitForAll(eventHandler_t* obj, void* taskParam, event_t event)
+uint8_t Event_SendAndWaitForAll(eventHandler_t* obj, event_t event)
 {
   eventData_t ev = {0};
   ev.eventNumber = event;
@@ -431,7 +433,7 @@ uint8_t Event_SendAndWaitForAll(eventHandler_t* obj, void* taskParam, event_t ev
   {
     return 0;
   }
-  if(!Event_WaitForEvent(obj, taskParam, event, obj->nrHandlers - 1, 1))
+  if(!Event_WaitForEvent(obj, event, obj->nrHandlers - 1, 1))
   {
     return 0;
   }
@@ -439,25 +441,25 @@ uint8_t Event_SendAndWaitForAll(eventHandler_t* obj, void* taskParam, event_t ev
 }
 
 
-uint8_t Event_HandleBufferedEvents(eventHandler_t* obj, void* taskParam)
+uint8_t Event_HandleBufferedEvents(eventHandler_t* obj)
 {
   eventData_t event_data = {0};
   if(!Event_CBuffPopFront(obj->cBuffer, &event_data))
   {
     return 0;
   }
-  if(!Event_FireCB(obj, taskParam, &event_data))
+  if(!Event_FireCB(obj, &event_data))
   {
     return 0;
   }
   return 1;
 }
 
-uint8_t Event_FireCB(eventHandler_t* obj, void* taskParam, eventData_t* event_data)
+uint8_t Event_FireCB(eventHandler_t* obj, eventData_t* event_data)
 {
   if(obj->eventFcns[event_data->eventNumber])
   {
-    obj->eventFcns[event_data->eventNumber](obj, taskParam, event_data);
+    obj->eventFcns[event_data->eventNumber](obj, obj->eventDataBinding[event_data->eventNumber], event_data);
   }
   else
   {
@@ -468,42 +470,43 @@ uint8_t Event_FireCB(eventHandler_t* obj, void* taskParam, eventData_t* event_da
 }
 
 
-uint8_t Event_RegisterCallback(eventHandler_t* obj, event_t eventNumber, eventHandlerFcn fcn)
+uint8_t Event_RegisterCallback(eventHandler_t* obj, event_t eventNumber, eventHandlerFcn fcn, void* data)
 {
   if(eventNumber >= eNrEvents)
   {
     return 0;
   }
+  obj->eventDataBinding[eventNumber] = data;
   obj->eventFcns[eventNumber] = fcn;
   return 1;
 }
 
-uint8_t Event_SubscriptionReq(eventHandler_t* obj, void* taskParam, eventData_t* data)
+uint8_t Event_SubscriptionReq(eventHandler_t* obj, void* data, eventData_t* eData)
 {
-  if(!data)
+  if(!eData)
   {
     return 0;
   }
-  eventHandler_t* subsData = (eventHandler_t*)data->data;
+  eventHandler_t* subsData = (eventHandler_t*)eData->data;
 
   obj->handlerSubscriptions[subsData->handlerId] = subsData->subscriptions;
   xSemaphoreGive(subsData->semaphore);
   return 1;
 }
 
-uint8_t Event_MeshComplete(eventHandler_t* obj, void* taskParam, eventData_t* data)
+uint8_t Event_MeshComplete(eventHandler_t* obj, void* data, eventData_t* eData)
 {
   obj->meshComplete = 1;
   return 1;
 }
 
-uint8_t Event_RegHandlerReq(eventHandler_t* obj, void* taskParam, eventData_t* data)
+uint8_t Event_RegHandlerReq(eventHandler_t* obj, void* data, eventData_t* eData)
 {
-  if(!data)
+  if(!eData)
   {
     return 0;
   }
-  eventHandler_t* subsData = (eventHandler_t*)data->data;
+  eventHandler_t* subsData = (eventHandler_t*)eData->data;
 
   if(obj->handlerId == 0) // we are master
   {
@@ -563,12 +566,12 @@ uint8_t Event_RegHandlerReq(eventHandler_t* obj, void* taskParam, eventData_t* d
   return 1;
 }
 
-uint8_t Event_Initialize(eventHandler_t* obj, void* taskParam, eventData_t* data)
+uint8_t Event_Initialize(eventHandler_t* obj, void* data, eventData_t* eData)
 {
   return 1;
 }
 
-uint8_t Event_InitializeDone(eventHandler_t* obj, void* taskParam, eventData_t* data)
+uint8_t Event_InitializeDone(eventHandler_t* obj, void* data, eventData_t* eData)
 {
   return 1;
 }

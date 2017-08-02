@@ -65,12 +65,12 @@ Satellite_t* Satellite_Init(QueueHandle_t eventMaster, FlightModeHandler_t* stat
   taskParam->current_control_mode = Control_mode_not_available;
   taskParam->evHandler = Event_CreateHandler(eventMaster,0);
 
-  param_obj_t * ReceiverRoot = Param_CreateObj(3, NoType, readOnly, NULL, "Rcver", Param_GetRoot(), NULL);
+  param_obj_t * ReceiverRoot = Param_CreateObj(3, variable_type_NoType, readOnly, NULL, "Rcver", Param_GetRoot(), NULL);
 
   // Enable receiver sensitivity adjustment.
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite, &taskParam->multiplier, "mult", ReceiverRoot, taskParam->xMutexParam);
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite, &taskParam->multiplier, "mult", ReceiverRoot, taskParam->xMutexParam);
 
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite, &taskParam->throMult, "TMult", ReceiverRoot, taskParam->xMutexParam);
+  Param_CreateObj(0, variable_type_fp_16_16, readWrite, &taskParam->throMult, "TMult", ReceiverRoot, taskParam->xMutexParam);
 
   if( !taskParam || !taskParam->decoded_data || !taskParam->configuration || !taskParam->setpoint
       || !taskParam->satellite_receive_buffer || !taskParam->xMutexParam || !taskParam->evHandler)
@@ -131,8 +131,6 @@ void Satellite_CreateReceiverTask(  QueueHandle_t eventMaster, FlightModeHandler
     }
   }
 
-  // Event_RegisterCallback(SatelliteParam->evHandler, ePeripheralError  ,Led_HandlePeripheralError);
-
   SatelliteParam->evHandler->subscriptions |= 0;
 
 
@@ -177,7 +175,7 @@ void Satellite_ReceiverTask(void *pvParameters)
     }
   }
 
-  if(!Event_SendAndWaitForAll(param->evHandler, param, eInitialize))
+  if(!Event_SendAndWaitForAll(param->evHandler, eInitialize))
    {
      for(;;)
      {
@@ -185,7 +183,7 @@ void Satellite_ReceiverTask(void *pvParameters)
    }
 
   // Do initializations here.
-  if(!Event_SendAndWaitForAll(param->evHandler, param, eInitializeDone))
+  if(!Event_SendAndWaitForAll(param->evHandler, eInitializeDone))
    {
      for(;;)
      {
@@ -202,7 +200,7 @@ void Satellite_ReceiverTask(void *pvParameters)
   for ( ;; )
   {
     //Process incoming events.
-    while(Event_Receive(param->evHandler, param, 0) == 1)
+    while(Event_Receive(param->evHandler, 0) == 1)
     {}
 
     /*Read data from the satellite receiver, wait longer than the period of the frames.*/
