@@ -68,13 +68,15 @@ uint8_t LogHandler_SendLogEvent(LogHandler_t*  obj);
 uint8_t LogHandler_SendNameReqEvent(LogHandler_t*  obj);
 
 /**
- *
- * @param obj             Get the serialized name id mapping of all nodes assosiated with this handler.
- * @param buffer          Buffer to write into.
- * @param buffer_length   Length of that buffer.
- * @return                1 if success, 0 otherwise.
+ * Get the id-name mapping. This function will add all mappings into the array of logNames_t, but not
+ * serialize the objects for sending.
+ * @param obj       Current object.
+ * @param loggers   array of logName objects, this array will be filled by the function.
+ * @param size      Size of the array.
+ * @param arrIndex  Current index in the array.
+ * @return
  */
-uint8_t LogHandler_GetNameIdMapping(LogHandler_t*  obj, uint8_t* buffer, uint32_t buffer_length);
+uint8_t LogHandler_GetMapping(LogHandler_t* obj, logNames_t* logs, uint32_t size, uint32_t* arrIndex);
 
 /**
  * Function only used by the master. The function will assign a unique id to each of

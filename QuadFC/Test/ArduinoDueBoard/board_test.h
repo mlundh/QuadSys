@@ -1,5 +1,5 @@
 /*
- * log_serial_backend.c
+ * board_test.h
  *
  * Copyright (C) 2017 Martin Lundh
  *
@@ -21,20 +21,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+#ifndef TEST_ARDUINODUEBOARD_BOARD_TEST_H_
+#define TEST_ARDUINODUEBOARD_BOARD_TEST_H_
 
-#include "Log/inc/log_backend.h"
-struct logBackEnd
-{
-  ;
-};
+#include "Test/TestFW/test_framework.h"
 
-LogBackEnd_t* LogBackend_CreateObj()
-{
-  return NULL;
-}
+void Board_GetTCs(TestFw_t* obj);
+
+uint8_t Board_TestSpiFram_1(TestFw_t* obj);
+uint8_t Board_TestSpiFram_2(TestFw_t* obj);
 
 
-uint8_t LogBackend_Report()
-{
-  return 0;
-}
+#endif /* TEST_ARDUINODUEBOARD_BOARD_TEST_H_ */

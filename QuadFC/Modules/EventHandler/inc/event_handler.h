@@ -87,6 +87,7 @@ typedef enum events
 
   eLog,            //!< eLog             A log event.
   eLogNameReq,     //!< eLogNameReq      A requirement for the log name-id mapping
+  eLogStop,        //!< eLogStop         A request to stop all logging
 
   eNrEvents        //!< eNrEvents
 }event_t;

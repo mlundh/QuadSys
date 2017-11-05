@@ -22,17 +22,17 @@
  * THE SOFTWARE.
  */
 
-#include "stddef.h"
 #include "FreeRTOS.h"
 #include "QuadFC/QuadFC_Memory.h"
-#include "QuadFC/QuadFC_Peripherals.h"
+#include "PortLayer/MB85RC_i2c_fram/inc/MB85RC_i2c_memory.h"
+#include "HAL/QuadFC/QuadFC_Peripherals.h"
 
 #define MB85RC_DEFAULT_ADDRESS        (0x50) /* 1010 + A2 + A1 + A0 = 0x50 default */
 #define MB85RC_SLAVE_ID               (0xF8)
 #define MB85RC_BUSS                   (0x0)
 #define MB85RC_BLOCK_TIME             (50UL / portTICK_PERIOD_MS)
 
-uint8_t Mem_Read(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size)
+uint8_t MB85RC_MemRead(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size)
 {
   QuadFC_I2C_t i2c_data;
   i2c_data.buffer = buffer;
@@ -48,7 +48,7 @@ uint8_t Mem_Read(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_
   return 1;
 }
 
-uint8_t Mem_Write(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size)
+uint8_t MB85RC_MemWrite(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size)
 {
   QuadFC_I2C_t i2c_data;
   i2c_data.buffer = buffer;

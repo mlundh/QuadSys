@@ -1,7 +1,7 @@
 /*
- * memory.h
+ * serialization.c
  *
- * Copyright (C) 2015 Martin Lundh
+ * Copyright (C) 2017 Martin Lundh
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,32 +21,30 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef PORTLAYER_MEMORY_INC_QUAD_FC_MEMORY_H_
-#define PORTLAYER_MEMORY_INC_QUAD_FC_MEMORY_H_
+#include "Utilities/inc/serialization.h"
+uint32_t serialize_int32(uint8_t *buffer, uint32_t size, int32_t value)
+{
+  if(!buffer || size < 4)
+  {
+    return 0;
+  }
+  buffer[0]  = (uint8_t)((value >> 24)   & 0xFF);
+  buffer[1]  = (uint8_t)((value >> 16)   & 0xFF);
+  buffer[2]  = (uint8_t)((value >> 8)    & 0xFF);
+  buffer[3]  = (uint8_t)((value)         & 0xFF);
+  return 4;
+}
 
-#include "stdint.h"
-
-uint8_t Mem_Init();
-
-/**
- * Read from memory.
- * @param addr          Address in memory to read from.
- * @param size          Size to read.
- * @param buffer        Buffer to read into.
- * @param buffer_size   Buffer size.
- * @return              1 if success, 0 otherwise.
- */
-uint8_t Mem_Read(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size);
-
-
-/**
- * Write to memory.
- * @param addr          Address in memory to write to.
- * @param size          Size to Write.
- * @param buffer        Buffer to Write from.
- * @param buffer_size   Buffer size.
- * @return              1 if success, 0 otherwise.
- */
-uint8_t Mem_Write(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size);
-
-#endif /* PORTLAYER_MEMORY_INC_MEMORY_H_ */
+uint32_t deserialize_int32(uint8_t *buffer, uint32_t size, int32_t* value)
+{
+  if(!buffer || size < 4)
+  {
+    return 0;
+  }
+  *value = (((int32_t)buffer[0]) << 24)+
+           (((int32_t)buffer[1]) << 16) +
+           (((int32_t)buffer[2]) << 8) +
+            ((int32_t)buffer[3]);
+           ;
+  return 4;
+}

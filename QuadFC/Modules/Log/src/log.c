@@ -65,7 +65,7 @@ Log_t* Log_CreateObj(uint8_t num_children, Log_variable_type_t type, void* value
   log_obj->id = 0;
   log_obj->logLevel = 0;
   log_obj->type = type;
-  log_obj->period = 0;
+  log_obj->PeriodsSinceLastLog = 0;
   log_obj->paramObject = paramObj;
   if(num_children)
   {
@@ -131,6 +131,17 @@ uint8_t Log_Report(Log_t* obj)
   {
     return 1;
   }
+  obj->PeriodsSinceLastLog++;
+
+  if(obj->PeriodsSinceLastLog >= obj->logLevel)
+  {
+    obj->PeriodsSinceLastLog = 0;
+  }
+  else
+  {
+    return 1;
+  }
+
   LogHandler_t* logH = Log_GetHandler(obj);
   if(!logH)
   {
@@ -164,12 +175,24 @@ uint8_t Log_GetName(Log_t* obj, logNames_t* array, const uint32_t arrayLength, u
   {
     logNames_t logName = {};
     logName.id = obj->id;
+    logName.type = obj->type;
     strncpy((char*)logName.name, (char*)obj->name, MAX_PARAM_NAME_LENGTH);
     array[(*arrayIndex)++] = logName;
   }
   for(int i = 0; i < obj->registeredChildren; i++)
   {
     result &= Log_GetName(obj->children[i], array, arrayLength, arrayIndex);
+  }
+  return result;
+}
+
+uint8_t Log_StopAllLogs(Log_t* obj)
+{
+  uint8_t result = 1;
+  obj->logLevel = 0;
+  for(int i = 0; (i < obj->registeredChildren); i++)
+  {
+    result &= Log_StopAllLogs(obj->children[i]);
   }
   return result;
 }

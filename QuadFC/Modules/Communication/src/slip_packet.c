@@ -150,9 +150,13 @@ uint16_t Slip_DePacketize(uint8_t* buffer, uint16_t bufferLength, SLIP_t *packet
 SLIP_Status_t SLIP_Parser(uint8_t *inputBuffer, int InputBufferLength,
     SLIP_t *SLIP_packet, int *index)
 {
-  if ( (InputBufferLength < 1) || (InputBufferLength > (SLIP_packet->allocatedSize - *index)))
+  if ( (InputBufferLength > (SLIP_packet->allocatedSize - *index)))
   {
-    return 0;
+    return SLIP_StatusNok;
+  }
+  if( (InputBufferLength < 1))
+  {
+    return SLIP_StatusCont;
   }
   SLIP_Status_t result = SLIP_StatusCont;
   for ( int i = 0; i < InputBufferLength; i++, (*index)++ )

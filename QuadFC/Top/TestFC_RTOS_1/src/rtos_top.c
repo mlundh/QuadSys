@@ -32,11 +32,9 @@
 #include "timers.h"
 //Include testers
 #include "Test/TestFW/test_framework.h"
-#include "Test/SignalProcessing/signal_processing_tester.h"
-#include "Test/EventHandler/event_handler_tester.h"
-#include "Test/Log/log_tester.h"
-#include "Test/Log/logEventTester.h"
 #include "HMI/inc/led_control_task.h"
+#include "Test/ArduinoDueBoard/board_test.h"
+#include "HAL/QuadFC/QuadFC_Memory.h"
 
 /**
  * @file Top used for regression testing. This top uses freeRTOS and
@@ -78,10 +76,10 @@ int main( void )
 
 void mainTester(void *pvParameters)
 {
-  TestFw_t* testFW = TestFW_Create("Log");
+  TestFw_t* testFW = TestFW_Create("Peripherals");
+  //Mem_Init();
   /**************Add test module instantiation here***************/
-  Log_GetTCs(testFW);
-  LogEv_GetTCs(testFW);
+  Board_GetTCs(testFW);
 
   /***************************************************************/
 

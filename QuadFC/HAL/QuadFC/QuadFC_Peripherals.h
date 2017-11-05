@@ -109,10 +109,30 @@ typedef struct peripheral_serial_options
   uint32_t bufferLength;
 }QuadFC_SerialOptions_t;
 
-typedef struct peripheral_spi
-{
+typedef struct SpiMaster_SlaveDevice SpiMaster_SlaveDevice_t;
 
-}QuadFC_SPI;
+typedef enum Spi_BitsPerTransfer
+{
+  Spi_8_bit_per_transfer,
+  Spi_9_bit_per_transfer,
+  Spi_10_bit_per_transfer,
+  Spi_11_bit_per_transfer,
+  Spi_12_bit_per_transfer,
+  Spi_13_bit_per_transfer,
+  Spi_14_bit_per_transfer,
+  Spi_15_bit_per_transfer,
+  Spi_16_bit_per_transfer,
+}SpiMaster_BitsPerTransfer_t;
+
+
+typedef enum Spi_Mode
+{
+  Spi_mode_0,
+  Spi_mode_1,
+  Spi_mode_2,
+  Spi_mode_3
+}Spi_Mode_t;
+
 
 /**
  * Initialize the i2c bus on index busIndex.
@@ -166,6 +186,16 @@ uint8_t QuadFC_SerialWrite(QuadFC_Serial_t *serial_data, uint8_t busIndex, TickT
  */
 uint32_t QuadFC_SerialRead(QuadFC_Serial_t *serial_data, uint8_t busIndex, TickType_t blockTimeMs);
 
+uint8_t SpiMaster_Init(int SpiIndex);
+
+SpiMaster_SlaveDevice_t* SpiMaster_CreateSlaveDevice(uint8_t SpiIndex,
+    uint32_t baudRate, uint32_t csId, SpiMaster_BitsPerTransfer_t bits, Spi_Mode_t mode);
+
+uint8_t SpiMaster_Transfer(uint8_t SpiIndex, uint8_t *buffer, uint32_t size);
+
+void SpiMaster_SelectSlave(uint8_t SpiIndex, SpiMaster_SlaveDevice_t* slave);
+
+void SpiMaster_DeselectSlave(uint8_t SpiIndex, SpiMaster_SlaveDevice_t* slave);
 
 
 #endif /* PORTLAYER_BOARD_INC_QUADFC_PERIPHERALS_H_ */

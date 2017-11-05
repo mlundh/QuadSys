@@ -35,6 +35,6 @@ LogBackEnd_t* LogBackend_CreateObj();
 
 uint8_t LogBackend_Report(LogBackEnd_t* obj, logEntry_t* entry);
 
-uint8_t LogBackend_GetLog(LogBackEnd_t* obj, logEntry_t* loggers, uint32_t size, uint32_t* nrLogs);
+uint8_t LogBackend_GetLog(LogBackEnd_t* obj, logEntry_t* loggers, uint32_t nrElements, uint32_t* nrLogs);
 
 #endif /* MODULES_LOG_INC_LOG_BACKEND_H_ */

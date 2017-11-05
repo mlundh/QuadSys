@@ -27,9 +27,16 @@
 #define MAX_LOG_HANDLERS 10
 
 #define MAX_LOG_NAME_LENGTH MAX_PARAM_NAME_LENGTH
-#define MAX_LOG_EXTRA (5)
+#define MAX_LOG_NAME_EXTRA (7)
 #define MAX_LOG_ID_DIGITS_ID (4)
-#define MAX_LOG_NODE_LENGTH (MAX_LOG_NAME_LENGTH + MAX_LOG_EXTRA + MAX_LOG_ID_DIGITS_ID)
+#define MAX_LOG_TYPE_DIGITS (2)
+#define MAX_LOG_NODE_LENGTH (MAX_LOG_NAME_LENGTH +  MAX_LOG_TYPE_DIGITS +MAX_LOG_NAME_EXTRA + MAX_LOG_ID_DIGITS_ID)
+
+#define MAX_LOG_ENTRY_DIGITS_ID (4)
+#define MAX_LOG_ENTRY_DIGITS_TIME (11)
+#define MAX_LOG_ENTRY_DIGITS_DATA (11)
+#define LOG_ENTRY_EXTRA (8)
+#define MAX_LOG_ENTRY_LENGTH (MAX_LOG_ENTRY_DIGITS_ID + MAX_LOG_ENTRY_DIGITS_TIME + MAX_LOG_ENTRY_DIGITS_DATA + LOG_ENTRY_EXTRA)
 
 #include <stdint.h>
 #include "EventHandler/inc/event_handler.h"
@@ -48,7 +55,7 @@ typedef struct logEntry
 {
   uint32_t time;          //! System time when the variable was sampled.
   uint32_t id;            //! id of the logged variable. This will, together with the logHandler id provide a system wide unique identifier.
-  uint32_t data;          //! data to stored. The log interface only supports uint32_t logging, so all entries must be cast to that size.
+  int32_t data;          //! data to stored. The log interface only supports int32_t logging, so all entries must be cast to that size.
   LogHandler_t* handler;  //! unique identifier of the log handler.
 }logEntry_t;
 
@@ -109,11 +116,20 @@ uint8_t LogHandler_HandleLogEvent(eventHandler_t* obj, void* data, eventData_t* 
  * This handler will serve all name requests. It will send all name-id mappings of the handler
  * to the given queue (the masters name queue).
  * @param obj     current handler.
- * @param data    optional data, here it contains the response queue.
- * @param event   event data.
+ * @param data    optional data, here it contains the current log handler.
+ * @param event   event data. Here the data field contains the response queue.
  * @return        1 success, 0 otherwise.
  */
 uint8_t LogHandler_HandleNameReqEvent(eventHandler_t* obj, void* data, eventData_t* event);
+
+/**
+ * This handler will stop all logs connected to the current handler.
+ * @param obj     current event handler.
+ * @param data    optional data. Here it is the current log handler.
+ * @param event   event data. Not used by this handler.
+ * @return
+ */
+uint8_t LogHandler_HandleStop(eventHandler_t* obj, void* data, eventData_t* event);
 
 /**
  * Process data in the queue given. The queue should only contain logEntry entries. Use this
@@ -133,15 +149,13 @@ uint8_t LogHandler_ProcessDataInQueue(LogHandler_t* obj, QueueHandle_t logQueue)
 param_obj_t* LogHandler_GetParameter(LogHandler_t* obj);
 
 /**
- * Get the id-name mapping. This function will add all mappings into the array of logNames_t, but not
- * serialize the objects for sending.
- * @param obj       Current object.
- * @param loggers   array of logName objects, this array will be filled by the function.
- * @param size      Size of the array.
- * @param arrIndex  Current index in the array.
- * @return
+ *
+ * @param obj             Get the serialized name id mapping of all nodes associated with this handler.
+ * @param buffer          Buffer to write into.
+ * @param buffer_length   Length of that buffer.
+ * @return                1 if success, 0 otherwise.
  */
-uint8_t LogHandler_GetMapping(LogHandler_t* obj, logNames_t* logs, uint32_t size, uint32_t* arrIndex);
+uint8_t LogHandler_GetNameIdMapping(LogHandler_t*  obj, uint8_t* buffer, uint32_t buffer_length);
 
 /**
  * Serialize the items in parameter "items" into the buffer. Make sure to have a buffer long enough to
@@ -169,6 +183,15 @@ uint8_t LogHandler_GetMapping(LogHandler_t* obj, logNames_t* logs, uint32_t size
 uint8_t LogHandler_AppendNodeString(logNameQueueItems_t *items, uint8_t *buffer, uint32_t buffer_length);
 
 /**
+ * Get the serialized version of the log. Will fill the buffer with a null terminated string.
+ * @param obj     LogHandler obj. Must be master.
+ * @param buffer  Buffer to write the log entries into.
+ * @param size    size of the buffer.
+ * @return        1 if success, 0 otherwise.
+ */
+uint8_t LogHandler_AppendSerializedlogs(LogHandler_t* obj, uint8_t* buffer, uint32_t size);
+
+/**
  * Get logs from the log backend.
  * @param obj         LogHandler obj. Must be the master.
  * @param logs        Buffer to write the logs into.
@@ -177,6 +200,13 @@ uint8_t LogHandler_AppendNodeString(logNameQueueItems_t *items, uint8_t *buffer,
  * @return            1 if success, 0 otherwise.
  */
 uint8_t LogHandler_Getlogs(LogHandler_t* obj, logEntry_t* logs, uint32_t size, uint32_t* nrLogs);
+
+/**
+ * Stop all logging. All log levels are set to 0.
+ * @param obj         master LogHandler object.
+ * @return            1 is success, 0 otherwise.
+ */
+uint8_t LogHandler_StopAllLogs(LogHandler_t* obj);
 
 
 #endif /* MODULES_LOG_INC_LOGHANDLER_H_ */

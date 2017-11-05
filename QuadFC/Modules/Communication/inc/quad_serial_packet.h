@@ -86,6 +86,7 @@ enum QSP_addresses
   QSP_FunctionCall = 2,
   QSP_Status = 3,
   QSP_Debug = 4,
+  QSP_Transmission = 5,
 };
 enum QSP_ParametersControl
 {
@@ -94,6 +95,12 @@ enum QSP_ParametersControl
   QSP_ParamValue = 2,
   QSP_ParamSave = 3,
   QSP_ParamLoad = 4,
+};
+enum QSP_LogControl
+{
+  QSP_LogName = 0,
+  QSP_LogEntry = 1,
+  QSP_LogStopAll = 2,
 };
 enum QSP_StatusControl
 {
@@ -107,7 +114,12 @@ enum QSP_StatusControl
   QSP_StatusBufferOverrun = 7,
   QSP_StatusNotImplemented = 200,
 };
+enum QSP_TransmissionControl
+{
+  QSP_TransmissionOK = 0,
+  QSP_TransmissionNOK = 1,
 
+};
 enum QSP_DebugControl
 {
   QSP_DebugGetRuntimeStats = 0,

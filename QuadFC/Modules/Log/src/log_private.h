@@ -37,7 +37,7 @@ struct log
   uint32_t id;
   uint8_t logLevel;
   Log_variable_type_t type;
-  uint32_t period;
+  uint32_t PeriodsSinceLastLog;
   param_obj_t * paramObject;
 };
 
@@ -46,6 +46,7 @@ struct logNames
 {
   signed char name[MAX_PARAM_NAME_LENGTH];
   uint32_t    id;
+  uint32_t    type;
 };
 
 /**
@@ -72,5 +73,12 @@ uint8_t Log_SetChild(Log_t *current, Log_t *child);
  * @return
  */
 uint8_t Log_GetName(Log_t* obj, logNames_t* array, const uint32_t arrayLength, uint32_t *arrayIndex);
+
+/**
+ * Stop all logging. LogLevel of this and children will be set to 0.
+ * @param obj   current log object.
+ * @return      1 if success, 0 otherwise.
+ */
+uint8_t Log_StopAllLogs(Log_t* obj);
 
 #endif /* MODULES_LOG_SRC_LOG_PRIVATE_H_ */

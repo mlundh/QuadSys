@@ -1,7 +1,7 @@
 /*
- * memory.h
+ * MB85RC_i2c_memory.h
  *
- * Copyright (C) 2015 Martin Lundh
+ * Copyright (C) 2017 Martin Lundh
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,32 +21,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef PORTLAYER_MEMORY_INC_QUAD_FC_MEMORY_H_
-#define PORTLAYER_MEMORY_INC_QUAD_FC_MEMORY_H_
+#ifndef PORTLAYER_MB85RC_I2C_FRAM_INC_MB85RC_I2C_MEMORY_H_
+#define PORTLAYER_MB85RC_I2C_FRAM_INC_MB85RC_I2C_MEMORY_H_
 
+#define MB85RC_SIZE 32000
 #include "stdint.h"
+#include "stddef.h"
 
-uint8_t Mem_Init();
-
-/**
- * Read from memory.
- * @param addr          Address in memory to read from.
- * @param size          Size to read.
- * @param buffer        Buffer to read into.
- * @param buffer_size   Buffer size.
- * @return              1 if success, 0 otherwise.
- */
-uint8_t Mem_Read(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size);
+uint8_t MB85RC_MemRead(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size);
+uint8_t MB85RC_MemWrite(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size);
 
 
-/**
- * Write to memory.
- * @param addr          Address in memory to write to.
- * @param size          Size to Write.
- * @param buffer        Buffer to Write from.
- * @param buffer_size   Buffer size.
- * @return              1 if success, 0 otherwise.
- */
-uint8_t Mem_Write(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size);
 
-#endif /* PORTLAYER_MEMORY_INC_MEMORY_H_ */
+#endif /* PORTLAYER_MB85RC_I2C_FRAM_INC_MB85RC_I2C_MEMORY_H_ */

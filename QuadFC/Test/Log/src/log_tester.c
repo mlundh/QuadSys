@@ -138,7 +138,7 @@ uint8_t Log_TestCreate(TestFw_t* obj)
       logObj->id != 0 ||
       logObj->logLevel != 0 ||
       logObj->type != variable_type_NoType ||
-      logObj->period != 0 ||
+      logObj->PeriodsSinceLastLog != 0 ||
       logObj->paramObject == NULL )
   {
     result = 0;
@@ -247,7 +247,6 @@ uint8_t Log_TestReport(TestFw_t* obj)
       return 0;
     }
     logEntry_t* entryP = entry;
-    entryP++;
     if(entryP->data != 879 ||
         entryP->id != 0 ||
         entryP->time != time )

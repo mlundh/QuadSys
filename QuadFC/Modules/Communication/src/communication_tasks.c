@@ -33,6 +33,7 @@
 #include "QuadFC/QuadFC_Peripherals.h"
 #include "Utilities/inc/run_time_stats.h"
 #include "EventHandler/inc/event_handler.h"
+#include "Log/inc/logHandler.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
@@ -44,7 +45,7 @@
 
 
 /*Display queue*/
-#define COM_QUEUE_LENGTH      (1)
+#define COM_QUEUE_LENGTH      (3)
 #define COM_QUEUE_ITEM_SIZE         (sizeof(QSP_t*))
 #define COM_PACKET_LENGTH_MAX       512
 static QueueHandle_t xQueue_Com;
@@ -57,12 +58,15 @@ typedef struct RxCom
   QuadFC_Serial_t * serialBuffer;
   QSP_t *QspPacket;                  //!< RxTask owns QSP package.
   QSP_t *QspRespPacket;              //!< RxTask creates the response QSP package.
+  QSP_t *QspTransRespPacket;              //!< RxTask creates the transmission response QSP package.
   SLIP_t *SLIP;                   //!< RxTask owns SLIP package.
   uint8_t *receive_buffer;
   param_helper_t *helper;
   param_helper_t *saveHelper;
   FlightModeHandler_t* stateHandler;
   eventHandler_t* evHandler;
+  LogHandler_t* logHandler;
+
 }RxCom_t;
 
 typedef struct TxCom
@@ -118,6 +122,13 @@ void Com_ParamLoad(RxCom_t* obj);
  * @return      0 if fail, 1 otherwise.
  */
 uint8_t Com_HandleQSP(RxCom_t* obj);
+
+/**
+ * Handle a log message.
+ * @param obj   The current object.
+ * @return      0 if there is no response to be sent, 1 otherwise.
+ */
+uint8_t Com_HandleLog(RxCom_t* obj);
 
 /**
  * Handle a parameter QSP message.
@@ -176,13 +187,15 @@ RxCom_t* Com_InitRx(QueueHandle_t eventMaster, FlightModeHandler_t* stateHandler
   taskParam->saveHelper = pvPortMalloc(sizeof(param_helper_t));
   taskParam->QspPacket = QSP_Create(QSP_MAX_PACKET_SIZE);
   taskParam->QspRespPacket = QSP_Create(QSP_MAX_PACKET_SIZE);
+  taskParam->QspTransRespPacket =  QSP_Create(8); // Only header is used!
   taskParam->SLIP =  Slip_Create(COM_PACKET_LENGTH_MAX);
   taskParam->receive_buffer = pvPortMalloc(sizeof(uint8_t) * COM_RECEIVE_BUFFER_LENGTH );
   taskParam->stateHandler = stateHandler;
   taskParam->evHandler = Event_CreateHandler(eventMaster, 0);
+  taskParam->logHandler = LogHandler_CreateObj(0,taskParam->evHandler,"LogM",1);
   if( !taskParam->helper || !taskParam->saveHelper || !taskParam->QspPacket
       || !taskParam->QspRespPacket || !taskParam->SLIP || !taskParam->receive_buffer
-      || !taskParam->evHandler)
+      || !taskParam->evHandler || !taskParam->QspTransRespPacket || !taskParam->logHandler)
   {
     return NULL;
   }
@@ -244,7 +257,7 @@ void Com_CreateTasks(QueueHandle_t eventMaster, FlightModeHandler_t* stateHandle
     }
   }
 
-   /* Create the freeRTOS tasks responsible for communication.*/
+  /* Create the freeRTOS tasks responsible for communication.*/
   portBASE_TYPE create_result_rx, create_result_tx;
 
   create_result_tx = xTaskCreate( Com_TxTask,           /* The task that implements the transmission of messages. */
@@ -296,20 +309,20 @@ void Com_TxTask( void *pvParameters )
   }
 
   if(!Event_SendAndWaitForAll(obj->evHandler, eInitialize))
-   {
-     for(;;)
-     {
-     }
-   }
+  {
+    for(;;)
+    {
+    }
+  }
 
   QSP_t *txPacket;            //!< Handle for a QSP packet, used for receiving from queue.
 
   if(!Event_SendAndWaitForAll(obj->evHandler, eInitializeDone))
-   {
-     for(;;)
-     {
-     }
-   }
+  {
+    for(;;)
+    {
+    }
+  }
 
   for ( ;; )
   {
@@ -326,7 +339,7 @@ void Com_TxTask( void *pvParameters )
       continue; //FrameError.
     }
     QSP_TakeIsPopulated(txPacket);
-     /* We have a packet, packetize into a SLIP. */
+    /* We have a packet, packetize into a SLIP. */
     if(!Slip_Packetize(QSP_GetPacketPtr(txPacket), QSP_GetPacketSize(txPacket),
         QSP_GetAvailibleSize(txPacket), obj->txSLIP))
     {
@@ -362,7 +375,7 @@ void Com_RxTask( void *pvParameters )
 
   /*The already allocated data is passed to the task.*/
   RxCom_t * obj = (RxCom_t *) pvParameters;
-  
+
   // Initialize event handler.
   uint8_t evInitResult = Event_InitHandler(obj->evHandler);
   if(!evInitResult)
@@ -375,18 +388,18 @@ void Com_RxTask( void *pvParameters )
 
 
   if(!Event_SendAndWaitForAll(obj->evHandler, eInitialize))
-   {
-     for(;;)
-     {
-     }
-   }
+  {
+    for(;;)
+    {
+    }
+  }
 
   if(!Event_SendAndWaitForAll(obj->evHandler, eInitializeDone))
-   {
-     for(;;)
-     {
-     }
-   }
+  {
+    for(;;)
+    {
+    }
+  }
   // TODO change timeout in mem_read and move this to the init phase.
   Com_ParamLoad(obj);
   if( QSP_StatusAck != QSP_GetControl(obj->QspRespPacket))
@@ -406,7 +419,7 @@ void Com_RxTask( void *pvParameters )
     serialData.buffer = obj->receive_buffer;
     serialData.bufferLength = 1;
 
-    uint32_t nr_bytes_received = QuadFC_SerialRead(&serialData, COM_SERIAL, portMAX_DELAY);
+    uint32_t nr_bytes_received = QuadFC_SerialRead(&serialData, COM_SERIAL, 1);
 
     SLIP_Status_t result;
     result = SLIP_Parser(obj->receive_buffer, nr_bytes_received,
@@ -418,9 +431,15 @@ void Com_RxTask( void *pvParameters )
       // Package is not finished, continue.
       break;
     case SLIP_StatusOK:
+
       if(Slip_DePacketize(QSP_GetPacketPtr(obj->QspPacket), QSP_GetAvailibleSize(obj->QspPacket),
           obj->SLIP))
       {
+        QSP_ClearPayload(obj->QspTransRespPacket);
+        QSP_SetAddress(obj->QspTransRespPacket, QSP_Transmission);
+        QSP_SetControl(obj->QspTransRespPacket, QSP_TransmissionOK);
+        Com_SendQSP(obj->QspTransRespPacket);
+
         uint8_t rxRespComplete = Com_HandleQSP(obj);
         if(rxRespComplete)
         {
@@ -429,18 +448,17 @@ void Com_RxTask( void *pvParameters )
       }
       else
       {
-        QSP_ClearPayload(obj->QspRespPacket);
-        QSP_SetAddress(obj->QspRespPacket, QSP_Status);
-        QSP_SetControl(obj->QspRespPacket, QSP_StatusNack);
-        Com_SendQSP(obj->QspRespPacket);
+        QSP_ClearPayload(obj->QspTransRespPacket);
+        QSP_SetAddress(obj->QspTransRespPacket, QSP_Transmission);
+        QSP_SetControl(obj->QspTransRespPacket, QSP_TransmissionNOK);
+        Com_SendQSP(obj->QspTransRespPacket);
       }
       break;
     case SLIP_StatusNok:
-    case SLIP_StatusCrcError:
-      QSP_ClearPayload(obj->QspRespPacket);
-      QSP_SetAddress(obj->QspRespPacket, QSP_Status);
-      QSP_SetControl(obj->QspRespPacket, QSP_StatusNack);
-      Com_SendQSP(obj->QspRespPacket);
+      QSP_ClearPayload(obj->QspTransRespPacket);
+      QSP_SetAddress(obj->QspTransRespPacket, QSP_Transmission);
+      QSP_SetControl(obj->QspTransRespPacket, QSP_TransmissionNOK);
+      Com_SendQSP(obj->QspTransRespPacket);
       break;
     default:
       break;
@@ -457,6 +475,9 @@ uint8_t Com_HandleQSP(RxCom_t* obj)
   {
   case QSP_Parameters:
     result = Com_HandleParameters(obj);
+    break;
+  case QSP_Log:
+    result = Com_HandleLog(obj);
     break;
   case QSP_Status:
     result = Com_HandleStatus(obj);
@@ -513,6 +534,43 @@ uint8_t Com_HandleDebug(RxCom_t* obj)
     break;
   }
 
+  return result;
+}
+
+uint8_t Com_HandleLog(RxCom_t* obj)
+{
+  uint8_t result = 0;
+  QSP_ClearPayload(obj->QspRespPacket);
+
+  switch ( QSP_GetControl(obj->QspPacket) )
+  {
+  case QSP_LogName:
+  {
+    result = 1;
+    LogHandler_GetNameIdMapping(obj->logHandler, QSP_GetPayloadPtr(obj->QspRespPacket), QSP_GetAvailibleSize(obj->QspRespPacket));
+    uint16_t len =  strlen((char *)QSP_GetPayloadPtr(obj->QspRespPacket));
+    QSP_SetPayloadSize(obj->QspRespPacket, len);
+    QSP_SetAddress(obj->QspRespPacket, QSP_Log);
+    QSP_SetControl(obj->QspRespPacket, QSP_LogName);
+  }
+  break;
+  case QSP_LogEntry:
+  {
+    result = 1;
+    LogHandler_AppendSerializedlogs(obj->logHandler, QSP_GetPayloadPtr(obj->QspRespPacket), QSP_GetAvailibleSize(obj->QspRespPacket));
+    uint16_t len =  strlen((char *)QSP_GetPayloadPtr(obj->QspRespPacket));
+    QSP_SetPayloadSize(obj->QspRespPacket, len);
+    QSP_SetAddress(obj->QspRespPacket, QSP_Log);
+    QSP_SetControl(obj->QspRespPacket, QSP_LogEntry);
+  }
+  break;
+  case QSP_LogStopAll:
+    LogHandler_StopAllLogs(obj->logHandler);
+    result = 0;
+    break;
+  default:
+    break;
+  }
   return result;
 }
 

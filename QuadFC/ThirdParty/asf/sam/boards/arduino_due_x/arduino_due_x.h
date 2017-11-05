@@ -266,7 +266,65 @@
 #define PIN_40_PWM_FLAGS   (PIO_PERIPH_B | PIO_DEFAULT)
 #define PIN_40_PWM_CHANNEL PWM_CHANNEL_3
 
+/**
+ * \file
+ * SPI
+ *
+ */
 
+/* ------------------------------------------------------------------------ */
+/* SPI                                                                      */
+/* ------------------------------------------------------------------------ */
+/*! SPI0 MISO pin definition. */
+#define SPI0_MISO_GPIO        (PIO_PA25_IDX)
+#define SPI0_MISO_FLAGS       (PIO_PERIPH_A | PIO_DEFAULT)
+/*! SPI0 MOSI pin definition. */
+#define SPI0_MOSI_GPIO        (PIO_PA26_IDX)
+#define SPI0_MOSI_FLAGS       (PIO_PERIPH_A | PIO_DEFAULT)
+/*! SPI0 SPCK pin definition. */
+#define SPI0_SPCK_GPIO        (PIO_PA27_IDX)
+#define SPI0_SPCK_FLAGS       (PIO_PERIPH_A | PIO_DEFAULT)
+
+/*! SPI0 chip select 0 pin definition. (Only one configuration is possible) */
+#define SPI0_NPCS0_GPIO            (PIO_PA28_IDX)
+#define SPI0_NPCS0_FLAGS           (PIO_PERIPH_A | PIO_DEFAULT)
+/*! SPI0 chip select 1 pin definition. (multiple configurations are possible) */
+#define SPI0_NPCS1_PA29_GPIO       (PIO_PA29_IDX)
+#define SPI0_NPCS1_PA29_FLAGS      (PIO_PERIPH_A | PIO_DEFAULT)
+#define SPI0_NPCS1_PB20_GPIO       (PIO_PB20_IDX)
+#define SPI0_NPCS1_PB20_FLAGS      (PIO_PERIPH_B | PIO_DEFAULT)
+/*! SPI0 chip select 2 pin definition. (multiple configurations are possible) */
+#define SPI0_NPCS2_PA30_GPIO       (PIO_PA30_IDX)
+#define SPI0_NPCS2_PA30_FLAGS      (PIO_PERIPH_A | PIO_DEFAULT)
+#define SPI0_NPCS2_PB21_GPIO       (PIO_PB21_IDX)
+#define SPI0_NPCS2_PB21_FLAGS      (PIO_PERIPH_B | PIO_DEFAULT)
+/*! SPI0 chip select 3 pin definition. (multiple configurations are possible) */
+#define SPI0_NPCS3_PA31_GPIO       (PIO_PA31_IDX)
+#define SPI0_NPCS3_PA31_FLAGS      (PIO_PERIPH_A | PIO_DEFAULT)
+#define SPI0_NPCS3_PB23_GPIO       (PIO_PB23_IDX)
+#define SPI0_NPCS3_PB23_FLAGS      (PIO_PERIPH_B | PIO_DEFAULT)
+
+/*! SPI1 MISO pin definition. */
+#define SPI1_MISO_GPIO             (PIO_PE28_IDX)
+#define SPI1_MISO_FLAGS            (PIO_PERIPH_A | PIO_DEFAULT)
+/*! SPI1 MOSI pin definition. */
+#define SPI1_MOSI_GPIO             (PIO_PE29_IDX)
+#define SPI1_MOSI_FLAGS            (PIO_PERIPH_A | PIO_DEFAULT)
+/*! SPI1 SPCK pin definition. */
+#define SPI1_SPCK_GPIO             (PIO_PE30_IDX)
+#define SPI1_SPCK_FLAGS            (PIO_PERIPH_A | PIO_DEFAULT)
+/*! SPI1 chip select 0 pin definition. (Only one configuration is possible) */
+#define SPI1_NPCS0_GPIO            (PIO_PE31_IDX)
+#define SPI1_NPCS0_FLAGS           (PIO_PERIPH_A | PIO_DEFAULT)
+/*! SPI1 chip select 1 pin definition. (Only one configuration is possible) */
+#define SPI1_NPCS1_GPIO            (PIO_PF0_IDX)
+#define SPI1_NPCS1_FLAGS           (PIO_PERIPH_A | PIO_DEFAULT)
+/*! SPI1 chip select 2 pin definition. (Only one configuration is possible) */
+#define SPI1_NPCS2_GPIO            (PIO_PF1_IDX)
+#define SPI1_NPCS2_FLAGS           (PIO_PERIPH_A | PIO_DEFAULT)
+/*! SPI1 chip select 3 pin definition. (Only one configuration is possible) */
+#define SPI1_NPCS3_GPIO            (PIO_PF2_IDX)
+#define SPI1_NPCS3_FLAGS           (PIO_PERIPH_A | PIO_DEFAULT)
 
 /**
  * \file

@@ -1,7 +1,7 @@
 /*
- * memory.h
+ * MB85RS64V_fram.h
  *
- * Copyright (C) 2015 Martin Lundh
+ * Copyright (C) 2017 Martin Lundh
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,32 +21,25 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef PORTLAYER_MEMORY_INC_QUAD_FC_MEMORY_H_
-#define PORTLAYER_MEMORY_INC_QUAD_FC_MEMORY_H_
+#ifndef PORTLAYER_MB85RS64V_SPI_FRAM_INC_MB85RS64V_FRAM_H_
+#define PORTLAYER_MB85RS64V_SPI_FRAM_INC_MB85RS64V_FRAM_H_
+#define MB85RS64V_SIZE 8000
 
 #include "stdint.h"
+#include "stddef.h"
+typedef enum opcodes
+{
+  OPCODE_WREN   = 0b0110,     //!< Write Enable Latch
+  OPCODE_WRDI   = 0b0100,     //!< Reset Write Enable Latch */
+  OPCODE_RDSR   = 0b0101,     //!< Read Status Register */
+  OPCODE_WRSR   = 0b0001,     //!< Write Status Register */
+  OPCODE_READ   = 0b0011,     //!< Read Memory */
+  OPCODE_WRITE  = 0b0010,     //!< Write Memory */
+  OPCODE_RDID   = 0b10011111  //!< Read Device ID */
+} opcodes_t;
 
-uint8_t Mem_Init();
+uint8_t MB85RS64V_MemRead(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size);
+uint8_t MB85RS64V_MemWrite(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size);
+uint8_t MB85RS64V_WriteEnable(uint8_t enable);
 
-/**
- * Read from memory.
- * @param addr          Address in memory to read from.
- * @param size          Size to read.
- * @param buffer        Buffer to read into.
- * @param buffer_size   Buffer size.
- * @return              1 if success, 0 otherwise.
- */
-uint8_t Mem_Read(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size);
-
-
-/**
- * Write to memory.
- * @param addr          Address in memory to write to.
- * @param size          Size to Write.
- * @param buffer        Buffer to Write from.
- * @param buffer_size   Buffer size.
- * @return              1 if success, 0 otherwise.
- */
-uint8_t Mem_Write(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size);
-
-#endif /* PORTLAYER_MEMORY_INC_MEMORY_H_ */
+#endif /* PORTLAYER_MB85RS64V_SPI_FRAM_INC_MB85RS64V_FRAM_H_ */

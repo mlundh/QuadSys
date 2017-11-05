@@ -29,18 +29,21 @@
 #include "Modules/Utilities/inc/string_utils.h"
 
 
-
-
-
 LogHandler_t* LogHandler_CreateObj(uint8_t num_children, eventHandler_t* evHandler, const char *obj_name, uint8_t isMaster)
 {
   /* --- test code - remove when less heap is used for the logHandler --- */
   size_t heapSize = xPortGetFreeHeapSize();
+  (void)heapSize;
   LogHandler_t *obj = pvPortMalloc( sizeof(LogHandler_t) );
   /* --- test code - End test code. --- */
 
   // only check obj, we are not required to have an event handler.
   if(!obj)
+  {
+    return NULL;
+  }
+
+  if(num_children > MAX_LOGGERS_PER_HANDLER)
   {
     return NULL;
   }
@@ -53,12 +56,6 @@ LogHandler_t* LogHandler_CreateObj(uint8_t num_children, eventHandler_t* evHandl
   {
     return NULL;
   }
-
-  /* --- test code - remove when less heap is used for the logHandler --- */
-  size_t heapSizeAfter = xPortGetFreeHeapSize();
-  size_t usedHeap = heapSize - heapSizeAfter;
-  (void)usedHeap;
-  /* --- test code - End test code. --- */
 
   if(isMaster)
   {
@@ -94,11 +91,15 @@ LogHandler_t* LogHandler_CreateObj(uint8_t num_children, eventHandler_t* evHandl
     return NULL;
   }
 
-  obj->children = pvPortMalloc(sizeof(Log_t*) * num_children);
-  if(!obj->children)
+  if(num_children > 0)
   {
-    return NULL;
+    obj->children = pvPortMalloc(sizeof(Log_t*) * num_children);
+    if(!obj->children)
+    {
+      return NULL;
+    }
   }
+
 
   obj->numChildrenAllocated = num_children;
   obj->registeredChildren = 0;
@@ -117,6 +118,9 @@ LogHandler_t* LogHandler_CreateObj(uint8_t num_children, eventHandler_t* evHandl
     {
       Event_RegisterCallback(obj->evHandler, eLogNameReq, LogHandler_HandleNameReqEvent, obj);
       obj->evHandler->subscriptions |= (1 << eLogNameReq); // create is called before initialize, therefore the subscription req function is not available.
+
+      Event_RegisterCallback(obj->evHandler, eLogStop, LogHandler_HandleStop, obj);
+      obj->evHandler->subscriptions |= (1 << eLogStop); // create is called before initialize, therefore the subscription req function is not available.
 
     }
   }
@@ -156,6 +160,7 @@ uint8_t LogHandler_report(LogHandler_t* obj, Log_t* log_obj)
   {
     if(obj->backend)
     {
+      // TODO read multiple entries at the same time ( all available) before sending to backend.
       logEntry_t queuedEntry = {0};
       while(xQueueReceive(obj->logQueue,&queuedEntry, 0)  == pdPASS)
       {
@@ -313,6 +318,18 @@ uint8_t LogHandler_HandleNameReqEvent(eventHandler_t* obj, void* data, eventData
   }
   return result;
 }
+
+uint8_t LogHandler_HandleStop(eventHandler_t* obj, void* data, eventData_t* event)
+{
+  if(!obj || ! data || !event)
+  {
+    return 0;
+  }
+  uint8_t result = 1;
+  LogHandler_t* handlerObj = (LogHandler_t*)data; // The data should always be the handler object when a logEvent is received. The logHandler registers this properly iteself.
+  result = LogHandler_StopAllLogs(handlerObj);
+  return result;
+}
 uint8_t LogHandler_ProcessDataInQueue(LogHandler_t* obj, QueueHandle_t logQueue)
 {
   if(!obj->backend)
@@ -320,6 +337,7 @@ uint8_t LogHandler_ProcessDataInQueue(LogHandler_t* obj, QueueHandle_t logQueue)
     return 0;
   }
   logEntry_t queuedEntry = {0};
+
   while(xQueueReceive(logQueue, &queuedEntry, 0)  == pdPASS)
   {
     if(!LogHandler_SendToBackend(obj, &queuedEntry))
@@ -353,34 +371,34 @@ uint8_t LogHandler_SendToBackend(LogHandler_t* obj, logEntry_t* log)
 uint8_t LogHandler_UpdateId(LogHandler_t* obj, LogHandler_t* originator, uint32_t* id)
 {
   if(!obj->backend)
-   {
-     return 0; // Only the master has a backend, and only master can update the id.
-   }
-   //Find the index of the handler
-   int found = 0;
-   int handlerIndex = 0;
-   for(; handlerIndex < obj->nrRegisteredHandlers; handlerIndex++)
-   {
-     if(obj->handlerArray[handlerIndex] == originator)
-     {
-       found = 1;
-       break;
-     }
-   }
-   if(!found)
-   {
-     if(obj->nrRegisteredHandlers < MAX_LOG_HANDLERS)
-     {
-       obj->handlerArray[obj->nrRegisteredHandlers] = originator;
-       obj->nrRegisteredHandlers++;
-     }
-     else
-     {
-       return 0;
-     }
-   }
-   (*id) =  handlerIndex * MAX_LOGGERS_PER_HANDLER + (*id);
-   return 1;
+  {
+    return 0; // Only the master has a backend, and only master can update the id.
+  }
+  //Find the index of the handler
+  int found = 0;
+  int handlerIndex = 0;
+  for(; handlerIndex < obj->nrRegisteredHandlers; handlerIndex++)
+  {
+    if(obj->handlerArray[handlerIndex] == originator)
+    {
+      found = 1;
+      break;
+    }
+  }
+  if(!found)
+  {
+    if(obj->nrRegisteredHandlers < MAX_LOG_HANDLERS)
+    {
+      obj->handlerArray[obj->nrRegisteredHandlers] = originator;
+      obj->nrRegisteredHandlers++;
+    }
+    else
+    {
+      return 0;
+    }
+  }
+  (*id) =  handlerIndex * MAX_LOGGERS_PER_HANDLER + (*id);
+  return 1;
 }
 
 
@@ -414,6 +432,13 @@ uint8_t LogHandler_AppendNodeString(logNameQueueItems_t *items, uint8_t *buffer,
     }
     // append name and update buf_index.
     strncat( (char *) buffer , (const char *) items->logNames[i].name, (unsigned short) MAX_PARAM_NAME_LENGTH);
+
+    //append value type <xx>
+    strncat( (char *) buffer, (const char *) "<", (unsigned short) 1);
+    uint8_t pVTTemp[MAX_VALUE_TYPE_LENGTH];
+    snprintf((char *) pVTTemp, MAX_VALUE_TYPE_LENGTH, "%lu",(uint32_t)items->logNames[i].type);
+    strncat( (char *) buffer, (const char *) pVTTemp, (unsigned short) MAX_LOG_TYPE_DIGITS);
+    strncat( (char *) buffer, (const char *) ">", (unsigned short) 1);
     // append id "[xxx]"
     strncat( (char *) buffer, (const char *) "[", (unsigned short) 1);
     uint8_t pTemp[MAX_LOG_ID_DIGITS_ID];
@@ -426,6 +451,59 @@ uint8_t LogHandler_AppendNodeString(logNameQueueItems_t *items, uint8_t *buffer,
   return 1;
 }
 
+uint8_t LogHandler_AppendSerializedlogs(LogHandler_t* obj, uint8_t* buffer, uint32_t size)
+{
+  if(!obj || !buffer)
+  {
+    return 0;
+  }
+  if(size < MAX_LOG_ENTRY_LENGTH)
+  {
+    return 1;
+  }
+  uint8_t result = 1;
+  uint32_t nrLogs = 0;
+
+  {
+    uint8_t nr_entries = size / MAX_LOG_ENTRY_LENGTH;
+    logEntry_t entries[nr_entries];
+
+    result &= LogHandler_Getlogs(obj, entries, nr_entries, &nrLogs);
+    for(int i = 0; i < nrLogs; i++)
+    {
+      uint8_t pTemp[MAX_LOG_ENTRY_DIGITS_DATA];
+      strncat( (char *) buffer, (const char *) "[", (unsigned short) 1);
+      snprintf((char *) pTemp, MAX_LOG_ENTRY_DIGITS_ID, "%lu",(uint32_t)entries[i].id);
+      strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_LOG_ENTRY_DIGITS_ID);
+      strncat( (char *) buffer, (const char *) "]", (unsigned short) 1);
+
+      strncat( (char *) buffer, (const char *) "[", (unsigned short) 1);
+      snprintf((char *) pTemp, MAX_LOG_ENTRY_DIGITS_TIME, "%lu",(uint32_t)entries[i].time);
+      strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_LOG_ENTRY_DIGITS_TIME);
+      strncat( (char *) buffer, (const char *) "]", (unsigned short) 1);
+
+      strncat( (char *) buffer, (const char *) "[", (unsigned short) 1);
+      snprintf((char *) pTemp, MAX_LOG_ENTRY_DIGITS_DATA, "%lu",(uint32_t)entries[i].data);
+      strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_LOG_ENTRY_DIGITS_DATA);
+      strncat( (char *) buffer, (const char *) "]", (unsigned short) 1);
+      strncat( (char *) buffer, (const char *) "/", (unsigned short) 1);
+    }
+  }
+  // We might have used less than max length for the data fields, call the function
+  // recursively until there is either no more space left in the buffer, or there is
+  // no more data to get.
+  if(result && (nrLogs > 0))
+  {
+    uint32_t length = strlen((const char*)buffer);
+    if(length < size)
+    {
+      uint32_t newSize = size - length;
+      result &= LogHandler_AppendSerializedlogs(obj, buffer, newSize);
+    }
+
+  }
+  return result;
+}
 uint8_t LogHandler_Getlogs(LogHandler_t* obj, logEntry_t* logs, uint32_t size, uint32_t* nrLogs)
 {
   if(!LogBackend_GetLog(obj->backend,logs,size,nrLogs))
@@ -434,4 +512,27 @@ uint8_t LogHandler_Getlogs(LogHandler_t* obj, logEntry_t* logs, uint32_t size, u
   }
   return 1;
 }
+
+uint8_t LogHandler_StopAllLogs(LogHandler_t* obj)
+{
+  if(!obj)
+  {
+    return 0; // only master is allowed to stop all!
+  }
+
+  uint8_t result = 1;
+  for(int i = 0; (i < obj->registeredChildren); i++)
+  {
+    result &= Log_StopAllLogs(obj->children[i]);
+  }
+  if(obj->backend && obj->evHandler)
+  {
+    eventData_t event;
+    event.eventNumber = eLogStop;
+    event.data = obj->logQueue;
+    result &= Event_Send(obj->evHandler, event);
+  }
+  return result;
+}
+
 
