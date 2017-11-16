@@ -204,7 +204,7 @@ protected:
     std::vector< QuadGSTree::ptr > mChildren;
     QuadGSTreeValue mValue;
     Log mLogger;
-
+public:
     /**
      * Get the module name from a string.
      * @param s String containing the module.
@@ -234,6 +234,13 @@ protected:
      * @return      The value of module contained in s.
      */
     static std::string GetValueString(const std::string& s);
+
+    /**
+     * Remove the first value string in the string s.
+     * @param s     A string containing values.
+     * @return      the removed value.
+     */
+    static std::string RemoveValueString( std::string& s);
 
 };
 

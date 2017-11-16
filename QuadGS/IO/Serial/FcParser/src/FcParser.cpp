@@ -27,6 +27,7 @@
 #include "QCMsgHeader.h"
 #include "QuadParamPacket.h"
 #include "QuadDebugMsg.h"
+#include "QuadLogMsg.h"
 #include <memory>
 
 namespace QuadGS
@@ -45,39 +46,45 @@ FcParser::~FcParser()
 
 int FcParser::parse( std::shared_ptr<std::vector<unsigned char> > data)
 {
-	//Package into a slip packet and send the packeged data.
-	BinaryIStream is(*data);
-	mHeader = QCMsgHeader::Create(0,0,0,0);
-	is >> *mHeader;
-	// TODO switch on header!!
-	switch (mHeader->GetAddress())
-	{
-	case QCMsgHeader::addresses::Parameters:
-	{
-		QuadParamPacket::ptr tmp = QuadParamPacket::Create();
-		is >> *tmp;
-		mPayload = tmp;
-		break;
-	}
-	case QCMsgHeader::addresses::FunctionCall:
-	{
-		return -1;
-		break;
-	}
-	case QCMsgHeader::addresses::Status:
-	{
-		mPayload.reset();
-		break;
-	}
-	case QCMsgHeader::addresses::Debug:
-	{
-		QuadDebugMsg::ptr tmp = QuadDebugMsg::Create();
-		is >> *tmp;
-		mPayload = tmp;
-		break;
-	}
-	default:
-    	break;
+    //Package into a slip packet and send the packeged data.
+    BinaryIStream is(*data);
+    mHeader = QCMsgHeader::Create(0,0,0,0);
+    is >> *mHeader;
+    switch (mHeader->GetAddress())
+    {
+    case QCMsgHeader::addresses::Parameters:
+    {
+        QuadParamPacket::ptr tmp = QuadParamPacket::Create();
+        is >> *tmp;
+        mPayload = tmp;
+        break;
+    }
+    case QCMsgHeader::addresses::FunctionCall:
+    {
+        return -1;
+        break;
+    }
+    case QCMsgHeader::addresses::Log:
+    {
+        QuadLogMsg::ptr tmp = QuadLogMsg::Create();
+        is >> *tmp;
+        mPayload = tmp;
+        break;
+    }
+    case QCMsgHeader::addresses::Status:
+    {
+        mPayload.reset();
+        break;
+    }
+    case QCMsgHeader::addresses::Debug:
+    {
+        QuadDebugMsg::ptr tmp = QuadDebugMsg::Create();
+        is >> *tmp;
+        mPayload = tmp;
+        break;
+    }
+    default:
+        break;
     }
 
     return 0;
@@ -85,16 +92,16 @@ int FcParser::parse( std::shared_ptr<std::vector<unsigned char> > data)
 
 QCMsgHeader::ptr FcParser::getHeader( void )
 {
-	QCMsgHeader::ptr ptr = mHeader;
-	mHeader.reset();
-	return ptr;
+    QCMsgHeader::ptr ptr = mHeader;
+    mHeader.reset();
+    return ptr;
 }
 
 QuadGSMsg::QuadGSMsgPtr FcParser::getPayload( void )
 {
-	QuadGSMsg::QuadGSMsgPtr ptr = mPayload;
-	mPayload.reset();
-	return ptr;
+    QuadGSMsg::QuadGSMsgPtr ptr = mPayload;
+    mPayload.reset();
+    return ptr;
 }
 
 } /* namespace QuadGS */

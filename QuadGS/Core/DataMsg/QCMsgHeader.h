@@ -72,11 +72,21 @@ public:
         FunctionCall = 2,
         Status = 3,
         Debug = 4,
+        Transmission = 5,
     };
     typedef enum addresses addresses_t;
 
     static std::vector<std::string> mAddressStrings;
 
+    enum LogControl
+    {
+        Name = 0,
+        Entry = 1,
+        StopAll = 2,
+    };
+    typedef enum LogControl LogControl_t;
+
+    static std::vector<std::string> mLogControl;
 
     enum StatusControl
     {
@@ -89,10 +99,21 @@ public:
         NotValidSlipPacket = 6,
         BufferOverrun = 7,
         NotImplemented = 8,
+
     };
     typedef enum StatusControl StatusControl_t;
 
     static std::vector<std::string> mStatusControl;
+
+    enum TransmissionControl
+    {
+        OK = 0,
+        NOK = 1,
+    };
+    typedef enum TransmissionControl TransmissionControl_t;
+
+    static std::vector<std::string> mTransmissionControl;
+
 
     enum DebugControl
     {

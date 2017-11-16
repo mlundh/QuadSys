@@ -3,13 +3,14 @@ add_subdirectory(BinaryStream)
 add_subdirectory(DataMsg)
 add_subdirectory(Parameters)
 add_subdirectory(Log)
-
+add_subdirectory(LogHandler)
 
 set(src Core.cpp)
 
 set(dep "CommandTree"
         "DataMsg"
-        "Parameters" )
+        "Parameters" 
+        "LogHandler")
 
 qgs_make_shared_lib( Core src dep)
 

@@ -429,6 +429,23 @@ std::string QuadGSTree::GetValueString(const std::string& s)
     }
     return token;
 }
+
+std::string QuadGSTree::RemoveValueString(std::string& s)
+{
+    size_t pos_front = 0;
+    size_t pos_back = 0;
+    std::string token;
+    pos_front = s.find(mValueDelimiterFront);
+    pos_back = s.find(mValueDelimiterBack);
+    if ((pos_front != std::string::npos)&&(pos_back != std::string::npos))
+    {
+        token = s.substr(pos_front + mValueDelimiterFront.length(), (pos_back - pos_front - mValueDelimiterBack.length()));
+        s.erase(pos_front, (pos_back - pos_front +mValueDelimiterBack.length()));
+
+    }
+    return token;
+}
+
 std::string QuadGSTree::RemoveModuleString(std::string& s)
 {
     size_t pos = 0;

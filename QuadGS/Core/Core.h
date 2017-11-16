@@ -29,7 +29,6 @@
 #include <string>
 #include <vector>
 #include "Log.h"
-#include "Parameters.h"
 namespace QuadGS {
 
 
@@ -37,7 +36,10 @@ namespace QuadGS {
 class IoBase;
 class UiBase;
 class QuadGSMsg;
+class QCMsgHeader;
 class QuadDebugMsg;
+class LogHandler;
+class Parameters;
 class Command
 {
 public:
@@ -134,6 +136,7 @@ private:
     Log logger;
     IoBase* mIo;
     UiBase* mUi;
+    std::shared_ptr<LogHandler> mLogHandler;
 };
 
 } /* namespace QuadGS */

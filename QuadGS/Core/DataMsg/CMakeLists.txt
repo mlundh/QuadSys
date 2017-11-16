@@ -1,7 +1,8 @@
 list(APPEND src "QCMsgHeader.cpp"
                 "QuadGSMsg.cpp"
                 "QuadParamPacket.cpp"
-                "QuadDebugMsg.cpp")
+                "QuadDebugMsg.cpp"
+                "QuadLogMsg.cpp")
                 
 list(APPEND dep "BinaryStream" )
 qgs_make_shared_lib( DataMsg src dep)

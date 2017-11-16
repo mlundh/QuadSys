@@ -32,8 +32,8 @@
 namespace QuadGS {
 
 Parameters::Parameters():
-        		        logger("Parameters"),
-        		        mWriteFcn(NULL)
+                       logger("Parameters"),
+                       mWriteFcn()
 {
     mTree = QuadGSTree::ptr();
     mCurrentBranch = QuadGSTree::ptr();
@@ -70,34 +70,34 @@ std::vector< Command::ptr > Parameters::getCommands()
     mCommands.push_back(std::make_shared<Command> ("ls",
             std::bind(&Parameters::list, shared_from_this(), std::placeholders::_1),
             "List children on branch", Command::ActOn::Core));
-    mCommands.push_back(std::make_shared<Command> ("set",
+    mCommands.push_back(std::make_shared<Command> ("paramSet",
             std::bind(&Parameters::set, shared_from_this(), std::placeholders::_1),
             "Set value of the command tree.", Command::ActOn::Core));
-    mCommands.push_back(std::make_shared<Command> ("get",
+    mCommands.push_back(std::make_shared<Command> ("paramGet",
             std::bind(&Parameters::get, shared_from_this(), std::placeholders::_1),
             "Get value of the command tree.", Command::ActOn::Core));
-    mCommands.push_back(std::make_shared<Command> ("add",
+    mCommands.push_back(std::make_shared<Command> ("paramAdd",
             std::bind(&Parameters::add, shared_from_this(), std::placeholders::_1),
             "Add the given value to the specified node.", Command::ActOn::Core));
-    mCommands.push_back(std::make_shared<Command> ("RegisterTree",
+    mCommands.push_back(std::make_shared<Command> ("paramRegisterTree",
             std::bind(&Parameters::SetAndRegister, shared_from_this(), std::placeholders::_1),
             "SetAndRegister a new value in the tree.", Command::ActOn::Core));
-    mCommands.push_back(std::make_shared<Command> ("dumpTree",
+    mCommands.push_back(std::make_shared<Command> ("paramDumpTree",
             std::bind(&Parameters::dump, shared_from_this(), std::placeholders::_1),
             "Dump the command tree.", Command::ActOn::Core));
-    mCommands.push_back(std::make_shared<Command> ("write",
+    mCommands.push_back(std::make_shared<Command> ("paramWrite",
             std::bind(&Parameters::writeCmd, shared_from_this(), std::placeholders::_1),
             "Write tree to port, relative to current node and path.", Command::ActOn::IO));
     mCommands.push_back(std::make_shared<Command> ("writeRawData",
             std::bind(&Parameters::writeRawCmd, shared_from_this(), std::placeholders::_1),
             "Write raw data to the serial port.", Command::ActOn::IO));
-    mCommands.push_back(std::make_shared<Command> ("read",
+    mCommands.push_back(std::make_shared<Command> ("paramRead",
             std::bind(&Parameters::requestUpdateCmd, shared_from_this(), std::placeholders::_1),
             "Request an update from FC.", Command::ActOn::IO));
-    mCommands.push_back(std::make_shared<Command> ("save",
+    mCommands.push_back(std::make_shared<Command> ("paramSave",
             std::bind(&Parameters::saveParamCmd, shared_from_this(), std::placeholders::_1),
             "Tell fc to save current parameters.", Command::ActOn::IO));
-    mCommands.push_back(std::make_shared<Command> ("load",
+    mCommands.push_back(std::make_shared<Command> ("paramLoad",
             std::bind(&Parameters::loadParamCmd, shared_from_this(), std::placeholders::_1),
             "Tell fc to load saved parameters.", Command::ActOn::IO));
     return mCommands;
@@ -117,6 +117,7 @@ void Parameters::ParameterHandler(QCMsgHeader::ptr header, QuadParamPacket::ptr 
         if((lastSequenceNo++) != sequenceNo)
         {
             logger.QuadLog(QuadGS::error, "Lost a setTree package, try again!" );
+            SetAndRegister(payload->GetPayload());
             lastSequenceNo = 0;
             RequestTree(); // We have not yet got the whole tree, continue!
             return;
@@ -286,6 +287,7 @@ std::string Parameters::set(std::string path)
         std::rethrow_exception(eptr);
     }
     RestoreBranch();
+    writeCmd("");
     return "";
 }
 

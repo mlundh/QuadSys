@@ -30,6 +30,8 @@
 #include "QuadGSMsg.h"
 #include "UiBase.h"
 #include "IoBase.h"
+#include "LogHandler.h"
+#include "Parameters.h"
 
 namespace QuadGS {
 
@@ -39,6 +41,7 @@ Core::Core()
 ,mUi()
 {
     mParameters = Parameters::create();
+    mLogHandler = LogHandler::create();
 }
 
 Core::~Core()
@@ -62,10 +65,10 @@ void Core::bind(UiBase* UiPtr)
 {
     mUi = UiPtr;
     mParameters->RegisterWriteFcn(std::bind(&QuadGS::Core::write, this, std::placeholders::_1, std::placeholders::_2));
+    mLogHandler->RegisterWriteFcn(std::bind(&QuadGS::Core::write, this, std::placeholders::_1, std::placeholders::_2));
     UiPtr->registerCommands(getCommands());
     UiPtr->SetCore(this);
 }
-
 
 std::string Core::getRuntimeStats(std::string )
 {
@@ -105,9 +108,12 @@ std::vector< Command::ptr > Core::getCommands()
 {
     std::vector<std::shared_ptr < Command > > mCommands;
     mCommands = mParameters->getCommands();
-    mCommands.push_back(std::make_shared<Command> ("getRuntimeStats",
+    mCommands.push_back(std::make_shared<Command> ("runtimeStatsGet",
             std::bind(&Core::getRuntimeStats, this, std::placeholders::_1),
             "Get runtime stats.", Command::ActOn::IO));
+    std::vector<std::shared_ptr < Command > > mCommandsLogHandler;
+    mCommandsLogHandler = mLogHandler->getCommands();
+    mCommands.insert( mCommands.end(), mCommandsLogHandler.begin(), mCommandsLogHandler.end() );
     return mCommands;
 }
 
@@ -154,6 +160,7 @@ void Core::DebugHandler(QCMsgHeader::ptr header, QuadDebugMsg::ptr payload)
     }
 }
 
+
 void Core::msgHandler(std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadGSMsg> payload)
 {
     uint8_t address = header->GetAddress();
@@ -165,7 +172,7 @@ void Core::msgHandler(std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadG
         // FunctionCallHandler();
         break;
     case QCMsgHeader::addresses::Log:
-        // LogHandler();
+        mLogHandler->Handler(header, std::dynamic_pointer_cast<QuadLogMsg>(payload));
         break;
     case QCMsgHeader::addresses::Status:
         StatusHandler(header);

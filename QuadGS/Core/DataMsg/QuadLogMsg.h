@@ -1,27 +1,26 @@
 /*
- * QuadDebugMsg.h
+ * QuadLogMsg.h
  *
- *  Created on: Jan 7, 2017
+ *  Created on: Nov 17, 2017
  *      Author: martin
  */
 
-#ifndef CORE_DATAMSG_QUADDEBUGMSG_H_
-#define CORE_DATAMSG_QUADDEBUGMSG_H_
-#include <string>
-#include "QuadGSMsg.h"
+#ifndef CORE_DATAMSG_QUADLOGMSG_H_
+#define CORE_DATAMSG_QUADLOGMSG_H_
 
+#include "QuadGSMsg.h"
 namespace QuadGS {
 
-class QuadDebugMsg : public QuadGSMsg
-{
+class QuadLogMsg: public QuadGS::QuadGSMsg {
 public:
-    typedef std::shared_ptr<QuadDebugMsg> ptr;
-    friend BinaryOStream& operator<< (BinaryOStream& os, const QuadDebugMsg& pl);
-    friend BinaryIStream& operator>> (BinaryIStream& is, QuadDebugMsg& pl);
+    typedef std::shared_ptr<QuadLogMsg> ptr;
+    friend BinaryOStream& operator<< (BinaryOStream& os, const QuadLogMsg& pl);
+    friend BinaryIStream& operator>> (BinaryIStream& is, QuadLogMsg& pl);
+
 
     /**
      * Create from a uint8_t array.
-     * @param Data	pointer to the data.
+     * @param Data  pointer to the data.
      * @param Length length of the data.
      * @return A shared pointer to the message.
      */
@@ -38,7 +37,6 @@ public:
      * @return A shared pointer to the message.
      */
     static ptr Create();
-
 
     /**
      * Get the payload.
@@ -68,19 +66,19 @@ public:
      */
     BinaryIStream& stream(BinaryIStream& os);
 
-    virtual ~QuadDebugMsg();
+    virtual ~QuadLogMsg();
 
 private:
 
-    QuadDebugMsg();
+    QuadLogMsg();
 
-    QuadDebugMsg(const std::string payload);
+    QuadLogMsg(const std::string payload);
 
-    QuadDebugMsg(const uint8_t* data, uint16_t length);
+    QuadLogMsg(const uint8_t* data, uint16_t length);
 
     std::string mPayload;
+
 };
+}/* namespace QuadGS */
 
-} /* namespace QuadGS */
-
-#endif /* CORE_DATAMSG_QUADDEBUGMSG_H_ */
+#endif /* CORE_DATAMSG_QUADLOGMSG_H_ */

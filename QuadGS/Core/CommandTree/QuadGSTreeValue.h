@@ -90,8 +90,11 @@ public:
             std::string fractional_part = value.substr(found+1);
             int fractional = std::stoi(fractional_part);
             int decimal    = std::stoi(decimal_part);
-            int fractionalLength = 0;
-            for(int i = fractional; i != 0; i /= 10, fractionalLength++);
+            int fractionalLength = fractional_part.length();
+            if(fractionalLength < 1)
+            {
+                throw std::runtime_error("Set: Ill-formated string..");
+            }
             if(decimal < 0)
             {
                 fractional = -fractional;

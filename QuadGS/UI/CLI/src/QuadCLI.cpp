@@ -35,6 +35,8 @@
 #include "IoBase.h"
 #include <boost/algorithm/string.hpp>
 #include "UiBase.h"
+#include "Parameters.h"
+
 
 namespace QuadGS {
 

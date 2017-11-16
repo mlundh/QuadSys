@@ -17,7 +17,15 @@ std::vector<std::string> QCMsgHeader::mAddressStrings =
         "FunctionCall",
         "Status",
         "Debug"
+        "mAddressStrings"
    };
+
+std::vector<std::string> QCMsgHeader::mLogControl =
+{
+        "Name",
+        "Entry",
+
+};
 
 std::vector<std::string> QCMsgHeader::mStatusControl =
 {
@@ -31,6 +39,11 @@ std::vector<std::string> QCMsgHeader::mStatusControl =
         "BufferOverrun"
 };
 
+std::vector<std::string> QCMsgHeader::mTransmissionControl =
+{
+        "OK",
+        "NOK",
+};
 
 std::vector<std::string> QCMsgHeader::mDebugControl =
 {
@@ -148,7 +161,7 @@ std::string QCMsgHeader::ControlToString() const
     	break;
     }
     case Log:{
-    	tmp = NULL;
+    	tmp = &mLogControl;
     	break;
     }
     case FunctionCall:{
@@ -162,6 +175,10 @@ std::string QCMsgHeader::ControlToString() const
     case Debug:{
     	tmp = &mDebugControl;
     	break;
+    }
+    case Transmission:{
+        tmp = &mTransmissionControl;
+        break;
     }
     default:
     	tmp = NULL;
