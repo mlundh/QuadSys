@@ -28,10 +28,10 @@
 #include <boost/bind.hpp>
 namespace po = boost::program_options;
 
-#include "SerialManager.h"
-#include "QuadCLI.h"
-#include "UiBase.h"
-#include "IoBase.h"
+#include "../../../QGS_IO/Serial/SerialManager.h"
+#include "../../../QGS_UI/CLI/QuadCLI.h"
+#include "../../../QGS_UI/UiBase.h"
+#include "../../../QGS_IO/IoBase.h"
 
 
 #include <iostream>

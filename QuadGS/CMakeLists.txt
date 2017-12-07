@@ -57,12 +57,21 @@ find_package(Readline REQUIRED)
 
 if(WITH_VISION)
     message(STATUS "Building with vision support.")
-
-    SET(VERSION_REQ_CUDA "8.0")
+    SET(VERSION_REQ_CUDA "9.0")
     SET(VERSION_REQ_OCV "3.1")
+    SET(VERSION_REQ_ZED "2")
+    
+    find_package(ZED ${VERSION_REQ_ZED} REQUIRED)
     find_package(OpenCV ${VERSION_REQ_OCV} REQUIRED)
     find_package(CUDA ${VERSION_REQ_CUDA} REQUIRED)
+    
     include_directories(${CUDA_INCLUDE_DIRS})
+    include_directories(${OPENCV_INCLUDE_DIRS})
+    include_directories(${ZED_INCLUDE_DIRS})
+    
+    link_directories(${ZED_LIBRARY_DIR})
+    link_directories(${OpenCV_LIBRARY_DIRS})
+    link_directories(${CUDA_LIBRARY_DIRS})
 endif()
 
 
