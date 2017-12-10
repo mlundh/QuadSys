@@ -5,13 +5,12 @@
  *      Author: martin
  */
 
-#include "../../../QGS_Core/DataMsg/QCMsgHeader.h"
-
-#include "../../../QGS_Core/BinaryStream/BinaryStream.h"
+#include "BinaryStream.h"
+#include "QGS_MsgHeader.h"
 namespace QuadGS {
 
 
-std::vector<std::string> QCMsgHeader::mAddressStrings =
+std::vector<std::string> QGS_MsgHeader::mAddressStrings =
    {
         "Parameters",
         "Log",
@@ -21,14 +20,14 @@ std::vector<std::string> QCMsgHeader::mAddressStrings =
         "mAddressStrings"
    };
 
-std::vector<std::string> QCMsgHeader::mLogControl =
+std::vector<std::string> QGS_MsgHeader::mLogControl =
 {
         "Name",
         "Entry",
 
 };
 
-std::vector<std::string> QCMsgHeader::mStatusControl =
+std::vector<std::string> QGS_MsgHeader::mStatusControl =
 {
         "Cont",
         "Ack",
@@ -40,20 +39,20 @@ std::vector<std::string> QCMsgHeader::mStatusControl =
         "BufferOverrun"
 };
 
-std::vector<std::string> QCMsgHeader::mTransmissionControl =
+std::vector<std::string> QGS_MsgHeader::mTransmissionControl =
 {
         "OK",
         "NOK",
 };
 
-std::vector<std::string> QCMsgHeader::mDebugControl =
+std::vector<std::string> QGS_MsgHeader::mDebugControl =
 {
         "GetRuntimeStats",
         "SetRuntimeStats",
         "GetErrorMessages",
 };
 
-std::vector<std::string> QCMsgHeader::mParamControl =
+std::vector<std::string> QGS_MsgHeader::mParamControl =
 {
 		"SetTree",
 		"GetTree",
@@ -62,53 +61,53 @@ std::vector<std::string> QCMsgHeader::mParamControl =
 		"Load"
 };
 
-QCMsgHeader::ptr QCMsgHeader::Create(const uint8_t* data, uint16_t length)
+QGS_MsgHeader::ptr QGS_MsgHeader::Create(const uint8_t* data, uint16_t length)
 {
-    ptr p(new QCMsgHeader(data, length) );
+    ptr p(new QGS_MsgHeader(data, length) );
     return p;
 }
-QCMsgHeader::ptr QCMsgHeader::Create(uint8_t Address, uint8_t Control, uint8_t IsResend, uint16_t PayloadSize)
+QGS_MsgHeader::ptr QGS_MsgHeader::Create(uint8_t Address, uint8_t Control, uint8_t IsResend, uint16_t PayloadSize)
 {
-    ptr p(new QCMsgHeader(Address, Control, IsResend, PayloadSize) );
+    ptr p(new QGS_MsgHeader(Address, Control, IsResend, PayloadSize) );
     return p;
 }
 
-QCMsgHeader::~QCMsgHeader()
+QGS_MsgHeader::~QGS_MsgHeader()
 {
 }
 
-uint8_t QCMsgHeader::GetAddress() const
+uint8_t QGS_MsgHeader::GetAddress() const
 {
     return mAddress;
 }
 
-void QCMsgHeader::SetAddress(uint8_t address)
+void QGS_MsgHeader::SetAddress(uint8_t address)
 {
     mAddress = address;
 }
 
-uint8_t QCMsgHeader::GetControl() const
+uint8_t QGS_MsgHeader::GetControl() const
 {
     return mControl;
 }
-void QCMsgHeader::SetControl(uint8_t control)
+void QGS_MsgHeader::SetControl(uint8_t control)
 {
     mControl = control;
 
 }
 
-uint8_t QCMsgHeader::GetIsResend() const
+uint8_t QGS_MsgHeader::GetIsResend() const
 {
     return mIsResend;
 }
 
 
-void QCMsgHeader::SetIsResend(uint8_t IsResend)
+void QGS_MsgHeader::SetIsResend(uint8_t IsResend)
 {
 	mIsResend = IsResend;
 }
 
-std::string QCMsgHeader::toString() const
+std::string QGS_MsgHeader::toString() const
 {
     std::string result;
     uint8_t address = GetAddress();
@@ -130,7 +129,7 @@ std::string QCMsgHeader::toString() const
     return result;
 }
 
-BinaryOStream& QCMsgHeader::stream(BinaryOStream& os) const
+BinaryOStream& QGS_MsgHeader::stream(BinaryOStream& os) const
 {
 	os <<  SetBits(8) << mAddress;
 	os <<  SetBits(1) << mIsResend;
@@ -139,7 +138,7 @@ BinaryOStream& QCMsgHeader::stream(BinaryOStream& os) const
 	return os;
 }
 
-BinaryIStream& QCMsgHeader::stream(BinaryIStream& is)
+BinaryIStream& QGS_MsgHeader::stream(BinaryIStream& is)
 {
 	is >>  SetBits(8) >> mAddress;
 	is >>  SetBits(1) >> mIsResend;
@@ -149,7 +148,7 @@ BinaryIStream& QCMsgHeader::stream(BinaryIStream& is)
 }
 
 
-std::string QCMsgHeader::ControlToString() const
+std::string QGS_MsgHeader::ControlToString() const
 {
 
 
@@ -199,8 +198,8 @@ std::string QCMsgHeader::ControlToString() const
     return result;
 }
 
-QCMsgHeader::QCMsgHeader(const uint8_t* data, uint16_t data_length)
-:QuadGSMsg()
+QGS_MsgHeader::QGS_MsgHeader(const uint8_t* data, uint16_t data_length)
+:QGS_Msg()
 ,mAddress(0)
 ,mControl(0)
 ,mIsResend(0)
@@ -210,8 +209,8 @@ QCMsgHeader::QCMsgHeader(const uint8_t* data, uint16_t data_length)
 	is >> *this;
 }
 
-QCMsgHeader::QCMsgHeader(uint8_t Address, uint8_t Control, uint8_t IsResend, uint16_t PayloadSize)
-:QuadGSMsg()
+QGS_MsgHeader::QGS_MsgHeader(uint8_t Address, uint8_t Control, uint8_t IsResend, uint16_t PayloadSize)
+:QGS_Msg()
 ,mAddress(Address)
 ,mControl(Control)
 ,mIsResend(IsResend)
@@ -220,13 +219,13 @@ QCMsgHeader::QCMsgHeader(uint8_t Address, uint8_t Control, uint8_t IsResend, uin
 
 }
 
-BinaryOStream& operator <<(BinaryOStream& os, const QCMsgHeader& pl)
+BinaryOStream& operator <<(BinaryOStream& os, const QGS_MsgHeader& pl)
 {
   pl.stream(os);
   return os;
 }
 
-BinaryIStream& operator >>(BinaryIStream& is, QCMsgHeader& pl)
+BinaryIStream& operator >>(BinaryIStream& is, QGS_MsgHeader& pl)
 {
   pl.stream(is);
   return is;

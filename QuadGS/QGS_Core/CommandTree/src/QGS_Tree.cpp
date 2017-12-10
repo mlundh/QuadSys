@@ -22,28 +22,27 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#include "../../../QGS_Core/CommandTree/QuadGSTree.h"
-
 #include <sstream>
 #include <iomanip>
+#include "QGS_Tree.h"
 
 namespace QuadGS {
   
-  std::string const QuadGSTree::mBranchDelimiter("/");
-  std::string const QuadGSTree::mParentDelimiter("..");
-  std::string const QuadGSTree::mSelfDelimiter(".");
-  std::string const QuadGSTree::mValueTypeDelimiterFront("<");
-  std::string const QuadGSTree::mValueTypeDelimiterBack(">");
-  std::string const QuadGSTree::mValueDelimiterFront("[");
-  std::string const QuadGSTree::mValueDelimiterBack("]");
-  const unsigned int QuadGSTree::mMaxNameLength(8);
-  const unsigned int QuadGSTree::mMaxDepth(8);
-  const unsigned int QuadGSTree::mMaxExtra(5);
-  const unsigned int QuadGSTree::mValueTypeLength(2);
-  const unsigned int QuadGSTree::mMaxDigitsInt32(11);
-  const unsigned int QuadGSTree::mMaxNodeLength(mMaxDigitsInt32 + mMaxExtra + mMaxNameLength + mValueTypeLength);
+  std::string const QGS_Tree::mBranchDelimiter("/");
+  std::string const QGS_Tree::mParentDelimiter("..");
+  std::string const QGS_Tree::mSelfDelimiter(".");
+  std::string const QGS_Tree::mValueTypeDelimiterFront("<");
+  std::string const QGS_Tree::mValueTypeDelimiterBack(">");
+  std::string const QGS_Tree::mValueDelimiterFront("[");
+  std::string const QGS_Tree::mValueDelimiterBack("]");
+  const unsigned int QGS_Tree::mMaxNameLength(8);
+  const unsigned int QGS_Tree::mMaxDepth(8);
+  const unsigned int QGS_Tree::mMaxExtra(5);
+  const unsigned int QGS_Tree::mValueTypeLength(2);
+  const unsigned int QGS_Tree::mMaxDigitsInt32(11);
+  const unsigned int QGS_Tree::mMaxNodeLength(mMaxDigitsInt32 + mMaxExtra + mMaxNameLength + mValueTypeLength);
 
-QuadGSTree::QuadGSTree(std::string name, QuadGSTreeValue::NodeType_t type):
+QGS_Tree::QGS_Tree(std::string name, QGS_TreeValue::NodeType_t type):
     mName(name),
     mParent(NULL),
     mValue(type),
@@ -52,10 +51,10 @@ QuadGSTree::QuadGSTree(std::string name, QuadGSTreeValue::NodeType_t type):
 
 }
 
-QuadGSTree::QuadGSTree(std::string path):
+QGS_Tree::QGS_Tree(std::string path):
     mName(),
     mParent(NULL),
-    mValue(QuadGSTreeValue::NodeType_t::NoType)
+    mValue(QGS_TreeValue::NodeType_t::NoType)
 {
     std::string module = GetModuleString(path);
     std::string name = GetModuleName(module);
@@ -63,12 +62,12 @@ QuadGSTree::QuadGSTree(std::string path):
     std::string value = GetValueString(module);
 
     mName = name;
-    QuadGSTreeValue::NodeType_t type = QuadGSTreeValue::NodeType_t::NoType;
+    QGS_TreeValue::NodeType_t type = QGS_TreeValue::NodeType_t::NoType;
     if(!valueType.empty())
     {
         // Might throw
         int valueTypeI = std::stoi(valueType);
-        type = static_cast<QuadGSTreeValue::NodeType_t>(valueTypeI);
+        type = static_cast<QGS_TreeValue::NodeType_t>(valueTypeI);
     }
     mValue = type;
     if(!value.empty())
@@ -77,12 +76,12 @@ QuadGSTree::QuadGSTree(std::string path):
     }
 }
 
-QuadGSTree::~QuadGSTree()
+QGS_Tree::~QGS_Tree()
 {
 
 }
 
-std::string QuadGSTree::Register(std::string path)
+std::string QGS_Tree::Register(std::string path)
 {
     std::string module = GetModuleString(path);
     std::string name = GetModuleName(module);
@@ -106,16 +105,16 @@ std::string QuadGSTree::Register(std::string path)
             throw std::runtime_error("Branch: " + module + " already exist at current level: " + GetName());
         }
     }    
-    QuadGSTreeValue::NodeType_t type = mValue.mNodeType;
+    QGS_TreeValue::NodeType_t type = mValue.mNodeType;
 
     if(!valueType.empty())
     {
         // Might throw
         int valueTypeI = std::stoi(valueType);
-        type = static_cast<QuadGSTreeValue::NodeType_t>(valueTypeI);
+        type = static_cast<QGS_TreeValue::NodeType_t>(valueTypeI);
     }
 
-    ptr tmpPtr(new QuadGSTree(name, type));
+    ptr tmpPtr(new QGS_Tree(name, type));
     tmpPtr->SetParent(this);
     if(!value.empty())
     {
@@ -126,12 +125,12 @@ std::string QuadGSTree::Register(std::string path)
     return name;
 }
 
-std::string QuadGSTree::GetName()
+std::string QGS_Tree::GetName()
 {
     return mName;
 }
 
-void QuadGSTree::SetParent(QuadGSTree* parent)
+void QGS_Tree::SetParent(QGS_Tree* parent)
 {
     if(!parent)
     {
@@ -140,12 +139,12 @@ void QuadGSTree::SetParent(QuadGSTree* parent)
     mParent = parent;
 }
 
-QuadGSTree* QuadGSTree::GetParent()
+QGS_Tree* QGS_Tree::GetParent()
 {
     return mParent;
 }
 
-std::string QuadGSTree::SetValue(const std::string path)
+std::string QGS_Tree::SetValue(const std::string path)
 {
     std::string module = GetModuleString(path);
     std::string name = GetModuleName(module);
@@ -163,22 +162,22 @@ std::string QuadGSTree::SetValue(const std::string path)
     return "";
 }
 
-std::string QuadGSTree::GetValue()
+std::string QGS_Tree::GetValue()
 {
     return mValue.GetValue(true);
 }
 
-std::string QuadGSTree::ModifyValue(std::string value)
+std::string QGS_Tree::ModifyValue(std::string value)
 {
     return mValue.ModifyValue(value);
 }
 
-QuadGSTree::ptr QuadGSTree::GetSelf()
+QGS_Tree::ptr QGS_Tree::GetSelf()
 {
   return shared_from_this();
 }
 
-QuadGSTree::ptr QuadGSTree::Find(const std::string& path)
+QGS_Tree::ptr QGS_Tree::Find(const std::string& path)
 {
     std::string module = GetModuleString(path);
     std::string name = GetModuleName(module);
@@ -221,14 +220,14 @@ QuadGSTree::ptr QuadGSTree::Find(const std::string& path)
 
     //We did not want to find a match (name could empty = last level) return null ptr.
     //std::cout << "QuadGSTree::Find 3 returning null due to no match"  << std::endl;
-    return QuadGSTree::ptr();
+    return QGS_Tree::ptr();
 }
 
 
 
-bool QuadGSTree::NeedUpdate(const std::string& path)
+bool QGS_Tree::NeedUpdate(const std::string& path)
 {
-    if(QuadGSTreeValue::NodeType_t::NoType != mValue.mNodeType)
+    if(QGS_TreeValue::NodeType_t::NoType != mValue.mNodeType)
     {
         std::string module = GetModuleString(path);
         std::string name = GetModuleName(module);
@@ -259,7 +258,7 @@ bool QuadGSTree::NeedUpdate(const std::string& path)
 }
 
 
-void QuadGSTree::FindPartial(const std::string& name, std::vector<std::string>& vec)
+void QGS_Tree::FindPartial(const std::string& name, std::vector<std::string>& vec)
 {
   std::string token = GetModuleName(name);
   //std::cout << "QuadGSTree::FindPartial 1 finding: " << token << " on branch: " << GetName() << std::endl;
@@ -276,13 +275,13 @@ void QuadGSTree::FindPartial(const std::string& name, std::vector<std::string>& 
 
 
 
-size_t QuadGSTree::getNrChildren()
+size_t QGS_Tree::getNrChildren()
 {
     return mChildren.size();
 }
 
 
-std::string QuadGSTree::ListChildren()
+std::string QGS_Tree::ListChildren()
 {
     std::stringstream ss;
     ss.flags(std::ios::left);
@@ -296,19 +295,19 @@ std::string QuadGSTree::ListChildren()
     return tmp;
 }
 
-std::string QuadGSTree::GetNodeString()
+std::string QGS_Tree::GetNodeString()
 {
     std::stringstream ss;
 
     ss << (GetName() + "<" + std::to_string(mValue.mNodeType) + ">");
-    if(QuadGSTreeValue::NodeType_t::NoType != mValue.mNodeType)
+    if(QGS_TreeValue::NodeType_t::NoType != mValue.mNodeType)
     {
         ss << "[" + mValue.GetValue() + "]" << std::endl;
     }
     return ss.str();
 }
 
-bool QuadGSTree::DumpTree(std::string &tree, std::vector<size_t> &startPosition, unsigned int &depth, unsigned int length)
+bool QGS_Tree::DumpTree(std::string &tree, std::vector<size_t> &startPosition, unsigned int &depth, unsigned int length)
 {
     if(depth > mMaxDepth)
     {
@@ -322,7 +321,7 @@ bool QuadGSTree::DumpTree(std::string &tree, std::vector<size_t> &startPosition,
     }
     //dump self.
     tree += ("/" + GetName() + "<" + std::to_string(mValue.mNodeType) + ">");
-    if(QuadGSTreeValue::NodeType_t::NoType != mValue.mNodeType)
+    if(QGS_TreeValue::NodeType_t::NoType != mValue.mNodeType)
     {
         tree += "[" + mValue.GetValue() + "]";
     }
@@ -347,14 +346,14 @@ bool QuadGSTree::DumpTree(std::string &tree, std::vector<size_t> &startPosition,
 }
 
 
-std::string QuadGSTree::DumpTreeFormatted(size_t depth)
+std::string QGS_Tree::DumpTreeFormatted(size_t depth)
 {
     std::stringstream ss;
     ss.flags(std::ios::left);
 
     ss << std::setw(4 * static_cast<int>(depth)) << "";
     ss << std::setw(20) << (GetName() + "<" + std::to_string(mValue.mNodeType) + ">");
-    if(QuadGSTreeValue::NodeType_t::NoType != mValue.mNodeType)
+    if(QGS_TreeValue::NodeType_t::NoType != mValue.mNodeType)
     {
         ss << std::setw(10) << "[" + mValue.GetValue(true) + "]" << std::endl;
     }
@@ -371,7 +370,7 @@ std::string QuadGSTree::DumpTreeFormatted(size_t depth)
     return tmp;
 }
 
-std::string QuadGSTree::GetModuleName(const std::string& s)
+std::string QGS_Tree::GetModuleName(const std::string& s)
 {
     std::string module = GetModuleString(s);
     size_t pos_valueType = module.find(mValueTypeDelimiterFront);
@@ -388,7 +387,7 @@ std::string QuadGSTree::GetModuleName(const std::string& s)
     return module;
 }
 
-std::string QuadGSTree::GetModuleString(const std::string& s)
+std::string QGS_Tree::GetModuleString(const std::string& s)
 {
     size_t pos = 0;
     std::string token;
@@ -403,7 +402,7 @@ std::string QuadGSTree::GetModuleString(const std::string& s)
     return token;
 }
 
-std::string QuadGSTree::GetValueTypeString(const std::string& s)
+std::string QGS_Tree::GetValueTypeString(const std::string& s)
 {
     size_t pos_front = 0;
     size_t pos_back = 0;
@@ -417,7 +416,7 @@ std::string QuadGSTree::GetValueTypeString(const std::string& s)
     return token;
 }
 
-std::string QuadGSTree::GetValueString(const std::string& s)
+std::string QGS_Tree::GetValueString(const std::string& s)
 {
     size_t pos_front = 0;
     size_t pos_back = 0;
@@ -431,7 +430,7 @@ std::string QuadGSTree::GetValueString(const std::string& s)
     return token;
 }
 
-std::string QuadGSTree::RemoveValueString(std::string& s)
+std::string QGS_Tree::RemoveValueString(std::string& s)
 {
     size_t pos_front = 0;
     size_t pos_back = 0;
@@ -447,7 +446,7 @@ std::string QuadGSTree::RemoveValueString(std::string& s)
     return token;
 }
 
-std::string QuadGSTree::RemoveModuleString(std::string& s)
+std::string QGS_Tree::RemoveModuleString(std::string& s)
 {
     size_t pos = 0;
     std::string token;

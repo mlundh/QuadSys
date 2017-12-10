@@ -1,5 +1,5 @@
 list(APPEND src "SerialPort.cpp")
-list(APPEND dep "DataMsg" 
+list(APPEND dep "Messages" 
                 "log"
                 "SlipPacket")
 

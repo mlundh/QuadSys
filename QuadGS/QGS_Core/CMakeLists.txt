@@ -1,14 +1,14 @@
 add_subdirectory(CommandTree)
 add_subdirectory(BinaryStream)
-add_subdirectory(DataMsg)
+add_subdirectory(Messages)
 add_subdirectory(Parameters)
 add_subdirectory(Log)
 add_subdirectory(LogHandler)
 
-set(src Core.cpp)
+set(src QGS_Core.cpp)
 
 set(dep "CommandTree"
-        "DataMsg"
+        "Messages"
         "Parameters" 
         "LogHandler")
 

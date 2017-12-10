@@ -21,23 +21,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#include "../../QGS_Core/Core.h"
-
 #include <memory>
 
-#include "../../QGS_Core/DataMsg/QCMsgHeader.h"
-#include "../../QGS_Core/DataMsg/QuadDebugMsg.h"
-#include "../../QGS_Core/DataMsg/QuadGSMsg.h"
-#include "../../QGS_Core/DataMsg/QuadParamPacket.h"
-#include "../../QGS_Core/LogHandler/LogHandler.h"
-#include "../../QGS_Core/Parameters/Parameters.h"
-#include "../../QGS_IO/IoBase.h"
-#include "../../QGS_UI/UiBase.h"
-#include "QCMsgHeader.h"
+#include "QGS_Msg.h"
+#include "LogHandler.h"
+#include "Parameters.h"
+#include "QGS_MsgHeader.h"
+
+#include "QGS_CoreInterface.h"
+#include "QGS_UiInterface.h"
+#include "QGS_IoInterface.h"
+
+#include "QGS_ParamMsg.h"
+#include "QGS_DebugMsg.h"
 
 namespace QuadGS {
 
-Core::Core()
+QGS_CoreInterface::QGS_CoreInterface()
 :logger("Core")
 ,mIo()
 ,mUi()
@@ -46,42 +46,42 @@ Core::Core()
     mLogHandler = LogHandler::create();
 }
 
-Core::~Core()
+QGS_CoreInterface::~QGS_CoreInterface()
 {
 
 }
 
-Core* Core::create()
+QGS_CoreInterface* QGS_CoreInterface::create()
 {
-	Core* tmp = new Core;
+	QGS_CoreInterface* tmp = new QGS_CoreInterface;
     return tmp;
 }
 
-void Core::bind(IoBase* IoPtr)
+void QGS_CoreInterface::bind(QGS_IoInterface* IoPtr)
 {
     mIo = IoPtr;
-    IoPtr->setMessageCallback(std::bind(&QuadGS::Core::msgHandler, this, std::placeholders::_1, std::placeholders::_2));
+    IoPtr->setMessageCallback(std::bind(&QuadGS::QGS_CoreInterface::msgHandler, this, std::placeholders::_1, std::placeholders::_2));
 
 }
-void Core::bind(UiBase* UiPtr)
+void QGS_CoreInterface::bind(QGS_UiInterface* UiPtr)
 {
     mUi = UiPtr;
-    mParameters->RegisterWriteFcn(std::bind(&QuadGS::Core::write, this, std::placeholders::_1, std::placeholders::_2));
-    mLogHandler->RegisterWriteFcn(std::bind(&QuadGS::Core::write, this, std::placeholders::_1, std::placeholders::_2));
+    mParameters->RegisterWriteFcn(std::bind(&QuadGS::QGS_CoreInterface::write, this, std::placeholders::_1, std::placeholders::_2));
+    mLogHandler->RegisterWriteFcn(std::bind(&QuadGS::QGS_CoreInterface::write, this, std::placeholders::_1, std::placeholders::_2));
     UiPtr->registerCommands(getCommands());
-    UiPtr->SetCore(this);
+    UiPtr->bind(this);
 }
 
-std::string Core::getRuntimeStats(std::string )
+std::string QGS_CoreInterface::getRuntimeStats(std::string )
 {
-	QCMsgHeader::ptr tmpPacket = QCMsgHeader::Create(QCMsgHeader::addresses::Debug, QCMsgHeader::DebugControl::GetRuntimeStats, 0, 0);
-    std::shared_ptr<QuadGSMsg> Payload;
+	QGS_MsgHeader::ptr tmpPacket = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Debug, QGS_MsgHeader::DebugControl::GetRuntimeStats, 0, 0);
+    std::shared_ptr<QGS_Msg> Payload;
     write( tmpPacket, Payload);
     return "";
 }
 
 
-std::string Core::FormatRuntimeStats(std::string runtimeStats)
+std::string QGS_CoreInterface::FormatRuntimeStats(std::string runtimeStats)
 {
     std::stringstream          lineStream(runtimeStats);
     std::string                cell;
@@ -106,38 +106,38 @@ std::string Core::FormatRuntimeStats(std::string runtimeStats)
 }
 
 
-std::vector< Command::ptr > Core::getCommands()
+std::vector< QGS_UiCommand::ptr > QGS_CoreInterface::getCommands()
 {
-    std::vector<std::shared_ptr < Command > > mCommands;
+    std::vector<std::shared_ptr < QGS_UiCommand > > mCommands;
     mCommands = mParameters->getCommands();
-    mCommands.push_back(std::make_shared<Command> ("runtimeStatsGet",
-            std::bind(&Core::getRuntimeStats, this, std::placeholders::_1),
-            "Get runtime stats.", Command::ActOn::IO));
-    std::vector<std::shared_ptr < Command > > mCommandsLogHandler;
+    mCommands.push_back(std::make_shared<QGS_UiCommand> ("runtimeStatsGet",
+            std::bind(&QGS_CoreInterface::getRuntimeStats, this, std::placeholders::_1),
+            "Get runtime stats.", QGS_UiCommand::ActOn::IO));
+    std::vector<std::shared_ptr < QGS_UiCommand > > mCommandsLogHandler;
     mCommandsLogHandler = mLogHandler->getCommands();
     mCommands.insert( mCommands.end(), mCommandsLogHandler.begin(), mCommandsLogHandler.end() );
     return mCommands;
 }
 
-void Core::write( QCMsgHeader::ptr header, QuadGSMsg::QuadGSMsgPtr payload)
+void QGS_CoreInterface::write( QGS_MsgHeader::ptr header, QGS_Msg::QuadGSMsgPtr payload)
 {
     mIo->write( header, payload );
 }
 
-void Core::StatusHandler(QCMsgHeader::ptr packetPtr)
+void QGS_CoreInterface::StatusHandler(QGS_MsgHeader::ptr packetPtr)
 {
     uint8_t control = packetPtr->GetControl();
     switch (control){
-    case QCMsgHeader::StatusControl::Ack:
+    case QGS_MsgHeader::StatusControl::Ack:
         break;
-    case QCMsgHeader::StatusControl::Cont:
-    case QCMsgHeader::StatusControl::BufferOverrun:
-    case QCMsgHeader::StatusControl::Error:
-    case QCMsgHeader::StatusControl::Nack:
-    case QCMsgHeader::StatusControl::NotAllowed:
-    case QCMsgHeader::StatusControl::NotImplemented:
-    case QCMsgHeader::StatusControl::NotValidSlipPacket:
-    case QCMsgHeader::StatusControl::UnexpectedSequence:
+    case QGS_MsgHeader::StatusControl::Cont:
+    case QGS_MsgHeader::StatusControl::BufferOverrun:
+    case QGS_MsgHeader::StatusControl::Error:
+    case QGS_MsgHeader::StatusControl::Nack:
+    case QGS_MsgHeader::StatusControl::NotAllowed:
+    case QGS_MsgHeader::StatusControl::NotImplemented:
+    case QGS_MsgHeader::StatusControl::NotValidSlipPacket:
+    case QGS_MsgHeader::StatusControl::UnexpectedSequence:
         logger.QuadLog(QuadGS::error, "Not valid status response: " + std::to_string(packetPtr->GetControl()));
         break;
 
@@ -145,15 +145,15 @@ void Core::StatusHandler(QCMsgHeader::ptr packetPtr)
         break;
     }
 }
-void Core::DebugHandler(QCMsgHeader::ptr header, QuadDebugMsg::ptr payload)
+void QGS_CoreInterface::DebugHandler(QGS_MsgHeader::ptr header, QGS_DebugMsg::ptr payload)
 {
     uint8_t control = header->GetControl();
     switch (control){
-    case QCMsgHeader::DebugControl::GetRuntimeStats:
-    case QCMsgHeader::DebugControl::SetRuntimeStats:
+    case QGS_MsgHeader::DebugControl::GetRuntimeStats:
+    case QGS_MsgHeader::DebugControl::SetRuntimeStats:
         mUi->Display(FormatRuntimeStats(payload->GetPayload()));
         break;
-    case QCMsgHeader::DebugControl::GetErrorMessages:
+    case QGS_MsgHeader::DebugControl::GetErrorMessages:
         logger.QuadLog(QuadGS::error, "DebugErrorMessage: " + std::to_string(header->GetControl()));
 
         break;
@@ -163,24 +163,24 @@ void Core::DebugHandler(QCMsgHeader::ptr header, QuadDebugMsg::ptr payload)
 }
 
 
-void Core::msgHandler(std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadGSMsg> payload)
+void QGS_CoreInterface::msgHandler(std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<QGS_Msg> payload)
 {
     uint8_t address = header->GetAddress();
     switch (address){
-    case QCMsgHeader::addresses::Parameters:
-        mParameters->ParameterHandler(header, std::dynamic_pointer_cast<QuadParamPacket>(payload));
+    case QGS_MsgHeader::addresses::Parameters:
+        mParameters->ParameterHandler(header, std::dynamic_pointer_cast<QGSParamMsg>(payload));
         break;
-    case QCMsgHeader::addresses::FunctionCall:
+    case QGS_MsgHeader::addresses::FunctionCall:
         // FunctionCallHandler();
         break;
-    case QCMsgHeader::addresses::Log:
-        mLogHandler->Handler(header, std::dynamic_pointer_cast<QuadLogMsg>(payload));
+    case QGS_MsgHeader::addresses::Log:
+        mLogHandler->Handler(header, std::dynamic_pointer_cast<QGS_LogMsg>(payload));
         break;
-    case QCMsgHeader::addresses::Status:
+    case QGS_MsgHeader::addresses::Status:
         StatusHandler(header);
         break;
-    case QCMsgHeader::addresses::Debug:
-        DebugHandler(header, std::dynamic_pointer_cast<QuadDebugMsg>(payload));
+    case QGS_MsgHeader::addresses::Debug:
+        DebugHandler(header, std::dynamic_pointer_cast<QGS_DebugMsg>(payload));
         break;
     default:
         logger.QuadLog(severity_level::warning, "Unhandled message: " + std::to_string(address) + " with data: \n" + payload->toString());

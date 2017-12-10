@@ -14,18 +14,18 @@
 #include <map>
 #include <vector>
 
-#include "../../QGS_Core/DataMsg/QuadLogMsg.h"
+#include "QGS_LogMsg.h"
 
 #define NR_LOG_FIELDS (3)
 namespace QuadGS {
 
-class QCMsgHeader;
-class Command;
-class QuadLogMsg;
-class QuadGSMsg;
+class QGS_MsgHeader;
+class QGS_UiCommand;
+class QGS_LogMsg;
+class QGS_Msg;
 class LogHandler: public std::enable_shared_from_this<LogHandler>
 {
-    typedef std::function<void(std::shared_ptr<QCMsgHeader>, std::shared_ptr<QuadGSMsg>) > WriteFcn;
+    typedef std::function<void(std::shared_ptr<QGS_MsgHeader>, std::shared_ptr<QGS_Msg>) > WriteFcn;
     typedef std::shared_ptr<LogHandler> ptr;
     /**
      * Private constructor, use create instead.
@@ -52,7 +52,7 @@ public:
      * Get the user commands this module supports.
      * @return
      */
-    std::vector<std::shared_ptr<Command> > getCommands();
+    std::vector<std::shared_ptr<QGS_UiCommand> > getCommands();
 
     /**
      * Get the name id mapping of all loggers.
@@ -87,7 +87,7 @@ public:
      * @param header    Header of the message.
      * @param payload   Payload of the message.
      */
-    void Handler(std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadLogMsg> payload);
+    void Handler(std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<QGS_LogMsg> payload);
 
 private:
     std::ofstream mLogFile;

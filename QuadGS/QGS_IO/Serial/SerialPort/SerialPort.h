@@ -30,9 +30,9 @@
 #include <cstddef>
 #include <memory>
 
-#include "../../../QGS_Core/DataMsg/QuadGSMsg.h"
-#include "../../../QGS_Core/Log/Log.h"
-#include "../../../QGS_IO/IoBase.h"
+#include "Log.h"
+#include "QGS_Msg.h"
+#include "QGS_IoInterface.h"
 
 typedef boost::asio::serial_port b_a_sp;
 
@@ -109,7 +109,7 @@ public:
      * and opened serial port.
      * @param ptr to a QSP instance to be transmitted.
      */
-    void write( std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadGSMsg> payload);
+    void write( std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<QGS_Msg> payload);
 
     /**
      * Start the read timer. If timeout occurs then the read will be considered failed.
@@ -158,13 +158,13 @@ public:
      * Set the function to be called when a message is ready.
      * @param fcn
      */
-    void setReadCallback( IoBase::MessageHandlerFcn fcn  );
+    void setReadCallback( QGS_IoInterface::MessageHandlerFcn fcn  );
 
     /**
      * Set the function to be called when a read has timed out.
      * @param fcn
      */
-    void setReadTimeoutCallback(  IoBase::TimeoutHandlerFcn fcn  );
+    void setReadTimeoutCallback(  QGS_IoInterface::TimeoutHandlerFcn fcn  );
 
 private:
     /**
@@ -223,8 +223,8 @@ private:
     std::shared_ptr<std::vector<unsigned char> > mWriteBuff;
     std::shared_ptr<std::vector<unsigned char> > mReadBuff;
     ParserBase::ptr mParser;
-    IoBase::MessageHandlerFcn mMessageHandler;
-    IoBase::TimeoutHandlerFcn mReadTimeoutHandler;
+    QGS_IoInterface::MessageHandlerFcn mMessageHandler;
+    QGS_IoInterface::TimeoutHandlerFcn mReadTimeoutHandler;
 };
 
 } /* namespace QuadGS */

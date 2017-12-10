@@ -27,33 +27,33 @@
 #include <string>
 #include <vector>
 
-#include "../../QGS_Core/CommandTree/QuadGSTree.h"
-#include "../../QGS_Core/Core.h"
-#include "../../QGS_Core/Log/Log.h"
-#include "../../QGS_IO/IoBase.h"
-#include "../../QGS_UI/UiBase.h"
+#include "QGS_Tree.h"
+#include "QGS_UiInterface.h"
+#include "QGS_CoreInterface.h"
+#include "Log.h"
+#include "QGS_IoInterface.h"
 namespace QuadGS {
   
-class QuadCLI : public Log, public UiBase
+class CLI : public Log, public QGS_UiInterface
 {
 public:
   
-  static UiBase* create();
+  static QGS_UiInterface* create();
   
-  virtual ~QuadCLI();
+  virtual ~CLI();
   
   virtual bool RunUI();
 
-  virtual void bind(IoBase* IoPtr);
+  virtual void bind(QGS_IoInterface* IoPtr);
 
-  virtual void registerCommands(std::vector< Command::ptr > commands);
+  virtual void registerCommands(std::vector< QGS_UiCommand::ptr > commands);
   
-  virtual void SetCore(Core* ptr);
+  virtual void bind(QGS_CoreInterface* ptr);
 
   virtual void Display(std::string str);
 private:
 
-  QuadCLI();
+  CLI();
 
   void SetPrompt(std::string prompt);
 
@@ -76,8 +76,8 @@ private:
 
 
 public:
-  static std::vector< Command::ptr > mCommands;
-  static Core* mCore;
+  static std::vector< QGS_UiCommand::ptr > mCommands;
+  static QGS_CoreInterface* mCore;
   std::string mPromptStatus;
   std::string mPromptBase;
   std::string mPrompt;

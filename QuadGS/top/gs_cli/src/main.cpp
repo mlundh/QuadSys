@@ -28,10 +28,11 @@
 #include <boost/bind.hpp>
 namespace po = boost::program_options;
 
-#include "../../../QGS_IO/Serial/SerialManager.h"
-#include "../../../QGS_UI/CLI/QuadCLI.h"
-#include "../../../QGS_UI/UiBase.h"
-#include "../../../QGS_IO/IoBase.h"
+#include "SerialManager.h"
+#include "CLI.h"
+#include "QGS_UiInterface.h"
+#include "QGS_IoInterface.h"
+#include "QGS_CoreInterface.h"
 
 
 #include <iostream>
@@ -87,9 +88,9 @@ int main(int ac, char* av[])
 
     QuadGS::Log::Init("app_log", "msg_log", std::clog, args.lvl);
     // Create the modules.
-    QuadGS::IoBase* mIO = QuadGS::Serial_Manager::create();
-    QuadGS::UiBase* mUI = QuadGS::QuadCLI::create();
-    QuadGS::Core* mCore = QuadGS::Core::create();
+    QuadGS::QGS_IoInterface* mIO = QuadGS::Serial_Manager::create();
+    QuadGS::QGS_UiInterface* mUI = QuadGS::CLI::create();
+    QuadGS::QGS_CoreInterface* mCore = QuadGS::QGS_CoreInterface::create();
 
     mCore->bind(mUI);
     mCore->bind(mIO);

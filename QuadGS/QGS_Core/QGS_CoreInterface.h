@@ -29,19 +29,19 @@
 #include <string>
 #include <vector>
 
-#include "../QGS_Core/Log/Log.h"
+#include "Log.h"
 namespace QuadGS {
 
 
 //Forward declarations
-class IoBase;
-class UiBase;
-class QuadGSMsg;
-class QCMsgHeader;
-class QuadDebugMsg;
+class QGS_IoInterface;
+class QGS_UiInterface;
+class QGS_Msg;
+class QGS_MsgHeader;
+class QGS_DebugMsg;
 class LogHandler;
 class Parameters;
-class Command
+class QGS_UiCommand
 {
 public:
   enum ActOn
@@ -52,15 +52,15 @@ public:
     UI,
     File
   };
-    typedef std::shared_ptr < Command > ptr;
+    typedef std::shared_ptr < QGS_UiCommand > ptr;
     typedef std::function<std::string(std::string)> fcn;
-    Command(std::string name, Command::fcn func, std::string doc, ActOn acton):
+    QGS_UiCommand(std::string name, QGS_UiCommand::fcn func, std::string doc, ActOn acton):
          mName(name)
         ,mFunc(func)
         ,mDoc(doc)
         ,mActOn(acton)
 {}
-    virtual ~Command()
+    virtual ~QGS_UiCommand()
     {
     }
   std::string mName;           /* User printable name of the function. */
@@ -71,39 +71,39 @@ public:
 
 
 
-class Core
+class QGS_CoreInterface
 {
 public:
-    virtual ~Core();
+    virtual ~QGS_CoreInterface();
 
     /**
      * Static create method. Use this to create an instance of Core.
      * @return  Pointer to instance of core.
      */
-    static Core* create();
+    static QGS_CoreInterface* create();
 
     /**
      * Bind method connecting a core object to an IoBase(Input/output) object.
      * @param IoPtr IoObject pointer.
      */
-    virtual void bind(IoBase* IoPtr);
+    virtual void bind(QGS_IoInterface* IoPtr);
     /**
      * Bind method connecting a core object to a UiBase(user interface) object.
      * @param UiPtr Pointer to an UiObject.
      */
-    virtual void bind(UiBase* UiPtr);
+    virtual void bind(QGS_UiInterface* UiPtr);
 
     /**
      * Function to get all commands availible to the User Interface.
      * @return  A vector of commands, with descriptions.
      */
-    virtual std::vector<Command::ptr> getCommands();
+    virtual std::vector<QGS_UiCommand::ptr> getCommands();
 
     /**
      * Internal write function. All writes to IO module passes this function.
      * @param  A pointer to a QSP that should be passed to the IO module.
      */
-    virtual void write( std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadGSMsg> payload);
+    virtual void write( std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<QGS_Msg> payload);
 
 private:
 
@@ -115,28 +115,28 @@ private:
      * Handler function for status messages.
      * @param packetPtr Message.
      */
-    virtual void StatusHandler(std::shared_ptr<QCMsgHeader> packetPtr);
+    virtual void StatusHandler(std::shared_ptr<QGS_MsgHeader> packetPtr);
 
     /**
      * Handler function for debug messages.
      * @param packetPtr Message.
      */
-    virtual void DebugHandler(std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadDebugMsg> payload);
+    virtual void DebugHandler(std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<QGS_DebugMsg> payload);
 
     /**
      * Message handler. Dispatches messages based on the address of the message.
      * @param ptr   Message.
      */
-    virtual void msgHandler(std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadGSMsg> payload);
+    virtual void msgHandler(std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<QGS_Msg> payload);
 
 public:// TODO should be private
     std::shared_ptr<Parameters> mParameters;
 
 private:
-    Core();
+    QGS_CoreInterface();
     Log logger;
-    IoBase* mIo;
-    UiBase* mUi;
+    QGS_IoInterface* mIo;
+    QGS_UiInterface* mUi;
     std::shared_ptr<LogHandler> mLogHandler;
 };
 

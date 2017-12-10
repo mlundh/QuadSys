@@ -23,13 +23,13 @@
  */
 
 
-#include "../../../../QGS_IO/Serial/SlipPacket/SlipPacket.h"
+#include "SlipPacket.h"
 
 #include <vector>
 #include "gtest/gtest.h"
-#include "../../../../QGS_Core/BinaryStream/BinaryStream.h"
-#include "../../../../QGS_Core/DataMsg/QCMsgHeader.h"
-#include "../../../../QGS_Core/DataMsg/QuadParamPacket.h"
+#include "BinaryStream.h"
+#include "QGS_MsgHeader.h"
+#include "QGS_ParamMsg.h"
 
 using namespace QuadGS;
 
@@ -87,8 +87,8 @@ TEST(SlipPacketTest, TestParamPacketSlip)
 {
 
 	std::string payload = "/root/tmp<5>[8]/test[3]";
-	QuadParamPacket::ptr paramPacket = QuadParamPacket::Create(payload,1,0);
-	QCMsgHeader::ptr header = QCMsgHeader::Create(QCMsgHeader::addresses::Parameters, QCMsgHeader::addresses::Parameters, false, paramPacket->GetPayload().length());
+	QGSParamMsg::ptr paramPacket = QGSParamMsg::Create(payload,1,0);
+	QGS_MsgHeader::ptr header = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Parameters, QGS_MsgHeader::addresses::Parameters, false, paramPacket->GetPayload().length());
 
 
     BinaryOStream os;

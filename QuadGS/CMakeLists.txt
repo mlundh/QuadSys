@@ -118,16 +118,18 @@ IF("${isSystemDir}" STREQUAL "-1")
 ENDIF("${isSystemDir}" STREQUAL "-1")
 
 # Add includes to the three main components.
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Core)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/IO)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/UI)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/QGS_Core)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/QGS_IO)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/QGS_UI)
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/QGS_Tracker)
 
 # Targets that we develop
 enable_testing()
-add_subdirectory(Core)
-add_subdirectory(IO)
-add_subdirectory(UI)
+add_subdirectory(QGS_Core)
+add_subdirectory(QGS_IO)
+add_subdirectory(QGS_UI)
+add_subdirectory(QGS_Tracker)
 add_subdirectory(top)
 add_subdirectory(test)
 

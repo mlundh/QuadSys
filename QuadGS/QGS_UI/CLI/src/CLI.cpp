@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-#include "../../../QGS_UI/CLI/QuadCLI.h"
+#include "CLI.h"
 
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -33,26 +33,26 @@
 #include <cstring>
 #include <boost/algorithm/string.hpp>
 
-#include "../../../QGS_Core/Core.h"
-#include "../../../QGS_Core/Parameters/Parameters.h"
-#include "../../../QGS_IO/IoBase.h"
-#include "../../../QGS_UI/UiBase.h"
+#include "QGS_CoreInterface.h"
+#include "Parameters.h"
+#include "QGS_UiInterface.h"
+#include "QGS_IoInterface.h"
 
 
 namespace QuadGS {
 
-std::vector<std::shared_ptr < Command > > QuadCLI::mCommands;
-Core* QuadCLI::mCore;
-char  QuadCLI::WordBreakPath[] = " \t\n\"\\'`@$><=;|&{(/";
-char  QuadCLI::WordBreak[] = " \t\n\"\\'`@$><=;|&{(";
+std::vector<std::shared_ptr < QGS_UiCommand > > CLI::mCommands;
+QGS_CoreInterface* CLI::mCore;
+char  CLI::WordBreakPath[] = " \t\n\"\\'`@$><=;|&{(/";
+char  CLI::WordBreak[] = " \t\n\"\\'`@$><=;|&{(";
 
-UiBase* QuadCLI::create()
+QGS_UiInterface* CLI::create()
 {
-	UiBase* tmp = new QuadCLI;
+	QGS_UiInterface* tmp = new CLI;
     return tmp;
 }
 
-QuadCLI::QuadCLI():
+CLI::CLI():
          Log("CLI"),
          mPromptStatus("N/A"),
          mPromptBase("QuadGS"),
@@ -61,33 +61,33 @@ QuadCLI::QuadCLI():
 {
     rl_attempted_completion_function = completion;    
     read_history(NULL);
-    mCommands.push_back( std::make_shared<Command> ("quit",
-            std::bind(&QuadCLI::Stop, this, std::placeholders::_1 ),
-            "Quit the application.", Command::ActOn::NoAction));
+    mCommands.push_back( std::make_shared<QGS_UiCommand> ("quit",
+            std::bind(&CLI::Stop, this, std::placeholders::_1 ),
+            "Quit the application.", QGS_UiCommand::ActOn::NoAction));
 }
 
-QuadCLI::~QuadCLI()
+CLI::~CLI()
 {
   write_history(NULL);
   history_truncate_file(NULL, 100);
 }
 
-void QuadCLI::bind(IoBase* IoPtr)
+void CLI::bind(QGS_IoInterface* IoPtr)
 {
     registerCommands(IoPtr->getCommands());
 }
 
-void QuadCLI::registerCommands(std::vector< Command::ptr > commands)
+void CLI::registerCommands(std::vector< QGS_UiCommand::ptr > commands)
 {
     for(size_t i = 0; i < commands.size(); i++)
     {
-        std::shared_ptr < Command > tmp = commands[i];
+        std::shared_ptr < QGS_UiCommand > tmp = commands[i];
         mCommands.push_back(tmp);
     }
 
 }
 
-size_t QuadCLI::FindCommand(std::string& line)
+size_t CLI::FindCommand(std::string& line)
 {
   if(line.empty())
   {
@@ -110,7 +110,7 @@ size_t QuadCLI::FindCommand(std::string& line)
   throw std::runtime_error("No such command.");
 }
 
-std::string QuadCLI::ExecuteLine(std::string line)
+std::string CLI::ExecuteLine(std::string line)
 {
  
   size_t i = FindCommand(line);
@@ -126,17 +126,17 @@ std::string QuadCLI::ExecuteLine(std::string line)
   return "";
 }
 
-void QuadCLI::SetCore(Core* ptr)
+void CLI::bind(QGS_CoreInterface* ptr)
 {
   mCore = ptr;
 }
 
-void QuadCLI::Display(std::string str)
+void CLI::Display(std::string str)
 {
     std::cout << std::endl << str << std::endl;
 }
 
-void QuadCLI::BuildPrompt()
+void CLI::BuildPrompt()
 {
     if(mPromptStatus.empty())
     {
@@ -148,12 +148,12 @@ void QuadCLI::BuildPrompt()
     }
 }
 
-std::string QuadCLI::Stop(std::string)
+std::string CLI::Stop(std::string)
 {
     mContinue = false;
     return "";
 }
-bool QuadCLI::RunUI()
+bool CLI::RunUI()
 {
     try
     {
@@ -202,7 +202,7 @@ bool QuadCLI::RunUI()
    the word to complete.  We can use the entire contents of rl_line_buffer
    in case we want to do some simple parsing.  Return the array of matches,
    or NULL if there aren't any. */
-char ** QuadCLI::completion (const char *text, int start, int)
+char ** CLI::completion (const char *text, int start, int)
 {
     
     char **matches;
@@ -231,7 +231,7 @@ char ** QuadCLI::completion (const char *text, int start, int)
 
       switch (mCommands[i]->mActOn)
       {
-        case Command::ActOn::Core:
+        case QGS_UiCommand::ActOn::Core:
           rl_completer_word_break_characters = WordBreakPath; 
           rl_attempted_completion_over = 1;
           //temporarily change branch for the completion function.
@@ -241,13 +241,13 @@ char ** QuadCLI::completion (const char *text, int start, int)
           // Restore the current branch.
           mCore->mParameters->RestoreBranch();
           break;
-        case Command::ActOn::IO:
+        case QGS_UiCommand::ActOn::IO:
           rl_attempted_completion_over = 1;
           break; 
-        case Command::ActOn::UI:
+        case QGS_UiCommand::ActOn::UI:
           rl_attempted_completion_over = 1;
           break;
-        case  Command::ActOn::File:
+        case  QGS_UiCommand::ActOn::File:
           rl_completer_word_break_characters = WordBreak;
           break;
         default:
@@ -262,7 +262,7 @@ char ** QuadCLI::completion (const char *text, int start, int)
    to start from scratch; without any state (i.e. STATE == 0), then we
    start at the top of the list. rl will free the returned char *, therefore
    we have to  malloc the c_str.*/
-char * QuadCLI::command_generator (const char *text, int state)
+char * CLI::command_generator (const char *text, int state)
 {
     static unsigned int list_index, len;
 
@@ -291,7 +291,7 @@ char * QuadCLI::command_generator (const char *text, int state)
    to start from scratch; without any state (i.e. STATE == 0), then we
    start at the top of the list. rl will free the returned char *, therefore
    we have to  malloc the c_str.*/
-char * QuadCLI::path_generator (const char *text, int state)
+char * CLI::path_generator (const char *text, int state)
 {
     rl_completion_append_character = '/';
     static unsigned int list_index;
@@ -328,7 +328,7 @@ char * QuadCLI::path_generator (const char *text, int state)
 }
 
 
-char * QuadCLI::dupstr (const char * s)
+char * CLI::dupstr (const char * s)
 {
     char *r;
 

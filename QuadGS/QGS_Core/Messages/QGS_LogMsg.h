@@ -8,14 +8,14 @@
 #ifndef CORE_DATAMSG_QUADLOGMSG_H_
 #define CORE_DATAMSG_QUADLOGMSG_H_
 
-#include "../../QGS_Core/DataMsg/QuadGSMsg.h"
+#include "QGS_Msg.h"
 namespace QuadGS {
 
-class QuadLogMsg: public QuadGS::QuadGSMsg {
+class QGS_LogMsg: public QuadGS::QGS_Msg {
 public:
-    typedef std::shared_ptr<QuadLogMsg> ptr;
-    friend BinaryOStream& operator<< (BinaryOStream& os, const QuadLogMsg& pl);
-    friend BinaryIStream& operator>> (BinaryIStream& is, QuadLogMsg& pl);
+    typedef std::shared_ptr<QGS_LogMsg> ptr;
+    friend BinaryOStream& operator<< (BinaryOStream& os, const QGS_LogMsg& pl);
+    friend BinaryIStream& operator>> (BinaryIStream& is, QGS_LogMsg& pl);
 
 
     /**
@@ -66,15 +66,15 @@ public:
      */
     BinaryIStream& stream(BinaryIStream& os);
 
-    virtual ~QuadLogMsg();
+    virtual ~QGS_LogMsg();
 
 private:
 
-    QuadLogMsg();
+    QGS_LogMsg();
 
-    QuadLogMsg(const std::string payload);
+    QGS_LogMsg(const std::string payload);
 
-    QuadLogMsg(const uint8_t* data, uint16_t length);
+    QGS_LogMsg(const uint8_t* data, uint16_t length);
 
     std::string mPayload;
 

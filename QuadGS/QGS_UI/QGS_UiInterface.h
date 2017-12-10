@@ -1,5 +1,5 @@
 /*
- * QspPayloadBase.cpp
+ * UiBase.h
  *
  * Copyright (C) 2015 Martin Lundh
  *
@@ -22,22 +22,26 @@
  * THE SOFTWARE.
  */
 
-#include "../../../QGS_Core/DataMsg/QuadGSMsg.h"
-
-#include <string.h>
-#include <sstream>
+#ifndef QUADGS_MODULES_USERINTERFACE_UIBASE_H_
+#define QUADGS_MODULES_USERINTERFACE_UIBASE_H_
+#include <memory>
+#include <vector>
 namespace QuadGS {
-
-BinaryOStream& operator <<(BinaryOStream& os, const QuadGSMsg& pl)
+class QGS_IoInterface;
+class QGS_UiCommand;
+class QGS_CoreInterface;
+class QGS_UiInterface
 {
-  pl.stream(os);
-  return os;
-}
-
-BinaryIStream& operator >>(BinaryIStream& is, QuadGSMsg& pl)
-{
-  pl.stream(is);
-  return is;
-}
+public:
+    QGS_UiInterface(){};
+    virtual ~QGS_UiInterface(){};
+    virtual void bind(QGS_IoInterface* IoPtr) = 0;
+    virtual bool RunUI() = 0;
+    virtual void registerCommands(std::vector< std::shared_ptr < QGS_UiCommand >  > commands) = 0;
+    virtual void bind(QGS_CoreInterface* ptr) = 0;
+    virtual void Display(std::string str) = 0;
+};
 
 } /* namespace QuadGS */
+
+#endif /* QUADGS_MODULES_USERINTERFACE_UIBASE_H_ */

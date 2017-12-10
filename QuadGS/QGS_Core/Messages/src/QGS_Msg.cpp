@@ -1,5 +1,5 @@
 /*
- * QuadGSMsg.h
+ * QspPayloadBase.cpp
  *
  * Copyright (C) 2015 Martin Lundh
  *
@@ -22,60 +22,22 @@
  * THE SOFTWARE.
  */
 
-#ifndef QUADGS_MODULES_SERIAL_MANAGER_SRC_QSPPAYLOADBASE_H_
-#define QUADGS_MODULES_SERIAL_MANAGER_SRC_QSPPAYLOADBASE_H_
-#include <memory>
 #include <string.h>
-#include <ostream>
+#include <sstream>
 
-#include "../../QGS_Core/BinaryStream/BinaryStream.h"
-
+#include "QGS_Msg.h"
 namespace QuadGS {
 
-/**
- * Base class of all message types in QuadGS. Inherit from this when creating new message
- * types to be able to pass by base.
- */
-class QuadGSMsg
+BinaryOStream& operator <<(BinaryOStream& os, const QGS_Msg& pl)
 {
-public:
-	friend BinaryOStream& operator<< (BinaryOStream& os, const QuadGSMsg& pl);
-	friend BinaryIStream& operator>> (BinaryIStream& is, QuadGSMsg& pl);
+  pl.stream(os);
+  return os;
+}
 
-	QuadGSMsg()
-	{
-
-	}
-	/**
-	 * Shared pointer type for this type.
-	 */
-	typedef std::shared_ptr<QuadGSMsg> QuadGSMsgPtr;
-
-	/**
-	 * Get the payload represented as a string.
-	 * @return Payload represented as string.
-	 */
-	virtual std::string toString() const = 0;
-
-	/**
-	 * Enable streaming of the class to a BinaryOStream.
-	 * @param os
-	 * @return
-	 */
-	virtual BinaryOStream& stream(BinaryOStream& os) const = 0;
-
-	/**
-	 * Enable streaming in from a BinaryIStream.
-	 * @param is
-	 * @return
-	 */
-	virtual BinaryIStream& stream(BinaryIStream& is) = 0;
-
-	virtual ~QuadGSMsg(){};
-
-
-};
+BinaryIStream& operator >>(BinaryIStream& is, QGS_Msg& pl)
+{
+  pl.stream(is);
+  return is;
+}
 
 } /* namespace QuadGS */
-
-#endif /* QUADGS_MODULES_SERIAL_MANAGER_SRC_QSPPAYLOADBASE_H_ */

@@ -21,15 +21,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#include "../../../QGS_IO/Serial/SerialManager.h"
+#include "SerialManager.h"
 
 #include "SlipPacket.h"
 #include <boost/algorithm/string.hpp>
 
-#include "../../../QGS_Core/DataMsg/QCMsgHeader.h"
-#include "../../../QGS_Core/DataMsg/QuadGSMsg.h"
-#include "../../../QGS_IO/Serial/FcParser/FcParser.h"
-#include "../../../QGS_IO/Serial/SlipPacket/SlipPacket.h"
+#include "QGS_Msg.h"
+#include "QGS_MsgHeader.h"
+#include "FcParser.h"
+#include "SlipPacket.h"
 
 namespace QuadGS {
 Serial_Manager::Serial_Manager():
@@ -54,9 +54,9 @@ void Serial_Manager::start()
 }
 
 
-IoBase* Serial_Manager::create()
+QGS_IoInterface* Serial_Manager::create()
 {
-    IoBase* tmp = new Serial_Manager;
+    QGS_IoInterface* tmp = new Serial_Manager;
     Serial_Manager* manager = dynamic_cast<Serial_Manager*>(tmp);
 
     if(!manager)
@@ -72,13 +72,13 @@ void Serial_Manager::startRead()
     mPort->read();
 }
 
-void Serial_Manager::write( QCMsgHeader::ptr header, QuadGSMsg::QuadGSMsgPtr payload)
+void Serial_Manager::write( QGS_MsgHeader::ptr header, QGS_Msg::QuadGSMsgPtr payload)
 {
     mOutgoingFifo.push(std::make_pair(header, payload));
     doWrite();
 }
 
-void Serial_Manager::setMessageCallback(  IoBase::MessageHandlerFcn fcn )
+void Serial_Manager::setMessageCallback(  QGS_IoInterface::MessageHandlerFcn fcn )
 {
     mMessageHandler = fcn;
 }
@@ -130,30 +130,30 @@ std::string Serial_Manager::startReadCmd(std::string)
     return "";
 }
 
-std::vector<Command::ptr> Serial_Manager::getCommands( )
+std::vector<QGS_UiCommand::ptr> Serial_Manager::getCommands( )
 {
-    std::vector<std::shared_ptr < Command > > Commands;
-    Commands.push_back(std::make_shared<Command> ("serialSetPort",
+    std::vector<std::shared_ptr < QGS_UiCommand > > Commands;
+    Commands.push_back(std::make_shared<QGS_UiCommand> ("serialSetPort",
             std::bind(&Serial_Manager::setNameCmd, this, std::placeholders::_1),
-            "Set the port name.", Command::ActOn::File));
-    Commands.push_back(std::make_shared<Command> ("SerialSetBaudRate",
+            "Set the port name.", QGS_UiCommand::ActOn::File));
+    Commands.push_back(std::make_shared<QGS_UiCommand> ("SerialSetBaudRate",
             std::bind(&Serial_Manager::setBaudRateCmd, this, std::placeholders::_1),
-            "Set the baud rate of the port, default 57600 baud.", Command::ActOn::IO));
-    Commands.push_back(std::make_shared<Command> ("serialSetFlowControl",
+            "Set the baud rate of the port, default 57600 baud.", QGS_UiCommand::ActOn::IO));
+    Commands.push_back(std::make_shared<QGS_UiCommand> ("serialSetFlowControl",
             std::bind(&Serial_Manager::setFlowControlCmd, this, std::placeholders::_1),
-            "Set flow control, default None.", Command::ActOn::IO));
-    Commands.push_back(std::make_shared<Command> ("serialSetParity",
+            "Set flow control, default None.", QGS_UiCommand::ActOn::IO));
+    Commands.push_back(std::make_shared<QGS_UiCommand> ("serialSetParity",
             std::bind(&Serial_Manager::setParityCmd, this, std::placeholders::_1),
-            "Set parity, default none.", Command::ActOn::IO));
-    Commands.push_back(std::make_shared<Command> ("serialSetStopBits",
+            "Set parity, default none.", QGS_UiCommand::ActOn::IO));
+    Commands.push_back(std::make_shared<QGS_UiCommand> ("serialSetStopBits",
             std::bind(&Serial_Manager::setStopBitsCmd, this, std::placeholders::_1),
-            "Set number of stop bits to be used, default one.", Command::ActOn::IO));
-    Commands.push_back(std::make_shared<Command> ("serialOpenPort",
+            "Set number of stop bits to be used, default one.", QGS_UiCommand::ActOn::IO));
+    Commands.push_back(std::make_shared<QGS_UiCommand> ("serialOpenPort",
             std::bind(&Serial_Manager::openCmd, this, std::placeholders::_1),
-            "Open the serial port.", Command::ActOn::File));
-    Commands.push_back(std::make_shared<Command> ("serialStartReadPort",
+            "Open the serial port.", QGS_UiCommand::ActOn::File));
+    Commands.push_back(std::make_shared<QGS_UiCommand> ("serialStartReadPort",
             std::bind(&Serial_Manager::startReadCmd, this, std::placeholders::_1),
-            "Start the read operation.", Command::ActOn::IO));
+            "Start the read operation.", QGS_UiCommand::ActOn::IO));
 
     return Commands;
 }
@@ -209,13 +209,13 @@ void Serial_Manager::timeoutHandler()
     doWrite();
 }
 
-void Serial_Manager::messageHandler(QCMsgHeader::ptr header, QuadGSMsg::QuadGSMsgPtr payload)
+void Serial_Manager::messageHandler(QGS_MsgHeader::ptr header, QGS_Msg::QuadGSMsgPtr payload)
 {
     // Transmission ok, pop from fifo and set ok to send again.
-    if(header->GetAddress() == QCMsgHeader::addresses::Transmission)
+    if(header->GetAddress() == QGS_MsgHeader::addresses::Transmission)
     {
         mOngoing = false; // we got a transmission message, this is the end of an ongoing transmission.
-        if(header->GetControl() == QCMsgHeader::TransmissionControl::OK)
+        if(header->GetControl() == QGS_MsgHeader::TransmissionControl::OK)
         {
             // Transmission ok, discard the outgoing message, no need to save after successful transmission.
             mLog.QuadLog(severity_level::message_trace, "Received: TransmissionOK ");
@@ -226,7 +226,7 @@ void Serial_Manager::messageHandler(QCMsgHeader::ptr header, QuadGSMsg::QuadGSMs
             }
             mRetries = 0;
         }
-        else if(header->GetControl() == QCMsgHeader::TransmissionControl::NOK)
+        else if(header->GetControl() == QGS_MsgHeader::TransmissionControl::NOK)
         {
             mLog.QuadLog(severity_level::message_trace, "Received: TransmissionNOK ");
             if(mRetries < 2)
@@ -268,9 +268,9 @@ void Serial_Manager::doWrite()
     {
         return;
     }
-    QCMsgHeader::ptr header = mOutgoingFifo.front().first;
+    QGS_MsgHeader::ptr header = mOutgoingFifo.front().first;
     header->SetIsResend(mRetries > 0 ? 1 : 0);
-    QuadGSMsg::QuadGSMsgPtr payload = mOutgoingFifo.front().second;
+    QGS_Msg::QuadGSMsgPtr payload = mOutgoingFifo.front().second;
     mLog.QuadLog(severity_level::message_trace, "Transmitting: " + (header ? header->toString() : "")  + (payload?payload->toString():""));
 
     mOngoing = true;

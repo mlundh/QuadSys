@@ -1,5 +1,5 @@
 /*
- * IoBase.h
+ * IoInterface.h
  *
  * Copyright (C) 2015 Martin Lundh
  *
@@ -29,29 +29,29 @@
 #include <vector>
 namespace QuadGS {
 
-class Core;
-class Command;
-class QCMsgHeader;
-class QuadGSMsg;
+class QGS_CoreInterface;
+class QGS_UiCommand;
+class QGS_MsgHeader;
+class QGS_Msg;
 
-class IoBase
+class QGS_IoInterface
 {
 public:
 	/**
 	 * @brief Callback typedefs.
 	 */
-	typedef std::function<void( std::shared_ptr<QCMsgHeader>, std::shared_ptr<QuadGSMsg> )> MessageHandlerFcn;
+	typedef std::function<void( std::shared_ptr<QGS_MsgHeader>, std::shared_ptr<QGS_Msg> )> MessageHandlerFcn;
 	typedef std::function<void( void )> TimeoutHandlerFcn;
 
-	IoBase(){}
-	virtual ~IoBase(){}
+	QGS_IoInterface(){}
+	virtual ~QGS_IoInterface(){}
 
 	/**
 	 * Write a message consisting of a header and payload to the io module.
 	 * @param header	Header data
 	 * @param data		Payload data.
 	 */
-	virtual void write( std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadGSMsg> payload) = 0;
+	virtual void write( std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<QGS_Msg> payload) = 0;
 
 	/**
 	 * Start a read operation. The read operation will continue until the program
@@ -70,7 +70,7 @@ public:
 	 * usage only.
 	 * @return A vector with pointer to commands.
 	 */
-	virtual std::vector< std::shared_ptr<Command> > getCommands( ) = 0;
+	virtual std::vector< std::shared_ptr<QGS_UiCommand> > getCommands( ) = 0;
 
 
 	virtual std::string getStatus( ) = 0;
@@ -115,7 +115,7 @@ public:
 	 * return a null ptr.
 	 * @return pointer to a header.
 	 */
-	virtual std::shared_ptr<QCMsgHeader> getHeader( void ) = 0;
+	virtual std::shared_ptr<QGS_MsgHeader> getHeader( void ) = 0;
 
 	/**
 	 * Get the shared ptr of the payload. Will return a NULL ptr if no data has
@@ -124,11 +124,11 @@ public:
 	 * return a null ptr.
 	 * @return
 	 */
-	virtual std::shared_ptr<QuadGSMsg> getPayload( void ) = 0;
+	virtual std::shared_ptr<QGS_Msg> getPayload( void ) = 0;
 
 protected:
-	std::shared_ptr<QCMsgHeader> mHeader;
-	std::shared_ptr<QuadGSMsg> mPayload;
+	std::shared_ptr<QGS_MsgHeader> mHeader;
+	std::shared_ptr<QGS_Msg> mPayload;
 };
 
 

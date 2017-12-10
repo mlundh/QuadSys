@@ -30,18 +30,18 @@
 #include <string>
 #include <vector>
 
-#include "../../QGS_Core/CommandTree/QuadGSTree.h"
-#include "../../QGS_Core/DataMsg/QuadParamPacket.h"
-#include "../../QGS_Core/Log/Log.h"
+#include "Log.h"
+#include "QGS_Tree.h"
+#include "QGS_ParamMsg.h"
 
 namespace QuadGS {
-class Command;
-class QCMsgHeader;
+class QGS_UiCommand;
+class QGS_MsgHeader;
 
 class Parameters
         : public std::enable_shared_from_this<Parameters>
 {
-    typedef std::function<void(std::shared_ptr<QCMsgHeader>, std::shared_ptr<QuadGSMsg>) > WriteFcn;
+    typedef std::function<void(std::shared_ptr<QGS_MsgHeader>, std::shared_ptr<QGS_Msg>) > WriteFcn;
 
     /**
      * Default contstructor is private, we are using shared pointers instead.
@@ -65,13 +65,13 @@ public:
      * Function to get all commands availible to the User Interface.
      * @return  A vector of commands, with descriptions.
      */
-    std::vector<std::shared_ptr<Command> > getCommands();
+    std::vector<std::shared_ptr<QGS_UiCommand> > getCommands();
 
     /**
      * Handler function for parameter messages.
      * @param packetPtr Message.
      */
-    void ParameterHandler(std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadParamPacket> payload);
+    void ParameterHandler(std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<QGSParamMsg> payload);
 
     /**
      * Update the temp branch to point at path. mTmpBranch will point at
@@ -134,10 +134,10 @@ public:
 
     Log logger;
     WriteFcn mWriteFcn;
-    QuadGSTree::ptr mTmpBranch;
-    QuadGSTree::ptr mCurrentBranch;
-    QuadGSTree::ptr mSavedBranch;
-    QuadGSTree::ptr mTree;
+    QGS_Tree::ptr mTmpBranch;
+    QGS_Tree::ptr mCurrentBranch;
+    QGS_Tree::ptr mSavedBranch;
+    QGS_Tree::ptr mTree;
 };
 
 } /* namespace QuadGS */

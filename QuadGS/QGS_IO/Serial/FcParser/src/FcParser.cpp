@@ -22,14 +22,15 @@
  * THE SOFTWARE.
  */
 
-#include "../../../../QGS_IO/Serial/FcParser/FcParser.h"
+#include "FcParser.h"
 
 #include <memory>
-#include "../../../../QGS_Core/DataMsg/QCMsgHeader.h"
-#include "../../../../QGS_Core/DataMsg/QuadDebugMsg.h"
-#include "../../../../QGS_Core/DataMsg/QuadGSMsg.h"
-#include "../../../../QGS_Core/DataMsg/QuadLogMsg.h"
-#include "../../../../QGS_Core/DataMsg/QuadParamPacket.h"
+
+#include "QGS_Msg.h"
+#include "QGS_DebugMsg.h"
+#include "QGS_LogMsg.h"
+#include "QGS_MsgHeader.h"
+#include "QGS_ParamMsg.h"
 
 namespace QuadGS
 {
@@ -49,37 +50,37 @@ int FcParser::parse( std::shared_ptr<std::vector<unsigned char> > data)
 {
     //Package into a slip packet and send the packeged data.
     BinaryIStream is(*data);
-    mHeader = QCMsgHeader::Create(0,0,0,0);
+    mHeader = QGS_MsgHeader::Create(0,0,0,0);
     is >> *mHeader;
     switch (mHeader->GetAddress())
     {
-    case QCMsgHeader::addresses::Parameters:
+    case QGS_MsgHeader::addresses::Parameters:
     {
-        QuadParamPacket::ptr tmp = QuadParamPacket::Create();
+        QGSParamMsg::ptr tmp = QGSParamMsg::Create();
         is >> *tmp;
         mPayload = tmp;
         break;
     }
-    case QCMsgHeader::addresses::FunctionCall:
+    case QGS_MsgHeader::addresses::FunctionCall:
     {
         return -1;
         break;
     }
-    case QCMsgHeader::addresses::Log:
+    case QGS_MsgHeader::addresses::Log:
     {
-        QuadLogMsg::ptr tmp = QuadLogMsg::Create();
+        QGS_LogMsg::ptr tmp = QGS_LogMsg::Create();
         is >> *tmp;
         mPayload = tmp;
         break;
     }
-    case QCMsgHeader::addresses::Status:
+    case QGS_MsgHeader::addresses::Status:
     {
         mPayload.reset();
         break;
     }
-    case QCMsgHeader::addresses::Debug:
+    case QGS_MsgHeader::addresses::Debug:
     {
-        QuadDebugMsg::ptr tmp = QuadDebugMsg::Create();
+        QGS_DebugMsg::ptr tmp = QGS_DebugMsg::Create();
         is >> *tmp;
         mPayload = tmp;
         break;
@@ -91,16 +92,16 @@ int FcParser::parse( std::shared_ptr<std::vector<unsigned char> > data)
     return 0;
 }
 
-QCMsgHeader::ptr FcParser::getHeader( void )
+QGS_MsgHeader::ptr FcParser::getHeader( void )
 {
-    QCMsgHeader::ptr ptr = mHeader;
+    QGS_MsgHeader::ptr ptr = mHeader;
     mHeader.reset();
     return ptr;
 }
 
-QuadGSMsg::QuadGSMsgPtr FcParser::getPayload( void )
+QGS_Msg::QuadGSMsgPtr FcParser::getPayload( void )
 {
-    QuadGSMsg::QuadGSMsgPtr ptr = mPayload;
+    QGS_Msg::QuadGSMsgPtr ptr = mPayload;
     mPayload.reset();
     return ptr;
 }

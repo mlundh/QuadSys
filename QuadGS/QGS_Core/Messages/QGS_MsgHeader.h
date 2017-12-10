@@ -53,18 +53,18 @@
 #include <vector>
 #include <memory>
 
-#include "../../QGS_Core/DataMsg/QuadGSMsg.h"
+#include "QGS_Msg.h"
 
 namespace QuadGS {
 
 
-class QCMsgHeader: public QuadGSMsg
+class QGS_MsgHeader: public QGS_Msg
 {
 public:
-	friend BinaryOStream& operator<< (BinaryOStream& os, const QCMsgHeader& pl);
-	friend BinaryIStream& operator>> (BinaryIStream& is, QCMsgHeader& pl);
+	friend BinaryOStream& operator<< (BinaryOStream& os, const QGS_MsgHeader& pl);
+	friend BinaryIStream& operator>> (BinaryIStream& is, QGS_MsgHeader& pl);
 
-    typedef std::shared_ptr<QCMsgHeader> ptr;
+    typedef std::shared_ptr<QGS_MsgHeader> ptr;
 
     enum addresses
     {
@@ -161,7 +161,7 @@ public:
     /**
      * Desructor
      */
-    virtual ~QCMsgHeader();
+    virtual ~QGS_MsgHeader();
 
     /**
      * @brief Get method for address field of the QuadGSMsg. The different
@@ -232,7 +232,7 @@ protected:
      * @param data Pointer to data array containing the payload.
      * @param length Length of the data array.
      */
-    QCMsgHeader(const uint8_t* data, uint16_t length);
+    QGS_MsgHeader(const uint8_t* data, uint16_t length);
 
     /**
      * Constructor taking the member variables respectively.
@@ -241,7 +241,7 @@ protected:
      * @param IsResend
      * @param PayloadSize
      */
-    QCMsgHeader(uint8_t Address, uint8_t Control, uint8_t IsResend, uint16_t PayloadSize);
+    QGS_MsgHeader(uint8_t Address, uint8_t Control, uint8_t IsResend, uint16_t PayloadSize);
 
     /**
      * @brief Set payload size

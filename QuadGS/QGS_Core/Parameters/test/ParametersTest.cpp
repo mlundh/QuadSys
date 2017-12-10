@@ -22,18 +22,18 @@
  * THE SOFTWARE.
  */
 
-#include "../../../QGS_Core/Parameters/Parameters.h"
+#include "Parameters.h"
 
 #include <memory>
 
-#include "../../../QGS_Core/DataMsg/QCMsgHeader.h"
-#include "../../../QGS_Core/DataMsg/QuadParamPacket.h"
+#include "QGS_ParamMsg.h"
+#include "QGS_MsgHeader.h"
 #include "gtest/gtest.h"
 
 
 using namespace QuadGS;
 
-void defaultMsgHandler(std::shared_ptr<QCMsgHeader>, std::shared_ptr<QuadGSMsg>)
+void defaultMsgHandler(std::shared_ptr<QGS_MsgHeader>, std::shared_ptr<QGS_Msg>)
 {
     std::cout << "Got a message!" << std::endl;
 }
@@ -50,11 +50,11 @@ protected:
         std::string payload_str = "/root/tmp<5>[8]/test[3]";
         mVerifyStr = {"root<0>             \n    tmp<5>              [8]       \n        test<5>             [3]       \n"};
 
-        QuadParamPacket::ptr payload = QuadParamPacket::Create(payload_str,0,1);
+        QGSParamMsg::ptr payload = QGSParamMsg::Create(payload_str,0,1);
 
         mParameters->RegisterWriteFcn(std::bind(&defaultMsgHandler, std::placeholders::_1, std::placeholders::_2));
-        QCMsgHeader::ptr header = QCMsgHeader::Create(QCMsgHeader::addresses::Parameters,
-                QCMsgHeader::ParametersControl::SetTree,
+        QGS_MsgHeader::ptr header = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Parameters,
+                QGS_MsgHeader::ParametersControl::SetTree,
                 0,
                 1+payload_str.length());
         mParameters->ParameterHandler(header, payload);
@@ -73,10 +73,10 @@ TEST(Parameters, TestRegisterAndDump)
     QuadGS::Log::Init("app_log", "msg_log", std::clog, severity_level::error);
     std::shared_ptr<Parameters> mParameters =  Parameters::create();
     std::string payload_str = "/root/tmp<5>[8]/test[3]";
-    QuadParamPacket::ptr payload = QuadParamPacket::Create(payload_str,0,1);
+    QGSParamMsg::ptr payload = QGSParamMsg::Create(payload_str,0,1);
 
-    QCMsgHeader::ptr header = QCMsgHeader::Create(QCMsgHeader::addresses::Parameters,
-            QCMsgHeader::ParametersControl::SetTree,
+    QGS_MsgHeader::ptr header = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Parameters,
+            QGS_MsgHeader::ParametersControl::SetTree,
             0,
             1+payload_str.length());
 
@@ -98,18 +98,18 @@ TEST(Parameters, TestRegisterSecondMsg)
 
     // Create and register the first message.
     std::string payload_str = "/root/tmp<5>[8]/test[3]";
-    QuadParamPacket::ptr payload = QuadParamPacket::Create(payload_str,0,0);
-    QCMsgHeader::ptr header = QCMsgHeader::Create(QCMsgHeader::addresses::Parameters,
-            QCMsgHeader::ParametersControl::SetTree,
+    QGSParamMsg::ptr payload = QGSParamMsg::Create(payload_str,0,0);
+    QGS_MsgHeader::ptr header = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Parameters,
+            QGS_MsgHeader::ParametersControl::SetTree,
             0,
             1+payload_str.length());
     mParameters->ParameterHandler(header, payload);
 
     // Create and register the second message.
     std::string payload_str2 = "/root/tmp<5>[8]/jus<7>/another<7>[65536]/value<7>[249037]";
-    QuadParamPacket::ptr payload2 = QuadParamPacket::Create(payload_str2,1,1);
-    QCMsgHeader::ptr header2 = QCMsgHeader::Create(QCMsgHeader::addresses::Parameters,
-            QCMsgHeader::ParametersControl::SetTree,
+    QGSParamMsg::ptr payload2 = QGSParamMsg::Create(payload_str2,1,1);
+    QGS_MsgHeader::ptr header2 = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Parameters,
+            QGS_MsgHeader::ParametersControl::SetTree,
             0,
             1+payload_str2.length());
     mParameters->ParameterHandler(header2, payload2);
@@ -139,7 +139,7 @@ TEST(Parameters, TestSetAndRegister)
 
 TEST(ParamValue, TestFpStringToValue)
 {
-    QuadGSTreeValue TreeValue(QuadGSTreeValue::fp_16_16_variable_type);
+    QGS_TreeValue TreeValue(QGS_TreeValue::fp_16_16_variable_type);
 
     int32_t value = TreeValue.StringToIntFixed("5.5");
 
@@ -153,7 +153,7 @@ TEST(ParamValue, TestFpStringToValue)
 
 TEST(ParamValue, TestModifyValueFp)
 {
-    QuadGSTreeValue TreeValue(QuadGSTreeValue::fp_16_16_variable_type);
+    QGS_TreeValue TreeValue(QGS_TreeValue::fp_16_16_variable_type);
 
     TreeValue.SetValue("5.5");
 

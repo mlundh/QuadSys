@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-#include "../../../../QGS_IO/Serial/SerialPort/SerialPort.h"
+#include "SerialPort.h"
 
 #include <iostream>
 #include <boost/bind.hpp>
@@ -30,8 +30,8 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include "../../../../QGS_Core/DataMsg/QCMsgHeader.h"
-#include "../../../../QGS_IO/Serial/SlipPacket/SlipPacket.h"
+#include "QGS_MsgHeader.h"
+#include "SlipPacket.h"
 
 namespace QuadGS {
 
@@ -139,13 +139,13 @@ void SerialPort::setParser(  ParserBase::ptr parser  )
 }
 
 
-void SerialPort::setReadCallback( IoBase::MessageHandlerFcn fcn  )
+void SerialPort::setReadCallback( QGS_IoInterface::MessageHandlerFcn fcn  )
 {
 	mMessageHandler = fcn;
     return;
 }
 
-void SerialPort::setReadTimeoutCallback(  IoBase::TimeoutHandlerFcn fcn  )
+void SerialPort::setReadTimeoutCallback(  QGS_IoInterface::TimeoutHandlerFcn fcn  )
 {
     mReadTimeoutHandler = fcn;
     return;
@@ -170,7 +170,7 @@ void SerialPort::doClose( const boost::system::error_code& error )
     QuadLog(severity_level::info, "Serial Port closed");
     return;
 }
-void SerialPort::write(QCMsgHeader::ptr header, QuadGSMsg::QuadGSMsgPtr payload)
+void SerialPort::write(QGS_MsgHeader::ptr header, QGS_Msg::QuadGSMsgPtr payload)
 {
     if( ! mSerialPort.is_open() )
     {

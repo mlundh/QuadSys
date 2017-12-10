@@ -30,10 +30,8 @@
 #include <vector>
 #include <memory>
 #include <iostream>
-#include "QuadGSTreeValue.h"
-
-#include "../../QGS_Core/CommandTree/QuadGSTreeValue.h"
-#include "../../QGS_Core/Log/Log.h"
+#include "Log.h"
+#include "QGS_TreeValue.h"
 
 namespace QuadGS {
 
@@ -47,7 +45,7 @@ namespace QuadGS {
  * It is possible to query the value or type of a node by accessing it
  * via only its name.
  */
-class QuadGSTree : public std::enable_shared_from_this<QuadGSTree>
+class QGS_Tree : public std::enable_shared_from_this<QGS_Tree>
 {
 public:
 
@@ -65,13 +63,13 @@ public:
     static const unsigned int mMaxDigitsInt32;
     static const unsigned int mMaxNodeLength;
 
-    typedef std::shared_ptr<QuadGSTree> ptr;
+    typedef std::shared_ptr<QGS_Tree> ptr;
 
-    QuadGSTree(std::string name, QuadGSTreeValue::NodeType_t type);
+    QGS_Tree(std::string name, QGS_TreeValue::NodeType_t type);
 
-    QuadGSTree(std::string path);
+    QGS_Tree(std::string path);
 
-    virtual ~QuadGSTree();
+    virtual ~QGS_Tree();
 
     /**
      * Register new child node to current node. Will throw if there is a node
@@ -92,13 +90,13 @@ public:
      * Set the parent of this node.
      * @param parent    Parent node.
      */
-    void SetParent(QuadGSTree* parent);
+    void SetParent(QGS_Tree* parent);
 
     /**
      * Get the parent node. If there is no node, then GetParent will return null.
      * @return  Pointer to the parent.
      */
-    QuadGSTree* GetParent();
+    QGS_Tree* GetParent();
 
     /**
      * Set value of current node. Extracts the value portion of the string and
@@ -126,14 +124,14 @@ public:
      * Get a shared pointer to this node.
      * @return  Pointer.
      */
-    QuadGSTree::ptr GetSelf();
+    QGS_Tree::ptr GetSelf();
 
     /**
      * Find child node. Return pointer to child if found.
      * @param name      String describing node to be found.
      * @return          Pointer to child.
      */
-    QuadGSTree::ptr Find(const std::string& name);
+    QGS_Tree::ptr Find(const std::string& name);
 
     /**
      * Checks if a node needs to be updated.
@@ -193,9 +191,9 @@ public:
 protected:
 
     std::string mName;
-    QuadGSTree* mParent;
-    std::vector< QuadGSTree::ptr > mChildren;
-    QuadGSTreeValue mValue;
+    QGS_Tree* mParent;
+    std::vector< QGS_Tree::ptr > mChildren;
+    QGS_TreeValue mValue;
     Log mLogger;
 public:
     /**

@@ -22,13 +22,13 @@
  * THE SOFTWARE.
  */
 
-#include "../../../QGS_Core/Parameters/Parameters.h"
+#include "Parameters.h"
 
 #include <boost/algorithm/string.hpp>
 
-#include "../../../QGS_Core/Core.h"
-#include "../../../QGS_Core/DataMsg/QCMsgHeader.h"
-#include "../../../QGS_Core/DataMsg/QuadParamPacket.h"
+#include "QGS_MsgHeader.h"
+#include "QGS_ParamMsg.h"
+#include "QGS_CoreInterface.h"
 
 namespace QuadGS {
 
@@ -36,10 +36,10 @@ Parameters::Parameters():
                        logger("Parameters"),
                        mWriteFcn()
 {
-    mTree = QuadGSTree::ptr();
-    mCurrentBranch = QuadGSTree::ptr();
-    mTmpBranch = QuadGSTree::ptr();
-    mSavedBranch = QuadGSTree::ptr();
+    mTree = QGS_Tree::ptr();
+    mCurrentBranch = QGS_Tree::ptr();
+    mTmpBranch = QGS_Tree::ptr();
+    mSavedBranch = QGS_Tree::ptr();
 }
 
 Parameters::~Parameters()
@@ -59,52 +59,52 @@ void Parameters::RegisterWriteFcn(WriteFcn fcn)
 }
 
 
-std::vector< Command::ptr > Parameters::getCommands()
+std::vector< QGS_UiCommand::ptr > Parameters::getCommands()
 {
-    std::vector<std::shared_ptr < Command > > mCommands;
-    mCommands.push_back(std::make_shared<Command> ("cd",
+    std::vector<std::shared_ptr < QGS_UiCommand > > mCommands;
+    mCommands.push_back(std::make_shared<QGS_UiCommand> ("cd",
             std::bind(&Parameters::ChangeBranchCmd, shared_from_this(), std::placeholders::_1),
-            "Change branch", Command::ActOn::Core));
-    mCommands.push_back(std::make_shared<Command> ("pwd",
+            "Change branch", QGS_UiCommand::ActOn::Core));
+    mCommands.push_back(std::make_shared<QGS_UiCommand> ("pwd",
             std::bind(&Parameters::PrintCurrentPath, shared_from_this(), std::placeholders::_1),
-            "Print current branch", Command::ActOn::Core));
-    mCommands.push_back(std::make_shared<Command> ("ls",
+            "Print current branch", QGS_UiCommand::ActOn::Core));
+    mCommands.push_back(std::make_shared<QGS_UiCommand> ("ls",
             std::bind(&Parameters::list, shared_from_this(), std::placeholders::_1),
-            "List children on branch", Command::ActOn::Core));
-    mCommands.push_back(std::make_shared<Command> ("paramSet",
+            "List children on branch", QGS_UiCommand::ActOn::Core));
+    mCommands.push_back(std::make_shared<QGS_UiCommand> ("paramSet",
             std::bind(&Parameters::set, shared_from_this(), std::placeholders::_1),
-            "Set value of the command tree.", Command::ActOn::Core));
-    mCommands.push_back(std::make_shared<Command> ("paramGet",
+            "Set value of the command tree.", QGS_UiCommand::ActOn::Core));
+    mCommands.push_back(std::make_shared<QGS_UiCommand> ("paramGet",
             std::bind(&Parameters::get, shared_from_this(), std::placeholders::_1),
-            "Get value of the command tree.", Command::ActOn::Core));
-    mCommands.push_back(std::make_shared<Command> ("paramAdd",
+            "Get value of the command tree.", QGS_UiCommand::ActOn::Core));
+    mCommands.push_back(std::make_shared<QGS_UiCommand> ("paramAdd",
             std::bind(&Parameters::add, shared_from_this(), std::placeholders::_1),
-            "Add the given value to the specified node.", Command::ActOn::Core));
-    mCommands.push_back(std::make_shared<Command> ("paramRegisterTree",
+            "Add the given value to the specified node.", QGS_UiCommand::ActOn::Core));
+    mCommands.push_back(std::make_shared<QGS_UiCommand> ("paramRegisterTree",
             std::bind(&Parameters::SetAndRegister, shared_from_this(), std::placeholders::_1),
-            "SetAndRegister a new value in the tree.", Command::ActOn::Core));
-    mCommands.push_back(std::make_shared<Command> ("paramDumpTree",
+            "SetAndRegister a new value in the tree.", QGS_UiCommand::ActOn::Core));
+    mCommands.push_back(std::make_shared<QGS_UiCommand> ("paramDumpTree",
             std::bind(&Parameters::dump, shared_from_this(), std::placeholders::_1),
-            "Dump the command tree.", Command::ActOn::Core));
-    mCommands.push_back(std::make_shared<Command> ("paramWrite",
+            "Dump the command tree.", QGS_UiCommand::ActOn::Core));
+    mCommands.push_back(std::make_shared<QGS_UiCommand> ("paramWrite",
             std::bind(&Parameters::writeCmd, shared_from_this(), std::placeholders::_1),
-            "Write tree to port, relative to current node and path.", Command::ActOn::IO));
-    mCommands.push_back(std::make_shared<Command> ("writeRawData",
+            "Write tree to port, relative to current node and path.", QGS_UiCommand::ActOn::IO));
+    mCommands.push_back(std::make_shared<QGS_UiCommand> ("writeRawData",
             std::bind(&Parameters::writeRawCmd, shared_from_this(), std::placeholders::_1),
-            "Write raw data to the serial port.", Command::ActOn::IO));
-    mCommands.push_back(std::make_shared<Command> ("paramRead",
+            "Write raw data to the serial port.", QGS_UiCommand::ActOn::IO));
+    mCommands.push_back(std::make_shared<QGS_UiCommand> ("paramRead",
             std::bind(&Parameters::requestUpdateCmd, shared_from_this(), std::placeholders::_1),
-            "Request an update from FC.", Command::ActOn::IO));
-    mCommands.push_back(std::make_shared<Command> ("paramSave",
+            "Request an update from FC.", QGS_UiCommand::ActOn::IO));
+    mCommands.push_back(std::make_shared<QGS_UiCommand> ("paramSave",
             std::bind(&Parameters::saveParamCmd, shared_from_this(), std::placeholders::_1),
-            "Tell fc to save current parameters.", Command::ActOn::IO));
-    mCommands.push_back(std::make_shared<Command> ("paramLoad",
+            "Tell fc to save current parameters.", QGS_UiCommand::ActOn::IO));
+    mCommands.push_back(std::make_shared<QGS_UiCommand> ("paramLoad",
             std::bind(&Parameters::loadParamCmd, shared_from_this(), std::placeholders::_1),
-            "Tell fc to load saved parameters.", Command::ActOn::IO));
+            "Tell fc to load saved parameters.", QGS_UiCommand::ActOn::IO));
     return mCommands;
 }
 
-void Parameters::ParameterHandler(QCMsgHeader::ptr header, QuadParamPacket::ptr payload)
+void Parameters::ParameterHandler(QGS_MsgHeader::ptr header, QGSParamMsg::ptr payload)
 {
     uint8_t control = header->GetControl();
 
@@ -114,7 +114,7 @@ void Parameters::ParameterHandler(QCMsgHeader::ptr header, QuadParamPacket::ptr 
     std::string path = payload->GetPayload();
 
     switch (control){
-    case QCMsgHeader::ParametersControl::SetTree:
+    case QGS_MsgHeader::ParametersControl::SetTree:
         if((lastSequenceNo++) != sequenceNo)
         {
             logger.QuadLog(QuadGS::error, "Lost a setTree package, try again!" );
@@ -134,10 +134,10 @@ void Parameters::ParameterHandler(QCMsgHeader::ptr header, QuadParamPacket::ptr 
             RequestTree(); // We have not yet got the whole tree, continue!
         }
         break;
-    case QCMsgHeader::ParametersControl::GetTree:
+    case QGS_MsgHeader::ParametersControl::GetTree:
         logger.QuadLog(QuadGS::error, "GetTree command not implemented in GS!" + path );
         break;
-    case QCMsgHeader::ParametersControl::Value:
+    case QGS_MsgHeader::ParametersControl::Value:
         break;
 
     default:
@@ -151,20 +151,20 @@ bool Parameters::UpdateTmp(std::string& path)
     {
         throw std::runtime_error("No tree registered");
     }
-    size_t pos = path.find(QuadGSTree::mBranchDelimiter);
+    size_t pos = path.find(QGS_Tree::mBranchDelimiter);
     if (pos == 0) // Update from root.
     {
 
         mTmpBranch = mTree;
 
-        path.erase(0, pos + QuadGSTree::mBranchDelimiter.length());
+        path.erase(0, pos + QGS_Tree::mBranchDelimiter.length());
 
         if(mTmpBranch->NeedUpdate(path))
         {
             return true;
         }
         //else remove module from string and continue.
-        QuadGSTree::RemoveModuleString(path);
+        QGS_Tree::RemoveModuleString(path);
     }
     else
     {
@@ -173,7 +173,7 @@ bool Parameters::UpdateTmp(std::string& path)
     while(!path.empty())
     {
         // Find will return shared_ptr to next element, or current if there is work to do in current node.
-        QuadGSTree::ptr tmp = mTmpBranch->Find(path);
+        QGS_Tree::ptr tmp = mTmpBranch->Find(path);
 
         // Node not found, return.
         if(!tmp)
@@ -191,7 +191,7 @@ bool Parameters::UpdateTmp(std::string& path)
                 return true;
             }
             //else remove module from string and continue.
-            QuadGSTree::RemoveModuleString(path);
+            QGS_Tree::RemoveModuleString(path);
         }
     }
     //we found the whole path! Return true, we found a node.
@@ -232,11 +232,11 @@ std::string Parameters::PrintCurrentPath(std::string)
         throw std::runtime_error("No tree registered");
     }
     std::string Path = mCurrentBranch->GetName();
-    QuadGSTree* tmp = mCurrentBranch->GetParent();
+    QGS_Tree* tmp = mCurrentBranch->GetParent();
     while(tmp)
     {
         std::string parentName = tmp->GetName();
-        Path = parentName + QuadGSTree::mBranchDelimiter + Path;
+        Path = parentName + QGS_Tree::mBranchDelimiter + Path;
         tmp = tmp->GetParent();
     }
     Path = "/" + Path;
@@ -277,7 +277,7 @@ std::string Parameters::set(std::string path)
             if(!path.empty())
             {
                 mTmpBranch->SetValue(path);
-                QuadGSTree::RemoveModuleString(path);
+                QGS_Tree::RemoveModuleString(path);
             }
         }
     }
@@ -315,15 +315,15 @@ std::string Parameters::SetAndRegister(std::string path)
 {
     if(!mTree)
     {
-        size_t pos = path.find(QuadGSTree::mBranchDelimiter);
+        size_t pos = path.find(QGS_Tree::mBranchDelimiter);
         if (pos == 0)
         {
-            path.erase(0, pos + QuadGSTree::mBranchDelimiter.length());
-            mTree = QuadGSTree::ptr(new QuadGSTree(path));
+            path.erase(0, pos + QGS_Tree::mBranchDelimiter.length());
+            mTree = QGS_Tree::ptr(new QGS_Tree(path));
             mCurrentBranch = mTree;
             mTmpBranch = mTree;
             mSavedBranch = mTree;
-            QuadGSTree::RemoveModuleString(path);
+            QGS_Tree::RemoveModuleString(path);
         }
         else
         {
@@ -347,7 +347,7 @@ std::string Parameters::SetAndRegister(std::string path)
                 else
                 {
                     mTmpBranch->SetValue(path);
-                    QuadGSTree::RemoveModuleString(path);
+                    QGS_Tree::RemoveModuleString(path);
                 }
             }
         }
@@ -399,14 +399,14 @@ std::string Parameters::writeRawCmd(std::string data)
         return "Address or control to large.";
     }
 
-    QCMsgHeader::ptr header = QCMsgHeader::Create(iAddress, iControl, 0, 0);
+    QGS_MsgHeader::ptr header = QGS_MsgHeader::Create(iAddress, iControl, 0, 0);
 
-    if(iAddress != QCMsgHeader::addresses::Parameters)
+    if(iAddress != QGS_MsgHeader::addresses::Parameters)
     {
         throw std::runtime_error("Only raw write of parameters are supported at the moment!");
     }
 
-    QuadParamPacket::ptr payload = QuadParamPacket::Create(reinterpret_cast<const uint8_t*>(data.c_str()),static_cast<uint16_t>(data.length()),0 , 1);
+    QGSParamMsg::ptr payload = QGSParamMsg::Create(reinterpret_cast<const uint8_t*>(data.c_str()),static_cast<uint16_t>(data.length()),0 , 1);
 
     if(mWriteFcn)
     {
@@ -422,29 +422,29 @@ std::string Parameters::writeRawCmd(std::string data)
 std::string Parameters::writeCmd(std::string path_dump)
 {
 	bool cont = true;
-	std::vector<size_t> StartPosition(QuadGSTree::mMaxDepth,0);
+	std::vector<size_t> StartPosition(QGS_Tree::mMaxDepth,0);
 	uint8_t SequenceNumber = 0;
 	while(cont)
 	{
 		UpdateTmp(path_dump);
 		std::string Path;
-		QuadGSTree* tmp = mTmpBranch->GetParent();
+		QGS_Tree* tmp = mTmpBranch->GetParent();
 		while(tmp)
 		{
 			std::string parentString = tmp->GetNodeString();
-			Path = QuadGSTree::mBranchDelimiter + parentString + Path;
+			Path = QGS_Tree::mBranchDelimiter + parentString + Path;
 			tmp = tmp->GetParent();
 		}
 		unsigned int Depth = 0;
 		cont = !(mTmpBranch->DumpTree(Path, StartPosition, Depth, 256));
 		Path += "/";
-		QuadParamPacket::ptr payload = QuadParamPacket::Create(reinterpret_cast<const uint8_t*>(Path.c_str()),static_cast<uint16_t>(Path.length()) );
+		QGSParamMsg::ptr payload = QGSParamMsg::Create(reinterpret_cast<const uint8_t*>(Path.c_str()),static_cast<uint16_t>(Path.length()) );
 		payload->SetSequenceNumber(SequenceNumber++);
 
-		QCMsgHeader::ptr header = QCMsgHeader::Create(QCMsgHeader::addresses::Parameters, QCMsgHeader::addresses::Parameters, false, payload->GetPayload().length());
+		QGS_MsgHeader::ptr header = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Parameters, QGS_MsgHeader::addresses::Parameters, false, payload->GetPayload().length());
 		if(mWriteFcn)
 		{
-			mWriteFcn( header, std::static_pointer_cast<QuadGSMsg>(payload) );
+			mWriteFcn( header, std::static_pointer_cast<QGS_Msg>(payload) );
 		}
 		else
 		{
@@ -462,9 +462,9 @@ std::string Parameters::requestUpdateCmd(std::string )
 
 std::string Parameters::saveParamCmd(std::string )
 {
-    QCMsgHeader::ptr header = QCMsgHeader::Create(QCMsgHeader::addresses::Parameters,
-            QCMsgHeader::ParametersControl::Save,0,0);
-    std::shared_ptr<QuadGSMsg> nullPtr;
+    QGS_MsgHeader::ptr header = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Parameters,
+            QGS_MsgHeader::ParametersControl::Save,0,0);
+    std::shared_ptr<QGS_Msg> nullPtr;
     if(mWriteFcn)
     {
         mWriteFcn( header,  nullPtr);
@@ -478,9 +478,9 @@ std::string Parameters::saveParamCmd(std::string )
 
 std::string Parameters::loadParamCmd(std::string )
 {
-    QCMsgHeader::ptr header = QCMsgHeader::Create(QCMsgHeader::addresses::Parameters,
-            QCMsgHeader::ParametersControl::Load,0,0);
-    std::shared_ptr<QuadGSMsg> nullPtr;
+    QGS_MsgHeader::ptr header = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Parameters,
+            QGS_MsgHeader::ParametersControl::Load,0,0);
+    std::shared_ptr<QGS_Msg> nullPtr;
     if(mWriteFcn)
     {
         mWriteFcn( header,  nullPtr);
@@ -509,9 +509,9 @@ void Parameters::FindPartial(std::string& name, std::vector<std::string>& vec)
 
 void Parameters::RequestTree()
 {
-    QCMsgHeader::ptr tmpPacket = QCMsgHeader::Create(QCMsgHeader::addresses::Parameters,
-            QCMsgHeader::ParametersControl::GetTree,0,0);
-    std::shared_ptr<QuadGSMsg> nullPtr;
+    QGS_MsgHeader::ptr tmpPacket = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Parameters,
+            QGS_MsgHeader::ParametersControl::GetTree,0,0);
+    std::shared_ptr<QGS_Msg> nullPtr;
     if(mWriteFcn)
     {
         mWriteFcn( tmpPacket,  nullPtr);

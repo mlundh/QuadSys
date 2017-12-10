@@ -52,18 +52,18 @@
  *  The L field indicates if it is the last in a sequence.
  */
 
-#include "../../QGS_Core/DataMsg/QuadGSMsg.h"
+#include "QGS_Msg.h"
 
 namespace QuadGS {
 
-class QuadParamPacket: public QuadGSMsg
+class QGSParamMsg: public QGS_Msg
 {
 public:
-	virtual ~QuadParamPacket();
+	virtual ~QGSParamMsg();
 
-	typedef std::shared_ptr<QuadParamPacket> ptr;
-	friend BinaryOStream& operator<< (BinaryOStream& os, const QuadParamPacket& pl);
-	friend BinaryIStream& operator>> (BinaryIStream& is, QuadParamPacket& pl);
+	typedef std::shared_ptr<QGSParamMsg> ptr;
+	friend BinaryOStream& operator<< (BinaryOStream& os, const QGSParamMsg& pl);
+	friend BinaryIStream& operator>> (BinaryIStream& is, QGSParamMsg& pl);
 	/**
 	 * Create an instance from a uint8_t array. Data is copied.
 	 * @param Payload Pointer to the array.
@@ -153,13 +153,13 @@ protected:
 	/**
 	 * Private constructors. Use create methods instead.
 	 */
-	QuadParamPacket(const uint8_t* data, uint16_t length, uint8_t sequenceNr, uint8_t lastInSequence);
+	QGSParamMsg(const uint8_t* data, uint16_t length, uint8_t sequenceNr, uint8_t lastInSequence);
 
-	QuadParamPacket(const uint8_t* data, uint16_t length);
+	QGSParamMsg(const uint8_t* data, uint16_t length);
 
-	QuadParamPacket();
+	QGSParamMsg();
 
-	QuadParamPacket(const std::string payload, uint8_t sequenceNr, uint8_t lastInSequence);
+	QGSParamMsg(const std::string payload, uint8_t sequenceNr, uint8_t lastInSequence);
 
 
 	uint8_t mSequenceNumber;

@@ -1,7 +1,7 @@
 /*
- * UiBase.h
+ * QGS_Tracker.h
  *
- * Copyright (C) 2015 Martin Lundh
+ *  Copyright (C) 2017 Martin Lundh
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,26 +22,19 @@
  * THE SOFTWARE.
  */
 
-#ifndef QUADGS_MODULES_USERINTERFACE_UIBASE_H_
-#define QUADGS_MODULES_USERINTERFACE_UIBASE_H_
-#include <memory>
-#include <vector>
-namespace QuadGS {
-class IoBase;
-class Command;
-class Core;
-class UiBase
+#ifndef QUADGS_QGS_TRACKER_QGS_TRACKER_INTERFACE_H_
+#define QUADGS_QGS_TRACKER_QGS_TRACKER_INTERFACE_H_
+
+namespace QuadGS
+{
+
+class QGS_TrackerInterface
 {
 public:
-    UiBase(){};
-    virtual ~UiBase(){};
-    virtual void bind(IoBase* IoPtr) = 0;
-    virtual bool RunUI() = 0;
-    virtual void registerCommands(std::vector< std::shared_ptr < Command >  > commands) = 0;
-    virtual void SetCore(Core* ptr) = 0;
-    virtual void Display(std::string str) = 0;
+	QGS_TrackerInterface();
+	virtual ~QGS_TrackerInterface();
 };
 
 } /* namespace QuadGS */
 
-#endif /* QUADGS_MODULES_USERINTERFACE_UIBASE_H_ */
+#endif /* QUADGS_QGS_TRACKER_QGS_TRACKER_INTERFACE_H_ */

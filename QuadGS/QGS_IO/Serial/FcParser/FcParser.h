@@ -24,7 +24,7 @@
 
 #ifndef IO_SERIAL_PARSER_SRC_FCPARSER_H_
 #define IO_SERIAL_PARSER_SRC_FCPARSER_H_
-#include "../../../QGS_IO/IoBase.h"
+#include "QGS_IoInterface.h"
 
 namespace QuadGS {
 
@@ -51,7 +51,7 @@ namespace QuadGS {
 		 * return a null ptr.
 		 * @return pointer to a header.
 		 */
-		virtual std::shared_ptr<QCMsgHeader> getHeader( void );
+		virtual std::shared_ptr<QGS_MsgHeader> getHeader( void );
 
 		/**
 		 * Get the shared ptr of the payload. Will return a NULL ptr if no data has
@@ -60,7 +60,7 @@ namespace QuadGS {
 		 * return a null ptr.
 		 * @return
 		 */
-		virtual std::shared_ptr<QuadGSMsg> getPayload( void );
+		virtual std::shared_ptr<QGS_Msg> getPayload( void );
 	};
 
 } /* namespace QuadGS */

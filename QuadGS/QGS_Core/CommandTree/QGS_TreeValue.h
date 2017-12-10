@@ -39,7 +39,7 @@ namespace QuadGS {
 #define FIXED_TO_INT(x,y)         ((x) >> (y))
 #define FIXED_TO_DOUBLE(x, y)     (((double)x) / (y))
 
-class QuadGSTreeValue
+class QGS_TreeValue
 {
 public:
 
@@ -56,7 +56,7 @@ public:
         last_variable_type  =             8,
     }NodeType_t;
 
-    QuadGSTreeValue(NodeType_t type):
+    QGS_TreeValue(NodeType_t type):
         mNodeType(type),
         mUint8_t(0),
         mUint16_t(0),
@@ -71,7 +71,7 @@ public:
             throw std::invalid_argument("No such type.");
         }
     }
-    virtual ~QuadGSTreeValue()
+    virtual ~QGS_TreeValue()
     {
 
     }

@@ -5,14 +5,14 @@
  *      Author: martin
  */
 
-#include "../../../QGS_Core/LogHandler/LogHandler.h"
+#include "LogHandler.h"
 
 #include <functional>
 #include <memory>
 
-#include "../../../QGS_Core/CommandTree/QuadGSTree.h"
-#include "../../../QGS_Core/Core.h"
-#include "../../../QGS_Core/DataMsg/QCMsgHeader.h"
+#include "QGS_Tree.h"
+#include "QGS_MsgHeader.h"
+#include "QGS_CoreInterface.h"
 namespace QuadGS {
 
 LogHandler::LogHandler() :
@@ -46,28 +46,28 @@ void LogHandler::RegisterWriteFcn(WriteFcn fcn)
     mWriteFcn = fcn;
 }
 
-std::vector< Command::ptr > LogHandler::getCommands()
+std::vector< QGS_UiCommand::ptr > LogHandler::getCommands()
 {
-    std::vector<std::shared_ptr < Command > > mCommands;
-    mCommands.push_back(std::make_shared<Command> ("logGetNames",
+    std::vector<std::shared_ptr < QGS_UiCommand > > mCommands;
+    mCommands.push_back(std::make_shared<QGS_UiCommand> ("logGetNames",
             std::bind(&LogHandler::getLogNames, this, std::placeholders::_1),
-            "Get name id mapping of logs.", Command::ActOn::Core));
-    mCommands.push_back(std::make_shared<Command> ("logPrintNameMapping",
+            "Get name id mapping of logs.", QGS_UiCommand::ActOn::Core));
+    mCommands.push_back(std::make_shared<QGS_UiCommand> ("logPrintNameMapping",
             std::bind(&LogHandler::FormatLogMapping, this, std::placeholders::_1),
-            "Print name id mapping of logs.", Command::ActOn::Core));
-    mCommands.push_back(std::make_shared<Command> ("logGetEntries",
+            "Print name id mapping of logs.", QGS_UiCommand::ActOn::Core));
+    mCommands.push_back(std::make_shared<QGS_UiCommand> ("logGetEntries",
             std::bind(&LogHandler::getLogEntries, this, std::placeholders::_1),
-            "Get runtime logs from QuadFC.", Command::ActOn::Core));
-    mCommands.push_back(std::make_shared<Command> ("logStopAll",
+            "Get runtime logs from QuadFC.", QGS_UiCommand::ActOn::Core));
+    mCommands.push_back(std::make_shared<QGS_UiCommand> ("logStopAll",
             std::bind(&LogHandler::stopAllLogs, this, std::placeholders::_1),
-            "Stop all logging.", Command::ActOn::Core));
+            "Stop all logging.", QGS_UiCommand::ActOn::Core));
     return mCommands;
 }
 
 std::string LogHandler::getLogNames(std::string )
 {
-    QCMsgHeader::ptr header = QCMsgHeader::Create(QCMsgHeader::addresses::Log, QCMsgHeader::LogControl::Name, 0, 0);
-    std::shared_ptr<QuadGSMsg> payload;
+    QGS_MsgHeader::ptr header = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Log, QGS_MsgHeader::LogControl::Name, 0, 0);
+    std::shared_ptr<QGS_Msg> payload;
     if(mWriteFcn)
     {
         mWriteFcn( header, payload );
@@ -81,8 +81,8 @@ std::string LogHandler::getLogNames(std::string )
 
 std::string LogHandler::getLogEntries(std::string )
 {
-    QCMsgHeader::ptr header = QCMsgHeader::Create(QCMsgHeader::addresses::Log, QCMsgHeader::LogControl::Entry, 0, 0);
-    std::shared_ptr<QuadGSMsg> payload;
+    QGS_MsgHeader::ptr header = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Log, QGS_MsgHeader::LogControl::Entry, 0, 0);
+    std::shared_ptr<QGS_Msg> payload;
     if(mWriteFcn)
     {
         mWriteFcn( header, payload );
@@ -96,8 +96,8 @@ std::string LogHandler::getLogEntries(std::string )
 
 std::string LogHandler::stopAllLogs(std::string )
 {
-    QCMsgHeader::ptr header = QCMsgHeader::Create(QCMsgHeader::addresses::Log, QCMsgHeader::LogControl::StopAll, 0, 0);
-    std::shared_ptr<QuadGSMsg> payload;
+    QGS_MsgHeader::ptr header = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Log, QGS_MsgHeader::LogControl::StopAll, 0, 0);
+    std::shared_ptr<QGS_Msg> payload;
     if(mWriteFcn)
     {
         mWriteFcn( header, payload );
@@ -124,23 +124,23 @@ std::string LogHandler::FormatLogMapping(std::string)
 }
 
 
-void LogHandler::Handler(std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadLogMsg> payload)
+void LogHandler::Handler(std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<QGS_LogMsg> payload)
 {
     uint8_t control = header->GetControl();
     switch (control)
     {
-    case QCMsgHeader::LogControl::Name:
+    case QGS_MsgHeader::LogControl::Name:
     {
         std::string payloadStr = payload->GetPayload();
         while(!payloadStr.empty())
         {
-            std::string module = QuadGSTree::RemoveModuleString(payloadStr);
+            std::string module = QGS_Tree::RemoveModuleString(payloadStr);
 
             if(!module.empty())
             {
-                std::string name = QuadGSTree::GetModuleName(module);
-                std::string valueType = QuadGSTree::GetValueTypeString(module);
-                std::string id_str = QuadGSTree::GetValueString(module);
+                std::string name = QGS_Tree::GetModuleName(module);
+                std::string valueType = QGS_Tree::GetValueTypeString(module);
+                std::string id_str = QGS_Tree::GetValueString(module);
                 if(!id_str.empty() && !valueType.empty())
                 {
                     int id = std::stoi(id_str);
@@ -172,7 +172,7 @@ void LogHandler::Handler(std::shared_ptr<QCMsgHeader> header, std::shared_ptr<Qu
         }
     }
     break;
-    case QCMsgHeader::LogControl::Entry:
+    case QGS_MsgHeader::LogControl::Entry:
     {
         std::string payloadStr = payload->GetPayload();
         bool end = false;
@@ -182,10 +182,10 @@ void LogHandler::Handler(std::shared_ptr<QCMsgHeader> header, std::shared_ptr<Qu
         }
         while(!payloadStr.empty())
         {
-            std::string module = QuadGSTree::RemoveModuleString(payloadStr);
+            std::string module = QGS_Tree::RemoveModuleString(payloadStr);
             for(int i = 0; i < NR_LOG_FIELDS; i++)
             {
-                std::string value = QuadGSTree::RemoveValueString(module);
+                std::string value = QGS_Tree::RemoveValueString(module);
                 mLogFile << value;
                 if(i < NR_LOG_FIELDS - 1)
                 {

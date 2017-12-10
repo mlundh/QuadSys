@@ -22,69 +22,69 @@
  * THE SOFTWARE.
  */
 
-#include "../../../QGS_Core/DataMsg/QuadParamPacket.h"
+#include "QGS_ParamMsg.h"
 
 namespace QuadGS {
 
 
 
-QuadParamPacket::~QuadParamPacket()
+QGSParamMsg::~QGSParamMsg()
 {
 }
 
-QuadParamPacket::ptr QuadParamPacket::Create(const uint8_t* data, uint16_t length)
+QGSParamMsg::ptr QGSParamMsg::Create(const uint8_t* data, uint16_t length)
 {
-	ptr p(new QuadParamPacket(data, length) );
+	ptr p(new QGSParamMsg(data, length) );
 	return p;
 }
 
-QuadParamPacket::ptr QuadParamPacket::Create()
+QGSParamMsg::ptr QGSParamMsg::Create()
 {
-	ptr p(new QuadParamPacket() );
+	ptr p(new QGSParamMsg() );
 	return p;
 }
 
-QuadParamPacket::ptr QuadParamPacket::Create(const uint8_t* data, uint16_t length, uint8_t sequenceNr, uint8_t lastInSequence)
+QGSParamMsg::ptr QGSParamMsg::Create(const uint8_t* data, uint16_t length, uint8_t sequenceNr, uint8_t lastInSequence)
 {
-	ptr p(new QuadParamPacket(data, length, sequenceNr, lastInSequence) );
+	ptr p(new QGSParamMsg(data, length, sequenceNr, lastInSequence) );
 	return p;
 }
 
 
-QuadParamPacket::ptr QuadParamPacket::Create(const std::string data, uint8_t sequenceNr, uint8_t lastInSequence)
+QGSParamMsg::ptr QGSParamMsg::Create(const std::string data, uint8_t sequenceNr, uint8_t lastInSequence)
 {
-	ptr p(new QuadParamPacket(data, sequenceNr, lastInSequence) );
+	ptr p(new QGSParamMsg(data, sequenceNr, lastInSequence) );
 	return p;
 }
-uint8_t QuadParamPacket::GetLastInSeq() const
+uint8_t QGSParamMsg::GetLastInSeq() const
 {
 	return mLastInSequence;
 }
-void QuadParamPacket::SetLastInSeq(uint8_t isLast)
+void QGSParamMsg::SetLastInSeq(uint8_t isLast)
 {
 	isLast &= 1;
 	mLastInSequence = isLast;
 }
 
-uint8_t QuadParamPacket::GetSequenceNumber() const
+uint8_t QGSParamMsg::GetSequenceNumber() const
 {
 	return mSequenceNumber;
 }
-void QuadParamPacket::SetSequenceNumber(uint8_t sequenceNumber)
+void QGSParamMsg::SetSequenceNumber(uint8_t sequenceNumber)
 {
 	mSequenceNumber = sequenceNumber;
 }
 
-std::string QuadParamPacket::GetPayload() const
+std::string QGSParamMsg::GetPayload() const
 {
 	return mPayload;
 }
-void QuadParamPacket::Setpayload(std::string payload)
+void QGSParamMsg::Setpayload(std::string payload)
 {
 	mPayload = payload;
 }
 
-std::string QuadParamPacket::toString() const
+std::string QGSParamMsg::toString() const
 {
 	std::string result;
 	result += "[" + std::to_string(GetLastInSeq()) + "]";
@@ -93,7 +93,7 @@ std::string QuadParamPacket::toString() const
 	return result;
 }
 
-BinaryOStream& QuadParamPacket::stream(BinaryOStream& os) const
+BinaryOStream& QGSParamMsg::stream(BinaryOStream& os) const
 {
 	os <<  SetBits(1) << mLastInSequence;
 	os <<  SetBits(7) << mSequenceNumber;
@@ -101,7 +101,7 @@ BinaryOStream& QuadParamPacket::stream(BinaryOStream& os) const
 	return os;
 }
 
-BinaryIStream& QuadParamPacket::stream(BinaryIStream& is)
+BinaryIStream& QGSParamMsg::stream(BinaryIStream& is)
 {
 	is >> SetBits(1) >> mLastInSequence;
 	is >> SetBits(7) >> mSequenceNumber;
@@ -109,8 +109,8 @@ BinaryIStream& QuadParamPacket::stream(BinaryIStream& is)
 	return is;
 }
 
-QuadParamPacket::QuadParamPacket(const uint8_t* data, uint16_t length, uint8_t sequenceNr, uint8_t lastInSequence)
-	: QuadGSMsg()
+QGSParamMsg::QGSParamMsg(const uint8_t* data, uint16_t length, uint8_t sequenceNr, uint8_t lastInSequence)
+	: QGS_Msg()
 	, mSequenceNumber(sequenceNr)
 	, mLastInSequence(lastInSequence)
 	, mPayload((const char*)data, (size_t)length)
@@ -119,8 +119,8 @@ QuadParamPacket::QuadParamPacket(const uint8_t* data, uint16_t length, uint8_t s
 }
 
 
-QuadParamPacket::QuadParamPacket(const uint8_t* data, uint16_t length)
-	: QuadGSMsg()
+QGSParamMsg::QGSParamMsg(const uint8_t* data, uint16_t length)
+	: QGS_Msg()
 	, mSequenceNumber(0)
 	, mLastInSequence(0)
 	, mPayload()
@@ -134,8 +134,8 @@ QuadParamPacket::QuadParamPacket(const uint8_t* data, uint16_t length)
 	is >> *this;
 }
 
-QuadParamPacket::QuadParamPacket()
-	: QuadGSMsg()
+QGSParamMsg::QGSParamMsg()
+	: QGS_Msg()
 	, mSequenceNumber(0)
 	, mLastInSequence(0)
 	, mPayload()
@@ -143,8 +143,8 @@ QuadParamPacket::QuadParamPacket()
 }
 
 
-QuadParamPacket::QuadParamPacket(const std::string payload, uint8_t sequenceNr, uint8_t lastInSequence)
-	: QuadGSMsg()
+QGSParamMsg::QGSParamMsg(const std::string payload, uint8_t sequenceNr, uint8_t lastInSequence)
+	: QGS_Msg()
 	, mSequenceNumber(sequenceNr)
 	, mLastInSequence(lastInSequence)
 	, mPayload(payload)
@@ -152,13 +152,13 @@ QuadParamPacket::QuadParamPacket(const std::string payload, uint8_t sequenceNr, 
 
 }
 
-BinaryOStream& operator <<(BinaryOStream& os, const QuadParamPacket& pl)
+BinaryOStream& operator <<(BinaryOStream& os, const QGSParamMsg& pl)
 {
   pl.stream(os);
   return os;
 }
 
-BinaryIStream& operator >>(BinaryIStream& is, QuadParamPacket& pl)
+BinaryIStream& operator >>(BinaryIStream& is, QGSParamMsg& pl)
 {
   pl.stream(is);
   return is;

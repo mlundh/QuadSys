@@ -5,7 +5,7 @@
  *      Author: mlundh
  */
 
-#include "../../QGS_Core/test/MockCore.h"
+#include "MockQGSCoreInterface.h"
 
 namespace QuadGS {
 

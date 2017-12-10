@@ -32,18 +32,18 @@
 #include <memory>
 #include <functional>
 
-#include "../../QGS_Core/Core.h"
-#include "../../QGS_Core/Log/Log.h"
-#include "../../QGS_IO/IoBase.h"
-#include "../../QGS_IO/Serial/SerialPort/SerialPort.h"
-#include "../../QGS_IO/Serial/SerialPort/TimedFifo.hpp"
+#include "Log.h"
+#include "SerialPort.h"
+#include "TimedFifo.hpp"
+#include "QGS_IoInterface.h"
+#include "QGS_CoreInterface.h"
 
 
 using namespace boost::asio;
 namespace QuadGS {
 
-class QCMsgHeader;
-class QuadGSMsg;
+class QGS_MsgHeader;
+class QGS_Msg;
 /**
  * @class Serial_Manager
  *
@@ -51,7 +51,7 @@ class QuadGSMsg;
  * be connected to a Core object.
  */
 class Serial_Manager:
-          public IoBase
+          public QGS_IoInterface
 {
 public:
 
@@ -66,13 +66,13 @@ public:
      * Create an instance of the Serial_Manager class.
      * @return  A pointer to the instance.
      */
-    static IoBase* create();
+    static QGS_IoInterface* create();
 
     /**
      * Write function used by users of the Io module.
      * @param ptr   The QSP that should be sent.
      */
-    virtual void write( std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadGSMsg> payload);
+    virtual void write( std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<QGS_Msg> payload);
 
     /**
      * Start the read operation. Can be used as soon as the serial
@@ -91,7 +91,7 @@ public:
      * Get the user commands available for the module.
      * @return  A vector of commands.
      */
-    virtual std::vector<Command::ptr> getCommands( );
+    virtual std::vector<QGS_UiCommand::ptr> getCommands( );
 
     /**
      * Get the current status of the io link.
@@ -131,7 +131,7 @@ private:
      * registered message handler. Also handles logging of messages.
      * @param ptr   The received message.
      */
-    void messageHandler(std::shared_ptr<QCMsgHeader> header, std::shared_ptr<QuadGSMsg> payload);
+    void messageHandler(std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<QGS_Msg> payload);
 
     /**
      * Internal write message. This is the only function allowed to write to the
@@ -144,8 +144,8 @@ private:
     boost::asio::io_service mIo_service;
     std::unique_ptr<boost::asio::io_service::work> mWork;
     std::thread *mThread_io;
-    TimedFifo<std::pair< std::shared_ptr<QCMsgHeader>, std::shared_ptr<QuadGSMsg> > >mOutgoingFifo;
-    IoBase::MessageHandlerFcn mMessageHandler;
+    TimedFifo<std::pair< std::shared_ptr<QGS_MsgHeader>, std::shared_ptr<QGS_Msg> > >mOutgoingFifo;
+    QGS_IoInterface::MessageHandlerFcn mMessageHandler;
     int mRetries;
     bool mOngoing;
     Log mLog;
