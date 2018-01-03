@@ -30,7 +30,7 @@
 #include <cstddef>
 #include <memory>
 
-#include "Log.h"
+#include "AppLog.h"
 #include "QGS_Msg.h"
 #include "QGS_IoInterface.h"
 
@@ -78,7 +78,7 @@ class SlipPacket;
  */
 class SerialPort
         : public std::enable_shared_from_this< SerialPort >
-        , public Log
+        , public AppLog
 {
 public:
     /**

@@ -46,14 +46,8 @@ QGS_CoreInterface* CLI::mCore;
 char  CLI::WordBreakPath[] = " \t\n\"\\'`@$><=;|&{(/";
 char  CLI::WordBreak[] = " \t\n\"\\'`@$><=;|&{(";
 
-QGS_UiInterface* CLI::create()
-{
-	QGS_UiInterface* tmp = new CLI;
-    return tmp;
-}
-
 CLI::CLI():
-         Log("CLI"),
+         AppLog("CLI"),
          mPromptStatus("N/A"),
          mPromptBase("QuadGS"),
          mPrompt(),
@@ -70,11 +64,6 @@ CLI::~CLI()
 {
   write_history(NULL);
   history_truncate_file(NULL, 100);
-}
-
-void CLI::bind(QGS_IoInterface* IoPtr)
-{
-    registerCommands(IoPtr->getCommands());
 }
 
 void CLI::registerCommands(std::vector< QGS_UiCommand::ptr > commands)

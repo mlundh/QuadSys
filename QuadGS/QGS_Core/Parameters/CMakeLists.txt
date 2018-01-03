@@ -1,7 +1,7 @@
 set(src "Parameters.cpp")
 set(dep "CommandTree"
         "Messages"
-        "log")
+        "AppLog")
 
 qgs_make_shared_lib( Parameters src dep)
 

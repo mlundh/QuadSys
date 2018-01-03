@@ -31,6 +31,7 @@
 #include "QGS_CoreInterface.h"
 #include "QGS_UiInterface.h"
 #include "QGS_IoInterface.h"
+#include "QGS_TrackerInterface.h"
 
 #include "QGS_ParamMsg.h"
 #include "QGS_DebugMsg.h"
@@ -41,6 +42,7 @@ QGS_CoreInterface::QGS_CoreInterface()
 :logger("Core")
 ,mIo()
 ,mUi()
+,mTrack()
 {
     mParameters = Parameters::create();
     mLogHandler = LogHandler::create();
@@ -51,11 +53,6 @@ QGS_CoreInterface::~QGS_CoreInterface()
 
 }
 
-QGS_CoreInterface* QGS_CoreInterface::create()
-{
-	QGS_CoreInterface* tmp = new QGS_CoreInterface;
-    return tmp;
-}
 
 void QGS_CoreInterface::bind(QGS_IoInterface* IoPtr)
 {
@@ -68,9 +65,20 @@ void QGS_CoreInterface::bind(QGS_UiInterface* UiPtr)
     mUi = UiPtr;
     mParameters->RegisterWriteFcn(std::bind(&QuadGS::QGS_CoreInterface::write, this, std::placeholders::_1, std::placeholders::_2));
     mLogHandler->RegisterWriteFcn(std::bind(&QuadGS::QGS_CoreInterface::write, this, std::placeholders::_1, std::placeholders::_2));
-    UiPtr->registerCommands(getCommands());
     UiPtr->bind(this);
 }
+void QGS_CoreInterface::bind(QGS_TrackerInterface* TrackerPtr)
+{
+	mTrack = TrackerPtr;
+	mTrack->RegisterWriteFcn(std::bind(&QuadGS::QGS_CoreInterface::write, this, std::placeholders::_1, std::placeholders::_2));
+}
+
+void QGS_CoreInterface::initialize()
+{
+    mUi->registerCommands(getCommands());
+	mIo->initialize();
+}
+
 
 std::string QGS_CoreInterface::getRuntimeStats(std::string )
 {
@@ -116,6 +124,19 @@ std::vector< QGS_UiCommand::ptr > QGS_CoreInterface::getCommands()
     std::vector<std::shared_ptr < QGS_UiCommand > > mCommandsLogHandler;
     mCommandsLogHandler = mLogHandler->getCommands();
     mCommands.insert( mCommands.end(), mCommandsLogHandler.begin(), mCommandsLogHandler.end() );
+    if(mIo)
+    {
+        std::vector<std::shared_ptr < QGS_UiCommand > > mCommandsIo;
+        mCommandsIo = mIo->getCommands();
+        mCommands.insert( mCommands.end(), mCommandsIo.begin(), mCommandsIo.end() );
+
+    }
+    if(mTrack)
+    {
+        std::vector<std::shared_ptr < QGS_UiCommand > > mCommandsTrack;
+        mCommandsTrack = mTrack->getCommands();
+        mCommands.insert( mCommands.end(), mCommandsTrack.begin(), mCommandsTrack.end() );
+    }
     return mCommands;
 }
 

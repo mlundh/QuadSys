@@ -43,7 +43,7 @@ Serial_Manager::Serial_Manager():
 {
 }
 
-void Serial_Manager::start()
+void Serial_Manager::initialize()
 {
     mThread_io = new std::thread(std::bind(&Serial_Manager::runThread, this));
     mPort = QuadGS::SerialPort::create(mIo_service);
@@ -51,20 +51,6 @@ void Serial_Manager::start()
     mPort->setReadTimeoutCallback( std::bind(&Serial_Manager::timeoutHandler, this) );
     mPort->setParser(std::make_shared<FcParser>());
 
-}
-
-
-QGS_IoInterface* Serial_Manager::create()
-{
-    QGS_IoInterface* tmp = new Serial_Manager;
-    Serial_Manager* manager = dynamic_cast<Serial_Manager*>(tmp);
-
-    if(!manager)
-    {
-        throw std::runtime_error("Not able to create Serial Manager.");
-    }
-    manager->start();
-    return tmp;
 }
 
 void Serial_Manager::startRead()

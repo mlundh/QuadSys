@@ -22,28 +22,28 @@
  * THE SOFTWARE.
  */
 
-#include "../../../QGS_Core/Log/Log.h"
+#include "AppLog.h"
 
 #include <boost/core/null_deleter.hpp>
 namespace QuadGS {
 
 
-Log::Log()
+AppLog::AppLog()
 {
 
 }
 
-Log::Log(std::string tag)
+AppLog::AppLog(std::string tag)
 {
   slg.add_attribute("Tag", attrs::constant< std::string >(tag));
 }
 
-Log::~Log()
+AppLog::~AppLog()
 {
 
 }
 
-void Log::QuadLog(QuadGS::severity_level svl, std::string msg)
+void AppLog::QuadLog(QuadGS::severity_level svl, std::string msg)
 {
     logging::record rec = slg.open_record(keywords::severity = svl);
     if (rec)
@@ -76,7 +76,7 @@ std::ostream& operator<< (std::ostream& strm, QuadGS::severity_level level)
 }
 
 
-void Log::Init( std::string FilenameAppLog, std::string FilenameMsgLog, std::ostream& outstream, severity_level svl )
+void AppLog::Init( std::string FilenameAppLog, std::string FilenameMsgLog, std::ostream& outstream, severity_level svl )
 {
     // Create the formatter for all file sinks.
     logging::formatter fmt = expr::stream

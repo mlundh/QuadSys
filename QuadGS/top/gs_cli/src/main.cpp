@@ -30,9 +30,13 @@ namespace po = boost::program_options;
 
 #include "SerialManager.h"
 #include "CLI.h"
+#ifdef WITH_VISION
+	#include "ZedTracker.h"
+#endif
 #include "QGS_UiInterface.h"
 #include "QGS_IoInterface.h"
 #include "QGS_CoreInterface.h"
+#include "QGS_TrackerInterface.h"
 
 
 #include <iostream>
@@ -86,22 +90,30 @@ int main(int ac, char* av[])
         return 1;
     }
 
-    QuadGS::Log::Init("app_log", "msg_log", std::clog, args.lvl);
+    QuadGS::AppLog::Init("app_log", "msg_log", std::clog, args.lvl);
     // Create the modules.
-    QuadGS::QGS_IoInterface* mIO = QuadGS::Serial_Manager::create();
-    QuadGS::QGS_UiInterface* mUI = QuadGS::CLI::create();
-    QuadGS::QGS_CoreInterface* mCore = QuadGS::QGS_CoreInterface::create();
-
-    mCore->bind(mUI);
+    QuadGS::QGS_IoInterface* mIO = new QuadGS::Serial_Manager();
+    QuadGS::QGS_UiInterface* mUI = new QuadGS::CLI();
+    QuadGS::QGS_CoreInterface* mCore = new QuadGS::QGS_CoreInterface();
+#ifdef WITH_VISION
+    QuadGS::QGS_TrackerInterface* mTracker = new QuadGS::ZedTracker();
+#endif
     mCore->bind(mIO);
-    mUI->bind(mIO);
-
+    mCore->bind(mUI);
+#ifdef WITH_VISION
+    mCore->bind(mTracker);
+#endif
+    mCore->initialize();
     // Read input.
     while(mUI->RunUI());
 
     delete mIO;
     delete mUI;
     delete mCore;
+#ifdef WITH_VISION
+    delete mTracker;
+#endif
+
     return 0;
 }
 

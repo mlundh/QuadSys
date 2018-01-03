@@ -44,7 +44,7 @@ void defaultMsgHandler(std::shared_ptr<QGS_MsgHeader>, std::shared_ptr<QGS_Msg>)
 class ParamTest : public ::testing::Test {
 protected:
     virtual void SetUp() {
-        QuadGS::Log::Init("app_log", "msg_log", std::clog, severity_level::error);
+        QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error);
         mParameters =  Parameters::create();
 
         std::string payload_str = "/root/tmp<5>[8]/test[3]";
@@ -70,7 +70,7 @@ protected:
 
 TEST(Parameters, TestRegisterAndDump)
 {
-    QuadGS::Log::Init("app_log", "msg_log", std::clog, severity_level::error);
+    QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error);
     std::shared_ptr<Parameters> mParameters =  Parameters::create();
     std::string payload_str = "/root/tmp<5>[8]/test[3]";
     QGSParamMsg::ptr payload = QGSParamMsg::Create(payload_str,0,1);
@@ -90,7 +90,7 @@ TEST(Parameters, TestRegisterAndDump)
 
 TEST(Parameters, TestRegisterSecondMsg)
 {
-    QuadGS::Log::Init("app_log", "msg_log", std::clog, severity_level::error);
+    QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error);
     std::shared_ptr<Parameters> mParameters =  Parameters::create();
 
     // Bind dummy write function.
@@ -125,7 +125,7 @@ TEST(Parameters, TestRegisterSecondMsg)
 
 TEST(Parameters, TestSetAndRegister)
 {
-    QuadGS::Log::Init("app_log", "msg_log", std::clog, severity_level::error);
+    QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error);
     std::string payload_str = "/root/tmp<5>[8]/test[3]";
     std::shared_ptr<Parameters> mParameters =  Parameters::create();
 

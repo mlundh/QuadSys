@@ -1,5 +1,5 @@
 /*
- * QGS_Tracker.h
+ * ZedTracker.h
  *
  *  Copyright (C) 2017 Martin Lundh
  *
@@ -22,19 +22,60 @@
  * THE SOFTWARE.
  */
 
-#ifndef QUADGS_QGS_TRACKER_QGS_TRACKER_INTERFACE_H_
-#define QUADGS_QGS_TRACKER_QGS_TRACKER_INTERFACE_H_
+#ifndef QUADGS_QGS_TRACKER_ZED_TRACKER_ZEDTRACKER_H_
+#define QUADGS_QGS_TRACKER_ZED_TRACKER_ZEDTRACKER_H_
+
+#include <sl/Camera.hpp>
+#include <atomic>
+#include "QGS_TrackerInterface.h"
+
+using namespace sl;
 
 namespace QuadGS
 {
 
-class QGS_TrackerInterface
+class ZedTracker : public QGS_TrackerInterface
 {
 public:
-	QGS_TrackerInterface();
-	virtual ~QGS_TrackerInterface();
+	ZedTracker();
+	virtual ~ZedTracker();
+
+	/**
+	 * Register the function used to write to the fc.
+	 * @param fcn
+	 */
+	virtual void RegisterWriteFcn(WriteFcn fcn);
+
+	/**
+	 * Handle incoming messages.
+	 * @param header
+	 * @param payload
+	 */
+	virtual void msgHandler(std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<QGS_Msg> payload);
+
+	virtual std::vector<std::shared_ptr<QGS_UiCommand>> getCommands( );
+
+	std::string startTracking(std::string str);
+
+	std::string stopTracking(std::string str);
+private:
+
+	void run();
+
+	void transformPose(sl::Transform &pose, float tx);
+
+
+
+
+	// ZED objects
+	sl::Camera  mZed;
+	sl::Pose    mCameraPose;
+	std::thread mZedThread;
+	TrackingParameters mTrackParam;
+	std::atomic<bool>        mQuit;
+
 };
 
 } /* namespace QuadGS */
 
-#endif /* QUADGS_QGS_TRACKER_QGS_TRACKER_INTERFACE_H_ */
+#endif /* QUADGS_QGS_TRACKER_ZED_TRACKER_ZEDTRACKER_H_ */

@@ -32,7 +32,7 @@
 #include <memory>
 #include <functional>
 
-#include "Log.h"
+#include "AppLog.h"
 #include "SerialPort.h"
 #include "TimedFifo.hpp"
 #include "QGS_IoInterface.h"
@@ -55,18 +55,15 @@ class Serial_Manager:
 {
 public:
 
+    Serial_Manager();
+
+
     virtual ~Serial_Manager();
 
     /**
      * Start the serial manager. This creates and starts the internal handler threads.
      */
-    void start();
-
-    /**
-     * Create an instance of the Serial_Manager class.
-     * @return  A pointer to the instance.
-     */
-    static QGS_IoInterface* create();
+    virtual void initialize();
 
     /**
      * Write function used by users of the Io module.
@@ -112,7 +109,6 @@ public:
 
 
 private:
-    Serial_Manager();
 
     /**
      * Method that is run in a separate thread. Will handle all async
@@ -148,7 +144,7 @@ private:
     QGS_IoInterface::MessageHandlerFcn mMessageHandler;
     int mRetries;
     bool mOngoing;
-    Log mLog;
+    AppLog mLog;
 
 
 };

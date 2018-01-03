@@ -65,13 +65,14 @@ if(WITH_VISION)
     find_package(OpenCV ${VERSION_REQ_OCV} REQUIRED)
     find_package(CUDA ${VERSION_REQ_CUDA} REQUIRED)
     
-    include_directories(${CUDA_INCLUDE_DIRS})
-    include_directories(${OPENCV_INCLUDE_DIRS})
-    include_directories(${ZED_INCLUDE_DIRS})
+    include_directories(SYSTEM ${CUDA_INCLUDE_DIRS})
+    include_directories(SYSTEM ${OPENCV_INCLUDE_DIRS})
+    include_directories(SYSTEM ${ZED_INCLUDE_DIRS})
     
     link_directories(${ZED_LIBRARY_DIR})
     link_directories(${OpenCV_LIBRARY_DIRS})
     link_directories(${CUDA_LIBRARY_DIRS})
+    add_definitions(-DWITH_VISION)
 endif()
 
 
@@ -121,7 +122,6 @@ ENDIF("${isSystemDir}" STREQUAL "-1")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/QGS_Core)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/QGS_IO)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/QGS_UI)
-
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/QGS_Tracker)
 
 # Targets that we develop
@@ -129,7 +129,11 @@ enable_testing()
 add_subdirectory(QGS_Core)
 add_subdirectory(QGS_IO)
 add_subdirectory(QGS_UI)
-add_subdirectory(QGS_Tracker)
+
+if(WITH_VISION)
+    add_subdirectory(QGS_Tracker)
+endif()
+
 add_subdirectory(top)
 add_subdirectory(test)
 

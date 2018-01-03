@@ -1,5 +1,5 @@
 list(APPEND src "CLI.cpp")
-list(APPEND dep "log"
+list(APPEND dep "AppLog"
                 "Parameters"
                 "Core"
 		        "readline")

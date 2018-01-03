@@ -1,5 +1,5 @@
 /*
- * Log.h
+ * AppLog.h
  *
  * Copyright (C) 2015 Martin Lundh
  *
@@ -65,12 +65,12 @@ enum severity_level
 
 std::ostream& operator<<( std::ostream& strm, QuadGS::severity_level level);
 
-class Log
+class AppLog
 {
 public:
-    Log();
-    Log(std::string tag);
-    virtual ~Log();
+    AppLog();
+    AppLog(std::string tag);
+    virtual ~AppLog();
     static void Init( std::string FilenameAppLog, std::string FilenameMsgLog, std::ostream& outstream, severity_level svl);
     void QuadLog(QuadGS::severity_level svl, std::string msg);
 protected:

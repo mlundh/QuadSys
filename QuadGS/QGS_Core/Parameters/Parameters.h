@@ -30,7 +30,7 @@
 #include <string>
 #include <vector>
 
-#include "Log.h"
+#include "AppLog.h"
 #include "QGS_Tree.h"
 #include "QGS_ParamMsg.h"
 
@@ -132,7 +132,7 @@ public:
     void RequestTree();
 
 
-    Log logger;
+    AppLog logger;
     WriteFcn mWriteFcn;
     QGS_Tree::ptr mTmpBranch;
     QGS_Tree::ptr mCurrentBranch;

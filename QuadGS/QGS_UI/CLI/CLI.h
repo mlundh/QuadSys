@@ -27,24 +27,22 @@
 #include <string>
 #include <vector>
 
+#include "AppLog.h"
 #include "QGS_Tree.h"
 #include "QGS_UiInterface.h"
 #include "QGS_CoreInterface.h"
-#include "Log.h"
 #include "QGS_IoInterface.h"
 namespace QuadGS {
   
-class CLI : public Log, public QGS_UiInterface
+class CLI : public AppLog, public QGS_UiInterface
 {
 public:
-  
-  static QGS_UiInterface* create();
-  
+
+  CLI();
+
   virtual ~CLI();
   
   virtual bool RunUI();
-
-  virtual void bind(QGS_IoInterface* IoPtr);
 
   virtual void registerCommands(std::vector< QGS_UiCommand::ptr > commands);
   
@@ -53,7 +51,6 @@ public:
   virtual void Display(std::string str);
 private:
 
-  CLI();
 
   void SetPrompt(std::string prompt);
 

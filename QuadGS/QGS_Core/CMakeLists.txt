@@ -2,7 +2,7 @@ add_subdirectory(CommandTree)
 add_subdirectory(BinaryStream)
 add_subdirectory(Messages)
 add_subdirectory(Parameters)
-add_subdirectory(Log)
+add_subdirectory(AppLog)
 add_subdirectory(LogHandler)
 
 set(src QGS_Core.cpp)
@@ -10,7 +10,8 @@ set(src QGS_Core.cpp)
 set(dep "CommandTree"
         "Messages"
         "Parameters" 
-        "LogHandler")
+        "LogHandler"
+        "AppLog")
 
 qgs_make_shared_lib( Core src dep)
 

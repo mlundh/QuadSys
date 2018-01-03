@@ -44,7 +44,12 @@ public:
 	typedef std::function<void( void )> TimeoutHandlerFcn;
 
 	QGS_IoInterface(){}
-	virtual ~QGS_IoInterface(){}
+	virtual ~QGS_IoInterface() {};
+
+	/**
+	 * Initialize the module.
+	 */
+    virtual void initialize() = 0;
 
 	/**
 	 * Write a message consisting of a header and payload to the io module.

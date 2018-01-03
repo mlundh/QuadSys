@@ -30,7 +30,8 @@
 #include <vector>
 #include <memory>
 #include <iostream>
-#include "Log.h"
+
+#include "AppLog.h"
 #include "QGS_TreeValue.h"
 
 namespace QuadGS {
@@ -194,7 +195,7 @@ protected:
     QGS_Tree* mParent;
     std::vector< QGS_Tree::ptr > mChildren;
     QGS_TreeValue mValue;
-    Log mLogger;
+    AppLog mLogger;
 public:
     /**
      * Get the module name from a string.

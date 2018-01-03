@@ -29,13 +29,14 @@
 #include <string>
 #include <vector>
 
-#include "Log.h"
+#include "AppLog.h"
 namespace QuadGS {
 
 
 //Forward declarations
 class QGS_IoInterface;
 class QGS_UiInterface;
+class QGS_TrackerInterface;
 class QGS_Msg;
 class QGS_MsgHeader;
 class QGS_DebugMsg;
@@ -74,13 +75,9 @@ public:
 class QGS_CoreInterface
 {
 public:
-    virtual ~QGS_CoreInterface();
+    QGS_CoreInterface();
 
-    /**
-     * Static create method. Use this to create an instance of Core.
-     * @return  Pointer to instance of core.
-     */
-    static QGS_CoreInterface* create();
+    virtual ~QGS_CoreInterface();
 
     /**
      * Bind method connecting a core object to an IoBase(Input/output) object.
@@ -92,6 +89,17 @@ public:
      * @param UiPtr Pointer to an UiObject.
      */
     virtual void bind(QGS_UiInterface* UiPtr);
+
+    /**
+     * Bind method connecting a core object to a Tracker object.
+     * @param TrackerPtr
+     */
+    virtual void bind(QGS_TrackerInterface* TrackerPtr);
+
+    /**
+     * Do all initializations that can not be done in the constructor.
+     */
+    virtual void initialize();
 
     /**
      * Function to get all commands availible to the User Interface.
@@ -133,10 +141,10 @@ public:// TODO should be private
     std::shared_ptr<Parameters> mParameters;
 
 private:
-    QGS_CoreInterface();
-    Log logger;
+    AppLog logger;
     QGS_IoInterface* mIo;
     QGS_UiInterface* mUi;
+    QGS_TrackerInterface* mTrack;
     std::shared_ptr<LogHandler> mLogHandler;
 };
 

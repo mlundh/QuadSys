@@ -9,7 +9,7 @@ list(APPEND src "SerialManager.cpp" )
 list(APPEND dep "SerialPort"
                 "SlipPacket"
                 "crc"
-                "log"
+                "AppLog"
                 "Parameters"
                 "FcParser")
 

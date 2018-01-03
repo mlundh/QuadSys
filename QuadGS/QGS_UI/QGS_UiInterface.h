@@ -30,15 +30,44 @@ namespace QuadGS {
 class QGS_IoInterface;
 class QGS_UiCommand;
 class QGS_CoreInterface;
+
+/**
+ * @class Interface for all Ui implementations.
+ */
 class QGS_UiInterface
 {
 public:
-    QGS_UiInterface(){};
-    virtual ~QGS_UiInterface(){};
-    virtual void bind(QGS_IoInterface* IoPtr) = 0;
+	/**
+	 * Constructor
+	 */
+	QGS_UiInterface(){};
+    /**
+     * Destructor
+     */
+    virtual ~QGS_UiInterface() {};
+
+    /**
+     * Run the UI.
+     * @return Return 0 to quit, 1 to continue calling the function.
+     */
     virtual bool RunUI() = 0;
+
+    /**
+     * Register the commands the implementation provides.
+     * @param commands
+     */
     virtual void registerCommands(std::vector< std::shared_ptr < QGS_UiCommand >  > commands) = 0;
+
+    /**
+     * Bind to a core interface.
+     * @param ptr
+     */
     virtual void bind(QGS_CoreInterface* ptr) = 0;
+
+    /**
+     * Display the text in str to the user.
+     * @param str
+     */
     virtual void Display(std::string str) = 0;
 };
 
