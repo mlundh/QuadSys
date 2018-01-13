@@ -3,8 +3,8 @@ QuadFC/out
 /*.o
 /*.elf
 /*.bin
-/*.cproject
-/*.project
-/*.settings
-/desktop.ini
+*.cproject
+*.project
+*.settings
+desktop.ini
 *~
