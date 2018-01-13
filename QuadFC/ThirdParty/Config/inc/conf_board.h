@@ -54,6 +54,9 @@
 #define CONF_BOARD_PWM_PIN_38
 #define CONF_BOARD_PWM_PIN_40
 
+#define CONF_BOARD_SPI0
+
+#define CONF_BOARD_SPI0_NPCS0
 
 #define CONF_BOARD_TWI0
 

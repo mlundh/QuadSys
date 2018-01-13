@@ -123,7 +123,7 @@ void range_meter_task( void *pvParameters )
     }
     if ( ranger_receive_buffer[0] == 'R' )
     {
-      new_sample = my_atoi( &ranger_receive_buffer[1], 4 );
+      new_sample = Fc_atoi( &ranger_receive_buffer[1], 4 );
       distance = moving_average( distance_calc, new_sample, &index, 5 );
       xQueueSendToBack( xQueue_ranger, &new_sample, mainDONT_BLOCK );
     }

@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include "Modules/Parameters/inc/parameters.h"
-
+#include "Modules/Utilities/inc/string_utils.h"
 
 #include <gpio.h>
 #include <pio.h>
@@ -116,124 +116,6 @@ uint8_t Param_GetNodeValue(param_obj_t *current, uint8_t *buffer, uint32_t buffe
 uint8_t Param_SettNodeValue(param_obj_t *current, uint8_t *buffer);
 
 /**
- * @brief Get the string between start char and end char.
- *
- * Helper function to get the string between start and end char.
- * If start or end exists in multiple locations, the first match is used.
- * Start has to be located before end, or the function will return 0 and
- * fail.
- *
- * example:
- *
- * start char = '<'
- * end char = '>'
- *
- * stringBuffer = foo<5>
- *
- * will copy '5' to buffer and return 1.
- *
- * @param StringBuffer			Input string buffer.
- * @param stringBufferLength	Input string buffer length.
- * @param buffer				Outout buffer.
- * @param buffer_length			Outout buffer length.
- * @param start					Start char.
- * @param end					End char.
- * @return						Pointer to first element after "end". Null if fail.
- */
-uint8_t *Param_GetStringBetween(uint8_t *StringBuffer, uint32_t stringBufferLength
-    , uint8_t *buffer, uint32_t buffer_length
-    , const char start, const char end);
-
-/**
- * @brief Get string until one of the delimiters.
- *
- * Copy string from start of fromBuffer to start of toBuffer until the first
- * delimiter in delimiters is found.
- *
- * Example:
- *
- * fromBuffer = "foo<1>[22]/bar<2>[2]"
- * delimiters = "/[<"
- *
- * Then the function will copy only "foo" to toBuffer.
- *
- * @param toBuffer			Buffer to copy to.
- * @param toBufferLength	Length of buffer to copy to, used for boundary check.
- * @param fromBuffer		Buffer to search for delimiter in, and copy from.
- * @param frombufferLength	Length of from buffer, used for boundary check.
- * @param delimiters		String of delimiters to search for.
- * @param noDelimiters		Number of delimiters to search for.
- * @return					pointer to first occurence. Null if fail.
- */
-uint8_t *Param_GetStringUntil(uint8_t *toBuffer, uint32_t toBufferLength, uint8_t *fromBuffer, uint32_t frombufferLength
-    , const char* delimiters, uint32_t noDelimiters);
-
-/**
- * @brief Get the value string of the module described in moduleBuffer.
- *
- * Takes a module string in moduleBuffer and searches for the value
- * string in that buffer. The string will be copied to vauleBuffer.
- *
- * Example:
- * moduleBuffer = "foo<1>[22]"
- * Then the function will copy "22" to valueBuffer.
- *
- * @param valueBuffer			Buffer to write the value to as ascii.
- * @param valueBufferLength		Length of value buffer, used for boundary check.
- * @param moduleBuffer			Buffer containing the module string copied from.
- * @param moduleBufferLength	Length of module buffer, used for boundary check.
- * @return						Pointer to first element after end of value string. Null if fail.
- */
-uint8_t *Param_GetValueString(uint8_t *valueBuffer, uint32_t valueBufferLength, uint8_t *moduleBuffer, uint32_t moduleBufferLength);
-
-/**
- * @brief Get value type string.
- *
- * Takes a module string in moduleBuffer and searches for the value type
- * string in that buffer. The string will be copied to vauleTypeBuffer.
- *
- * Example:
- * moduleBuffer = "foo<1>[22]"
- * Then the function will copy "1" to valueTypeBuffer.
- *
- *
- * @param valueTypeBuffer			Buffer to write the value type to as ascii.
- * @param valueTypeBufferLength		Length of value type buffer, used for boundary check.
- * @param moduleBuffer				Buffer containing the module string copied from.
- * @param moduleBufferLength		Length of module buffer, used for boundary check.
- * @return							Pointer to first element after end of value type string. Null if fail.
- */
-uint8_t *Param_GetValueTypeString(uint8_t *valueTypeBuffer, uint32_t valueTypeBufferLength, uint8_t *moduleBuffer, uint32_t moduleBufferLength);
-
-/**
- * @brief Get module string.
- *
- * Get the module string from the path described in pathBuffer. Will not include
- * delimiters.
- *
- * @param moduleBuffer			Buffer to copy module string to.
- * @param moduleBufferLength	Length of module buffer, used for boundary check.
- * @param pathBuffer			Buffer containing the path to be handled.
- * @param PathBufferLength		Length of pathBuffer, used for boundary check.
- * @return						Pointer to first element after module string. Null if fail.
- */
-uint8_t *Param_GetModuleString(uint8_t *moduleBuffer, uint32_t moduleBufferLength, uint8_t *pathBuffer, uint32_t PathBufferLength);
-
-/**
- * @brief Get name string from module string.
- *
- * Get the name string from the module string in moduleBuffer. Name will be placed
- * at the beginning of nameBuffer.
- *
- * @param nameBuffer			Buffer to copy the name to.
- * @param nameBufferLength		Length of name buffer, used for boundary check.
- * @param moduleBuffer			Buffer containing the module string.
- * @param moduleBufferLength 	module buffer length, used for boundary check.
- * @return						Pointer to first element after name sting.
- */
-uint8_t *Param_GetNameString(uint8_t *nameBuffer, uint32_t nameBufferLength, uint8_t *moduleBuffer, uint32_t moduleBufferLength);
-
-/**
  * @brief Append full node string to buffer.
  *
  * Appends current node represented as a string to the end of the null terminated buffer.
@@ -302,7 +184,7 @@ param_obj_t * Param_FindNext(param_obj_t *current, uint8_t *moduleBuffer, uint32
 
 void Param_Init()
 {
-  mRoot = Param_CreateObj(12, NoType, readOnly, NULL, "QuadFC", NULL, NULL );
+  mRoot = Param_CreateObj(18, variable_type_NoType, readOnly, NULL, "QuadFC", NULL, NULL );
 }
 
 param_obj_t *Param_GetRoot()
@@ -328,7 +210,7 @@ param_obj_t *Param_CreateObj(uint8_t num_children, Log_variable_type_t type,
     param_obj_t *parent, SemaphoreHandle_t xMutex)
 {
 
-  if((NoType != type) && !value)
+  if((variable_type_NoType != type) && !value)
   {
     return NULL;
   }
@@ -341,7 +223,7 @@ param_obj_t *Param_CreateObj(uint8_t num_children, Log_variable_type_t type,
   log_obj->type = type;
   log_obj->access = access;
   log_obj->value = value;
-  log_obj->group_name = pvPortMalloc( sizeof( unsigned char ) * MAX_LOG_NAME_LENGTH );
+  log_obj->group_name = pvPortMalloc( sizeof( unsigned char ) * MAX_PARAM_NAME_LENGTH );
   log_obj->parent = parent;
   log_obj->registered_children = 0;
   log_obj->xMutex = xMutex;
@@ -363,8 +245,8 @@ param_obj_t *Param_CreateObj(uint8_t num_children, Log_variable_type_t type,
   }
 
   //Set name.
-  strncpy( (char *) log_obj->group_name , obj_name, (unsigned short) MAX_LOG_NAME_LENGTH - 1);
-  log_obj->group_name[MAX_LOG_NAME_LENGTH] = '\0';
+  strncpy( (char *) log_obj->group_name , obj_name, (unsigned short) MAX_PARAM_NAME_LENGTH - 1);
+  log_obj->group_name[MAX_PARAM_NAME_LENGTH] = '\0';
 
   if(parent)
   {
@@ -453,44 +335,44 @@ uint8_t Param_GetNodeValue(param_obj_t *current, uint8_t *buffer, uint32_t buffe
   uint8_t pTemp[11];
   switch (current->type)
   {
-  case NoType:
+  case variable_type_NoType:
     break;
-  case uint8_variable_type:
+  case variable_type_uint8:
     snprintf((char *) pTemp, MAX_DIGITS_INT32, "%hu", (*(uint8_t*)current->value));
     strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_DIGITS_INT32);
     result = 1;
     break;
-  case uint16_variable_type:
+  case variable_type_uint16:
     snprintf((char *) pTemp, MAX_DIGITS_INT32, "%u", (*(uint16_t*)current->value));
     strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_DIGITS_INT32);
     result = 1;
     break;
-  case uint32_variable_type:
+  case variable_type_uint32:
     snprintf((char *) pTemp, MAX_DIGITS_INT32, "%lu", (*(uint32_t*)current->value));
     strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_DIGITS_INT32);
     result = 1;
     break;
-  case int8_variable_type:
+  case variable_type_int8:
     snprintf((char *) pTemp, MAX_DIGITS_INT32, "%hi", (*(int8_t*)current->value));
     strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_DIGITS_INT32);
     result = 1;
     break;
-  case int16_variable_type:
+  case variable_type_int16:
     snprintf((char *) pTemp, MAX_DIGITS_INT32, "%i", (*(int16_t*)current->value));
     strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_DIGITS_INT32);
     result = 1;
     break;
-  case int32_variable_type:
+  case variable_type_int32:
     snprintf((char *) pTemp, MAX_DIGITS_INT32, "%li", (*(int32_t*)current->value));
     strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_DIGITS_INT32);
     result = 1;
     break;
-  case fp_16_16_variable_type:
+  case variable_type_fp_16_16:
     snprintf((char *) pTemp, MAX_DIGITS_INT32, "%li", (*(int32_t*)current->value));
     strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_DIGITS_INT32);
     result = 1;
     break;
-  case last_variable_type:
+  case variable_type_last:
     break;
   default:
     break;
@@ -529,58 +411,58 @@ uint8_t Param_SettNodeValue(param_obj_t *current, uint8_t *buffer)
 
   switch (current->type)
   {
-  case NoType:
+  case variable_type_NoType:
     break;
-  case uint8_variable_type:
+  case variable_type_uint8:
     if(value < UINT8_MAX)
     {
       *((uint8_t*)current->value) = (uint8_t)value;
       result = 1;
     }
     break;
-  case uint16_variable_type:
+  case variable_type_uint16:
     if(value < UINT16_MAX)
     {
       *((uint16_t*)current->value) = (uint16_t)value;
       result = 1;
     }
     break;
-  case uint32_variable_type:
+  case variable_type_uint32:
     if(value < UINT32_MAX)
     {
       *((uint32_t*)current->value) = (uint32_t)value;
       result = 1;
     }
     break;
-  case int8_variable_type:
+  case variable_type_int8:
     if(value < INT8_MAX)
     {
       *((int8_t*)current->value) = (int8_t)value;
       result = 1;
     }
     break;
-  case int16_variable_type:
+  case variable_type_int16:
     if(value < INT16_MAX)
     {
       *((int16_t*)current->value) = (int16_t)value;
       result = 1;
     }
     break;
-  case int32_variable_type:
+  case variable_type_int32:
     if(value < INT32_MAX)
     {
       *((int32_t*)current->value) = (int32_t)value;
       result = 1;
     }
     break;
-  case fp_16_16_variable_type:
+  case variable_type_fp_16_16:
     if(value < INT32_MAX)
     {
       *((int32_t*)current->value) = (int32_t)value;
       result = 1;
     }
     break;
-  case last_variable_type:
+  case variable_type_last:
     break;
   default:
     break;
@@ -591,132 +473,6 @@ uint8_t Param_SettNodeValue(param_obj_t *current, uint8_t *buffer)
   }
   return result;
 }
-
-uint8_t *Param_GetStringBetween(uint8_t *StringBuffer, uint32_t stringBufferLength
-    , uint8_t *buffer, uint32_t buffer_length
-    , const char start, const char end)
-{
-  StringBuffer[0] = '\0';
-  if(!StringBuffer || !buffer || !start || !end)
-  {
-    return NULL;
-  }
-  char * matchFront;
-  char * matchBack;
-  //Find first occurence of "/" in buffer.
-  matchFront = strchr ((char *)buffer, (int)start);
-  matchBack = strchr ((char *)buffer, (int)end);
-
-
-  //Make sure it is a valid match, and that the match fits in the provided buffer.
-  if(!matchFront
-      || !matchBack
-      || (matchFront > matchBack )
-      || (((matchBack - matchFront +1) ) > stringBufferLength))
-  {
-    return NULL;
-  }
-
-  uint32_t length = (uint32_t)(matchBack - matchFront);
-
-  // Copy the value string (everything between "matchFront" and "matchBack") to value buffer,
-  // discarding the indicators. Make sure that we only copy valid data, and that the data will fit
-  // in target.
-  if(length > stringBufferLength || (length > (buffer_length - ((char *)buffer - matchFront))))
-  {
-    return NULL;
-  }
-  strncpy ((char *)StringBuffer, (matchFront+1), length-1);
-  StringBuffer[ length - 1] = '\0';
-
-  // Return pointer to character after match.
-  return (uint8_t *)(matchBack + 1);
-}
-
-uint8_t *Param_GetStringUntil(uint8_t *toBuffer, uint32_t toBufferLength, uint8_t *fromBuffer, uint32_t frombufferLength
-    , const char* delimiters, uint32_t noDelimiters)
-{
-  toBuffer[0]= '\0';
-  if(!toBuffer || !fromBuffer || !delimiters)
-  {
-    return NULL;
-  }
-  char * firstOccurence = NULL;
-
-  //Find first occurence of the delimiters.
-  for (uint32_t i = 0; i < noDelimiters; i++)
-  {
-    char * current = strchr ((char *)fromBuffer, (int)delimiters[i]);
-    if(!firstOccurence)
-    {
-      firstOccurence = current;
-    }
-    else if (current && (current < firstOccurence))
-    {
-      firstOccurence = current;
-    }
-  }
-
-  if(!firstOccurence || firstOccurence < (char *)fromBuffer || (firstOccurence > (char *)(fromBuffer + frombufferLength)))
-  {
-    return NULL;
-  }
-  uint32_t length = (uint32_t)(firstOccurence - (char *)fromBuffer);
-  // target has to be long enough for text + null terminaing.
-  if((( length + 1 ) > toBufferLength))
-  {
-    return NULL;
-  }
-  //Copy length number of bytes to target, omitting the matched char.
-  strncpy ((char *)toBuffer, (char *)fromBuffer, length);
-  toBuffer[ length ] = '\0';
-  // Return pointer to character after match.
-  return (uint8_t *)(firstOccurence);
-}
-
-uint8_t *Param_GetValueString(uint8_t *valueBuffer, uint32_t valueBufferLength, uint8_t *moduleBuffer, uint32_t moduleBufferLength)
-{
-  return Param_GetStringBetween(valueBuffer, valueBufferLength, moduleBuffer, moduleBufferLength, '[', ']');
-}
-
-uint8_t *Param_GetValueTypeString(uint8_t *valueTypeBuffer, uint32_t valueTypeBufferLength, uint8_t *moduleBuffer, uint32_t moduleBufferLength)
-{
-  return Param_GetStringBetween(valueTypeBuffer, valueTypeBufferLength, moduleBuffer, moduleBufferLength, '<', '>');
-}
-
-uint8_t *Param_GetModuleString(uint8_t *moduleBuffer, uint32_t moduleBufferLength, uint8_t *pathBuffer, uint32_t PathBufferLength)
-{
-  const char delimiters[]={"/\0"};
-  uint8_t * after_string = Param_GetStringUntil(moduleBuffer, moduleBufferLength, pathBuffer, PathBufferLength, delimiters, 1);
-  if(!after_string)
-  {
-    return NULL;
-  }
-  return (after_string + 1);
-}
-
-uint8_t *Param_GetNameString(uint8_t *nameBuffer, uint32_t nameBufferLength, uint8_t *moduleBuffer, uint32_t moduleBufferLength)
-{
-  const char delimiters[]={'<','[','/','\0'};
-  uint8_t * after_string = Param_GetStringUntil(nameBuffer, nameBufferLength, moduleBuffer, moduleBufferLength, delimiters, 3);
-  if(!after_string)
-  {
-    // Found no match for delimiters in module string, module string contains only name.
-    uint32_t length = 0;
-    // Make sure that the string in moduleBuffer can fit in nameBuffer.Do not copy more than what is left in moduleBuffer.
-    uint32_t stringLength = (uint32_t)strlen((char *)moduleBuffer);
-    length = ((nameBufferLength < moduleBufferLength) ? nameBufferLength : moduleBufferLength);
-    if(stringLength+1 > length)
-    {
-      return NULL;
-    }
-
-    strncpy ((char *)nameBuffer, (char *)moduleBuffer, stringLength+1);
-    return (nameBuffer + stringLength);
-  }
-  return (after_string);
-}
-
 uint8_t Param_AppendNodeString(param_obj_t *current, uint8_t *buffer, uint32_t buffer_length)
 {
   if(!buffer || !current)
@@ -726,19 +482,19 @@ uint8_t Param_AppendNodeString(param_obj_t *current, uint8_t *buffer, uint32_t b
   uint32_t buf_index = (uint32_t)strlen( (const char *)buffer);
 
   //ensure that the name will fit in current buffer.
-  if((buf_index + MAX_NODE_LENGTH) > buffer_length)
+  if((buf_index + MAX_PARAM_NODE_LENGTH) > buffer_length)
   {
     return 0;
   }
   //append group name and update buf_index.
-  strncat( (char *) buffer , (const char *) current->group_name, (unsigned short) MAX_LOG_NAME_LENGTH);
+  strncat( (char *) buffer , (const char *) current->group_name, (unsigned short) MAX_PARAM_NAME_LENGTH);
   // append variabletype "<y>" and value "[xxx]"
   strncat( (char *) buffer, (const char *) "<", (unsigned short) 1);
   uint8_t pTemp[MAX_VALUE_TYPE_LENGTH];
   snprintf((char *) pTemp, MAX_VALUE_TYPE_LENGTH, "%lu",(uint32_t)current->type);
   strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_VALUE_TYPE_LENGTH);
   strncat( (char *) buffer, (const char *) ">", (unsigned short) 1);
-  if(NoType != current->type)
+  if(variable_type_NoType != current->type)
   {
     strncat( (char *) buffer, (const char *) "[", (unsigned short) 1);
     if(!Param_GetNodeValue(current, buffer, buffer_length))
@@ -782,7 +538,7 @@ uint8_t Param_AppendPathToHere(param_obj_t *current, uint8_t *buffer, uint32_t b
 
   //Ensure that the parent strings will fit in the buffer.
   uint32_t buf_index = (uint32_t)strlen( (const char *)buffer);
-  if((buf_index + ((MAX_NODE_LENGTH + 1) * parentIdx) ) > buffer_length)
+  if((buf_index + ((MAX_PARAM_NODE_LENGTH + 1) * parentIdx) ) > buffer_length)
   {
     return 0;
   }
@@ -827,7 +583,7 @@ uint8_t Param_AppendDumpFromHere(param_obj_t *current, uint8_t *buffer, uint32_t
   //ensure that the name will fit in current buffer.
 
   uint32_t buf_index = (uint32_t)strlen( (const char *)buffer);
-  if((buf_index + MAX_NODE_LENGTH) > buffer_length)
+  if((buf_index + MAX_PARAM_NODE_LENGTH) > buffer_length)
   {
     return 0;
   }
@@ -895,7 +651,7 @@ uint8_t Param_UpdateCurrent(param_obj_t *current, uint8_t *moduleBuffer, uint32_
   {
     return 0;
   }
-  uint8_t bufferName[MAX_LOG_NAME_LENGTH+1];
+  uint8_t bufferName[MAX_PARAM_NAME_LENGTH+1];
   uint8_t bufferValueType[MAX_VALUE_TYPE_LENGTH+1];
   uint8_t bufferValue[MAX_DIGITS_INT32+1];
 
@@ -903,17 +659,17 @@ uint8_t Param_UpdateCurrent(param_obj_t *current, uint8_t *moduleBuffer, uint32_
   bufferValueType[0] = '\0';
   bufferValue[0] = '\0';
   // Make sure the string is null terminated.
-  bufferName[MAX_LOG_NAME_LENGTH] = '\0';
+  bufferName[MAX_PARAM_NAME_LENGTH] = '\0';
   bufferValueType[MAX_VALUE_TYPE_LENGTH] = '\0';
   bufferValue[MAX_DIGITS_INT32] = '\0';
 
-  if(!Param_GetNameString(bufferName, MAX_LOG_NAME_LENGTH, moduleBuffer, moduleBuffer_length))
+  if(!FcString_GetNameString(bufferName, MAX_PARAM_NAME_LENGTH, moduleBuffer, moduleBuffer_length))
   {
     return 0;
   }
 
-  Param_GetValueTypeString(bufferValueType, MAX_VALUE_TYPE_LENGTH, moduleBuffer, moduleBuffer_length);
-  Param_GetValueString(bufferValue, MAX_DIGITS_INT32, moduleBuffer, moduleBuffer_length);
+  FcString_GetValueTypeString(bufferValueType, MAX_VALUE_TYPE_LENGTH, moduleBuffer, moduleBuffer_length);
+  FcString_GetValueString(bufferValue, MAX_DIGITS_INT32, moduleBuffer, moduleBuffer_length);
   //Make sure it is the right node, parent notation is ok.
   if(!Log_CompareName(current, bufferName) && (strcmp("..", (char *)bufferName)))
   {
@@ -939,12 +695,12 @@ param_obj_t * Param_FindNext(param_obj_t *current, uint8_t *moduleBuffer, uint32
   {
     return NULL;
   }
-  uint8_t bufferName[MAX_LOG_NAME_LENGTH];
+  uint8_t bufferName[MAX_PARAM_NAME_LENGTH];
   bufferName[0] = '\0';
-  bufferName[MAX_LOG_NAME_LENGTH -1] = '\0';
+  bufferName[MAX_PARAM_NAME_LENGTH -1] = '\0';
 
   //The buffer has to contain a valid name.
-  if(!Param_GetNameString(bufferName, MAX_LOG_NAME_LENGTH , moduleBuffer, moduleBufferLength))
+  if(!FcString_GetNameString(bufferName, MAX_PARAM_NAME_LENGTH , moduleBuffer, moduleBufferLength))
   {
     return NULL;
   }
@@ -979,12 +735,12 @@ uint8_t Param_SetFromRoot(param_obj_t *current, uint8_t *Buffer, uint32_t Buffer
   }
   uint8_t * buffPtr = (Buffer + 1);
   uint32_t buffPtrLength = (uint32_t)(BufferLength - (buffPtr - Buffer));
-  uint8_t bufferModule[MAX_NODE_LENGTH];
+  uint8_t bufferModule[MAX_PARAM_NODE_LENGTH];
 
   param_obj_t * workingOnObj = current;
 
   // Update root if needed.
-  buffPtr = Param_GetModuleString(bufferModule, MAX_NODE_LENGTH, buffPtr, buffPtrLength);
+  buffPtr = FcString_GetModuleString(bufferModule, MAX_PARAM_NODE_LENGTH, buffPtr, buffPtrLength);
   if(!buffPtr)
   {
     return 0;
@@ -992,7 +748,7 @@ uint8_t Param_SetFromRoot(param_obj_t *current, uint8_t *Buffer, uint32_t Buffer
   buffPtrLength = (uint32_t)(BufferLength - (buffPtr - Buffer));
 
   // Update the module.
-  if(!Param_UpdateCurrent(current, bufferModule, MAX_NODE_LENGTH))
+  if(!Param_UpdateCurrent(current, bufferModule, MAX_PARAM_NODE_LENGTH))
   {
     return 0;
   }
@@ -1000,7 +756,7 @@ uint8_t Param_SetFromRoot(param_obj_t *current, uint8_t *Buffer, uint32_t Buffer
   while(buffPtrLength > 1)
   {
     // Get module string of next module to update.
-    buffPtr = Param_GetModuleString(bufferModule, MAX_NODE_LENGTH, buffPtr, buffPtrLength);
+    buffPtr = FcString_GetModuleString(bufferModule, MAX_PARAM_NODE_LENGTH, buffPtr, buffPtrLength);
     if(!buffPtr)
     {
       return 0;
@@ -1016,13 +772,13 @@ uint8_t Param_SetFromRoot(param_obj_t *current, uint8_t *Buffer, uint32_t Buffer
     buffPtrLength = (uint32_t)(BufferLength - (buffPtr - Buffer));
 
     // Find the module.
-    workingOnObj = Param_FindNext(workingOnObj, bufferModule, MAX_NODE_LENGTH);
+    workingOnObj = Param_FindNext(workingOnObj, bufferModule, MAX_PARAM_NODE_LENGTH);
     if(!workingOnObj)
     {
       return 0;
     }
     // Update the module.
-    if(!Param_UpdateCurrent(workingOnObj, bufferModule, MAX_NODE_LENGTH))
+    if(!Param_UpdateCurrent(workingOnObj, bufferModule, MAX_PARAM_NODE_LENGTH))
     {
       return 0;
     }

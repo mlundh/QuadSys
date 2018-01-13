@@ -35,7 +35,7 @@
 #include <gpio.h>
 
 
-#define MAX_NR_TEST_FUNCTIONS (16)
+#define MAX_NR_TEST_FUNCTIONS (64)
 #define MAX_NR_INTERNALS (16)
 #define REPORT_SIZE (0x4000)
 #define TC_Name_LENGTH (16)
@@ -64,7 +64,7 @@ void TestFW_CreateMainTestTask(TestFW_mainTestFunction_t mainFcn)
   portBASE_TYPE create_result;
   create_result = xTaskCreate( mainFcn,             /* The function that implements the task.  */
       (const char *const) "TestTask" ,              /* The name of the task. This is not used by the kernel, only aids in debugging*/
-      500,                                          /* The stack size for the task*/
+      700,                                          /* The stack size for the task*/
       NULL,                                         /* pass params to task.*/
       configMAX_PRIORITIES-1,                       /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
       NULL );                                       /* Handle to the task. Not used here and therefore NULL*/

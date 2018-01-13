@@ -31,7 +31,6 @@
 struct eventCircBuffer
 {
   eventData_t     Buffer[BUFFER_SIZE];
-  uint8_t         eventBuferIndex;
   size_t          capacity;  // maximum number of items in the buffer
   size_t          count;     // number of items in the buffer
   uint8_t         head;       // pointer to head

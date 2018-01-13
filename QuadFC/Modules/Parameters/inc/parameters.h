@@ -64,12 +64,12 @@
 /**
  * Definitions used by the module.
  */
-#define MAX_LOG_NAME_LENGTH (9) // 8 bytes for name, 1 for null.
+#define MAX_PARAM_NAME_LENGTH (9) // 8 bytes for name, 1 for null.
 #define MAX_EXTRA (5)
 #define MAX_DIGITS_INT32 (11)
 #define MAX_VALUE_TYPE_LENGTH (2)
 #define MAX_DEPTH (8)
-#define MAX_NODE_LENGTH (MAX_DIGITS_INT32 + MAX_EXTRA + MAX_LOG_NAME_LENGTH + MAX_VALUE_TYPE_LENGTH)
+#define MAX_PARAM_NODE_LENGTH (MAX_DIGITS_INT32 + MAX_EXTRA + MAX_PARAM_NAME_LENGTH + MAX_VALUE_TYPE_LENGTH)
 
 
 /**
@@ -80,15 +80,15 @@
  */
 typedef enum variable_type
 {
-    NoType               =            0,//!< NoType
-    uint8_variable_type  =            1,//!< uint8_variable_type
-    uint16_variable_type =            2,//!< uint16_variable_type
-    uint32_variable_type =            3,//!< uint32_variable_type
-    int8_variable_type   =            4,//!< int8_variable_type
-    int16_variable_type  =            5,//!< int16_variable_type
-    int32_variable_type  =            6,//!< int32_variable_type
-    fp_16_16_variable_type  =         7,//!< fp_16_16_variable_type
-    last_variable_type  =             8,//!< last_variable_type
+    variable_type_NoType =            0,//!< variable_type_NoType
+    variable_type_uint8  =            1,//!< uint8_variable_type
+    variable_type_uint16 =            2,//!< uint16_variable_type
+    variable_type_uint32 =            3,//!< uint32_variable_type
+    variable_type_int8   =            4,//!< int8_variable_type
+    variable_type_int16  =            5,//!< int16_variable_type
+    variable_type_int32  =            6,//!< int32_variable_type
+    variable_type_fp_16_16  =         7,//!< fp_16_16_variable_type
+    variable_type_last  =             8,//!< last_variable_type
 }Log_variable_type_t;
 
 typedef enum variable_access

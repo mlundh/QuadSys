@@ -28,6 +28,7 @@
 //Include testers
 #include "Test/TestFW/test_framework.h"
 #include "Test/Math/math_tester.h"
+#include "Test/Utilities/utilities_tester.h"
 
 /**
  * @file Top used for regression testing. This top does not include any
@@ -54,6 +55,7 @@ int main( void )
   TestFw_t* testFW = TestFW_Create("Suite1");
   /**************Add test module instantiation here***************/
   MathTest_GetTCs(testFW);
+  Utilities_GetTCs(testFW);
   /***************************************************************/
 
   uint8_t result = TestFW_ExecuteTests(testFW);

@@ -34,7 +34,10 @@
 #include "Test/TestFW/test_framework.h"
 #include "Test/SignalProcessing/signal_processing_tester.h"
 #include "Test/EventHandler/event_handler_tester.h"
+#include "Test/Log/log_tester.h"
+#include "Test/Log/logEventTester.h"
 #include "HMI/inc/led_control_task.h"
+#include "HAL/QuadFC/QuadFC_Memory.h"
 
 /**
  * @file Top used for regression testing. This top uses freeRTOS and
@@ -66,7 +69,6 @@ int main( void )
   /* Prepare the hardware to run QuadFC. */
   prvSetupHardware();
   TestFW_CreateMainTestTask(mainTester);
-  //Led_CreateLedControlTask();
   /* Start the RTOS scheduler. */
   vTaskStartScheduler();
   for ( ;; )
@@ -77,18 +79,21 @@ int main( void )
 
 void mainTester(void *pvParameters)
 {
-  TestFw_t* testFW = TestFW_Create("Suite1");
+  TestFw_t* testFW = TestFW_Create("Sig & event");
+  //Mem_Init();
+
   /**************Add test module instantiation here***************/
   SigProsses_GetTCs(testFW);
   EventHandler_GetTCs(testFW);
-
-
+  Log_GetTCs(testFW);
+  LogEv_GetTCs(testFW);
   /***************************************************************/
 
   uint8_t result = TestFW_ExecuteTests(testFW);
   uint32_t heartbeat_counter = 0;
 
   uint32_t pin = (result ? PIN_31_GPIO : PIN_41_GPIO);
+  taskENTER_CRITICAL();
 
   while ( 1 )
   {
@@ -99,6 +104,8 @@ void mainTester(void *pvParameters)
       heartbeat_counter = 0;
     }
   }
+  taskEXIT_CRITICAL();
+
 }
 
 static void prvSetupHardware( void )

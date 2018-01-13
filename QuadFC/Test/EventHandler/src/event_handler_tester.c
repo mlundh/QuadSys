@@ -315,9 +315,9 @@ uint8_t EventHandler_createTestTasks(eventTester_t* obj)
   taskParam1->evHandler->subscriptions |= (1 << eNewState) | (1 << eNewCtrlSignal);
   taskParam1->responseQueue = obj->responseQueue;
   obj->evHandler1 = taskParam1->evHandler;
-  Event_RegisterCallback(taskParam1->evHandler, eNewState ,stateCb);
-  Event_RegisterCallback(taskParam1->evHandler, eNewCtrlSignal ,ctrlCb);
-  Event_RegisterCallback(taskParam1->evHandler, eNewSetpoint ,setpointCb);
+  Event_RegisterCallback(taskParam1->evHandler, eNewState ,stateCb, taskParam1);
+  Event_RegisterCallback(taskParam1->evHandler, eNewCtrlSignal ,ctrlCb, taskParam1);
+  Event_RegisterCallback(taskParam1->evHandler, eNewSetpoint ,setpointCb, taskParam1);
   portBASE_TYPE create_result1 = xTaskCreate( event_test_task,   /* The function that implements the task.  */
       (const char *const) "Test1",                  /* The name of the task. This is not used by the kernel, only aids in debugging*/
       100,                                          /* The stack size for the task*/
@@ -331,9 +331,9 @@ uint8_t EventHandler_createTestTasks(eventTester_t* obj)
   taskParam2->evHandler->subscriptions |= (1 << eNewState);
   taskParam2->responseQueue = obj->responseQueue;
   obj->evHandler2 = taskParam2->evHandler;
-  Event_RegisterCallback(taskParam2->evHandler, eNewState ,stateCb);
-  Event_RegisterCallback(taskParam2->evHandler, eNewCtrlSignal ,ctrlCb);
-  Event_RegisterCallback(taskParam2->evHandler, eNewSetpoint ,setpointCb);
+  Event_RegisterCallback(taskParam2->evHandler, eNewState ,stateCb, taskParam2);
+  Event_RegisterCallback(taskParam2->evHandler, eNewCtrlSignal ,ctrlCb, taskParam2);
+  Event_RegisterCallback(taskParam2->evHandler, eNewSetpoint ,setpointCb, taskParam2);
   portBASE_TYPE create_result2 = xTaskCreate( event_test_task,   /* The function that implements the task.  */
       (const char *const) "Test2",                  /* The name of the task. This is not used by the kernel, only aids in debugging*/
       100,                                          /* The stack size for the task*/
@@ -347,12 +347,12 @@ uint8_t EventHandler_createTestTasks(eventTester_t* obj)
   taskParam3->evHandler->subscriptions |= ((1 << eNewSetpoint) | (1 << eTestEvent1) | (1 << eTestEvent2) | ( 1<< eFcFault));
   taskParam3->responseQueue = obj->responseQueue;
   obj->evHandler3 = taskParam3->evHandler;
-  Event_RegisterCallback(taskParam3->evHandler, eNewState ,stateCb);
-  Event_RegisterCallback(taskParam3->evHandler, eNewCtrlSignal ,ctrlCb);
-  Event_RegisterCallback(taskParam3->evHandler, eNewSetpoint ,setpointCb);
-  Event_RegisterCallback(taskParam3->evHandler, eTestEvent1 ,testeTestEvent1Cb);
-  Event_RegisterCallback(taskParam3->evHandler, eTestEvent2 ,testTestEvent2Cb);
-  Event_RegisterCallback(taskParam3->evHandler, eFcFault ,testeFcFaultCb);
+  Event_RegisterCallback(taskParam3->evHandler, eNewState ,stateCb, taskParam3);
+  Event_RegisterCallback(taskParam3->evHandler, eNewCtrlSignal ,ctrlCb, taskParam3);
+  Event_RegisterCallback(taskParam3->evHandler, eNewSetpoint ,setpointCb, taskParam3);
+  Event_RegisterCallback(taskParam3->evHandler, eTestEvent1 ,testeTestEvent1Cb, taskParam3);
+  Event_RegisterCallback(taskParam3->evHandler, eTestEvent2 ,testTestEvent2Cb, taskParam3);
+  Event_RegisterCallback(taskParam3->evHandler, eFcFault ,testeFcFaultCb, taskParam3);
 
   portBASE_TYPE create_result3 = xTaskCreate( event_test_task,   /* The function that implements the task.  */
       (const char *const) "Test3",                  /* The name of the task. This is not used by the kernel, only aids in debugging*/
@@ -367,7 +367,7 @@ uint8_t EventHandler_createTestTasks(eventTester_t* obj)
   stimuliTask->evHandler->subscriptions |= (1 << ePeripheralError);
   stimuliTask->responseQueue = obj->responseQueue;
   obj->evHandler4 = stimuliTask->evHandler;
-  Event_RegisterCallback(stimuliTask->evHandler, ePeripheralError ,stimuliPeripheralErrorCb);
+  Event_RegisterCallback(stimuliTask->evHandler, ePeripheralError ,stimuliPeripheralErrorCb, stimuliTask);
   portBASE_TYPE create_result4 = xTaskCreate( stimuli_test_task,   /* The function that implements the task.  */
       (const char *const) "Stimuli",                  /* The name of the task. This is not used by the kernel, only aids in debugging*/
       100,                                          /* The stack size for the task*/
@@ -393,14 +393,14 @@ void stimuli_test_task( void *pvParameters )
       // ERROR!
     }
   }
-  if(!Event_SendAndWaitForAll(param->evHandler, param, eInitialize))
+  if(!Event_SendAndWaitForAll(param->evHandler, eInitialize))
   {
     for(;;)
     {
     }
   }
 
-  if(!Event_SendAndWaitForAll(param->evHandler, param, eInitializeDone))
+  if(!Event_SendAndWaitForAll(param->evHandler, eInitializeDone))
   {
     for(;;)
     {
@@ -425,7 +425,7 @@ void stimuli_test_task( void *pvParameters )
   //
   for (int i = 0; i < 4; i++ )
   {
-    Event_Receive(param->evHandler, param, portMAX_DELAY);
+    Event_Receive(param->evHandler, portMAX_DELAY);
   }
 
   // Second part of test, testing the buffering of events.
@@ -442,7 +442,7 @@ void stimuli_test_task( void *pvParameters )
 
   for ( ;; )
   {
-    Event_Receive(param->evHandler, param, portMAX_DELAY);
+    Event_Receive(param->evHandler, portMAX_DELAY);
   }
 
 }
@@ -457,14 +457,14 @@ void event_test_task( void *pvParameters )
       // ERROR!
     }
   }
-  if(!Event_SendAndWaitForAll(param->evHandler, param, eInitialize))
+  if(!Event_SendAndWaitForAll(param->evHandler, eInitialize))
   {
     for(;;)
     {
     }
   }
 
-  if(!Event_SendAndWaitForAll(param->evHandler, param, eInitializeDone))
+  if(!Event_SendAndWaitForAll(param->evHandler, eInitializeDone))
   {
     for(;;)
     {
@@ -473,7 +473,7 @@ void event_test_task( void *pvParameters )
 
   for ( ;; )
   {
-    Event_Receive(param->evHandler, param, portMAX_DELAY);
+    Event_Receive(param->evHandler, portMAX_DELAY);
   }
 
 }
@@ -481,8 +481,8 @@ void event_test_task( void *pvParameters )
 // Task 3 will use this callback.
 uint8_t testeTestEvent1Cb(eventHandler_t* obj, void* taskParam, eventData_t* data)
 {
-  Event_WaitForEvent(obj, taskParam, eTestEvent2, 1, 1);
-  Event_HandleBufferedEvents(obj, taskParam);
+  Event_WaitForEvent(obj, eTestEvent2, 1, 1);
+  Event_HandleBufferedEvents(obj);
   return 1;
 }
 uint8_t testTestEvent2Cb(eventHandler_t* obj, void* taskParam, eventData_t* data)

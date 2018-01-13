@@ -50,6 +50,9 @@
 #include "QuadFC/QuadFC_MotorControl.h"
 #include "Parameters/inc/parameters.h"
 #include "SetpointHandler/inc/setpoint_handler.h"
+#include "Log/inc/logHandler.h"
+#include "Log/inc/log.h"
+
 
 //TODO remove
 #include "Parameters/inc/parameters.h"
@@ -71,6 +74,7 @@ typedef struct mainTaskParams
   CtrlModeHandler_t * CtrlModeHandler;
   eventHandler_t* evHandler;
   TimerHandle_t xTimer;
+  LogHandler_t* logHandler;
 }MaintaskParams_t;
 
 void main_control_task( void *pvParameters );
@@ -105,12 +109,13 @@ void create_main_control_task(eventHandler_t* evHandler,  FlightModeHandler_t* f
   taskParam->CtrlModeHandler = CtrlModeHandler;
   taskParam->evHandler = evHandler;
   taskParam->xTimer = xTimerCreate("Tmain", SpTimeoutTimeMs / portTICK_PERIOD_MS, pdFALSE, ( void * ) taskParam, main_TimerCallback);
+  taskParam->logHandler = LogHandler_CreateObj(20,taskParam->evHandler,"LogSctr",0);
 
   /*Ensure that all mallocs returned valid pointers*/
    if (   !taskParam || !taskParam->ctrl || !taskParam->setpoint
        || !taskParam->state || !taskParam->control_signal
        || !taskParam->motorControl || !taskParam->flightModeHandler
-       || !taskParam->stateEst || !taskParam->setPointHandler)
+       || !taskParam->stateEst || !taskParam->setPointHandler || !taskParam->logHandler)
    {
      for ( ;; )
      {
@@ -161,7 +166,7 @@ void main_control_task( void *pvParameters )
     }
   }
 
-  if(!Event_SendAndWaitForAll(param->evHandler, param, eInitialize))
+  if(!Event_SendAndWaitForAll(param->evHandler, eInitialize))
    {
      for(;;)
      {
@@ -181,14 +186,24 @@ void main_control_task( void *pvParameters )
   TickType_t arming_counter = 0;
   uint32_t heartbeat_counter = 0;
 
-  //TODO remove
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite, &param->state->state_bf[pitch_bf], "pitch_bf", Param_GetRoot(), NULL);
-  Param_CreateObj(0, fp_16_16_variable_type, readWrite, &param->state->state_bf[roll_bf], "roll_bf", Param_GetRoot(), NULL);
+  /* Loggers for rate mode */
+  Log_t* logPitchRate = Log_CreateObj(0,variable_type_fp_16_16,  &param->state->state_bf[pitch_rate_bf],NULL, param->logHandler, "m_PR");
+  Log_t* logRollRate = Log_CreateObj(0,variable_type_fp_16_16, &param->state->state_bf[roll_rate_bf],NULL, param->logHandler, "m_RR");
+  Log_t* logYawRate = Log_CreateObj(0,variable_type_fp_16_16, &param->state->state_bf[yaw_rate_bf],NULL, param->logHandler, "m_YR");
 
+  Log_t* logUPitch = Log_CreateObj(0,variable_type_fp_16_16,  &param->control_signal[u_pitch],NULL, param->logHandler, "u_P");
+  Log_t* logURoll = Log_CreateObj(0,variable_type_fp_16_16, &param->control_signal[u_roll],NULL, param->logHandler, "u_R");
+  Log_t* logUYaw = Log_CreateObj(0,variable_type_fp_16_16, &param->control_signal[u_yaw],NULL, param->logHandler, "u_Y");
+  Log_t* logUThrust = Log_CreateObj(0,variable_type_fp_16_16, &param->control_signal[u_thrust],NULL, param->logHandler, "u_T");
+
+  Log_t* logSpPitchRate = Log_CreateObj(0,variable_type_fp_16_16,  &param->setpoint->state_bf[pitch_rate_bf],NULL, param->logHandler, "sp_PR");
+  Log_t* logSpRollRate = Log_CreateObj(0,variable_type_fp_16_16, &param->setpoint->state_bf[roll_rate_bf],NULL, param->logHandler, "sp_RR");
+  Log_t* logSpYawRate = Log_CreateObj(0,variable_type_fp_16_16, &param->setpoint->state_bf[yaw_rate_bf],NULL, param->logHandler, "sp_YE");
+  Log_t* logSpThrustRate = Log_CreateObj(0,variable_type_fp_16_16, &param->setpoint->state_bf[thrust_sp],NULL, param->logHandler, "sp_T");
 
   /*The main control loop*/
 
-  if(!Event_SendAndWaitForAll(param->evHandler, param, eInitializeDone))
+  if(!Event_SendAndWaitForAll(param->evHandler, eInitializeDone))
    {
      for(;;)
      {
@@ -297,6 +312,21 @@ void main_control_task( void *pvParameters )
       Ctrl_Execute(param->ctrl, param->state, param->setpoint, param->control_signal);
       Ctrl_Allocate(param->control_signal, param->motorControl->motorSetpoint);
       MotorCtrl_UpdateSetpoint( param->motorControl);
+
+      Log_Report(logPitchRate);
+      Log_Report(logRollRate);
+      Log_Report(logYawRate);
+
+      Log_Report(logUPitch);
+      Log_Report(logURoll);
+      Log_Report(logUYaw);
+      Log_Report(logUThrust);
+
+      Log_Report(logSpPitchRate);
+      Log_Report(logSpRollRate);
+      Log_Report(logSpYawRate);
+      Log_Report(logSpThrustRate);
+
       break;
     case fmode_disarming:
       /*---------------------------------------Disarming mode--------------------------
@@ -333,7 +363,7 @@ void main_control_task( void *pvParameters )
     }
 
     //Process incoming events.
-    while(Event_Receive(param->evHandler, param, 0) == 1)
+    while(Event_Receive(param->evHandler, 0) == 1)
     {}
 
     vTaskDelayUntil( &xLastWakeTime, CTRL_TIME );

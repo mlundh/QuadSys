@@ -26,6 +26,8 @@
 
 #include "stdint.h"
 
+uint8_t Mem_Init();
+
 /**
  * Read from memory.
  * @param addr          Address in memory to read from.

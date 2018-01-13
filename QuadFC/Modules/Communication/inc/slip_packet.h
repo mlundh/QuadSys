@@ -39,7 +39,6 @@ enum SLIP_Status
   SLIP_StatusNok = 0,
   SLIP_StatusOK = 1,
   SLIP_StatusCont = 2,
-  SLIP_StatusCrcError = 4,
 };
 typedef enum SLIP_Status SLIP_Status_t;
 

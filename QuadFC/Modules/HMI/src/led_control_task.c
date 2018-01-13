@@ -107,9 +107,9 @@ void Led_CreateLedControlTask( QueueHandle_t eventMaster )
     ledParams->ledState[i] = tmp;
   }
 
-  Event_RegisterCallback(ledParams->evHandler, eNewFlightMode    ,Led_HandleFlightMode);
-  Event_RegisterCallback(ledParams->evHandler, eNewCtrlMode      ,Led_HandleCtrltMode);
-  Event_RegisterCallback(ledParams->evHandler, ePeripheralError  ,Led_HandlePeripheralError);
+  Event_RegisterCallback(ledParams->evHandler, eNewFlightMode    ,Led_HandleFlightMode, ledParams);
+  Event_RegisterCallback(ledParams->evHandler, eNewCtrlMode      ,Led_HandleCtrltMode, ledParams);
+  Event_RegisterCallback(ledParams->evHandler, ePeripheralError  ,Led_HandlePeripheralError, ledParams);
 
   // Subscribe to the events that should cause led-state change.
   ledParams->evHandler->subscriptions |= (1 << eNewFlightMode) | (1 << eNewCtrlMode)
@@ -147,7 +147,7 @@ void Led_ControlTask( void *pvParameters )
     }
   }
 
-  if(!Event_SendAndWaitForAll(param->evHandler, param, eInitialize))
+  if(!Event_SendAndWaitForAll(param->evHandler, eInitialize))
   {
     for(;;)
     {
@@ -155,7 +155,7 @@ void Led_ControlTask( void *pvParameters )
   }
   // Do initializations here.
 
-  if(!Event_SendAndWaitForAll(param->evHandler, param, eInitializeDone))
+  if(!Event_SendAndWaitForAll(param->evHandler, eInitializeDone))
   {
     for(;;)
     {
@@ -167,7 +167,7 @@ void Led_ControlTask( void *pvParameters )
   for ( ;; )
   {
     vTaskDelayUntil( &xLastWakeTime, LED_TASK_DELAY );
-    while(Event_Receive(param->evHandler, param, 0) == 1)
+    while(Event_Receive(param->evHandler, 0) == 1)
     {}
     for(int i = 0; i < NR_LEDS; i++)
     {

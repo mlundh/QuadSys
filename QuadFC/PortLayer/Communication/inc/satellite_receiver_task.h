@@ -146,6 +146,7 @@ typedef struct Satellite
   CtrlModeHandler_t* CtrlModeHandler;
   SpHandler_t* setpointHandler;
   int32_t multiplier;
+  int32_t divisor;
   int32_t throMult;
   SemaphoreHandle_t xMutexParam;
   FMode_t current_state;
