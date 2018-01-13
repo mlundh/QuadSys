@@ -1,11 +1,10 @@
-/.vagrant
-/QuadFC/out
+QuadFC/out
 /*.d
 /*.o
 /*.elf
 /*.bin
-/QuadFC/*.cproject
-/QuadFC/*.project
-/QuadFC/.settings
+/*.cproject
+/*.project
+/*.settings
 /desktop.ini
 *~
