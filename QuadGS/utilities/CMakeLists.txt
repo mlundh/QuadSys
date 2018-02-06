@@ -1,0 +1,6 @@
+add_subdirectory(AppLog)
+add_subdirectory(BinaryStream)
+add_subdirectory(CommandTree)
+add_subdirectory(Messages)
+add_subdirectory(QGS_Module)
+add_subdirectory(Fifo)

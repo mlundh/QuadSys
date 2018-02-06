@@ -15,7 +15,7 @@ SET(WITH_VISION "TRUE" CACHE BOOL "Build with vision support.")
 project(QuadGS VERSION 0.1)
 
 # Set project properties
-set(CMAKE_CXX_STANDARD 11) # C++11...
+set(CMAKE_CXX_STANDARD 14) # C++14...
 set(CMAKE_CXX_STANDARD_REQUIRED ON) #...is required...
 set(CMAKE_CXX_EXTENSIONS OFF) #...without compiler extensions like gnu++11
 
@@ -64,14 +64,23 @@ if(WITH_VISION)
     find_package(ZED ${VERSION_REQ_ZED} REQUIRED)
     find_package(OpenCV ${VERSION_REQ_OCV} REQUIRED)
     find_package(CUDA ${VERSION_REQ_CUDA} REQUIRED)
-    
+    find_package(GLUT REQUIRED)
+    find_package(GLEW REQUIRED)
+    find_package(OpenGL REQUIRED)
+
     include_directories(SYSTEM ${CUDA_INCLUDE_DIRS})
     include_directories(SYSTEM ${OPENCV_INCLUDE_DIRS})
     include_directories(SYSTEM ${ZED_INCLUDE_DIRS})
-    
+    include_directories(${GLEW_INCLUDE_DIRS})
+    include_directories(${GLUT_INCLUDE_PATH})
+
     link_directories(${ZED_LIBRARY_DIR})
     link_directories(${OpenCV_LIBRARY_DIRS})
     link_directories(${CUDA_LIBRARY_DIRS})
+    link_directories(${GLEW_LIBRARY_DIRS})
+    link_directories(${GLUT_LIBRARY_DIRS})
+    link_directories(${OpenGL_LIBRARY_DIRS})
+
     add_definitions(-DWITH_VISION)
 endif()
 
@@ -118,23 +127,15 @@ IF("${isSystemDir}" STREQUAL "-1")
    SET(CMAKE_INSTALL_RPATH "../lib")
 ENDIF("${isSystemDir}" STREQUAL "-1")
 
-# Add includes to the three main components.
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/QGS_Core)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/QGS_IO)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/QGS_UI)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/QGS_Tracker)
+
+include_directories(Interfaces)
 
 # Targets that we develop
 enable_testing()
-add_subdirectory(QGS_Core)
-add_subdirectory(QGS_IO)
-add_subdirectory(QGS_UI)
-
-if(WITH_VISION)
-    add_subdirectory(QGS_Tracker)
-endif()
-
+add_subdirectory(Core)
+add_subdirectory(Modules)
+add_subdirectory(utilities)
 add_subdirectory(top)
-add_subdirectory(test)
+
 
 

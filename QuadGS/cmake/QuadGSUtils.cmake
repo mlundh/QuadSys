@@ -44,8 +44,32 @@ function(qgs_make_shared_lib lib_name lib_files lib_deps)
 
 endfunction()
 
+# Function to build and install a header only library in QuadGS
+function(qgs_make_header_lib lib_name lib_deps)
+    # Define library. Only source files here!
+    project(${lib_name} VERSION 0.1 LANGUAGES CXX)
+         
+    add_library(${lib_name} INTERFACE)
+    
+    # Define headers for this library. PUBLIC headers are used for
+    # compiling the library, and will be added to consumers' build
+    # paths.
+    target_include_directories(${lib_name} INTERFACE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> )
+    
+    # If we have compiler requirements for this library, list them
+    # here
+    #target_compile_features(lib
+    #    PUBLIC cxx_auto_type
+    #    PRIVATE cxx_variadic_templates)
+    
+    # Depend on a library that we defined in the top-level file
+    target_link_libraries(${lib_name}
+        ${${lib_deps}})    
 
-# Function to build and install a shared library in QuadGS
+endfunction()
+
+# Function to build and install a mock shared library in QuadGS
 function(qgs_make_mock_shared_lib lib_name lib_files lib_deps)
     if(BUILD_TESTS)
 

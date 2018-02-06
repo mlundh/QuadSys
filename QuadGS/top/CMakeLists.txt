@@ -7,6 +7,9 @@ list(APPEND dep_gs ${Boost_LIBRARIES}
                     "readline"
                     "pthread")
 if(WITH_VISION)
-    list(APPEND dep_gs "ZedTracker")
+    list(APPEND dep_gs "ZedTracker"
+                       )
 endif()
 qgs_add_exe(QuadGS src_gs dep_gs)
+
+add_subdirectory(gs_cli/test)
