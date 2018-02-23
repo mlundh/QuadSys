@@ -27,7 +27,7 @@
 namespace QuadGS {
 
 QGS_ModuleFake::QGS_ModuleFake(std::string name)
-:QGS_MessageHandlerBase(name), QGS_ReactiveModule(name), mNrMsg(0),mReturnNxtMsg(false)
+:QGS_MessageHandlerBase(name), mNrMsg(0),mReturnNxtMsg(false)
 {
 }
 
@@ -45,7 +45,7 @@ int QGS_ModuleFake::getNrMsg()
 void QGS_ModuleFake::sendDummyMsg(messageTypes_t type)
 {
 	QGS_ModuleMsg::ptr msg = QGS_ModuleMsg::Create(type);
-	sendMsg(msg);
+	sendMsg(std::move(msg));
 }
 
 void QGS_ModuleFake::returnNxtMsg(bool flag)
@@ -68,14 +68,14 @@ void QGS_ModuleFake::process(QGS_ModuleMsg* message)
 	if(mReturnNxtMsg.load())
 	{
 		QGS_ModuleMsg::ptr ptr = QGS_ModuleMsg::Create(*message);
-		sendMsg(ptr);
+		sendMsg(std::move(ptr));
 		mReturnNxtMsg.store(false);
 	}
 }
 
 
 QGS_ThreadedModuleFake::QGS_ThreadedModuleFake(std::string name)
-:QGS_MessageHandlerBase(name), QGS_ThreadedModule(name), mNrMsg(0),mReturnNxtMsg(false)
+:QGS_MessageHandlerBase(name), mNrMsg(0),mReturnNxtMsg(false)
 {
 	setProcessingFcn(std::bind(&QGS_ThreadedModuleFake::module, this));
 	startProcessing();
@@ -96,7 +96,7 @@ int QGS_ThreadedModuleFake::getNrMsg()
 void QGS_ThreadedModuleFake::sendDummyMsg(messageTypes_t type)
 {
 	QGS_ModuleMsg::ptr msg = QGS_ModuleMsg::Create(type);
-	sendMsg(msg);
+	sendMsg(std::move(msg));
 }
 
 void QGS_ThreadedModuleFake::returnNxtMsg(bool flag)
@@ -119,7 +119,7 @@ void QGS_ThreadedModuleFake::process(QGS_ModuleMsg* message)
 	if(mReturnNxtMsg.load())
 	{
 		QGS_ModuleMsg::ptr ptr = QGS_ModuleMsg::Create(*message);
-		sendMsg(ptr);
+		sendMsg(std::move(ptr));
 		mReturnNxtMsg.store(false);
 	}
 }

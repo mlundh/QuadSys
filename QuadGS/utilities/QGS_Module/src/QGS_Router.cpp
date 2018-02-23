@@ -37,7 +37,7 @@ QGS_Router::QGS_Router(std::string name):QGS_MessageHandlerBase(name), mNrModule
 QGS_Router::~QGS_Router()
 {
 	QGS_ModuleMsg::ptr ptr  = QGS_ModuleMsg::Create(messageTypes_t::msgQuit);
-	mFifo.push(ptr); // send stop to own fifo.
+	mFifo.push(std::move(ptr)); // send stop to own fifo.
 
 	if(mThread.joinable())
 	{
@@ -62,7 +62,7 @@ bool QGS_Router::done()
 void QGS_Router::incomingPort(QGS_ModuleMsg::ptr message, int port)
 {
 	message->setOriginatingPort(port);
-	mFifo.push(message);
+	mFifo.push(std::move(message));
 }
 
 
@@ -75,7 +75,7 @@ void QGS_Router::sendMsg(QGS_ModuleMsg::ptr message)
 		int destPort = message->getDestinationPort();
 		if(destPort >= 0) // Did we get a destination?
 		{
-			internalSend(message, destPort);
+			internalSend(std::move(message), destPort);
 		}
 		else // Did not get a destination, send to all subscribers.
 		{
@@ -84,7 +84,7 @@ void QGS_Router::sendMsg(QGS_ModuleMsg::ptr message)
 			{
 				if(subsPort != originatingPort) // Do not return to sender
 				{
-					internalSend(message, subsPort);
+					internalSend(std::move(message), subsPort);
 				}
 			}
 		}

@@ -50,7 +50,7 @@ public:
 		}
 		else
 		{
-			mQueue.push(item);
+			mQueue.push(std::move(item));
 		}
 		}
 		mCv.notify_all();
@@ -65,6 +65,17 @@ public:
 			mCv.wait(lock);
 		}
 		return mQueue.front();
+	}
+
+	T& frontMove()
+	{
+		std::unique_lock<std::mutex> lock(mMutex);
+		while(mQueue.empty())
+		{
+			// release lock, wait and then reaquire it.
+			mCv.wait(lock);
+		}
+		return std::move(mQueue.front());
 	}
 
 	void pop()
@@ -87,7 +98,7 @@ public:
 			// release lock, wait and then reaquire it.
 			mCv.wait(lock);
 		}
-		T result = mQueue.front();
+		T result = std::move(mQueue.front());
 		mQueue.pop();
 		return std::move(result);
 	}

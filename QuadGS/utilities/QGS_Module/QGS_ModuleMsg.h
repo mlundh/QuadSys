@@ -28,7 +28,7 @@
 
 namespace QuadGS {
 class QGS_ModuleMsg;
-typedef std::function<void(std::shared_ptr<QGS_ModuleMsg>) > WriteFcn;
+typedef std::function<void(std::unique_ptr<QGS_ModuleMsg>) > WriteFcn;
 
 
 class QGS_ModuleMsg: public QGS_Msg
@@ -37,7 +37,7 @@ public:
 	friend BinaryOStream& operator<< (BinaryOStream& os, const QGS_ModuleMsg& pl);
 	friend BinaryIStream& operator>> (BinaryIStream& is, QGS_ModuleMsg& pl);
 
-	typedef std::shared_ptr<QGS_ModuleMsg> ptr;
+	typedef std::unique_ptr<QGS_ModuleMsg> ptr;
 
 	static ptr Create(messageTypes_t messageType);
 
@@ -89,7 +89,7 @@ public:
 	virtual ~QGS_ModuleSubMsg();
 
 	DISPATCH_FCN
-	typedef std::shared_ptr<QGS_ModuleSubMsg> ptr;
+	typedef std::unique_ptr<QGS_ModuleSubMsg> ptr;
 
 	friend BinaryOStream& operator<< (BinaryOStream& os, const QGS_ModuleSubMsg& pl);
 	friend BinaryIStream& operator>> (BinaryIStream& is, QGS_ModuleSubMsg& pl);

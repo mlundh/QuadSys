@@ -98,9 +98,9 @@ class QGS_Module: virtual public QGS_MessageHandlerBase
 {
 public:
     friend QGS_Router;
-	typedef std::function<void(std::shared_ptr<QGS_ModuleMsg>) > receivingFcn_t;
+	typedef std::function<void(std::unique_ptr<QGS_ModuleMsg>) > receivingFcn_t;
 
-	QGS_Module(std::string name);
+	QGS_Module();
 
 	virtual ~QGS_Module();
 
@@ -110,12 +110,6 @@ public:
 	 * @param router
 	 */
 	void bind(QGS_Router* router);
-
-	/**
-	 * Get the name of the module. This name will be included in all logs from the module.
-	 * @return
-	 */
-	std::string& getName();
 
 protected:
 
@@ -147,13 +141,13 @@ protected:
 	 * send a message.
 	 * @param message
 	 */
-	void sendMsg(std::shared_ptr<QGS_ModuleMsg> message);
+	void sendMsg(std::unique_ptr<QGS_ModuleMsg> message);
 
 	/**
 	 * Utility function used internally to handle incoming messages of type getCommands.
 	 * @return QGS_Msg shared pointer containing information of all commands.
 	 */
-	std::shared_ptr<QGS_ModuleMsg> getCommands();
+	std::unique_ptr<QGS_ModuleMsg> getCommands();
 
 	/**
 	 * Utility function used internally to handle incoming messages of type executeCommands.
@@ -173,7 +167,6 @@ protected:
 
 	WriteFcn mReceiveFcn;
     WriteFcn mSendFcn;
-    std::string mName;
     std::vector<QGS_UiCommand_> mCommands;
 };
 
@@ -183,13 +176,13 @@ class QGS_ReactiveModule: public QGS_Module
 public:
 	typedef std::function<void() > processingFcn;
 
-	QGS_ReactiveModule(std::string name);
+	QGS_ReactiveModule();
 
 	virtual ~QGS_ReactiveModule();
 
 private:
 
-	void ReceivingFcn(std::shared_ptr<QGS_ModuleMsg> message);
+	void ReceivingFcn(std::unique_ptr<QGS_ModuleMsg> message);
 };
 
 
@@ -206,7 +199,7 @@ class QGS_ThreadedModule: public QGS_Module
 public:
 	typedef std::function<void() > processingFcn;
 
-	QGS_ThreadedModule(std::string name);
+	QGS_ThreadedModule();
 
 	virtual ~QGS_ThreadedModule();
 
@@ -238,7 +231,7 @@ protected:
 
 private:
 
-	void ReceivingFcn(std::shared_ptr<QGS_ModuleMsg> message);
+	void ReceivingFcn(std::unique_ptr<QGS_ModuleMsg> message);
 
 	void runThread();
 

@@ -53,7 +53,7 @@ typedef enum messageTypes messageTypes_t; // TODO remove this. Should be derived
 class QGS_MessageHandlerBase
 {
 public:
-	QGS_MessageHandlerBase(std::string name):mLogger(name)
+	QGS_MessageHandlerBase(std::string name):mLogger(name), mName(name)
 	{
 
 	}
@@ -62,8 +62,14 @@ public:
 	{
 		mLogger.QuadLog( severity_level::warning ,"Received unhandled message. Install handler or remove subscription.");
 	}
+	std::string& getName()
+	{
+		return mName;
+	}
+
 protected:
 	AppLog mLogger;
+    std::string mName;
 	std::vector<messageTypes_t> subscriptions;
 };
 

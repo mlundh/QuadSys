@@ -28,8 +28,8 @@
 namespace QuadGS
 {
 
-QGS_Module::QGS_Module(std::string name)
-:QGS_MessageHandlerBase("moduleBase"), mSendFcn(NULL), mName(name)
+QGS_Module::QGS_Module()
+:QGS_MessageHandlerBase("moduleBase"), mSendFcn(NULL)
 {
 
 }
@@ -45,18 +45,11 @@ void QGS_Module::bind(QGS_Router* router)
 
 
 
-std::string& QGS_Module::getName()
-{
-	return mName;
-}
-
-
-
 void QGS_Module::subscribeMsg(messageTypes_t type)
 {
-	std::shared_ptr<QGS_ModuleSubMsg> msg = std::make_shared<QGS_ModuleSubMsg>(
+	std::unique_ptr <QGS_ModuleSubMsg> msg = std::make_unique<QGS_ModuleSubMsg>(
 			messageTypes_t::msgSubscription,type);
-	sendMsg(std::move(std::dynamic_pointer_cast<QGS_ModuleMsg>(std::move(msg))));
+	sendMsg(std::move(std::move(msg)));
 }
 
 void QGS_Module::setReceivingFcn(receivingFcn_t fcn)
@@ -79,7 +72,7 @@ WriteFcn QGS_Module::getReceivingFcn()
 	}
 }
 
-void QGS_Module::sendMsg(std::shared_ptr<QGS_ModuleMsg> message)
+void QGS_Module::sendMsg(std::unique_ptr<QGS_ModuleMsg> message)
 {
 	if(mSendFcn)
 	{
@@ -92,9 +85,9 @@ void QGS_Module::sendMsg(std::shared_ptr<QGS_ModuleMsg> message)
 	}
 }
 
-std::shared_ptr<QGS_ModuleMsg> QGS_Module::getCommands()
+std::unique_ptr<QGS_ModuleMsg> QGS_Module::getCommands()
 {
-	return std::shared_ptr<QGS_ModuleMsg>(); // TODO Commands message!
+	return std::unique_ptr<QGS_ModuleMsg>(); // TODO Commands message!
 }
 
 std::string QGS_Module::executeCommand(std::string command, std::string args)
@@ -114,8 +107,8 @@ void QGS_Module::setSendFunc(WriteFcn func)
 	}
 }
 
-QGS_ReactiveModule::QGS_ReactiveModule(std::string name)
-:QGS_MessageHandlerBase("reactiveModule"),QGS_Module("reactiveModule")
+QGS_ReactiveModule::QGS_ReactiveModule()
+:QGS_MessageHandlerBase("reactiveModule")
 {
 	setReceivingFcn(std::bind(&QGS_ReactiveModule::ReceivingFcn, this, std::placeholders::_1));
 }
@@ -126,14 +119,14 @@ QGS_ReactiveModule::~QGS_ReactiveModule()
 }
 
 
-void QGS_ReactiveModule::ReceivingFcn(std::shared_ptr<QGS_ModuleMsg> message)
+void QGS_ReactiveModule::ReceivingFcn(std::unique_ptr<QGS_ModuleMsg> message)
 {
 	message->dispatch(this);
 }
 
 
-QGS_ThreadedModule::QGS_ThreadedModule(std::string name)
-:QGS_MessageHandlerBase("threadedModule"),QGS_Module("threadedModule"), mStop(false)
+QGS_ThreadedModule::QGS_ThreadedModule()
+:QGS_MessageHandlerBase("threadedModule"), mStop(false)
 {
 	setReceivingFcn(std::bind(&QGS_ThreadedModule::ReceivingFcn, this, std::placeholders::_1));
 }
@@ -194,7 +187,7 @@ void QGS_ThreadedModule::handleMessages(bool blocking)
 		msg->dispatch(this);
 	}
 }
-void QGS_ThreadedModule::ReceivingFcn(std::shared_ptr<QGS_ModuleMsg> message)
+void QGS_ThreadedModule::ReceivingFcn(std::unique_ptr<QGS_ModuleMsg> message)
 {
 	mFifo.push(std::move(message));
 }
