@@ -12,43 +12,31 @@ Ground station to configure and log data from QuadFC. A serial connection should
 Quit the program by typing "quit" and press enter. 
 
 ### Dependencies
-
-##### Boost libs:
-
-  - boost_thread
-  - boost_program_options
-  - boost_system
-  - boost_log
-  - boost_log_setup
   
 Other:
-
+ - boost
  - readline
  - gtest (automatically downloaded by cmake)
+ - ZED sdk (optional, required if WITH_VISION=true)
+ - openCV (optional, required if WITH_VISION=true)
   
-##### Should work on:
-Mac and Linux (tested on Ubuntu 16.04 and OS X 10.10.3)
+##### tested on:
+Linux (tested on Ubuntu 16.04 )
 
 ### Other
-- Build and install the boost libs acording to the boost dockumentation at http://www.boost.org . Make sure to build for dynamic linkage. 
-
 - Set the following env variables to build: 
 
 ``` 
 BOOST_ROOT = path_to_boost_root_dir
 ``` 
-
-Mac: 
-Install readline lib using homebrew. Force linkage for compilaion.
-
 Linux:
-Readline should be installed, but you might need the dev version of the libs. 
+Install libreadline-dev. 
 
 Build: 
 ```
 mkdir build
 cd build
-cmake ..
+cmake -DWITH_VISION=[true/false] .. 
 make
 ```
 
