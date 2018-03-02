@@ -14,9 +14,6 @@ namespace QuadGS {
 class QGS_LogMsg: public QuadGS::QGS_Msg {
 public:
     typedef std::shared_ptr<QGS_LogMsg> ptr;
-    friend BinaryOStream& operator<< (BinaryOStream& os, const QGS_LogMsg& pl);
-    friend BinaryIStream& operator>> (BinaryIStream& is, QGS_LogMsg& pl);
-
 
     /**
      * Create from a uint8_t array.

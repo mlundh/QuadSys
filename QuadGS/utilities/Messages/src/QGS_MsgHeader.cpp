@@ -219,17 +219,4 @@ QGS_MsgHeader::QGS_MsgHeader(uint8_t Address, uint8_t Control, uint8_t IsResend,
 
 }
 
-BinaryOStream& operator <<(BinaryOStream& os, const QGS_MsgHeader& pl)
-{
-  pl.stream(os);
-  return os;
-}
-
-BinaryIStream& operator >>(BinaryIStream& is, QGS_MsgHeader& pl)
-{
-  pl.stream(is);
-  return is;
-}
-
-
 } /* namespace QuadGS */

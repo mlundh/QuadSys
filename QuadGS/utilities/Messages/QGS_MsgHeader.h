@@ -61,8 +61,6 @@ namespace QuadGS {
 class QGS_MsgHeader: public QGS_Msg
 {
 public:
-	friend BinaryOStream& operator<< (BinaryOStream& os, const QGS_MsgHeader& pl);
-	friend BinaryIStream& operator>> (BinaryIStream& is, QGS_MsgHeader& pl);
 
     typedef std::shared_ptr<QGS_MsgHeader> ptr;
 

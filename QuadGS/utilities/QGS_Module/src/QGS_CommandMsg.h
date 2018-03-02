@@ -32,12 +32,22 @@ namespace QuadGS {
 class QGS_CommandMsg: public QGS_ModuleMsg
 {
 public:
-	QGS_CommandMsg();
+	friend BinaryOStream& operator<< (BinaryOStream& os, const QGS_CommandMsg& pl);
+	friend BinaryIStream& operator>> (BinaryIStream& is, QGS_CommandMsg& pl);
+
+	QGS_CommandMsg(std::string name, std::string args, std::string doc);
 	virtual ~QGS_CommandMsg();
 
+	virtual BinaryOStream& stream(BinaryOStream& os) const;
+
+	virtual BinaryIStream& stream(BinaryIStream& is);
+
+	DISPATCH_FCN;
+
 	std::string mName;
-	std::string mDoc;
 	std::string mArgs;
+	std::string mDoc;
+
 };
 
 } /* namespace QuadGS */

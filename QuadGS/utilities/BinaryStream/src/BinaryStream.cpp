@@ -34,7 +34,7 @@ BinaryOStream& operator << (BinaryOStream& ostm, const std::string& val)
 // TODO add check for next width!!
 BinaryIStream& operator >> (BinaryIStream& istm, std::string& val)
 {
-	char tmp;
+	char tmp = '\0';
 	while (!istm.eof())
 	{
 		istm >> tmp;

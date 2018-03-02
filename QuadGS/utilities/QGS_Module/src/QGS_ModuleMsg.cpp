@@ -102,40 +102,25 @@ std::string QGS_ModuleMsg::toString() const
 
 BinaryIStream& QGS_ModuleMsg::stream(BinaryIStream& is)
 {
-	is >>  SetBits(8) >> mType;
+	is >>  SetBits(8)  >> mType;
+	is >>  SetBits(16) >> mOriginatingPort;
+	is >>  SetBits(16) >> mDestinationPort;
+	is >> mOriginator;
+
 	return is;
 }
 
 BinaryOStream& QGS_ModuleMsg::stream(BinaryOStream& os) const
 {
-	os <<  SetBits(8) << mType;
+	os <<  SetBits(8)  << mType;
+	os <<  SetBits(16) << mOriginatingPort;
+	os <<  SetBits(16) << mDestinationPort;
+	os << mOriginator;
+
 	return os;
 }
 
-BinaryOStream& operator <<(BinaryOStream& os, const QGS_ModuleMsg& pl)
-{
-	pl.stream(os);
-	return os;
-}
 
-BinaryIStream& operator >>(BinaryIStream& is, QGS_ModuleMsg& pl)
-{
-	pl.stream(is);
-	return is;
-}
-
-
-BinaryOStream& operator <<(BinaryOStream& os, const QGS_ModuleSubMsg& pl)
-{
-	pl.stream(os);
-	return os;
-}
-
-BinaryIStream& operator >>(BinaryIStream& is, QGS_ModuleSubMsg& pl)
-{
-	pl.stream(is);
-	return is;
-}
 
 QGS_ModuleSubMsg::QGS_ModuleSubMsg(messageTypes_t type,messageTypes_t subscription)
 :QGS_ModuleMsg(type), mSubscription(subscription)

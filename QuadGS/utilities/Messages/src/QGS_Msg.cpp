@@ -25,19 +25,8 @@
 #include <string.h>
 #include <sstream>
 
-#include "QGS_Msg.h"
 namespace QuadGS {
 
-BinaryOStream& operator <<(BinaryOStream& os, const QGS_Msg& pl)
-{
-  pl.stream(os);
-  return os;
-}
 
-BinaryIStream& operator >>(BinaryIStream& is, QGS_Msg& pl)
-{
-  pl.stream(is);
-  return is;
-}
 
 } /* namespace QuadGS */

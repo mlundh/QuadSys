@@ -54,9 +54,9 @@ class QGS_MessageHandlerBase
 {
 public:
 	QGS_MessageHandlerBase(std::string name):mLogger(name), mName(name)
-	{
+{
 
-	}
+}
 	virtual ~QGS_MessageHandlerBase() = default;
 	virtual void unhandledMsg()
 	{
@@ -69,7 +69,7 @@ public:
 
 protected:
 	AppLog mLogger;
-    std::string mName;
+	std::string mName;
 	std::vector<messageTypes_t> subscriptions;
 };
 
@@ -105,7 +105,6 @@ public:
 
 
 
-
 /**
  * Base class of all message types in QuadGS. Inherit from this when creating new message
  * types to be able to pass by base.
@@ -113,8 +112,8 @@ public:
 class QGS_Msg
 {
 public:
-	friend BinaryOStream& operator<< (BinaryOStream& os, const QGS_Msg& pl);
-	friend BinaryIStream& operator>> (BinaryIStream& is, QGS_Msg& pl);
+	//friend BinaryOStream& operator<< (BinaryOStream& os, const QGS_Msg& pl);
+	//friend BinaryIStream& operator>> (BinaryIStream& is, QGS_Msg& pl);
 
 
 	QGS_Msg()
@@ -183,6 +182,22 @@ public:
 
 
 };
+
+template <class T,
+class B = QGS_Msg, class = typename std::enable_if<std::is_base_of<B,T>::value>::type>
+BinaryOStream& operator <<(BinaryOStream& os, const T& pl)
+{
+	pl.stream(os);
+	return os;
+}
+
+template <class T,
+class B = QGS_Msg, class = typename std::enable_if<std::is_base_of<B,T>::value>::type>
+BinaryIStream& operator >>(BinaryIStream& is, T& pl)
+{
+	pl.stream(is);
+	return is;
+}
 
 } /* namespace QuadGS */
 

@@ -26,15 +26,14 @@
 
 namespace QuadGS {
 
-QGS_CommandMsg::QGS_CommandMsg()
+QGS_CommandMsg::QGS_CommandMsg(std::string name, std::string args, std::string doc):
+		mName(name),mArgs(args),mDoc(doc)
 {
-	// TODO Auto-generated constructor stub
 
 }
 
 QGS_CommandMsg::~QGS_CommandMsg()
 {
-	// TODO Auto-generated destructor stub
 }
 
 } /* namespace QuadGS */

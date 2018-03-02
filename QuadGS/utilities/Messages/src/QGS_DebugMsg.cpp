@@ -60,7 +60,7 @@ QGS_DebugMsg::~QGS_DebugMsg()
 {
 	// TODO Auto-generated destructor stub
 }
-
+/*
 BinaryOStream& operator <<(BinaryOStream& os, const QGS_DebugMsg& pl)
 {
   pl.stream(os);
@@ -72,7 +72,7 @@ BinaryIStream& operator >>(BinaryIStream& is, QGS_DebugMsg& pl)
   pl.stream(is);
   return is;
 }
-
+*/
 QGS_DebugMsg::QGS_DebugMsg()
 	:QGS_Msg()
 {

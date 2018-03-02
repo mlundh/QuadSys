@@ -34,8 +34,6 @@ typedef std::function<void(std::unique_ptr<QGS_ModuleMsg>) > WriteFcn;
 class QGS_ModuleMsg: public QGS_Msg
 {
 public:
-	friend BinaryOStream& operator<< (BinaryOStream& os, const QGS_ModuleMsg& pl);
-	friend BinaryIStream& operator>> (BinaryIStream& is, QGS_ModuleMsg& pl);
 
 	typedef std::unique_ptr<QGS_ModuleMsg> ptr;
 
@@ -90,9 +88,6 @@ public:
 
 	DISPATCH_FCN
 	typedef std::unique_ptr<QGS_ModuleSubMsg> ptr;
-
-	friend BinaryOStream& operator<< (BinaryOStream& os, const QGS_ModuleSubMsg& pl);
-	friend BinaryIStream& operator>> (BinaryIStream& is, QGS_ModuleSubMsg& pl);
 
 	virtual messageTypes_t getSubscription();
 	virtual void setSubscription(messageTypes_t type);

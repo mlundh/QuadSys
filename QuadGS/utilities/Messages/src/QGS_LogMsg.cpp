@@ -60,17 +60,6 @@ QGS_LogMsg::~QGS_LogMsg()
     // TODO Auto-generated destructor stub
 }
 
-BinaryOStream& operator <<(BinaryOStream& os, const QGS_LogMsg& pl)
-{
-  pl.stream(os);
-  return os;
-}
-
-BinaryIStream& operator >>(BinaryIStream& is, QGS_LogMsg& pl)
-{
-  pl.stream(is);
-  return is;
-}
 
 QGS_LogMsg::QGS_LogMsg()
     :QGS_Msg()

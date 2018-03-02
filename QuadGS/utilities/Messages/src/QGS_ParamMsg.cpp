@@ -152,16 +152,4 @@ QGSParamMsg::QGSParamMsg(const std::string payload, uint8_t sequenceNr, uint8_t 
 
 }
 
-BinaryOStream& operator <<(BinaryOStream& os, const QGSParamMsg& pl)
-{
-  pl.stream(os);
-  return os;
-}
-
-BinaryIStream& operator >>(BinaryIStream& is, QGSParamMsg& pl)
-{
-  pl.stream(is);
-  return is;
-}
-
 } /* namespace QuadGS */

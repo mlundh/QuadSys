@@ -62,8 +62,6 @@ public:
 	virtual ~QGSParamMsg();
 
 	typedef std::shared_ptr<QGSParamMsg> ptr;
-	friend BinaryOStream& operator<< (BinaryOStream& os, const QGSParamMsg& pl);
-	friend BinaryIStream& operator>> (BinaryIStream& is, QGSParamMsg& pl);
 	/**
 	 * Create an instance from a uint8_t array. Data is copied.
 	 * @param Payload Pointer to the array.

@@ -17,8 +17,6 @@ class QGS_DebugMsg : public QGS_Msg
 {
 public:
     typedef std::shared_ptr<QGS_DebugMsg> ptr;
-    friend BinaryOStream& operator<< (BinaryOStream& os, const QGS_DebugMsg& pl);
-    friend BinaryIStream& operator>> (BinaryIStream& is, QGS_DebugMsg& pl);
 
     /**
      * Create from a uint8_t array.
