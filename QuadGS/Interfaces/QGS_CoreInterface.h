@@ -41,7 +41,7 @@ class QGS_TrackerInterface;
 class QGS_DebugMsg;
 class LogHandler;
 class Parameters;
-class QGS_MsgHeader;
+class QGS_IoHeader;
 class QGS_Msg;
 
 class QGS_CoreInterface
@@ -83,7 +83,7 @@ public:
      * Internal write function. All writes to IO module passes this function.
      * @param  A pointer to a QSP that should be passed to the IO module.
      */
-    virtual void write( std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<QGS_Msg> payload);
+    virtual void write( std::shared_ptr<QGS_IoHeader> header, std::shared_ptr<QGS_Msg> payload);
 
 private:
 
@@ -95,19 +95,19 @@ private:
      * Handler function for status messages.
      * @param packetPtr Message.
      */
-    virtual void StatusHandler(std::shared_ptr<QGS_MsgHeader> packetPtr);
+    virtual void StatusHandler(std::shared_ptr<QGS_IoHeader> packetPtr);
 
     /**
      * Handler function for debug messages.
      * @param packetPtr Message.
      */
-    virtual void DebugHandler(std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<QGS_DebugMsg> payload);
+    virtual void DebugHandler(std::shared_ptr<QGS_IoHeader> header, std::shared_ptr<QGS_DebugMsg> payload);
 
     /**
      * Message handler. Dispatches messages based on the address of the message.
      * @param ptr   Message.
      */
-    virtual void msgHandler(std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<QGS_Msg> payload);
+    virtual void msgHandler(std::shared_ptr<QGS_IoHeader> header, std::shared_ptr<QGS_Msg> payload);
 
 public:// TODO should be private
     std::shared_ptr<Parameters> mParameters;

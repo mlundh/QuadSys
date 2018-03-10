@@ -31,7 +31,7 @@ namespace QuadGS {
 
 class QGS_CoreInterface;
 class QGS_UiCommand;
-class QGS_MsgHeader;
+class QGS_IoHeader;
 class QGS_Msg;
 
 class QGS_IoInterface
@@ -40,7 +40,7 @@ public:
 	/**
 	 * @brief Callback typedefs.
 	 */
-	typedef std::function<void( std::shared_ptr<QGS_MsgHeader>, std::shared_ptr<QGS_Msg> )> MessageHandlerFcn;
+	typedef std::function<void( std::shared_ptr<QGS_IoHeader>, std::shared_ptr<QGS_Msg> )> MessageHandlerFcn;
 	typedef std::function<void( void )> TimeoutHandlerFcn;
 
 	QGS_IoInterface(){}
@@ -56,7 +56,7 @@ public:
 	 * @param header	Header data
 	 * @param data		Payload data.
 	 */
-	virtual void write( std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<QGS_Msg> payload) = 0;
+	virtual void write( std::shared_ptr<QGS_IoHeader> header, std::shared_ptr<QGS_Msg> payload) = 0;
 
 	/**
 	 * Start a read operation. The read operation will continue until the program
@@ -120,7 +120,7 @@ public:
 	 * return a null ptr.
 	 * @return pointer to a header.
 	 */
-	virtual std::shared_ptr<QGS_MsgHeader> getHeader( void ) = 0;
+	virtual std::shared_ptr<QGS_IoHeader> getHeader( void ) = 0;
 
 	/**
 	 * Get the shared ptr of the payload. Will return a NULL ptr if no data has
@@ -132,7 +132,7 @@ public:
 	virtual std::shared_ptr<QGS_Msg> getPayload( void ) = 0;
 
 protected:
-	std::shared_ptr<QGS_MsgHeader> mHeader;
+	std::shared_ptr<QGS_IoHeader> mHeader;
 	std::shared_ptr<QGS_Msg> mPayload;
 };
 

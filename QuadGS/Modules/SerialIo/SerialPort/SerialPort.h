@@ -109,7 +109,7 @@ public:
      * and opened serial port.
      * @param ptr to a QSP instance to be transmitted.
      */
-    void write( std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<QGS_Msg> payload);
+    void write( std::shared_ptr<QGS_IoHeader> header, std::shared_ptr<QGS_Msg> payload);
 
     /**
      * Start the read timer. If timeout occurs then the read will be considered failed.

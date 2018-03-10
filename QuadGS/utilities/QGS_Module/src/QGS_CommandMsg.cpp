@@ -23,17 +23,207 @@
  */
 
 #include "QGS_CommandMsg.h"
-
+#include "QGS_Module.h"
 namespace QuadGS {
 
-QGS_CommandMsg::QGS_CommandMsg(std::string name, std::string args, std::string doc):
-		mName(name),mArgs(args),mDoc(doc)
+BinaryOStream& operator << (BinaryOStream& ostm, const QGS_UiCommandDesc& val)
+{
+	ostm << val.mName;
+	ostm << val.mArgs;
+	ostm << val.mDoc;
+
+	return ostm;
+}
+
+
+
+BinaryIStream& operator >> (BinaryIStream& istm, QGS_UiCommandDesc& val)
+{
+	istm >> val.mName;
+	istm >> val.mArgs;
+	istm >> val.mDoc;
+	return istm;
+}
+
+
+
+
+
+QGS_UiCommandDesc::QGS_UiCommandDesc(std::string name, std::string args, std::string doc)
+:mName(name)
+,mArgs(args)
+,mDoc(doc)
+{}
+QGS_UiCommandDesc::QGS_UiCommandDesc(const QGS_UiCommand_& uiCommand)
+:mName(uiCommand.mName)
+,mArgs()
+,mDoc(uiCommand.mDoc)
+{}
+QGS_UiCommandDesc::~QGS_UiCommandDesc()
+{
+}
+
+
+
+QGS_CommandMsg::QGS_CommandMsg(std::string name, std::string args, std::string doc)
+:QGS_ModuleMsg(msgCommand)
+,mCommand(name, args, doc)
 {
 
 }
+
+QGS_CommandMsg::QGS_CommandMsg(const QGS_ModuleMsg& moduleMsg)
+:QGS_ModuleMsg(moduleMsg)
+,mCommand("", "", "")
+
+{
+
+}
+
 
 QGS_CommandMsg::~QGS_CommandMsg()
 {
 }
+
+
+
+BinaryIStream& QGS_CommandMsg::stream(BinaryIStream& is)
+{
+	is >> mCommand;
+	return is;
+}
+
+BinaryOStream& QGS_CommandMsg::stream(BinaryOStream& os) const
+{
+	QGS_ModuleMsg::stream(os);
+	os << mCommand;
+	return os;
+}
+
+
+/*-----------------------------*/
+
+
+QGS_CommandRsltMsg::QGS_CommandRsltMsg(std::string& result)
+:QGS_ModuleMsg(msgCommandRslt)
+,mResult(result)
+{
+
+}
+
+QGS_CommandRsltMsg::QGS_CommandRsltMsg(const QGS_ModuleMsg& moduleMsg)
+:QGS_ModuleMsg(moduleMsg)
+,mResult()
+{
+
+}
+
+
+QGS_CommandRsltMsg::~QGS_CommandRsltMsg()
+{
+}
+
+
+
+BinaryIStream& QGS_CommandRsltMsg::stream(BinaryIStream& is)
+{
+	is >> mResult;
+
+	return is;
+}
+
+BinaryOStream& QGS_CommandRsltMsg::stream(BinaryOStream& os) const
+{
+	QGS_ModuleMsg::stream(os);
+	os << mResult;
+
+	return os;
+}
+
+
+/*----------------------------*/
+
+
+QGS_CommandReqMsg::QGS_CommandReqMsg()
+:QGS_ModuleMsg(msgCommandReq)
+{
+
+}
+
+QGS_CommandReqMsg::QGS_CommandReqMsg(const QGS_ModuleMsg& moduleMsg)
+:QGS_ModuleMsg(moduleMsg)
+{
+
+}
+
+
+QGS_CommandReqMsg::~QGS_CommandReqMsg()
+{
+}
+
+
+BinaryIStream& QGS_CommandReqMsg::stream(BinaryIStream& is)
+{
+	return is;
+}
+
+BinaryOStream& QGS_CommandReqMsg::stream(BinaryOStream& os) const
+{
+	QGS_ModuleMsg::stream(os);
+	return os;
+}
+
+
+
+/*--------------------------------------*/
+
+
+QGS_CommandReqRspMsg::QGS_CommandReqRspMsg(std::vector<QGS_UiCommand_>& Commands)
+:QGS_ModuleMsg(msgCommandRslt)
+{
+	for(auto i : Commands)
+	{
+		mCommands.push_back(QGS_UiCommandDesc(i));
+	}
+}
+
+QGS_CommandReqRspMsg::QGS_CommandReqRspMsg(const QGS_ModuleMsg& moduleMsg)
+:QGS_ModuleMsg(moduleMsg)
+{
+
+}
+
+
+QGS_CommandReqRspMsg::~QGS_CommandReqRspMsg()
+{
+}
+
+
+
+BinaryIStream& QGS_CommandReqRspMsg::stream(BinaryIStream& is)
+{
+	size_t size = 0;
+	is >> size;
+	for(unsigned int i = 0; i < size; i++)
+	{
+		QGS_UiCommandDesc desc("","","");
+		is >> desc;
+		mCommands.push_back(desc);
+	}
+	return is;
+}
+
+BinaryOStream& QGS_CommandReqRspMsg::stream(BinaryOStream& os) const
+{
+	QGS_ModuleMsg::stream(os);
+	os << mCommands.size();
+	for(unsigned int i = 0; i < mCommands.size(); i++)
+	{
+		os << mCommands[i];
+	}
+	return os;
+}
+
+
 
 } /* namespace QuadGS */

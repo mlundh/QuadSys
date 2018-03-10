@@ -10,8 +10,8 @@
 #include <functional>
 #include <memory>
 
+#include "QGS_IoHeader.h"
 #include "QGS_Tree.h"
-#include "QGS_MsgHeader.h"
 #include "QGS_Module.h"
 
 namespace QuadGS {
@@ -67,7 +67,7 @@ std::vector< QGS_UiCommand::ptr > LogHandler::getCommands()
 
 std::string LogHandler::getLogNames(std::string )
 {
-    QGS_MsgHeader::ptr header = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Log, QGS_MsgHeader::LogControl::Name, 0, 0);
+    QGS_IoHeader::ptr header = QGS_IoHeader::Create(QGS_IoHeader::addresses::Log, QGS_IoHeader::LogControl::Name, 0, 0);
     std::shared_ptr<QGS_Msg> payload;
     if(mWriteFcn)
     {
@@ -82,7 +82,7 @@ std::string LogHandler::getLogNames(std::string )
 
 std::string LogHandler::getLogEntries(std::string )
 {
-    QGS_MsgHeader::ptr header = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Log, QGS_MsgHeader::LogControl::Entry, 0, 0);
+    QGS_IoHeader::ptr header = QGS_IoHeader::Create(QGS_IoHeader::addresses::Log, QGS_IoHeader::LogControl::Entry, 0, 0);
     std::shared_ptr<QGS_Msg> payload;
     if(mWriteFcn)
     {
@@ -97,7 +97,7 @@ std::string LogHandler::getLogEntries(std::string )
 
 std::string LogHandler::stopAllLogs(std::string )
 {
-    QGS_MsgHeader::ptr header = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Log, QGS_MsgHeader::LogControl::StopAll, 0, 0);
+    QGS_IoHeader::ptr header = QGS_IoHeader::Create(QGS_IoHeader::addresses::Log, QGS_IoHeader::LogControl::StopAll, 0, 0);
     std::shared_ptr<QGS_Msg> payload;
     if(mWriteFcn)
     {
@@ -125,12 +125,12 @@ std::string LogHandler::FormatLogMapping(std::string)
 }
 
 
-void LogHandler::Handler(std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<QGS_LogMsg> payload)
+void LogHandler::Handler(std::shared_ptr<QGS_IoHeader> header, std::shared_ptr<QGS_LogMsg> payload)
 {
     uint8_t control = header->GetControl();
     switch (control)
     {
-    case QGS_MsgHeader::LogControl::Name:
+    case QGS_IoHeader::LogControl::Name:
     {
         std::string payloadStr = payload->GetPayload();
         while(!payloadStr.empty())
@@ -173,7 +173,7 @@ void LogHandler::Handler(std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<
         }
     }
     break;
-    case QGS_MsgHeader::LogControl::Entry:
+    case QGS_IoHeader::LogControl::Entry:
     {
         std::string payloadStr = payload->GetPayload();
         bool end = false;

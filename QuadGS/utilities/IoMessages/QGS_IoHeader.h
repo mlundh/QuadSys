@@ -1,5 +1,5 @@
 /*
- * Parameters.cpp
+ * QGS_IoHeader.h
  *
  * Copyright (C) 2017 Martin Lundh
  *
@@ -58,11 +58,11 @@
 namespace QuadGS {
 
 
-class QGS_MsgHeader: public QGS_Msg
+class QGS_IoHeader: public QGS_Msg
 {
 public:
 
-    typedef std::shared_ptr<QGS_MsgHeader> ptr;
+    typedef std::shared_ptr<QGS_IoHeader> ptr;
 
     enum addresses
     {
@@ -139,27 +139,30 @@ public:
 
 	static std::vector<std::string> mParamControl;
 
-    /**
-     * Create an instance from a uint8_t array. Data is copied.
-     * @param Payload Pointer to the array.
-     * @param PayloadLength Length of the array.
-     * @param offset.
-     * @return Shared pointer to the created instance.
-     */
-    static ptr Create(const uint8_t* data, uint16_t length);
+
+	QGS_IoHeader(const QGS_IoHeader& header);
 
     /**
-     *
-     * @param create a QuadGSMsg.
-     * @return Shared pointer to the created instance.
+     * @brief Constructor
+     * Creates a QuadSerialPacket.
+     * @param data Pointer to data array containing the payload.
+     * @param length Length of the data array.
      */
-    static ptr Create(uint8_t Address, uint8_t Control, uint8_t IsResend, uint16_t PayloadSize);
+    QGS_IoHeader(const uint8_t* data, uint16_t length);
 
+    /**
+     * Constructor taking the member variables respectively.
+     * @param Address
+     * @param Control
+     * @param IsResend
+     * @param PayloadSize
+     */
+    QGS_IoHeader(uint8_t Address, uint8_t Control, uint8_t IsResend, uint16_t PayloadSize);
 
     /**
      * Desructor
      */
-    virtual ~QGS_MsgHeader();
+    virtual ~QGS_IoHeader();
 
     /**
      * @brief Get method for address field of the QuadGSMsg. The different
@@ -204,6 +207,11 @@ public:
     void SetIsResend(uint8_t IsResend);
 
     /**
+     * @brief Get the length of the payload.
+     */
+    uint8_t GetPayloadSize() const;
+
+    /**
      * Get the complete package as a string.
      * @return A string containing the message.
      */
@@ -223,23 +231,6 @@ protected:
 
 	std::string ControlToString() const;
 
-
-    /**
-     * @brief Constructor
-     * Creates a QuadSerialPacket.
-     * @param data Pointer to data array containing the payload.
-     * @param length Length of the data array.
-     */
-    QGS_MsgHeader(const uint8_t* data, uint16_t length);
-
-    /**
-     * Constructor taking the member variables respectively.
-     * @param Address
-     * @param Control
-     * @param IsResend
-     * @param PayloadSize
-     */
-    QGS_MsgHeader(uint8_t Address, uint8_t Control, uint8_t IsResend, uint16_t PayloadSize);
 
     /**
      * @brief Set payload size

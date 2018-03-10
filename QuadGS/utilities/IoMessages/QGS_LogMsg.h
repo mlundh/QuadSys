@@ -8,10 +8,10 @@
 #ifndef CORE_DATAMSG_QUADLOGMSG_H_
 #define CORE_DATAMSG_QUADLOGMSG_H_
 
-#include "QGS_Msg.h"
+#include "QGS_IoHeader.h"
 namespace QuadGS {
 
-class QGS_LogMsg: public QuadGS::QGS_Msg {
+class QGS_LogMsg: public QGS_IoHeader {
 public:
     typedef std::shared_ptr<QGS_LogMsg> ptr;
 
@@ -19,21 +19,19 @@ public:
      * Create from a uint8_t array.
      * @param Data  pointer to the data.
      * @param Length length of the data.
-     * @return A shared pointer to the message.
      */
-    static ptr Create(const uint8_t* data, uint16_t length);
+    QGS_LogMsg(uint8_t control, const uint8_t* data, uint16_t length);
 
     /**
      * Create a message with the specified payload.
-     * @return A shared pointer to the message.
      */
-    static ptr Create(std::string payload);
+    QGS_LogMsg(uint8_t control, const std::string payload);
 
     /**
      * Create an empty message.
-     * @return A shared pointer to the message.
      */
-    static ptr Create();
+    QGS_LogMsg(const QGS_IoHeader& header);
+
 
     /**
      * Get the payload.
@@ -61,17 +59,13 @@ public:
     /**
      * Implement the interface, this is a utility to stream the class.
      */
-    BinaryIStream& stream(BinaryIStream& os);
+    BinaryIStream& stream(BinaryIStream& is);
 
     virtual ~QGS_LogMsg();
 
 private:
 
-    QGS_LogMsg();
 
-    QGS_LogMsg(const std::string payload);
-
-    QGS_LogMsg(const uint8_t* data, uint16_t length);
 
     std::string mPayload;
 

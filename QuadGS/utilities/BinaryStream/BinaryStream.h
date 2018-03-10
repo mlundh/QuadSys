@@ -28,12 +28,15 @@ namespace QuadGS {
  * width of the input data type is used.
  */
 class BinaryIStream {
+friend BinaryIStream& operator >> (BinaryIStream& istm, char* val);
+
 public:
     virtual ~BinaryIStream(){}
     BinaryIStream()
     : mIndex(0)
     , mBitIdx(7)
     , mNextWidth(-1)
+    , mNextCharLength(0)
     {
 
     }
@@ -47,6 +50,7 @@ public:
     : mIndex(0)
     , mBitIdx(7)
     , mNextWidth(-1)
+    , mNextCharLength(0)
     {
         open(mem, size);
     }
@@ -59,6 +63,7 @@ public:
     : mIndex(0)
     , mBitIdx(7)
     , mNextWidth(-1)
+    , mNextCharLength(0)
     {
         mVec.reserve(vec.size());
         mVec.assign(vec.begin(), vec.end());
@@ -268,12 +273,18 @@ public:
         mNextWidth = i;
     }
 
+    void setNextCharLength(int i)
+    {
+    	mNextCharLength = i;
+    }
+
 private:
 
     std::vector<unsigned char> mVec;
     size_t mIndex;
     int mBitIdx;
     int mNextWidth;
+    int mNextCharLength;
 };
 
 
@@ -291,6 +302,16 @@ BinaryIStream& operator >> (BinaryIStream& istm, T& val)
 
     return istm;
 }
+
+
+/**
+ * Enable streaming of a c-style string. Only use with c-style, null terminated strings.
+ * Ignores next width parameter(only used for the first byte). Use SetByte for setting length of the string.
+ * @param istm
+ * @param val
+ * @return
+ */
+BinaryIStream& operator >> (BinaryIStream& istm, char* val);
 
 /**
  * Stream a string. Only uses next width for the first byte.
@@ -314,10 +335,13 @@ BinaryIStream& operator >> (BinaryIStream& istm, std::string& val);
 class BinaryOStream
 {
 public:
+friend	BinaryOStream& operator << (BinaryOStream& ostm, const char* val);
+
     BinaryOStream()
 :mVec()
 ,mBitIdx(7)
 ,mNextWidth(-1)
+,mNextCharLength(0)
 {
 
 }
@@ -478,16 +502,24 @@ public:
     void write(const char* p, size_t size)
     {
         for(size_t i=0; i<size; ++i)
+        {
             write(p[i]);
+        }
     }
     void setNextBits(int i)
     {
         mNextWidth = i;
     }
+
+    void setNextCharLength(int i)
+    {
+    	mNextCharLength = i;
+    }
     //private:
     std::vector<uint8_t> mVec;
     int mBitIdx;
     int mNextWidth;
+    int mNextCharLength;
 };
 
 /**
@@ -506,7 +538,7 @@ BinaryOStream& operator << (BinaryOStream& ostm, const T& val)
 }
 /**
  * Enable streaming of a c-style string. Only use with c-style, null terminated strings.
- * Ignores next width parameter(only used for the first byte).
+ * Ignores next width parameter(only used for the first byte). Use SetByte for setting length of the string.
  * @param ostm
  * @param val
  * @return
@@ -542,6 +574,27 @@ SetBits(int nBits)
     return { nBits };
 }
 
+
+/**
+ * @class SetNxtBytes
+ * Utility class for setting number of bits in the binary streams.
+ */
+struct SetNxtBytes
+{
+    int mBytes;
+};
+
+/**
+ * Functin for setting number of bits in the stream.
+ * @param nBits	number of bits to set.
+ * @return
+ */
+inline SetNxtBytes
+SetBytes(int nBytes)
+{
+    return { nBytes };
+}
+
 /**
  * Stream operator for setting next bit width of a binary input stream.
  */
@@ -562,6 +615,27 @@ operator<<(BinaryOStream& stream, SetNxtBits bits)
     return stream;
 }
 
+
+
+/**
+ * Stream operator for setting next bit width of a binary input stream.
+ */
+inline BinaryIStream&
+operator>>(BinaryIStream& stream, SetNxtBytes bytes)
+{
+    stream.setNextCharLength(bytes.mBytes);
+    return stream;
+}
+
+/**
+ * Stream operator for setting next bit width of a binary output stream.
+ */
+inline BinaryOStream&
+operator<<(BinaryOStream& stream, SetNxtBytes bytes)
+{
+    stream.setNextCharLength(bytes.mBytes);
+    return stream;
+}
 } /* namespace QuadGS */
 
 #endif /* CORE_BINARYSTREAM_SRC_BINARYSTREAM_H_ */

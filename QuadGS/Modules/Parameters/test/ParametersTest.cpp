@@ -27,13 +27,13 @@
 #include <memory>
 
 #include "QGS_ParamMsg.h"
-#include "QGS_MsgHeader.h"
+#include "QGS_IoHeader.h"
 #include "gtest/gtest.h"
 
 
 using namespace QuadGS;
 
-void defaultMsgHandler(std::shared_ptr<QGS_MsgHeader>, std::shared_ptr<QGS_Msg>)
+void defaultMsgHandler(std::shared_ptr<QGS_IoHeader>, std::shared_ptr<QGS_Msg>)
 {
     std::cout << "Got a message!" << std::endl;
 }
@@ -53,8 +53,8 @@ protected:
         QGSParamMsg::ptr payload = QGSParamMsg::Create(payload_str,0,1);
 
         mParameters->RegisterWriteFcn(std::bind(&defaultMsgHandler, std::placeholders::_1, std::placeholders::_2));
-        QGS_MsgHeader::ptr header = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Parameters,
-                QGS_MsgHeader::ParametersControl::SetTree,
+        QGS_IoHeader::ptr header = QGS_IoHeader::Create(QGS_IoHeader::addresses::Parameters,
+                QGS_IoHeader::ParametersControl::SetTree,
                 0,
                 1+payload_str.length());
         mParameters->ParameterHandler(header, payload);
@@ -75,8 +75,8 @@ TEST(Parameters, TestRegisterAndDump)
     std::string payload_str = "/root/tmp<5>[8]/test[3]";
     QGSParamMsg::ptr payload = QGSParamMsg::Create(payload_str,0,1);
 
-    QGS_MsgHeader::ptr header = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Parameters,
-            QGS_MsgHeader::ParametersControl::SetTree,
+    QGS_IoHeader::ptr header = QGS_IoHeader::Create(QGS_IoHeader::addresses::Parameters,
+            QGS_IoHeader::ParametersControl::SetTree,
             0,
             1+payload_str.length());
 
@@ -99,8 +99,8 @@ TEST(Parameters, TestRegisterSecondMsg)
     // Create and register the first message.
     std::string payload_str = "/root/tmp<5>[8]/test[3]";
     QGSParamMsg::ptr payload = QGSParamMsg::Create(payload_str,0,0);
-    QGS_MsgHeader::ptr header = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Parameters,
-            QGS_MsgHeader::ParametersControl::SetTree,
+    QGS_IoHeader::ptr header = QGS_IoHeader::Create(QGS_IoHeader::addresses::Parameters,
+            QGS_IoHeader::ParametersControl::SetTree,
             0,
             1+payload_str.length());
     mParameters->ParameterHandler(header, payload);
@@ -108,8 +108,8 @@ TEST(Parameters, TestRegisterSecondMsg)
     // Create and register the second message.
     std::string payload_str2 = "/root/tmp<5>[8]/jus<7>/another<7>[65536]/value<7>[249037]";
     QGSParamMsg::ptr payload2 = QGSParamMsg::Create(payload_str2,1,1);
-    QGS_MsgHeader::ptr header2 = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Parameters,
-            QGS_MsgHeader::ParametersControl::SetTree,
+    QGS_IoHeader::ptr header2 = QGS_IoHeader::Create(QGS_IoHeader::addresses::Parameters,
+            QGS_IoHeader::ParametersControl::SetTree,
             0,
             1+payload_str2.length());
     mParameters->ParameterHandler(header2, payload2);

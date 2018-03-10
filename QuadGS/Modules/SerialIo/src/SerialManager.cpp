@@ -25,12 +25,12 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include "QGS_IoHeader.h"
 #include "FcParser.h"
 #include "SlipPacket.h"
 #include "SlipPacket.h"
 #include "SlipPacket.h"
 #include "QGS_Msg.h"
-#include "QGS_MsgHeader.h"
 #include "QGS_Module.h"
 
 namespace QuadGS {
@@ -60,7 +60,7 @@ void Serial_Manager::startRead()
     mPort->read();
 }
 
-void Serial_Manager::write( QGS_MsgHeader::ptr header, QGS_Msg::Ptr payload)
+void Serial_Manager::write( QGS_IoHeader::ptr header, QGS_Msg::Ptr payload)
 {
     mOutgoingFifo.push(std::make_pair(header, payload));
     doWrite();
@@ -197,13 +197,13 @@ void Serial_Manager::timeoutHandler()
     doWrite();
 }
 
-void Serial_Manager::messageHandler(QGS_MsgHeader::ptr header, QGS_Msg::Ptr payload)
+void Serial_Manager::messageHandler(QGS_IoHeader::ptr header, QGS_Msg::Ptr payload)
 {
     // Transmission ok, pop from fifo and set ok to send again.
-    if(header->GetAddress() == QGS_MsgHeader::addresses::Transmission)
+    if(header->GetAddress() == QGS_IoHeader::addresses::Transmission)
     {
         mOngoing = false; // we got a transmission message, this is the end of an ongoing transmission.
-        if(header->GetControl() == QGS_MsgHeader::TransmissionControl::OK)
+        if(header->GetControl() == QGS_IoHeader::TransmissionControl::OK)
         {
             // Transmission ok, discard the outgoing message, no need to save after successful transmission.
             mLog.QuadLog(severity_level::message_trace, "Received: TransmissionOK ");
@@ -214,7 +214,7 @@ void Serial_Manager::messageHandler(QGS_MsgHeader::ptr header, QGS_Msg::Ptr payl
             }
             mRetries = 0;
         }
-        else if(header->GetControl() == QGS_MsgHeader::TransmissionControl::NOK)
+        else if(header->GetControl() == QGS_IoHeader::TransmissionControl::NOK)
         {
             mLog.QuadLog(severity_level::message_trace, "Received: TransmissionNOK ");
             if(mRetries < 2)
@@ -256,7 +256,7 @@ void Serial_Manager::doWrite()
     {
         return;
     }
-    QGS_MsgHeader::ptr header = mOutgoingFifo.front().first;
+    QGS_IoHeader::ptr header = mOutgoingFifo.front().first;
     header->SetIsResend(mRetries > 0 ? 1 : 0);
     QGS_Msg::Ptr payload = mOutgoingFifo.front().second;
     mLog.QuadLog(severity_level::message_trace, "Transmitting: " + (header ? header->toString() : "")  + (payload?payload->toString():""));

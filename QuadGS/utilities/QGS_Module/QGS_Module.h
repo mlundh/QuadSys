@@ -35,6 +35,7 @@
 #include "AppLog.h"
 #include "ThreadSafeFifo.hpp"
 #include "QGS_ModuleMsg.h"
+#include "QGS_CommandMsg.h"
 
 namespace QuadGS
 {
@@ -72,17 +73,19 @@ struct QGS_UiCommand_
 public:
 	typedef std::shared_ptr < QGS_UiCommand > ptr;
 	typedef std::function<std::string(std::string)> fcn;
-	QGS_UiCommand_(std::string name, QGS_UiCommand::fcn func, std::string doc):
-		mName(name)
-	,mFunc(func)
+	QGS_UiCommand_(std::string name, QGS_UiCommand::fcn func, std::string doc)
+	:mName(name)
 	,mDoc(doc)
+	,mFunc(func)
+
 	{}
 	virtual ~QGS_UiCommand_()
 	{
 	}
 	std::string mName;           /* Human readable name of the function. */
-	fcn mFunc;                   /* Function to call to do the job. */
 	std::string mDoc;            /* Documentation for this function.  */
+	fcn mFunc;                   /* Function to call to do the job. */
+
 };
 
 /**
@@ -94,7 +97,9 @@ public:
  * implement processMsg and registerCommands. The basic QGS_Module is executed in the thread that sends
  * a message, normally this would be the router thread.
  */
-class QGS_Module: virtual public QGS_MessageHandlerBase
+class QGS_Module
+: virtual public QGS_MessageHandler<QGS_CommandMsg>
+, virtual public QGS_MessageHandler<QGS_CommandReqMsg>
 {
 public:
     friend QGS_Router;
@@ -163,6 +168,9 @@ protected:
 	 * @param func
 	 */
 	void setSendFunc(WriteFcn func);
+
+	virtual void process(QGS_CommandMsg* message);
+	virtual void process(QGS_CommandReqMsg* message);
 
 
 	WriteFcn mReceiveFcn;

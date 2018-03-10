@@ -26,11 +26,11 @@
 
 #include <memory>
 
-#include "QGS_Msg.h"
 #include "QGS_DebugMsg.h"
+#include "QGS_IoHeader.h"
 #include "QGS_LogMsg.h"
-#include "QGS_MsgHeader.h"
 #include "QGS_ParamMsg.h"
+#include "QGS_Msg.h"
 
 namespace QuadGS
 {
@@ -50,35 +50,35 @@ int FcParser::parse( std::shared_ptr<std::vector<unsigned char> > data)
 {
     //Package into a slip packet and send the packeged data.
     BinaryIStream is(*data);
-    mHeader = QGS_MsgHeader::Create(0,0,0,0);
+    mHeader = QGS_IoHeader::Create(0,0,0,0);
     is >> *mHeader;
     switch (mHeader->GetAddress())
     {
-    case QGS_MsgHeader::addresses::Parameters:
+    case QGS_IoHeader::addresses::Parameters:
     {
-        QGSParamMsg::ptr tmp = QGSParamMsg::Create();
+        QGSParamMsg::ptr tmp = std::make_unique<QGSParamMsg>(*mHeader);
         is >> *tmp;
         mPayload = tmp;
         break;
     }
-    case QGS_MsgHeader::addresses::State:
+    case QGS_IoHeader::addresses::State:
     {
         return -1;
         break;
     }
-    case QGS_MsgHeader::addresses::Log:
+    case QGS_IoHeader::addresses::Log:
     {
         QGS_LogMsg::ptr tmp = QGS_LogMsg::Create();
         is >> *tmp;
         mPayload = tmp;
         break;
     }
-    case QGS_MsgHeader::addresses::Status:
+    case QGS_IoHeader::addresses::Status:
     {
         mPayload.reset();
         break;
     }
-    case QGS_MsgHeader::addresses::Debug:
+    case QGS_IoHeader::addresses::Debug:
     {
         QGS_DebugMsg::ptr tmp = QGS_DebugMsg::Create();
         is >> *tmp;
@@ -92,9 +92,9 @@ int FcParser::parse( std::shared_ptr<std::vector<unsigned char> > data)
     return 0;
 }
 
-QGS_MsgHeader::ptr FcParser::getHeader( void )
+QGS_IoHeader::ptr FcParser::getHeader( void )
 {
-    QGS_MsgHeader::ptr ptr = mHeader;
+    QGS_IoHeader::ptr ptr = mHeader;
     mHeader.reset();
     return ptr;
 }

@@ -37,8 +37,6 @@ public:
 
 	typedef std::unique_ptr<QGS_ModuleMsg> ptr;
 
-	static ptr Create(messageTypes_t messageType);
-
 	static ptr Create(QGS_ModuleMsg& copy);
 
 	QGS_ModuleMsg(messageTypes_t type);
@@ -54,6 +52,8 @@ public:
 	virtual ~QGS_ModuleMsg();
 
 	void setOriginator(std::string originator);
+
+	std::string getOriginator() const;
 
 	void setDestinationPort(int port);
 

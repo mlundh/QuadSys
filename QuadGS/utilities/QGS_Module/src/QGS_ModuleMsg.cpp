@@ -28,12 +28,6 @@
 
 namespace QuadGS {
 
-QGS_ModuleMsg::ptr QGS_ModuleMsg::Create(messageTypes_t messageType)
-{
-	ptr p(new QGS_ModuleMsg(messageType) );
-	return p;
-}
-
 QGS_ModuleMsg::ptr QGS_ModuleMsg::Create(QGS_ModuleMsg& copy)
 {
 	ptr p(new QGS_ModuleMsg(copy) );
@@ -41,17 +35,18 @@ QGS_ModuleMsg::ptr QGS_ModuleMsg::Create(QGS_ModuleMsg& copy)
 }
 
 QGS_ModuleMsg::QGS_ModuleMsg(messageTypes type)
-:mType(type), mOriginatingPort(-1), mDestinationPort(-1)
+:mType(type), mOriginatingPort(-1), mDestinationPort(-1), mOriginator()
 {
 
 }
 
 QGS_ModuleMsg::QGS_ModuleMsg(const QGS_ModuleMsg& msg)
-:mType(0), mOriginatingPort(-1), mDestinationPort(-1)
+:mType(static_cast<uint8_t>(msg.getType()))
+, mOriginatingPort( msg.getOriginatingPort())
+, mDestinationPort(msg.getDestinationPort())
+, mOriginator(msg.getOriginator())
 {
-	mType = static_cast<uint8_t>(msg.getType());
-	mOriginatingPort = msg.getOriginatingPort();
-	mDestinationPort = msg.getDestinationPort();
+
 }
 
 
@@ -65,6 +60,11 @@ QGS_ModuleMsg::~QGS_ModuleMsg()
 void QGS_ModuleMsg::setOriginator(std::string originator)
 {
 	mOriginator = originator;
+}
+
+std::string QGS_ModuleMsg::getOriginator() const
+{
+	return mOriginator;;
 }
 
 void QGS_ModuleMsg::setDestinationPort(int port)

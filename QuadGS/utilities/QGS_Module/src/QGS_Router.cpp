@@ -36,7 +36,7 @@ QGS_Router::QGS_Router(std::string name):QGS_MessageHandlerBase(name), mNrModule
 
 QGS_Router::~QGS_Router()
 {
-	QGS_ModuleMsg::ptr ptr  = QGS_ModuleMsg::Create(messageTypes_t::msgQuit);
+	QGS_ModuleMsg::ptr ptr  = std::make_unique<QGS_ModuleMsg>(messageTypes_t::msgQuit);
 	mFifo.push(std::move(ptr)); // send stop to own fifo.
 
 	if(mThread.joinable())

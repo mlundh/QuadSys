@@ -51,7 +51,7 @@ namespace QuadGS {
 		 * return a null ptr.
 		 * @return pointer to a header.
 		 */
-		virtual std::shared_ptr<QGS_MsgHeader> getHeader( void );
+		virtual std::shared_ptr<QGS_IoHeader> getHeader( void );
 
 		/**
 		 * Get the shared ptr of the payload. Will return a NULL ptr if no data has

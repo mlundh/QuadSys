@@ -51,7 +51,7 @@ public:
 	 * @param header
 	 * @param payload
 	 */
-	virtual void msgHandler(std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<QGS_Msg> payload);
+	virtual void msgHandler(std::shared_ptr<QGS_IoHeader> header, std::shared_ptr<QGS_Msg> payload);
 
 	virtual std::vector<std::shared_ptr<QGS_UiCommand>> getCommands( );
 

@@ -44,7 +44,7 @@ int QGS_ModuleFake::getNrMsg()
 
 void QGS_ModuleFake::sendDummyMsg(messageTypes_t type)
 {
-	QGS_ModuleMsg::ptr msg = QGS_ModuleMsg::Create(type);
+	QGS_ModuleMsg::ptr msg = std::make_unique<QGS_ModuleMsg>(type);
 	sendMsg(std::move(msg));
 }
 
@@ -95,7 +95,7 @@ int QGS_ThreadedModuleFake::getNrMsg()
 
 void QGS_ThreadedModuleFake::sendDummyMsg(messageTypes_t type)
 {
-	QGS_ModuleMsg::ptr msg = QGS_ModuleMsg::Create(type);
+	QGS_ModuleMsg::ptr msg = std::make_unique<QGS_ModuleMsg>(type);
 	sendMsg(std::move(msg));
 }
 

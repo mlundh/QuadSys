@@ -26,10 +26,11 @@
 #include "SlipPacket.h"
 
 #include <vector>
+
+#include "QGS_IoHeader.h"
+#include "QGS_ParamMsg.h"
 #include "gtest/gtest.h"
 #include "BinaryStream.h"
-#include "QGS_MsgHeader.h"
-#include "QGS_ParamMsg.h"
 
 using namespace QuadGS;
 
@@ -88,7 +89,7 @@ TEST(SlipPacketTest, TestParamPacketSlip)
 
 	std::string payload = "/root/tmp<5>[8]/test[3]";
 	QGSParamMsg::ptr paramPacket = QGSParamMsg::Create(payload,1,0);
-	QGS_MsgHeader::ptr header = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Parameters, QGS_MsgHeader::addresses::Parameters, false, paramPacket->GetPayload().length());
+	QGS_IoHeader::ptr header = QGS_IoHeader::Create(QGS_IoHeader::addresses::Parameters, QGS_IoHeader::addresses::Parameters, false, paramPacket->GetPayload().length());
 
 
     BinaryOStream os;

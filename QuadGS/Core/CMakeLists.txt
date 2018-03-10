@@ -1,7 +1,7 @@
 set(src QGS_Core.cpp)
 
 set(dep "CommandTree"
-        "Messages"
+        "IoMessages"
         "Parameters" 
         "LogHandler"
         "QGS_Module"

@@ -52,47 +52,41 @@
  *  The L field indicates if it is the last in a sequence.
  */
 
-#include "QGS_Msg.h"
+#include "QGS_IoHeader.h"
 
 namespace QuadGS {
 
-class QGSParamMsg: public QGS_Msg
+class QGSParamMsg: public QGS_IoHeader
 {
 public:
-	virtual ~QGSParamMsg();
 
-	typedef std::shared_ptr<QGSParamMsg> ptr;
+	//QGSParamMsg(const uint8_t* data, uint16_t length, uint8_t sequenceNr, uint8_t lastInSequence);
+
 	/**
 	 * Create an instance from a uint8_t array. Data is copied.
 	 * @param Payload Pointer to the array.
 	 * @param PayloadLength Length of the array.
-	 * @param offset.
-	 * @return Shared pointer to the created instance.
 	 */
-	static ptr Create(const uint8_t* data, uint16_t length);
+	QGSParamMsg(const QGS_IoHeader& header, const uint8_t* data, uint16_t length);
 
-	/**
-	 * Create an empty message.
-	 * @return
-	 */
-	static ptr Create();
+	//TODO make control data length ctor.
 
-	/**
-	 *
-	 * @param packet Complete paramPacket contained in a raw packet.
-	 * @return Shared pointer to the created instance.
-	 */
-	static ptr Create(const uint8_t* data, uint16_t length, uint8_t sequenceNr, uint8_t lastInSequence);
-
+	QGSParamMsg(const QGS_IoHeader& header);
 
 	/**
 	 * Create from payload, sequence number and lastInSequence.
+	 * @param Control		The type of parameter message.
 	 * @param payload 		The string describing the parameter payload.
 	 * @param sequenceNr	Sequence number of the payload message.
 	 * @param lastInSequence  If the message is the last in the sequence.
 	 * @return
 	 */
-	static ptr Create(const std::string payload, uint8_t sequenceNr, uint8_t lastInSequence);
+	QGSParamMsg(uint8_t Control, const std::string payload, uint8_t sequenceNr, uint8_t lastInSequence);
+
+
+	virtual ~QGSParamMsg();
+
+	typedef std::shared_ptr<QGSParamMsg> ptr;
 
 	/**
 	 * Get field indicating if it is the last message in the
@@ -137,27 +131,17 @@ public:
 	virtual std::string toString() const;
 
 	/**
-	 * Implement the interface, this is a utility to stream the class.
+	 * Stream the class into a binaryOstream. This will serialize the whole class, including the header.
 	 */
 	BinaryOStream& stream(BinaryOStream& os) const;
 
 	/**
-	 * Implement the interface, this is a utility to stream the class.
+	 * Stream into the class instance. This will not populate the fields created by the header since
+	 * this information is required to create a package of this type.
 	 */
 	BinaryIStream& stream(BinaryIStream& is);
 
 protected:
-
-	/**
-	 * Private constructors. Use create methods instead.
-	 */
-	QGSParamMsg(const uint8_t* data, uint16_t length, uint8_t sequenceNr, uint8_t lastInSequence);
-
-	QGSParamMsg(const uint8_t* data, uint16_t length);
-
-	QGSParamMsg();
-
-	QGSParamMsg(const std::string payload, uint8_t sequenceNr, uint8_t lastInSequence);
 
 
 	uint8_t mSequenceNumber;

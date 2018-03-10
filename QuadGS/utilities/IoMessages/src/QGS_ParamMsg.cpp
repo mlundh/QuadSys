@@ -27,35 +27,50 @@
 namespace QuadGS {
 
 
+/*
+QGSParamMsg::QGSParamMsg(const uint8_t* data, uint16_t length, uint8_t sequenceNr, uint8_t lastInSequence)
+	: QGS_MsgHeader()
+	, mSequenceNumber(sequenceNr)
+	, mLastInSequence(lastInSequence)
+	, mPayload((const char*)data, (size_t)length)
+{
+
+}*/
+
+
+QGSParamMsg::QGSParamMsg(const QGS_IoHeader& header, const uint8_t* data, uint16_t length)
+	: QGS_IoHeader(header)
+	, mSequenceNumber(0)
+	, mLastInSequence(0)
+	, mPayload()
+{
+	BinaryIStream is1(data, length);
+	mPayloadSize = length;
+	is1 >> *this;
+}
+
+QGSParamMsg::QGSParamMsg(const QGS_IoHeader& header)
+	: QGS_IoHeader(header)
+	, mSequenceNumber(0)
+	, mLastInSequence(0)
+	, mPayload()
+{
+}
+
+
+QGSParamMsg::QGSParamMsg(uint8_t Control, const std::string payload, uint8_t sequenceNr, uint8_t lastInSequence)
+	: QGS_IoHeader( Parameters, Control, 0, payload.length() + 1)
+	, mSequenceNumber(sequenceNr)
+	, mLastInSequence(lastInSequence)
+	, mPayload(payload)
+{
+
+}
 
 QGSParamMsg::~QGSParamMsg()
 {
 }
 
-QGSParamMsg::ptr QGSParamMsg::Create(const uint8_t* data, uint16_t length)
-{
-	ptr p(new QGSParamMsg(data, length) );
-	return p;
-}
-
-QGSParamMsg::ptr QGSParamMsg::Create()
-{
-	ptr p(new QGSParamMsg() );
-	return p;
-}
-
-QGSParamMsg::ptr QGSParamMsg::Create(const uint8_t* data, uint16_t length, uint8_t sequenceNr, uint8_t lastInSequence)
-{
-	ptr p(new QGSParamMsg(data, length, sequenceNr, lastInSequence) );
-	return p;
-}
-
-
-QGSParamMsg::ptr QGSParamMsg::Create(const std::string data, uint8_t sequenceNr, uint8_t lastInSequence)
-{
-	ptr p(new QGSParamMsg(data, sequenceNr, lastInSequence) );
-	return p;
-}
 uint8_t QGSParamMsg::GetLastInSeq() const
 {
 	return mLastInSequence;
@@ -82,11 +97,13 @@ std::string QGSParamMsg::GetPayload() const
 void QGSParamMsg::Setpayload(std::string payload)
 {
 	mPayload = payload;
+	mPayloadSize = payload.length() + 1;
 }
 
 std::string QGSParamMsg::toString() const
 {
 	std::string result;
+	result += 	QGS_IoHeader::toString();
 	result += "[" + std::to_string(GetLastInSeq()) + "]";
 	result += "[" + std::to_string(GetSequenceNumber()) + "]";
 	result += "[" +  mPayload + "]";
@@ -95,9 +112,10 @@ std::string QGSParamMsg::toString() const
 
 BinaryOStream& QGSParamMsg::stream(BinaryOStream& os) const
 {
+	QGS_IoHeader::stream(os);
 	os <<  SetBits(1) << mLastInSequence;
 	os <<  SetBits(7) << mSequenceNumber;
-	os << mPayload;
+	os <<  SetBytes(mPayloadSize -1) << mPayload.c_str();
 	return os;
 }
 
@@ -105,51 +123,12 @@ BinaryIStream& QGSParamMsg::stream(BinaryIStream& is)
 {
 	is >> SetBits(1) >> mLastInSequence;
 	is >> SetBits(7) >> mSequenceNumber;
-	is >> mPayload;
+	std::vector<char> v;
+	v.reserve(mPayloadSize - 1);
+	is >> SetBytes(mPayloadSize - 1) >> v.data();
+	mPayload = std::string(v.data(), mPayloadSize - 1);
 	return is;
 }
 
-QGSParamMsg::QGSParamMsg(const uint8_t* data, uint16_t length, uint8_t sequenceNr, uint8_t lastInSequence)
-	: QGS_Msg()
-	, mSequenceNumber(sequenceNr)
-	, mLastInSequence(lastInSequence)
-	, mPayload((const char*)data, (size_t)length)
-{
-
-}
-
-
-QGSParamMsg::QGSParamMsg(const uint8_t* data, uint16_t length)
-	: QGS_Msg()
-	, mSequenceNumber(0)
-	, mLastInSequence(0)
-	, mPayload()
-{
-	BinaryOStream os;
-	for(int i = 0; i < length; i++)
-	{
-		os << data[i];
-	}
-	BinaryIStream is(os.get_internal_vec());
-	is >> *this;
-}
-
-QGSParamMsg::QGSParamMsg()
-	: QGS_Msg()
-	, mSequenceNumber(0)
-	, mLastInSequence(0)
-	, mPayload()
-{
-}
-
-
-QGSParamMsg::QGSParamMsg(const std::string payload, uint8_t sequenceNr, uint8_t lastInSequence)
-	: QGS_Msg()
-	, mSequenceNumber(sequenceNr)
-	, mLastInSequence(lastInSequence)
-	, mPayload(payload)
-{
-
-}
 
 } /* namespace QuadGS */

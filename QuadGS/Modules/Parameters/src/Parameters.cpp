@@ -26,8 +26,8 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include "QGS_MsgHeader.h"
 #include "QGS_ParamMsg.h"
+#include "QGS_IoHeader.h"
 #include "QGS_Module.h"
 namespace QuadGS {
 
@@ -103,7 +103,7 @@ std::vector< QGS_UiCommand::ptr > Parameters::getCommands()
     return mCommands;
 }
 
-void Parameters::ParameterHandler(QGS_MsgHeader::ptr header, QGSParamMsg::ptr payload)
+void Parameters::ParameterHandler(QGS_IoHeader::ptr header, QGSParamMsg::ptr payload)
 {
     uint8_t control = header->GetControl();
 
@@ -113,7 +113,7 @@ void Parameters::ParameterHandler(QGS_MsgHeader::ptr header, QGSParamMsg::ptr pa
     std::string path = payload->GetPayload();
 
     switch (control){
-    case QGS_MsgHeader::ParametersControl::SetTree:
+    case QGS_IoHeader::ParametersControl::SetTree:
         if((lastSequenceNo++) != sequenceNo)
         {
             logger.QuadLog(QuadGS::error, "Lost a setTree package, try again!" );
@@ -133,10 +133,10 @@ void Parameters::ParameterHandler(QGS_MsgHeader::ptr header, QGSParamMsg::ptr pa
             RequestTree(); // We have not yet got the whole tree, continue!
         }
         break;
-    case QGS_MsgHeader::ParametersControl::GetTree:
+    case QGS_IoHeader::ParametersControl::GetTree:
         logger.QuadLog(QuadGS::error, "GetTree command not implemented in GS!" + path );
         break;
-    case QGS_MsgHeader::ParametersControl::Value:
+    case QGS_IoHeader::ParametersControl::Value:
         break;
 
     default:
@@ -398,9 +398,9 @@ std::string Parameters::writeRawCmd(std::string data)
         return "Address or control to large.";
     }
 
-    QGS_MsgHeader::ptr header = QGS_MsgHeader::Create(iAddress, iControl, 0, 0);
+    QGS_IoHeader::ptr header = QGS_IoHeader::Create(iAddress, iControl, 0, 0);
 
-    if(iAddress != QGS_MsgHeader::addresses::Parameters)
+    if(iAddress != QGS_IoHeader::addresses::Parameters)
     {
         throw std::runtime_error("Only raw write of parameters are supported at the moment!");
     }
@@ -440,7 +440,7 @@ std::string Parameters::writeCmd(std::string path_dump)
 		QGSParamMsg::ptr payload = QGSParamMsg::Create(reinterpret_cast<const uint8_t*>(Path.c_str()),static_cast<uint16_t>(Path.length()) );
 		payload->SetSequenceNumber(SequenceNumber++);
 
-		QGS_MsgHeader::ptr header = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Parameters, QGS_MsgHeader::addresses::Parameters, false, payload->GetPayload().length());
+		QGS_IoHeader::ptr header = QGS_IoHeader::Create(QGS_IoHeader::addresses::Parameters, QGS_IoHeader::addresses::Parameters, false, payload->GetPayload().length());
 		if(mWriteFcn)
 		{
 			mWriteFcn( header, std::static_pointer_cast<QGS_Msg>(payload) );
@@ -461,8 +461,8 @@ std::string Parameters::requestUpdateCmd(std::string )
 
 std::string Parameters::saveParamCmd(std::string )
 {
-    QGS_MsgHeader::ptr header = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Parameters,
-            QGS_MsgHeader::ParametersControl::Save,0,0);
+    QGS_IoHeader::ptr header = QGS_IoHeader::Create(QGS_IoHeader::addresses::Parameters,
+            QGS_IoHeader::ParametersControl::Save,0,0);
     std::shared_ptr<QGS_Msg> nullPtr;
     if(mWriteFcn)
     {
@@ -477,8 +477,8 @@ std::string Parameters::saveParamCmd(std::string )
 
 std::string Parameters::loadParamCmd(std::string )
 {
-    QGS_MsgHeader::ptr header = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Parameters,
-            QGS_MsgHeader::ParametersControl::Load,0,0);
+    QGS_IoHeader::ptr header = QGS_IoHeader::Create(QGS_IoHeader::addresses::Parameters,
+            QGS_IoHeader::ParametersControl::Load,0,0);
     std::shared_ptr<QGS_Msg> nullPtr;
     if(mWriteFcn)
     {
@@ -508,8 +508,8 @@ void Parameters::FindPartial(std::string& name, std::vector<std::string>& vec)
 
 void Parameters::RequestTree()
 {
-    QGS_MsgHeader::ptr tmpPacket = QGS_MsgHeader::Create(QGS_MsgHeader::addresses::Parameters,
-            QGS_MsgHeader::ParametersControl::GetTree,0,0);
+    QGS_IoHeader::ptr tmpPacket = QGS_IoHeader::Create(QGS_IoHeader::addresses::Parameters,
+            QGS_IoHeader::ParametersControl::GetTree,0,0);
     std::shared_ptr<QGS_Msg> nullPtr;
     if(mWriteFcn)
     {

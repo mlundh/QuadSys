@@ -45,6 +45,9 @@ enum messageTypes
 	msgLog,
 	msgDebug,
 	msgCommand,
+	msgCommandRslt,
+	msgCommandReq,
+	msgCommandReqRsp,
 	msgSubscription,
 	msgQuit,
 };
@@ -75,28 +78,13 @@ protected:
 
 class QGS_Msg;
 
-template<class T, class B>
-struct Derived_from
-{
-	static void constraints(T* p)
-	{
-		B* pb = p; // will fail compilation if pb is not a base of p
-		(void)pb;
-	}
-	Derived_from()
-	{
-		void(*p)(T*) = constraints; //Function pointer to the constraints function.
-		(void)p;
-	}
-};
-
-template<typename MessageType>
+template <class MessageType,
+class B = QGS_Msg, class = typename std::enable_if<std::is_base_of<B,MessageType>::value>::type>
 class QGS_MessageHandler: public virtual QGS_MessageHandlerBase
 {
 public:
 	QGS_MessageHandler():QGS_MessageHandlerBase("baseHandler")
 {
-		Derived_from<MessageType, QGS_Msg>();
 }
 	virtual ~QGS_MessageHandler() = default;
 	virtual void process(MessageType*)=0;
@@ -112,19 +100,16 @@ public:
 class QGS_Msg
 {
 public:
-	//friend BinaryOStream& operator<< (BinaryOStream& os, const QGS_Msg& pl);
-	//friend BinaryIStream& operator>> (BinaryIStream& is, QGS_Msg& pl);
-
 
 	QGS_Msg()
 	{
 
 	}
 protected:
-	template<typename MessageType>
+	template <class MessageType,
+	class B = QGS_Msg, class = typename std::enable_if<std::is_base_of<B,MessageType>::value>::type>
 	void dynamicDispatch(QGS_MessageHandlerBase* handler,MessageType* self)
 	{
-		Derived_from<MessageType, QGS_Msg>(); // Compile time type check.
 		QGS_MessageHandler<MessageType>* msgHandler = dynamic_cast<QGS_MessageHandler<MessageType>*>(handler);
 		if(msgHandler != nullptr)
 		{
@@ -147,7 +132,7 @@ public:
 	 *      dynamicDispatch(handler,this);
 	 *  }
 	 *
-	 *  anything else is an error. You can use the macro DISPATCH_FCN(handler) as a convenience.
+	 *  anything else is an error. You can use the macro DISPATCH_FCN as a convenience.
 	 *
 	 * @param handler
 	 */

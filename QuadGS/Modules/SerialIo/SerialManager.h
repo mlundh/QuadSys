@@ -42,7 +42,7 @@ using namespace boost::asio;
 namespace QuadGS {
 
 class QGS_UiCommand;
-class QGS_MsgHeader;
+class QGS_IoHeader;
 class QGS_Msg;
 /**
  * @class Serial_Manager
@@ -69,7 +69,7 @@ public:
      * Write function used by users of the Io module.
      * @param ptr   The QSP that should be sent.
      */
-    virtual void write( std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<QGS_Msg> payload);
+    virtual void write( std::shared_ptr<QGS_IoHeader> header, std::shared_ptr<QGS_Msg> payload);
 
     /**
      * Start the read operation. Can be used as soon as the serial
@@ -127,7 +127,7 @@ private:
      * registered message handler. Also handles logging of messages.
      * @param ptr   The received message.
      */
-    void messageHandler(std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<QGS_Msg> payload);
+    void messageHandler(std::shared_ptr<QGS_IoHeader> header, std::shared_ptr<QGS_Msg> payload);
 
     /**
      * Internal write message. This is the only function allowed to write to the
@@ -140,7 +140,7 @@ private:
     boost::asio::io_service mIo_service;
     std::unique_ptr<boost::asio::io_service::work> mWork;
     std::thread *mThread_io;
-    ThreadSafeFifo<std::pair< std::shared_ptr<QGS_MsgHeader>, std::shared_ptr<QGS_Msg> > >mOutgoingFifo;
+    ThreadSafeFifo<std::pair< std::shared_ptr<QGS_IoHeader>, std::shared_ptr<QGS_Msg> > >mOutgoingFifo;
     QGS_IoInterface::MessageHandlerFcn mMessageHandler;
     int mRetries;
     bool mOngoing;

@@ -26,8 +26,9 @@
 #define QUADGS_QGS_TRACKER_QGS_TRACKERINTERFACE_H_
 #include <memory>
 #include <functional>
+
+#include "QGS_IoHeader.h"
 #include "QGS_Msg.h"
-#include "QGS_MsgHeader.h"
 
 namespace QuadGS
 {
@@ -74,7 +75,7 @@ struct state_data
 class QGS_TrackerInterface
 {
 public:
-    typedef std::function<void(std::shared_ptr<QGS_MsgHeader>, std::shared_ptr<QGS_Msg>) > WriteFcn;
+    typedef std::function<void(std::shared_ptr<QGS_IoHeader>, std::shared_ptr<QGS_Msg>) > WriteFcn;
 
 
 	QGS_TrackerInterface(){};
@@ -91,7 +92,7 @@ public:
      * @param header
      * @param payload
      */
-    virtual void msgHandler(std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<QGS_Msg> payload) = 0;
+    virtual void msgHandler(std::shared_ptr<QGS_IoHeader> header, std::shared_ptr<QGS_Msg> payload) = 0;
 
     /**
      * Get the user commands available for the module.

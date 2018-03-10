@@ -85,18 +85,16 @@ void QGS_Module::sendMsg(std::unique_ptr<QGS_ModuleMsg> message)
 	}
 }
 
-std::unique_ptr<QGS_ModuleMsg> QGS_Module::getCommands()
-{
-	return std::unique_ptr<QGS_ModuleMsg>(); // TODO Commands message!
-}
-
 std::string QGS_Module::executeCommand(std::string command, std::string args)
 {
 	for(auto i : mCommands)
 	{
-
+		if(i.mName.compare(command) == 0)
+		{
+			return i.mFunc(args);
+		}
 	}
-	return "";
+	return "command not found.";
 }
 
 void QGS_Module::setSendFunc(WriteFcn func)
@@ -105,6 +103,29 @@ void QGS_Module::setSendFunc(WriteFcn func)
 	{
 		mSendFcn = func;
 	}
+}
+
+
+void QGS_Module::process(QGS_CommandMsg* message)
+{
+	std::string result = executeCommand(message->mCommand.mName, message->mCommand.mArgs);
+	if(result.empty())
+	{
+		return;
+	}
+	else
+	{
+		QGS_CommandRsltMsg::ptr ptr = std::make_unique<QGS_CommandRsltMsg>(result);
+		ptr->setDestinationPort(message->getOriginatingPort());
+		sendMsg(std::move(ptr));
+	}
+}
+
+void QGS_Module::process(QGS_CommandReqMsg* message)
+{
+	QGS_CommandReqRspMsg::ptr ptr = std::make_unique<QGS_CommandReqRspMsg>(mCommands);
+	ptr->setDestinationPort(message->getOriginatingPort());
+	sendMsg(std::move(ptr));
 }
 
 QGS_ReactiveModule::QGS_ReactiveModule()
@@ -146,7 +167,7 @@ void QGS_ThreadedModule::startProcessing()
 
 void QGS_ThreadedModule::stopProcessing()
 {
-	QGS_ModuleMsg::ptr ptr  = QGS_ModuleMsg::Create(messageTypes_t::msgQuit);
+	QGS_ModuleMsg::ptr ptr  = std::make_unique<QGS_ModuleMsg>(messageTypes_t::msgQuit);
 	mFifo.push(std::move(ptr)); // send stop to own fifo.
 
 	if(mThread.joinable())

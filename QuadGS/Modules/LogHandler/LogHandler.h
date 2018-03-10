@@ -19,13 +19,13 @@
 #define NR_LOG_FIELDS (3)
 namespace QuadGS {
 
-class QGS_MsgHeader;
+class QGS_IoHeader;
 class QGS_UiCommand;
 class QGS_LogMsg;
 class QGS_Msg;
 class LogHandler: public std::enable_shared_from_this<LogHandler>
 {
-    typedef std::function<void(std::shared_ptr<QGS_MsgHeader>, std::shared_ptr<QGS_Msg>) > WriteFcn;
+    typedef std::function<void(std::shared_ptr<QGS_IoHeader>, std::shared_ptr<QGS_Msg>) > WriteFcn;
     typedef std::shared_ptr<LogHandler> ptr;
     /**
      * Private constructor, use create instead.
@@ -87,7 +87,7 @@ public:
      * @param header    Header of the message.
      * @param payload   Payload of the message.
      */
-    void Handler(std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<QGS_LogMsg> payload);
+    void Handler(std::shared_ptr<QGS_IoHeader> header, std::shared_ptr<QGS_LogMsg> payload);
 
 private:
     std::ofstream mLogFile;

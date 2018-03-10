@@ -160,16 +160,31 @@ TEST(BinaryOStreamTest, StreamChar)
 	EXPECT_EQ(test, verify);
 }
 
+TEST(BinaryOStreamTest, StreamCharBytes)
+{
+	BinaryOStream os;
+
+	std::string test = "TestVector";
+	std::string expected ="Test";
+	os << SetBytes(4) << test.c_str();
+	// Comparing strings are easier than comparing c_strings, so lets convert.
+	// (This adds a null terminator, that is ok as long as we know...)
+	std::string verify((char*)&os.get_internal_vec()[0], os.get_internal_vec().size());
+	EXPECT_EQ(expected, verify);
+}
+
 TEST(BinaryOStreamTest, StreamString)
 {
 	BinaryOStream os;
 
 	std::string test = "TestVector";
 	os << test;
-	// Comparing strings are easier than comparing c_strings, so lets convert.
-	std::string verify((char*)&os.get_internal_vec()[0], os.get_internal_vec().size());
+	// Comparing strings are easier than comparing c_strings, so lets convert. Remove the 4 positions occupied by
+	// the integer describing the length of the string.
+	std::string verify((char*)&os.get_internal_vec()[4], os.get_internal_vec().size()-4);
 	EXPECT_EQ(test, verify);
 }
+
 
 // TODO signed integer test!
 
@@ -305,9 +320,41 @@ TEST(BinaryIStreamTest, Streamuint12Offset)
 }
 
 
-TEST(BinaryIStreamTest, StreamString)
+
+TEST(BinaryIStreamTest, StreamCharBytes)
 {
 	std::vector<unsigned char> v = {0x54, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x67};
+	BinaryIStream is(v);
+
+	char expected[] = "Test";
+
+	char verify[4];
+	char* vp = &verify[0];
+
+	is >> SetBytes(4) >> vp;
+
+
+	EXPECT_TRUE( 0 == std::memcmp( expected, verify, sizeof( expected ) ) );
+}
+
+TEST(BinaryIStreamTest, StreamCharBytes1)
+{
+	std::vector<unsigned char> v = {0x54, 0x65, 0x73, 0x74};
+	BinaryIStream is(v);
+
+	char expected[] = "Test";
+
+	char verify[4];
+	char* vp = &verify[0];
+
+	is >> SetBytes(4) >> vp;
+
+
+	EXPECT_TRUE( 0 == std::memcmp( expected, verify, sizeof( expected ) ) );
+}
+TEST(BinaryIStreamTest, StreamString)
+{
+	std::vector<unsigned char> v = {0x00,0x00,0x00,0x07, 0x54, 0x65, 0x73, 0x74, 0x69, 0x6e, 0x67};
 
 	BinaryIStream is(v);
 
@@ -378,6 +425,74 @@ TEST(BinaryIOStreamTest, StremOutThenIn2)
 	EXPECT_EQ(j, b);
 	EXPECT_EQ(k, c);
 	EXPECT_EQ(d, l);
+
+}
+
+TEST(BinaryIOStreamTest, StreamString)
+{
+	BinaryOStream os;
+
+	std::string test = "TestString";
+
+	os << test;
+
+	BinaryIStream is(os.get_internal_vec());
+	std::string verify;
+
+	is >> verify;
+	EXPECT_EQ(test, verify);
+}
+
+TEST(BinaryIOStreamTest, StreamMultipleString)
+{
+	BinaryOStream os;
+
+	std::string test = "TestString";
+	std::string test1 = "SecondString";
+	std::string test2 = "ThirdString";
+
+	os << test << test1 << test2;
+
+	BinaryIStream is(os.get_internal_vec());
+
+	std::string verify;
+	std::string verify1;
+	std::string verify2;
+
+	is >> verify >> verify1 >> verify2;
+
+	EXPECT_EQ(test, verify);
+	EXPECT_EQ(test1, verify1);
+	EXPECT_EQ(test2, verify2);
+
+}
+
+
+TEST(BinaryIOStreamTest, StreamCharBytes)
+{
+
+	BinaryOStream os;
+
+	std::string test = "TestString";
+	std::string test1 = "SecondString";
+
+	os << SetBytes(10)<< test.c_str() << SetBytes(12) << test1.c_str();
+
+
+	BinaryIStream is(os.get_internal_vec());
+
+	char verify[10];
+	char* vp = &verify[0];
+
+	char verify1[12];
+	char* vp1 = &verify1[0];
+
+	is >> SetBytes(10) >> vp;
+	is >> SetBytes(12) >> vp1;
+
+
+	EXPECT_TRUE( 0 == std::memcmp( test.c_str(), verify, sizeof( verify ) ) );
+	EXPECT_TRUE( 0 == std::memcmp( test1.c_str(), verify1, sizeof( verify1 ) ) );
 
 }
 

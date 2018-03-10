@@ -30,8 +30,8 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include "QGS_IoHeader.h"
 #include "SlipPacket.h"
-#include "QGS_MsgHeader.h"
 
 namespace QuadGS {
 
@@ -170,7 +170,7 @@ void SerialPort::doClose( const boost::system::error_code& error )
     QuadLog(severity_level::info, "Serial Port closed");
     return;
 }
-void SerialPort::write(QGS_MsgHeader::ptr header, QGS_Msg::Ptr payload)
+void SerialPort::write(QGS_IoHeader::ptr header, QGS_Msg::Ptr payload)
 {
     if( ! mSerialPort.is_open() )
     {

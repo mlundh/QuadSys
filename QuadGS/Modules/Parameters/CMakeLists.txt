@@ -1,6 +1,6 @@
 set(src "Parameters.cpp")
 set(dep "CommandTree"
-        "Messages"
+        "IoMessages"
         "AppLog"
         "QGS_Module")
 

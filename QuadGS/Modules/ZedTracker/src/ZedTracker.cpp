@@ -62,7 +62,7 @@ void ZedTracker::RegisterWriteFcn(WriteFcn fcn)
 	mWriteFcn = fcn;
 }
 
-void ZedTracker::msgHandler(std::shared_ptr<QGS_MsgHeader> header, std::shared_ptr<QGS_Msg> payload)
+void ZedTracker::msgHandler(std::shared_ptr<QGS_IoHeader> header, std::shared_ptr<QGS_Msg> payload)
 {
 
 }

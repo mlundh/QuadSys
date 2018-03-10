@@ -1,6 +1,6 @@
 set(src "LogHandler.cpp")
 set(dep "CommandTree"
-        "Messages"
+        "IoMessages"
         "QGS_Module")
 
 qgs_make_shared_lib( LogHandler src dep)
