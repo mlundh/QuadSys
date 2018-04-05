@@ -57,6 +57,13 @@ QGSParamMsg::QGSParamMsg(const QGS_IoHeader& header)
 {
 }
 
+QGSParamMsg::QGSParamMsg(const QGSParamMsg& msg)
+	: QGS_IoHeader(msg)
+	, mSequenceNumber(msg.mSequenceNumber)
+	, mLastInSequence(msg.mLastInSequence)
+	, mPayload(msg.GetPayload())
+{
+}
 
 QGSParamMsg::QGSParamMsg(uint8_t Control, const std::string payload, uint8_t sequenceNr, uint8_t lastInSequence)
 	: QGS_IoHeader( Parameters, Control, 0, payload.length() + 1)

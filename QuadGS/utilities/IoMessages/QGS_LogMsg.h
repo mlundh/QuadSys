@@ -13,7 +13,7 @@ namespace QuadGS {
 
 class QGS_LogMsg: public QGS_IoHeader {
 public:
-    typedef std::shared_ptr<QGS_LogMsg> ptr;
+    typedef std::unique_ptr<QGS_LogMsg> ptr;
 
     /**
      * Create from a uint8_t array.

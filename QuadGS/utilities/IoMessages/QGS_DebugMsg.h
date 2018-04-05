@@ -16,59 +16,64 @@ namespace QuadGS {
 class QGS_DebugMsg : public QGS_IoHeader
 {
 public:
-    typedef std::shared_ptr<QGS_DebugMsg> ptr;
+	typedef std::unique_ptr<QGS_DebugMsg> ptr;
 
-    /**
-     * Create an empty message.
-     */
-    QGS_DebugMsg(const QGS_IoHeader& header);
+	/**
+	 * Copy a message.
+	 */
+	QGS_DebugMsg(const QGS_DebugMsg& msg);
 
-    /**
-     * Create a message with the specified payload.
-     */
-    QGS_DebugMsg(uint8_t Control, const std::string payload);
+	/**
+	 * Create an empty message.
+	 */
+	QGS_DebugMsg(const QGS_IoHeader& header);
 
-    /**
-     * Create from a uint8_t array.
-     * @param Data	pointer to the data.
-     * @param Length length of the data.
-     */
-    QGS_DebugMsg(uint8_t control, const uint8_t* data, uint16_t length);
+	/**
+	 * Create a message with the specified payload.
+	 */
+	QGS_DebugMsg(uint8_t Control, const std::string payload);
 
-    /**
-     * Get the payload.
-     * @return     payload.
-     */
-    std::string GetPayload() const;
+	/**
+	 * Create from a uint8_t array.
+	 * @param Data	pointer to the data.
+	 * @param Length length of the data.
+	 */
+	QGS_DebugMsg(uint8_t control, const uint8_t* data, uint16_t length);
 
-    /**
-     * Set the payload
-     * @param payload    The payload.
-     */
-    void Setpayload(std::string payload);
+	/**
+	 * Get the payload.
+	 * @return     payload.
+	 */
+	std::string GetPayload() const;
 
-    /**
-     * Prints the message in a human readable form.
-     * @return
-     */
-    virtual std::string toString() const;
+	/**
+	 * Set the payload
+	 * @param payload    The payload.
+	 */
+	void Setpayload(std::string payload);
 
-    /**
-     * Implement the interface, this is a utility to stream the class.
-     */
-    BinaryOStream& stream(BinaryOStream& os) const;
+	/**
+	 * Prints the message in a human readable form.
+	 * @return
+	 */
+	virtual std::string toString() const;
 
-    /**
-     * Implement the interface, this is a utility to stream the class.
-     */
-    BinaryIStream& stream(BinaryIStream& is);
+	/**
+	 * Implement the interface, this is a utility to stream the class.
+	 */
+	BinaryOStream& stream(BinaryOStream& os) const;
 
-    virtual ~QGS_DebugMsg();
+	/**
+	 * Implement the interface, this is a utility to stream the class.
+	 */
+	BinaryIStream& stream(BinaryIStream& is);
+
+	virtual ~QGS_DebugMsg();
 
 private:
 
 
-    std::string mPayload;
+	std::string mPayload;
 };
 
 } /* namespace QuadGS */

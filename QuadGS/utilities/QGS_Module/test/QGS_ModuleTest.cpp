@@ -29,6 +29,7 @@
 #include "gtest/gtest.h"
 #include "QGS_ModuleFake.h"
 #include "QGS_Router.h"
+#include "QGS_ModuleIoMsg.h"
 
 using namespace QuadGS;
 
@@ -53,9 +54,9 @@ TEST_F(ModuleTest, SendNoSubsc)
 {
 	testing::internal::CaptureStdout();
 
-	module_2.sendDummyMsg(messageTypes_t::msgDebug);
+	module_2.sendDummyDebugIoMsg();
 
-	module_2.sendDummyMsg(messageTypes_t::msgParam);
+	module_2.sendDummyParamIoMsg();
 
 	while(!router.done())
 	{
@@ -81,15 +82,15 @@ TEST_F(ModuleTest, SendNoSubsc)
 
 TEST_F(ModuleTest, SubscribeAndSend)
 {
-	module_1.subscribeMsg(messageTypes_t::msgDebug);
 	module_1.subscribeMsg(messageTypes_t::msgParam);
+	module_1.subscribeMsg(messageTypes_t::msgDebug);
 
-	module_2.subscribeMsg(messageTypes_t::msgDebug);
+	module_2.subscribeMsg(messageTypes_t::msgParam);
 
 	module_1.returnNxtMsg(true);
-	module_2.sendDummyMsg(messageTypes_t::msgDebug);
+	module_2.sendDummyDebugIoMsg();;
 	module_1.returnNxtMsg(true);
-	module_2.sendDummyMsg(messageTypes_t::msgParam);
+	module_2.sendDummyParamIoMsg();
 	for(int i = 0; i < 100; i++)
 	{
 		if((module_1.getNrMsg() == 2) && (module_2.getNrMsg() == 1))
@@ -102,28 +103,6 @@ TEST_F(ModuleTest, SubscribeAndSend)
 	EXPECT_EQ(module_2.getNrMsg(), 1); // only param msg should be returned.
 
 }
-
-
-TEST_F(ModuleTest, FaultySubscribeMsg)
-{
-
-	testing::internal::CaptureStdout();
-
-	module_2.sendDummyMsg(messageTypes_t::msgSubscription);
-	while(!router.done())
-	{
-		usleep(50); // make sure that all messages are processed.
-	}
-	usleep(500); // and allow time to print to stdout
-	std::string output;
-	size_t pos = 0;
-
-	output += testing::internal::GetCapturedStdout();
-	pos = output.find("Received unhandled message. Install handler or remove subscription.");
-
-	EXPECT_NE(pos, std::string::npos) << "---> did not find \"Received a faulty subscription message\"";
-}
-
 
 TEST_F(ModuleTest, TwoSameName)
 {
@@ -172,9 +151,9 @@ TEST_F(ThreadedModuleTest, SubscribeAndSend)
 	module_2.subscribeMsg(messageTypes_t::msgDebug);
 
 	module_1.returnNxtMsg(true);
-	module_2.sendDummyMsg(messageTypes_t::msgDebug);
+	module_2.sendDummyDebugMsg();
 	module_1.returnNxtMsg(true);
-	module_2.sendDummyMsg(messageTypes_t::msgParam);
+	module_2.sendDummyParamMsg();
 
 	for(int i = 0; i < 100; i++)
 	{
@@ -186,5 +165,59 @@ TEST_F(ThreadedModuleTest, SubscribeAndSend)
 	}
 	EXPECT_EQ(module_1.getNrMsg(), 2);
 	EXPECT_EQ(module_2.getNrMsg(), 1); // only param msg should be returned.
+}
+
+// Test fixture to setup the topology.
+class IoModuleTest : public ::testing::Test {
+protected:
+	IoModuleTest(): threadedModule("threadedModule"),reactiveModule("reactiveModule"),ioModule("ioModule"), router("router")
+{
+		QuadGS::AppLog::Init("app_log", "msg_log", std::cout, QuadGS::severity_level::warning, false);
+
+		router.bind(&threadedModule);
+		router.bind(&reactiveModule);
+		router.bind(&ioModule);
+
+		ioModule.subscribeMsg(msgCommandReqRsp);
+		ioModule.subscribeMsg(msgCommandRslt);
+
+		reactiveModule.subscribeMsg(msgCommand); // TODO! this should be handled in the QGS_Module class...
+		reactiveModule.subscribeMsg(msgCommandReq);
+
+}
+
+	virtual void SetUp()
+	{
+
+	}
+
+	QGS_ThreadedModuleFake threadedModule;
+	QGS_ModuleFake reactiveModule;
+	QGS_IoModuleFake ioModule;
+	QGS_Router router;
+};
+
+
+TEST_F(IoModuleTest, CommandTest)
+{
+
+	ioModule.getCommands();
+	ioModule.sendCommandMsg();
+
+
+	for(int i = 0; i < 100; i++)
+	{
+		if(ioModule.mCommands.size() == 1 && ioModule.mResponce.size() == 1)
+		{
+			break;
+		}
+		usleep(10); // make sure that all messages are processed.
+	}
+	ASSERT_EQ(ioModule.mCommands.size(), 1);
+	ASSERT_EQ(ioModule.mResponce.size(), 1);
+	EXPECT_EQ(ioModule.mCommands[0].mName, "TestFcn");
+	EXPECT_EQ(ioModule.mResponce[0], "OK");
+
+
 }
 

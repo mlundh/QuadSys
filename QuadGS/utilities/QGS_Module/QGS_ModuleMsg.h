@@ -26,22 +26,21 @@
 #define QUADGS_UTILITIES_QGS_MODULE_SRC_QGS_MODULEMSG_H_
 #include "QGS_Msg.h"
 
+
 namespace QuadGS {
-class QGS_ModuleMsg;
-typedef std::function<void(std::unique_ptr<QGS_ModuleMsg>) > WriteFcn;
+class QGS_ModuleMsgBase;
+typedef std::function<void(std::unique_ptr<QGS_ModuleMsgBase>) > WriteFcn;
 
 
-class QGS_ModuleMsg: public QGS_Msg
+class QGS_ModuleMsgBase: public QGS_Msg
 {
 public:
 
-	typedef std::unique_ptr<QGS_ModuleMsg> ptr;
+	typedef std::unique_ptr<QGS_ModuleMsgBase> ptr;
 
-	static ptr Create(QGS_ModuleMsg& copy);
+	QGS_ModuleMsgBase(messageTypes_t type);
 
-	QGS_ModuleMsg(messageTypes_t type);
-
-	QGS_ModuleMsg(const QGS_ModuleMsg& msg);
+	QGS_ModuleMsgBase(const QGS_ModuleMsgBase& msg);
 
 	DISPATCH_FCN
 	/*virtual void dispatch(QGS_MessageHandlerBase* handler)
@@ -49,7 +48,7 @@ public:
 		dynamicDispatch(handler,this);
 	}*/
 
-	virtual ~QGS_ModuleMsg();
+	virtual ~QGS_ModuleMsgBase();
 
 	void setOriginator(std::string originator);
 
@@ -71,6 +70,8 @@ public:
 
 	virtual BinaryIStream& stream(BinaryIStream& is);
 
+	virtual QGS_ModuleMsgBase* clone() const {return new QGS_ModuleMsgBase(*this);};
+
 private:
 	uint8_t mType;
 	int mOriginatingPort;
@@ -78,11 +79,45 @@ private:
 	std::string mOriginator;
 };
 
-class QGS_ModuleSubMsg: public QGS_ModuleMsg
+
+template <class MessageType>
+class QGS_ModuleMsg : public QGS_ModuleMsgBase
 {
 public:
 
-	QGS_ModuleSubMsg(messageTypes_t type,messageTypes_t subscription);
+	QGS_ModuleMsg(messageTypes_t type)
+	:QGS_ModuleMsgBase(type)
+	{
+
+	}
+
+	QGS_ModuleMsg(const QGS_ModuleMsgBase& msg)
+	:QGS_ModuleMsgBase(msg)
+	{
+
+	}
+	QGS_ModuleMsg(const QGS_ModuleMsg& msg)
+	:QGS_ModuleMsgBase(msg)
+	{
+
+	}
+
+	virtual ~QGS_ModuleMsg(){};
+	virtual QGS_ModuleMsg* clone() const
+	{
+		return new MessageType(static_cast<const MessageType&>(*this));
+	}
+};
+
+
+
+class QGS_ModuleSubMsg: public QGS_ModuleMsg<QGS_ModuleSubMsg>
+{
+public:
+
+	QGS_ModuleSubMsg(messageTypes_t subscription);
+
+	QGS_ModuleSubMsg(const QGS_ModuleSubMsg& msg);
 
 	virtual ~QGS_ModuleSubMsg();
 
@@ -98,6 +133,7 @@ public:
 private:
 	uint8_t mSubscription;
 };
+
 
 
 } /* namespace QuadGS */

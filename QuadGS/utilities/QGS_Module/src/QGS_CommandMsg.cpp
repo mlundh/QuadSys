@@ -54,6 +54,15 @@ QGS_UiCommandDesc::QGS_UiCommandDesc(std::string name, std::string args, std::st
 ,mArgs(args)
 ,mDoc(doc)
 {}
+
+QGS_UiCommandDesc::QGS_UiCommandDesc(const QGS_UiCommandDesc& uiCommandDesc)
+:mName(uiCommandDesc.mName)
+,mArgs(uiCommandDesc.mArgs)
+,mDoc(uiCommandDesc.mDoc)
+{
+
+}
+
 QGS_UiCommandDesc::QGS_UiCommandDesc(const QGS_UiCommand_& uiCommand)
 :mName(uiCommand.mName)
 ,mArgs()
@@ -65,15 +74,23 @@ QGS_UiCommandDesc::~QGS_UiCommandDesc()
 
 
 
-QGS_CommandMsg::QGS_CommandMsg(std::string name, std::string args, std::string doc)
+QGS_CommandMsg::QGS_CommandMsg(std::string name, std::string args)
 :QGS_ModuleMsg(msgCommand)
-,mCommand(name, args, doc)
+,mCommand(name, args, "")
 {
 
 }
 
-QGS_CommandMsg::QGS_CommandMsg(const QGS_ModuleMsg& moduleMsg)
-:QGS_ModuleMsg(moduleMsg)
+QGS_CommandMsg::QGS_CommandMsg(const QGS_CommandMsg& msg)
+:QGS_ModuleMsg(msg)
+,mCommand(msg.mCommand)
+
+{
+
+}
+
+QGS_CommandMsg::QGS_CommandMsg(const QGS_ModuleMsgBase& header)
+:QGS_ModuleMsg(header)
 ,mCommand("", "", "")
 
 {
@@ -111,8 +128,16 @@ QGS_CommandRsltMsg::QGS_CommandRsltMsg(std::string& result)
 
 }
 
-QGS_CommandRsltMsg::QGS_CommandRsltMsg(const QGS_ModuleMsg& moduleMsg)
-:QGS_ModuleMsg(moduleMsg)
+QGS_CommandRsltMsg::QGS_CommandRsltMsg(const QGS_CommandRsltMsg& msg)
+:QGS_ModuleMsg(msg)
+,mResult(msg.mResult)
+{
+
+}
+
+
+QGS_CommandRsltMsg::QGS_CommandRsltMsg(const QGS_ModuleMsgBase& header)
+:QGS_ModuleMsg(header)
 ,mResult()
 {
 
@@ -150,8 +175,14 @@ QGS_CommandReqMsg::QGS_CommandReqMsg()
 
 }
 
-QGS_CommandReqMsg::QGS_CommandReqMsg(const QGS_ModuleMsg& moduleMsg)
-:QGS_ModuleMsg(moduleMsg)
+QGS_CommandReqMsg::QGS_CommandReqMsg(const QGS_CommandReqMsg& msg)
+:QGS_ModuleMsg(msg)
+{
+
+}
+
+QGS_CommandReqMsg::QGS_CommandReqMsg(const QGS_ModuleMsgBase& header)
+:QGS_ModuleMsg(header)
 {
 
 }
@@ -187,10 +218,19 @@ QGS_CommandReqRspMsg::QGS_CommandReqRspMsg(std::vector<QGS_UiCommand_>& Commands
 	}
 }
 
-QGS_CommandReqRspMsg::QGS_CommandReqRspMsg(const QGS_ModuleMsg& moduleMsg)
-:QGS_ModuleMsg(moduleMsg)
+QGS_CommandReqRspMsg::QGS_CommandReqRspMsg(const QGS_ModuleMsgBase& header)
+:QGS_ModuleMsg(header)
 {
 
+}
+
+QGS_CommandReqRspMsg::QGS_CommandReqRspMsg(const QGS_CommandReqRspMsg& msg)
+:QGS_ModuleMsg(msg)
+{
+	for(auto i : msg.mCommands)
+	{
+		mCommands.push_back(i);
+	}
 }
 
 

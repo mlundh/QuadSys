@@ -28,19 +28,13 @@
 
 namespace QuadGS {
 
-QGS_ModuleMsg::ptr QGS_ModuleMsg::Create(QGS_ModuleMsg& copy)
-{
-	ptr p(new QGS_ModuleMsg(copy) );
-	return p;
-}
-
-QGS_ModuleMsg::QGS_ModuleMsg(messageTypes type)
+QGS_ModuleMsgBase::QGS_ModuleMsgBase(messageTypes type)
 :mType(type), mOriginatingPort(-1), mDestinationPort(-1), mOriginator()
 {
 
 }
 
-QGS_ModuleMsg::QGS_ModuleMsg(const QGS_ModuleMsg& msg)
+QGS_ModuleMsgBase::QGS_ModuleMsgBase(const QGS_ModuleMsgBase& msg)
 :mType(static_cast<uint8_t>(msg.getType()))
 , mOriginatingPort( msg.getOriginatingPort())
 , mDestinationPort(msg.getDestinationPort())
@@ -50,57 +44,57 @@ QGS_ModuleMsg::QGS_ModuleMsg(const QGS_ModuleMsg& msg)
 }
 
 
-QGS_ModuleMsg::~QGS_ModuleMsg()
+QGS_ModuleMsgBase::~QGS_ModuleMsgBase()
 {
 
 }
 
 
 
-void QGS_ModuleMsg::setOriginator(std::string originator)
+void QGS_ModuleMsgBase::setOriginator(std::string originator)
 {
 	mOriginator = originator;
 }
 
-std::string QGS_ModuleMsg::getOriginator() const
+std::string QGS_ModuleMsgBase::getOriginator() const
 {
 	return mOriginator;;
 }
 
-void QGS_ModuleMsg::setDestinationPort(int port)
+void QGS_ModuleMsgBase::setDestinationPort(int port)
 {
 	mDestinationPort = port;
 }
 
-int QGS_ModuleMsg::getDestinationPort() const
+int QGS_ModuleMsgBase::getDestinationPort() const
 {
 	return mDestinationPort;
 }
 
-void QGS_ModuleMsg::setOriginatingPort(int port)
+void QGS_ModuleMsgBase::setOriginatingPort(int port)
 {
 	mOriginatingPort = port;
 }
 
-int QGS_ModuleMsg::getOriginatingPort() const
+int QGS_ModuleMsgBase::getOriginatingPort() const
 {
 	return mOriginatingPort;
 }
 
 
-messageTypes_t QGS_ModuleMsg::getType() const
+messageTypes_t QGS_ModuleMsgBase::getType() const
 {
 	return static_cast<messageTypes_t>(mType);
 }
 
-std::string QGS_ModuleMsg::toString() const
+std::string QGS_ModuleMsgBase::toString() const
 {
 	std::stringstream ss;
 	ss << "ModuleMsg type: " << mType << std::endl;
 	return ss.str();
 }
 
-BinaryIStream& QGS_ModuleMsg::stream(BinaryIStream& is)
+BinaryIStream& QGS_ModuleMsgBase::stream(BinaryIStream& is)
 {
 	is >>  SetBits(8)  >> mType;
 	is >>  SetBits(16) >> mOriginatingPort;
@@ -110,7 +104,7 @@ BinaryIStream& QGS_ModuleMsg::stream(BinaryIStream& is)
 	return is;
 }
 
-BinaryOStream& QGS_ModuleMsg::stream(BinaryOStream& os) const
+BinaryOStream& QGS_ModuleMsgBase::stream(BinaryOStream& os) const
 {
 	os <<  SetBits(8)  << mType;
 	os <<  SetBits(16) << mOriginatingPort;
@@ -122,12 +116,17 @@ BinaryOStream& QGS_ModuleMsg::stream(BinaryOStream& os) const
 
 
 
-QGS_ModuleSubMsg::QGS_ModuleSubMsg(messageTypes_t type,messageTypes_t subscription)
-:QGS_ModuleMsg(type), mSubscription(subscription)
+QGS_ModuleSubMsg::QGS_ModuleSubMsg(messageTypes_t subscription)
+:QGS_ModuleMsg(messageTypes_t::msgSubscription), mSubscription(subscription)
 {
 
 }
 
+QGS_ModuleSubMsg::QGS_ModuleSubMsg(const QGS_ModuleSubMsg& msg)
+:QGS_ModuleMsg(msg), mSubscription(msg.mSubscription)
+{
+
+}
 QGS_ModuleSubMsg::~QGS_ModuleSubMsg()
 {
 
@@ -145,16 +144,20 @@ void QGS_ModuleSubMsg::setSubscription(messageTypes_t type)
 
 BinaryIStream& QGS_ModuleSubMsg::stream(BinaryIStream& is)
 {
-	QGS_ModuleMsg::stream(is);
+	QGS_ModuleMsgBase::stream(is);
 	is >> mSubscription;
 	return is;
 }
 
 BinaryOStream& QGS_ModuleSubMsg::stream(BinaryOStream& os) const
 {
-	QGS_ModuleMsg::stream(os);
+	QGS_ModuleMsgBase::stream(os);
 	os << mSubscription;
 	return os;
 }
+
+
+
+
 
 } /* namespace QuadGS */

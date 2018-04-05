@@ -36,7 +36,7 @@ QGS_Router::QGS_Router(std::string name):QGS_MessageHandlerBase(name), mNrModule
 
 QGS_Router::~QGS_Router()
 {
-	QGS_ModuleMsg::ptr ptr  = std::make_unique<QGS_ModuleMsg>(messageTypes_t::msgQuit);
+	QGS_ModuleMsgBase::ptr ptr  = std::make_unique<QGS_ModuleMsgBase>(msgQuit);
 	mFifo.push(std::move(ptr)); // send stop to own fifo.
 
 	if(mThread.joinable())
@@ -59,14 +59,14 @@ bool QGS_Router::done()
 }
 
 
-void QGS_Router::incomingPort(QGS_ModuleMsg::ptr message, int port)
+void QGS_Router::incomingPort(QGS_ModuleMsgBase::ptr message, int port)
 {
 	message->setOriginatingPort(port);
 	mFifo.push(std::move(message));
 }
 
 
-void QGS_Router::sendMsg(QGS_ModuleMsg::ptr message)
+void QGS_Router::sendMsg(QGS_ModuleMsgBase::ptr message)
 {
 	messageTypes_t type = message->getType();
 	if(mSubscriptions.find(type) != mSubscriptions.end())
@@ -99,14 +99,18 @@ void QGS_Router::sendMsg(QGS_ModuleMsg::ptr message)
 }
 
 
-void QGS_Router::internalSend(QGS_ModuleMsg::ptr message, int port)
+void QGS_Router::internalSend(QGS_ModuleMsgBase::ptr message, int port)
 {
 	//Make sure we have a write function.
 	if((mWriteFunctions.size() >= static_cast<size_t>(port)) && (mWriteFunctions[port] != NULL))
 	{
 		// each module gets its own copy. This ensures thread safety. Naive but works...
-		QGS_ModuleMsg::ptr ptr = QGS_ModuleMsg::Create(*message);
+		QGS_ModuleMsgBase::ptr ptr(message->clone());
 		mWriteFunctions[port](std::move(ptr));
+	}
+	else
+	{
+        throw std::runtime_error("No message write function set. Set the function before binding.");
 	}
 }
 
@@ -116,7 +120,7 @@ void QGS_Router::runRouter()
 	while(!mStop)
 	{
 
-		QGS_ModuleMsg::ptr msg(mFifo.dequeue());
+		QGS_ModuleMsgBase::ptr msg(mFifo.dequeue());
 		route(std::move(msg));
 	}
 	mLogger.QuadLog(severity_level::info, "Stopping router.");
@@ -135,7 +139,7 @@ void QGS_Router::checkUniqueName(std::string &name)
 	}
 }
 
-void QGS_Router::route(QGS_ModuleMsg::ptr msg)
+void QGS_Router::route(QGS_ModuleMsgBase::ptr msg)
 {
 	switch (msg->getType())
 	{
@@ -147,7 +151,7 @@ void QGS_Router::route(QGS_ModuleMsg::ptr msg)
 	}
 	break;
 
-	case msgQuit:
+	case messageTypes_t::msgQuit:
 	{
 		mStop = true;
 	}

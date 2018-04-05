@@ -47,9 +47,8 @@ void QGS_Module::bind(QGS_Router* router)
 
 void QGS_Module::subscribeMsg(messageTypes_t type)
 {
-	std::unique_ptr <QGS_ModuleSubMsg> msg = std::make_unique<QGS_ModuleSubMsg>(
-			messageTypes_t::msgSubscription,type);
-	sendMsg(std::move(std::move(msg)));
+	std::unique_ptr <QGS_ModuleSubMsg> msg = std::make_unique<QGS_ModuleSubMsg>(type);
+	sendMsg(std::move(msg));
 }
 
 void QGS_Module::setReceivingFcn(receivingFcn_t fcn)
@@ -72,7 +71,7 @@ WriteFcn QGS_Module::getReceivingFcn()
 	}
 }
 
-void QGS_Module::sendMsg(std::unique_ptr<QGS_ModuleMsg> message)
+void QGS_Module::sendMsg(std::unique_ptr<QGS_ModuleMsgBase> message)
 {
 	if(mSendFcn)
 	{
@@ -140,7 +139,7 @@ QGS_ReactiveModule::~QGS_ReactiveModule()
 }
 
 
-void QGS_ReactiveModule::ReceivingFcn(std::unique_ptr<QGS_ModuleMsg> message)
+void QGS_ReactiveModule::ReceivingFcn(std::unique_ptr<QGS_ModuleMsgBase> message)
 {
 	message->dispatch(this);
 }
@@ -167,7 +166,7 @@ void QGS_ThreadedModule::startProcessing()
 
 void QGS_ThreadedModule::stopProcessing()
 {
-	QGS_ModuleMsg::ptr ptr  = std::make_unique<QGS_ModuleMsg>(messageTypes_t::msgQuit);
+	QGS_ModuleMsgBase::ptr ptr  = std::make_unique<QGS_ModuleMsgBase>(msgQuit);
 	mFifo.push(std::move(ptr)); // send stop to own fifo.
 
 	if(mThread.joinable())
@@ -198,7 +197,7 @@ void QGS_ThreadedModule::handleMessages(bool blocking)
 		}
 	}
 
-	QGS_ModuleMsg::ptr msg = mFifo.dequeue();
+	QGS_ModuleMsgBase::ptr msg = mFifo.dequeue();
 	if(msg->getType() == messageTypes_t::msgQuit)
 	{
 		mStop = true;
@@ -208,7 +207,7 @@ void QGS_ThreadedModule::handleMessages(bool blocking)
 		msg->dispatch(this);
 	}
 }
-void QGS_ThreadedModule::ReceivingFcn(std::unique_ptr<QGS_ModuleMsg> message)
+void QGS_ThreadedModule::ReceivingFcn(std::unique_ptr<QGS_ModuleMsgBase> message)
 {
 	mFifo.push(std::move(message));
 }

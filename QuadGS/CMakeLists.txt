@@ -9,6 +9,7 @@ include(cmake/QuadGSUtils.cmake)
 
 SET(BUILD_TESTS "TRUE" CACHE BOOL "Build Tests")
 SET(WITH_VISION "TRUE" CACHE BOOL "Build with vision support.")
+SET(STOP_ON_ERROR "FALSE" CACHE BOOL "Stop build on first error.")
 
 #SET(CMAKE_VERBOSE_MAKEFILE ON)
 # Define project name
@@ -34,6 +35,11 @@ ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 
 # Set some warning flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -pedantic -Werror")
+
+#Stop on first error if needed
+if(STOP_ON_ERROR)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wfatal-errors")
+endif()
 
 # Fix boost linking for log.
 add_definitions(-D BOOST_LOG_DYN_LINK)

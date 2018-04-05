@@ -62,7 +62,7 @@ class QGS_IoHeader: public QGS_Msg
 {
 public:
 
-    typedef std::shared_ptr<QGS_IoHeader> ptr;
+    typedef std::unique_ptr<QGS_IoHeader> ptr;
 
     enum addresses
     {

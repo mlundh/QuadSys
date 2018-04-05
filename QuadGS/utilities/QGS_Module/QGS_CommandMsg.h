@@ -36,6 +36,7 @@ struct QGS_UiCommandDesc
 {
 public:
 	QGS_UiCommandDesc(std::string name, std::string args, std::string doc);
+	QGS_UiCommandDesc(const QGS_UiCommandDesc& uiCommandDesc);
 	QGS_UiCommandDesc(const QGS_UiCommand_& uiCommand);
 	virtual ~QGS_UiCommandDesc();
 	std::string mName;           /* Human readable name of the function. */
@@ -45,15 +46,17 @@ public:
 
 
 
-class QGS_CommandMsg: public QGS_ModuleMsg
+class QGS_CommandMsg: public QGS_ModuleMsg<QGS_CommandMsg>
 {
 public:
 	typedef std::unique_ptr<QGS_CommandMsg> ptr;
 
 
-	QGS_CommandMsg(std::string name, std::string args, std::string doc = "");
+	QGS_CommandMsg(std::string name, std::string args);
 
-	QGS_CommandMsg(const QGS_ModuleMsg& moduleMsg);
+	QGS_CommandMsg(const QGS_CommandMsg& msg);
+
+	QGS_CommandMsg(const QGS_ModuleMsgBase& moduleMsg);
 
 	virtual ~QGS_CommandMsg();
 
@@ -69,7 +72,7 @@ public:
 };
 
 
-class QGS_CommandRsltMsg: public QGS_ModuleMsg
+class QGS_CommandRsltMsg: public QGS_ModuleMsg<QGS_CommandRsltMsg>
 {
 public:
 	typedef std::unique_ptr<QGS_CommandRsltMsg> ptr;
@@ -77,7 +80,9 @@ public:
 
 	QGS_CommandRsltMsg(std::string& result);
 
-	QGS_CommandRsltMsg(const QGS_ModuleMsg& moduleMsg);
+	QGS_CommandRsltMsg(const QGS_CommandRsltMsg& msg);
+
+	QGS_CommandRsltMsg(const QGS_ModuleMsgBase& header);
 
 	virtual ~QGS_CommandRsltMsg();
 
@@ -91,7 +96,7 @@ public:
 };
 
 
-class QGS_CommandReqMsg: public QGS_ModuleMsg
+class QGS_CommandReqMsg: public QGS_ModuleMsg<QGS_CommandReqMsg>
 {
 public:
 	typedef std::unique_ptr<QGS_CommandReqMsg> ptr;
@@ -99,7 +104,9 @@ public:
 
 	QGS_CommandReqMsg();
 
-	QGS_CommandReqMsg(const QGS_ModuleMsg& moduleMsg);
+	QGS_CommandReqMsg(const QGS_CommandReqMsg& msg);
+
+	QGS_CommandReqMsg(const QGS_ModuleMsgBase& header);
 
 	virtual ~QGS_CommandReqMsg();
 
@@ -111,7 +118,7 @@ public:
 };
 
 
-class QGS_CommandReqRspMsg: public QGS_ModuleMsg
+class QGS_CommandReqRspMsg: public QGS_ModuleMsg<QGS_CommandReqRspMsg>
 {
 public:
 	typedef std::unique_ptr<QGS_CommandReqRspMsg> ptr;
@@ -119,7 +126,9 @@ public:
 
 	QGS_CommandReqRspMsg(std::vector<QGS_UiCommand_>& Commands);
 
-	QGS_CommandReqRspMsg(const QGS_ModuleMsg& moduleMsg);
+	QGS_CommandReqRspMsg(const QGS_ModuleMsgBase& header);
+
+	QGS_CommandReqRspMsg(const QGS_CommandReqRspMsg& msg);
 
 	virtual ~QGS_CommandReqRspMsg();
 

@@ -10,6 +10,11 @@
 namespace QuadGS {
 
 
+QGS_DebugMsg::QGS_DebugMsg(const QGS_DebugMsg& msg)
+: QGS_IoHeader(msg), mPayload(msg.GetPayload())
+{
+
+}
 
 QGS_DebugMsg::QGS_DebugMsg(const QGS_IoHeader& header)
 : QGS_IoHeader(header)

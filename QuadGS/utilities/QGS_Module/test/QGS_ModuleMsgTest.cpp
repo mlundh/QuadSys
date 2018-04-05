@@ -15,7 +15,7 @@ using namespace QuadGS;
 
 TEST(QGSModuleMsgTest, StreamInOut)
 {
-	QGS_ModuleMsg::ptr msg = std::make_unique<QGS_ModuleMsg>(msgQuit);
+	QGS_ModuleMsgBase::ptr msg = std::make_unique< QGS_ModuleMsgBase>(msgQuit);
 	msg->setDestinationPort(55);
 	msg->setOriginatingPort(11);
 	msg->setOriginator("test");
@@ -25,7 +25,7 @@ TEST(QGSModuleMsgTest, StreamInOut)
 
 	BinaryIStream is(os.get_internal_vec());
 
-	QGS_ModuleMsg::ptr msgVerify = std::make_unique<QGS_ModuleMsg>(msgCommand);
+	QGS_ModuleMsgBase::ptr msgVerify = std::make_unique<QGS_ModuleMsgBase>(msgQuit);
 
 	is >> *msgVerify;
 
@@ -38,7 +38,7 @@ TEST(QGSModuleMsgTest, StreamInOut)
 
 TEST(QGSCommandMsgTest, StreamInOut)
 {
-	QGS_CommandMsg::ptr msg = std::make_unique<QGS_CommandMsg>("first","arg","doc");
+	QGS_CommandMsg::ptr msg = std::make_unique<QGS_CommandMsg>("first","arg");
 	msg->setDestinationPort(55);
 	msg->setOriginatingPort(11);
 	msg->setOriginator("test");
@@ -47,7 +47,7 @@ TEST(QGSCommandMsgTest, StreamInOut)
 	os << *msg;
 
 	BinaryIStream is(os.get_internal_vec());
-	QGS_ModuleMsg header(msgCommand);
+	QGS_ModuleMsgBase header(msgCommand);
 
 	is >> header;
 	QGS_CommandMsg::ptr msgVerify = std::make_unique<QGS_CommandMsg>(header);
@@ -76,7 +76,7 @@ TEST(QGSCommandMsgTest, StreamInOutRsp)
 	os << *msg;
 
 	BinaryIStream is(os.get_internal_vec());
-	QGS_ModuleMsg header(msgCommand);
+	QGS_ModuleMsgBase header(msgCommand);
 
 	is >> header;
 	QGS_CommandRsltMsg::ptr msgVerify = std::make_unique<QGS_CommandRsltMsg>(header);
@@ -101,7 +101,7 @@ TEST(QGSCommandMsgTest, StreamInOutReq)
 	os << *msg;
 
 	BinaryIStream is(os.get_internal_vec());
-	QGS_ModuleMsg header(msgCommand);
+	QGS_ModuleMsgBase header(msgCommand);
 
 	is >> header;
 	QGS_CommandReqMsg::ptr msgVerify = std::make_unique<QGS_CommandReqMsg>(header);
@@ -130,7 +130,7 @@ TEST(QGSCommandMsgTest, StreamInOutReqRsp)
 	os << *msg;
 
 	BinaryIStream is(os.get_internal_vec());
-	QGS_ModuleMsg header(msgCommand);
+	QGS_ModuleMsgBase header(msgCommand);
 
 	is >> header;
 	QGS_CommandReqRspMsg::ptr msgVerify = std::make_unique<QGS_CommandReqRspMsg>(header);

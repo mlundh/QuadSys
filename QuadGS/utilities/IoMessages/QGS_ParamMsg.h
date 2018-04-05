@@ -60,7 +60,7 @@ class QGSParamMsg: public QGS_IoHeader
 {
 public:
 
-	//QGSParamMsg(const uint8_t* data, uint16_t length, uint8_t sequenceNr, uint8_t lastInSequence);
+	typedef std::unique_ptr<QGSParamMsg> ptr;
 
 	/**
 	 * Create an instance from a uint8_t array. Data is copied.
@@ -72,6 +72,8 @@ public:
 	//TODO make control data length ctor.
 
 	QGSParamMsg(const QGS_IoHeader& header);
+
+	QGSParamMsg(const QGSParamMsg& msg);
 
 	/**
 	 * Create from payload, sequence number and lastInSequence.
@@ -86,7 +88,6 @@ public:
 
 	virtual ~QGSParamMsg();
 
-	typedef std::shared_ptr<QGSParamMsg> ptr;
 
 	/**
 	 * Get field indicating if it is the last message in the

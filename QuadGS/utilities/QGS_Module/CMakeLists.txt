@@ -15,6 +15,7 @@ list(APPEND src_Test "QGS_ModuleTest.cpp"
                      "QGS_ModuleMsgTest.cpp")
                      
 list(APPEND dep_Test "gtest_main"
-                     "QGS_Module")
+                     "QGS_Module"
+                     "IoMessages")
 
 qgs_add_test(QGS_ModuleTest src_Test dep_Test)

@@ -103,7 +103,7 @@ class QGS_Module
 {
 public:
     friend QGS_Router;
-	typedef std::function<void(std::unique_ptr<QGS_ModuleMsg>) > receivingFcn_t;
+	typedef std::function<void(std::unique_ptr<QGS_ModuleMsgBase>) > receivingFcn_t;
 
 	QGS_Module();
 
@@ -117,12 +117,6 @@ public:
 	void bind(QGS_Router* router);
 
 protected:
-
-
-	/**
-	 * Register the custom UI commands the module can handle
-	 */
-	virtual void registerCommands() = 0;
 
 	/**
 	 * Subscribe to a particular message type. Call multiple times to subscribe to multiple message types.
@@ -146,13 +140,7 @@ protected:
 	 * send a message.
 	 * @param message
 	 */
-	void sendMsg(std::unique_ptr<QGS_ModuleMsg> message);
-
-	/**
-	 * Utility function used internally to handle incoming messages of type getCommands.
-	 * @return QGS_Msg shared pointer containing information of all commands.
-	 */
-	std::unique_ptr<QGS_ModuleMsg> getCommands();
+	void sendMsg(std::unique_ptr<QGS_ModuleMsgBase> message);
 
 	/**
 	 * Utility function used internally to handle incoming messages of type executeCommands.
@@ -169,17 +157,18 @@ protected:
 	 */
 	void setSendFunc(WriteFcn func);
 
+public:
 	virtual void process(QGS_CommandMsg* message);
 	virtual void process(QGS_CommandReqMsg* message);
 
-
+protected:
 	WriteFcn mReceiveFcn;
     WriteFcn mSendFcn;
     std::vector<QGS_UiCommand_> mCommands;
 };
 
 
-class QGS_ReactiveModule: public QGS_Module
+class QGS_ReactiveModule: public virtual QGS_Module
 {
 public:
 	typedef std::function<void() > processingFcn;
@@ -190,7 +179,7 @@ public:
 
 private:
 
-	void ReceivingFcn(std::unique_ptr<QGS_ModuleMsg> message);
+	void ReceivingFcn(std::unique_ptr<QGS_ModuleMsgBase> message);
 };
 
 
@@ -239,14 +228,14 @@ protected:
 
 private:
 
-	void ReceivingFcn(std::unique_ptr<QGS_ModuleMsg> message);
+	void ReceivingFcn(std::unique_ptr<QGS_ModuleMsgBase> message);
 
 	void runThread();
 
 private:
     bool mStop;
 	std::thread mThread;
-	ThreadSafeFifo<QGS_ModuleMsg::ptr> mFifo; // ,essage, originating port
+	ThreadSafeFifo<QGS_ModuleMsgBase::ptr> mFifo; // ,essage, originating port
 	processingFcn mProcessingFcn;
 
 };

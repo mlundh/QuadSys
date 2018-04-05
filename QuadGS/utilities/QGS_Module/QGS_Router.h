@@ -47,24 +47,24 @@ public:
 	bool done();
 protected:
 
-	void incomingPort(QGS_ModuleMsg::ptr message, int port);
+	void incomingPort(QGS_ModuleMsgBase::ptr message, int port);
 
 
 private:
 
-	void sendMsg(QGS_ModuleMsg::ptr message);
+	void sendMsg(QGS_ModuleMsgBase::ptr message);
 
-	void internalSend(QGS_ModuleMsg::ptr message, int port);
+	void internalSend(QGS_ModuleMsgBase::ptr message, int port);
 
 	void runRouter();
 
 	void checkUniqueName(std::string &name);
 
-	void route(QGS_ModuleMsg::ptr fifoEntry);
+	void route(QGS_ModuleMsgBase::ptr fifoEntry);
 
 	virtual void process(QGS_ModuleSubMsg* msg);
 
-	ThreadSafeFifo<QGS_ModuleMsg::ptr> mFifo; // ,essage, originating port
+	ThreadSafeFifo<QGS_ModuleMsgBase::ptr> mFifo; // ,essage, originating port
 	std::vector<std::string> mPortNameMaping; // map port number to name of module connected there.
 	std::map<messageTypes_t, std::list<int> > mSubscriptions; // Map message types to ports subscribed to that message type.
 	std::vector<WriteFcn> mWriteFunctions;

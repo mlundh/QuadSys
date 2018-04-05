@@ -34,13 +34,13 @@
 #include "BinaryStream.h"
 
 
-#define DISPATCH_FCN virtual void dispatch(QGS_MessageHandlerBase* handler) { dynamicDispatch(handler,this); }
+#define DISPATCH_FCN virtual void dispatch(QGS_MessageHandlerBase* handler) { this->dynamicDispatch(handler,this); }
 
 namespace QuadGS {
 
 enum messageTypes
 {
-	msgFc,
+	msgIo,
 	msgParam,
 	msgLog,
 	msgDebug,
@@ -51,7 +51,7 @@ enum messageTypes
 	msgSubscription,
 	msgQuit,
 };
-typedef enum messageTypes messageTypes_t; // TODO remove this. Should be derived classes instead.
+typedef enum messageTypes messageTypes_t;
 
 class QGS_MessageHandlerBase
 {
@@ -75,6 +75,31 @@ protected:
 	std::string mName;
 	std::vector<messageTypes_t> subscriptions;
 };
+
+
+class CloneBase
+{
+public:
+	virtual ~CloneBase(){};
+    virtual CloneBase* clone() const = 0;
+};
+
+/**
+ *
+ */
+template <class MessageType>
+class Cloneable : virtual public CloneBase
+{
+public:
+	virtual ~Cloneable(){};
+	virtual MessageType* clone() const
+	{
+		MessageType *msg = new MessageType(*this);
+		return msg;
+	}
+};
+
+
 
 class QGS_Msg;
 
@@ -124,6 +149,11 @@ protected:
 public:
 
 	/**
+	 * Shared pointer type for this type.
+	 */
+	typedef std::shared_ptr<QGS_Msg> Ptr;
+
+	/**
 	 * Dispatch the processing. The processing will be handled by the appropriate message handler. The
 	 * correct handler for this type will be automatically called. Implementation should look like this:
 	 *
@@ -137,10 +167,7 @@ public:
 	 * @param handler
 	 */
 	virtual void dispatch(QGS_MessageHandlerBase* handler) {};
-	/**
-	 * Shared pointer type for this type.
-	 */
-	typedef std::shared_ptr<QGS_Msg> Ptr;
+
 
 	/**
 	 * Get the payload represented as a string.
