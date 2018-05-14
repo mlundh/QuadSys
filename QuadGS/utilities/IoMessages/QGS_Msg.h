@@ -29,43 +29,30 @@
 #include <iostream>
 #include <sstream>
 
+#include "messageTypes.h"
 #include "AppLog.h"
-
 #include "BinaryStream.h"
-
+#include "messageTypes.h"
 
 #define DISPATCH_FCN virtual void dispatch(QGS_MessageHandlerBase* handler) { this->dynamicDispatch(handler,this); }
 
 namespace QuadGS {
 
-enum messageTypes
-{
-	msgIo,
-	msgParam,
-	msgLog,
-	msgDebug,
-	msgCommand,
-	msgCommandRslt,
-	msgCommandReq,
-	msgCommandReqRsp,
-	msgSubscription,
-	msgQuit,
-};
-typedef enum messageTypes messageTypes_t;
-
 class QGS_MessageHandlerBase
 {
 public:
 	QGS_MessageHandlerBase(std::string name):mLogger(name), mName(name)
-{
+	{
 
-}
+	}
 	virtual ~QGS_MessageHandlerBase() = default;
+
 	virtual void unhandledMsg()
 	{
 		mLogger.QuadLog( severity_level::warning ,"Received unhandled message. Install handler or remove subscription.");
 	}
-	std::string& getName()
+
+	std::string getName()
 	{
 		return mName;
 	}

@@ -36,7 +36,7 @@ namespace QuadGS {
 
 class QGS_Module;
 
-class QGS_Router : public QGS_MessageHandler<QGS_ModuleSubMsg>
+class QGS_Router
 {
 public:
 	QGS_Router(std::string name);
@@ -47,14 +47,14 @@ public:
 	bool done();
 protected:
 
-	void incomingPort(QGS_ModuleMsgBase::ptr message, int port);
+	void incomingPort(QGS_ModuleMsgBase::ptr message);
 
 
 private:
 
 	void sendMsg(QGS_ModuleMsgBase::ptr message);
 
-	void internalSend(QGS_ModuleMsgBase::ptr message, int port);
+	void internalSend(QGS_ModuleMsgBase::ptr message, std::string port, bool broadcast);
 
 	void runRouter();
 
@@ -62,16 +62,13 @@ private:
 
 	void route(QGS_ModuleMsgBase::ptr fifoEntry);
 
-	virtual void process(QGS_ModuleSubMsg* msg);
-
-	ThreadSafeFifo<QGS_ModuleMsgBase::ptr> mFifo; // ,essage, originating port
-	std::vector<std::string> mPortNameMaping; // map port number to name of module connected there.
-	std::map<messageTypes_t, std::list<int> > mSubscriptions; // Map message types to ports subscribed to that message type.
-	std::vector<WriteFcn> mWriteFunctions;
+	ThreadSafeFifo<QGS_ModuleMsgBase::ptr> mFifo;
+	std::map<std::string, WriteFcn> mWriteFunctions;
     std::thread mThread;
 	unsigned int mNrModules;
     std::string mName;
     bool mStop;
+	AppLog mLogger;
 
 
 

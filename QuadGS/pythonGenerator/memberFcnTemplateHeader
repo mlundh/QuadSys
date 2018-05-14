@@ -1,0 +1,3 @@
+	{type} get{nameFcn}() {const};
+
+	void set{nameFcn}({type} {nameinput});

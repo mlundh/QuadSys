@@ -38,29 +38,21 @@ public:
 
 	typedef std::unique_ptr<QGS_ModuleMsgBase> ptr;
 
-	QGS_ModuleMsgBase(messageTypes_t type);
+	QGS_ModuleMsgBase(messageTypes_t type, std::string desination);
 
 	QGS_ModuleMsgBase(const QGS_ModuleMsgBase& msg);
 
 	DISPATCH_FCN
-	/*virtual void dispatch(QGS_MessageHandlerBase* handler)
-	{
-		dynamicDispatch(handler,this);
-	}*/
 
 	virtual ~QGS_ModuleMsgBase();
 
-	void setOriginator(std::string originator);
+	void setSource(std::string originator);
 
-	std::string getOriginator() const;
+	std::string getSource() const;
 
-	void setDestinationPort(int port);
+	void setDestination(std::string port);
 
-	int getDestinationPort() const;
-
-	void setOriginatingPort(int port);
-
-	int getOriginatingPort() const;
+	std::string getDestination() const;
 
 	messageTypes_t getType() const;
 
@@ -73,10 +65,9 @@ public:
 	virtual QGS_ModuleMsgBase* clone() const {return new QGS_ModuleMsgBase(*this);};
 
 private:
-	uint8_t mType;
-	int mOriginatingPort;
-	int mDestinationPort;
-	std::string mOriginator;
+	uint32_t mType;
+	std::string mSource;
+	std::string mDestination;
 };
 
 
@@ -85,8 +76,8 @@ class QGS_ModuleMsg : public QGS_ModuleMsgBase
 {
 public:
 
-	QGS_ModuleMsg(messageTypes_t type)
-	:QGS_ModuleMsgBase(type)
+	QGS_ModuleMsg(messageTypes_t type, std::string desination)
+	:QGS_ModuleMsgBase(type, desination)
 	{
 
 	}
@@ -108,33 +99,6 @@ public:
 		return new MessageType(static_cast<const MessageType&>(*this));
 	}
 };
-
-
-
-class QGS_ModuleSubMsg: public QGS_ModuleMsg<QGS_ModuleSubMsg>
-{
-public:
-
-	QGS_ModuleSubMsg(messageTypes_t subscription);
-
-	QGS_ModuleSubMsg(const QGS_ModuleSubMsg& msg);
-
-	virtual ~QGS_ModuleSubMsg();
-
-	DISPATCH_FCN
-	typedef std::unique_ptr<QGS_ModuleSubMsg> ptr;
-
-	virtual messageTypes_t getSubscription();
-	virtual void setSubscription(messageTypes_t type);
-
-	virtual BinaryOStream& stream(BinaryOStream& os) const;
-	virtual BinaryIStream& stream(BinaryIStream& is);
-
-private:
-	uint8_t mSubscription;
-};
-
-
 
 } /* namespace QuadGS */
 

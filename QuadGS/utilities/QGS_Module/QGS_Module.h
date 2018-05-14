@@ -35,58 +35,10 @@
 #include "AppLog.h"
 #include "ThreadSafeFifo.hpp"
 #include "QGS_ModuleMsg.h"
-#include "QGS_CommandMsg.h"
 
 namespace QuadGS
 {
 class QGS_Router;
-struct QGS_UiCommand
-{
-public:
-	enum ActOn
-	{
-		NoAction,
-		Core,
-		IO,
-		UI,
-		File
-	};
-	typedef std::shared_ptr < QGS_UiCommand > ptr;
-	typedef std::function<std::string(std::string)> fcn;
-	QGS_UiCommand(std::string name, QGS_UiCommand::fcn func, std::string doc, ActOn acton):
-		mName(name)
-	,mFunc(func)
-	,mDoc(doc)
-	,mActOn(acton)
-	{}
-	virtual ~QGS_UiCommand()
-	{
-	}
-	std::string mName;           /* Human readable name of the function. */
-	fcn mFunc;                   /* Function to call to do the job. */
-	std::string mDoc;            /* Documentation for this function.  */
-	ActOn mActOn;
-};
-
-struct QGS_UiCommand_
-{
-public:
-	typedef std::shared_ptr < QGS_UiCommand > ptr;
-	typedef std::function<std::string(std::string)> fcn;
-	QGS_UiCommand_(std::string name, QGS_UiCommand::fcn func, std::string doc)
-	:mName(name)
-	,mDoc(doc)
-	,mFunc(func)
-
-	{}
-	virtual ~QGS_UiCommand_()
-	{
-	}
-	std::string mName;           /* Human readable name of the function. */
-	std::string mDoc;            /* Documentation for this function.  */
-	fcn mFunc;                   /* Function to call to do the job. */
-
-};
 
 /**
  * @class QGS_Module
@@ -97,9 +49,7 @@ public:
  * implement processMsg and registerCommands. The basic QGS_Module is executed in the thread that sends
  * a message, normally this would be the router thread.
  */
-class QGS_Module
-: virtual public QGS_MessageHandler<QGS_CommandMsg>
-, virtual public QGS_MessageHandler<QGS_CommandReqMsg>
+class QGS_Module: public virtual QGS_MessageHandlerBase
 {
 public:
     friend QGS_Router;
@@ -117,12 +67,6 @@ public:
 	void bind(QGS_Router* router);
 
 protected:
-
-	/**
-	 * Subscribe to a particular message type. Call multiple times to subscribe to multiple message types.
-	 * @param type
-	 */
-	void subscribeMsg(messageTypes_t type);
 
 	/**
 	 * Set the method that receives the messages.
@@ -143,28 +87,15 @@ protected:
 	void sendMsg(std::unique_ptr<QGS_ModuleMsgBase> message);
 
 	/**
-	 * Utility function used internally to handle incoming messages of type executeCommands.
-	 * @param command
-	 * @param args
-	 * @return
-	 */
-	std::string executeCommand(std::string command, std::string args);
-
-	/**
 	 * Used internally during binding. Sets the send function and enables the module to
 	 * send messages to the router (and through the router to other modules).
 	 * @param func
 	 */
 	void setSendFunc(WriteFcn func);
 
-public:
-	virtual void process(QGS_CommandMsg* message);
-	virtual void process(QGS_CommandReqMsg* message);
-
 protected:
 	WriteFcn mReceiveFcn;
     WriteFcn mSendFcn;
-    std::vector<QGS_UiCommand_> mCommands;
 };
 
 

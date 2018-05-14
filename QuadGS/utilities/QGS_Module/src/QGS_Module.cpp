@@ -25,11 +25,13 @@
 
 #include "QGS_Module.h"
 #include "QGS_Router.h"
+#include "Msg_Stop.h"
+
 namespace QuadGS
 {
 
 QGS_Module::QGS_Module()
-:QGS_MessageHandlerBase("moduleBase"), mSendFcn(NULL)
+:QGS_MessageHandlerBase("QGS_Module"), mSendFcn(NULL)
 {
 
 }
@@ -43,13 +45,6 @@ void QGS_Module::bind(QGS_Router* router)
 	router->bind(this);
 }
 
-
-
-void QGS_Module::subscribeMsg(messageTypes_t type)
-{
-	std::unique_ptr <QGS_ModuleSubMsg> msg = std::make_unique<QGS_ModuleSubMsg>(type);
-	sendMsg(std::move(msg));
-}
 
 void QGS_Module::setReceivingFcn(receivingFcn_t fcn)
 {
@@ -67,7 +62,7 @@ WriteFcn QGS_Module::getReceivingFcn()
 	}
 	else
 	{
-        throw std::runtime_error("No message receiving function set. Set the function before binding.");
+		throw std::runtime_error("No message receiving function set. Set the function before binding.");
 	}
 }
 
@@ -75,26 +70,15 @@ void QGS_Module::sendMsg(std::unique_ptr<QGS_ModuleMsgBase> message)
 {
 	if(mSendFcn)
 	{
-		message->setOriginator(mName);
+		message->setSource(getName());
 		mSendFcn(std::move(message));
 	}
 	else
 	{
-        throw std::runtime_error("No send function set. Bind before sending messages.");
+		throw std::runtime_error("No send function set. Bind before sending messages.");
 	}
 }
 
-std::string QGS_Module::executeCommand(std::string command, std::string args)
-{
-	for(auto i : mCommands)
-	{
-		if(i.mName.compare(command) == 0)
-		{
-			return i.mFunc(args);
-		}
-	}
-	return "command not found.";
-}
 
 void QGS_Module::setSendFunc(WriteFcn func)
 {
@@ -102,29 +86,6 @@ void QGS_Module::setSendFunc(WriteFcn func)
 	{
 		mSendFcn = func;
 	}
-}
-
-
-void QGS_Module::process(QGS_CommandMsg* message)
-{
-	std::string result = executeCommand(message->mCommand.mName, message->mCommand.mArgs);
-	if(result.empty())
-	{
-		return;
-	}
-	else
-	{
-		QGS_CommandRsltMsg::ptr ptr = std::make_unique<QGS_CommandRsltMsg>(result);
-		ptr->setDestinationPort(message->getOriginatingPort());
-		sendMsg(std::move(ptr));
-	}
-}
-
-void QGS_Module::process(QGS_CommandReqMsg* message)
-{
-	QGS_CommandReqRspMsg::ptr ptr = std::make_unique<QGS_CommandReqRspMsg>(mCommands);
-	ptr->setDestinationPort(message->getOriginatingPort());
-	sendMsg(std::move(ptr));
 }
 
 QGS_ReactiveModule::QGS_ReactiveModule()
@@ -166,7 +127,7 @@ void QGS_ThreadedModule::startProcessing()
 
 void QGS_ThreadedModule::stopProcessing()
 {
-	QGS_ModuleMsgBase::ptr ptr  = std::make_unique<QGS_ModuleMsgBase>(msgQuit);
+	QGS_ModuleMsgBase::ptr ptr  = std::make_unique<Msg_Stop>(getName());
 	mFifo.push(std::move(ptr)); // send stop to own fifo.
 
 	if(mThread.joinable())
@@ -198,7 +159,7 @@ void QGS_ThreadedModule::handleMessages(bool blocking)
 	}
 
 	QGS_ModuleMsgBase::ptr msg = mFifo.dequeue();
-	if(msg->getType() == messageTypes_t::msgQuit)
+	if(msg->getType() == messageTypes_t::Msg_Stop_e)
 	{
 		mStop = true;
 	}
@@ -227,11 +188,6 @@ void QGS_ThreadedModule::runThread()
 	}
 	mLogger.QuadLog(severity_level::info, "Stopping threaded module.");
 }
-
-
-
-
-
 
 } /* namespace QuadGS */
 

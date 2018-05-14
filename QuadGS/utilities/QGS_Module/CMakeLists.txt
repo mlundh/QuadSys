@@ -1,21 +1,18 @@
 list(APPEND src "QGS_Module.cpp"
-                "QGS_Router.cpp"
-                "QGS_Msg.cpp"
-                "QGS_ModuleMsg.cpp"
-                "QGS_CommandMsg.cpp")
+                "QGS_Router.cpp")
                 
 list(APPEND dep "AppLog"
                 "Fifo"
-                "BinaryStream")
+                "BinaryStream"
+                "Messages")
 
 qgs_make_shared_lib( QGS_Module src dep)
 
 list(APPEND src_Test "QGS_ModuleTest.cpp"
-                     "QGS_ModuleFake.cpp"
-                     "QGS_ModuleMsgTest.cpp")
+                     "QGS_ModuleFake.cpp")
                      
 list(APPEND dep_Test "gtest_main"
                      "QGS_Module"
-                     "IoMessages")
+                     "Messages")
 
 qgs_add_test(QGS_ModuleTest src_Test dep_Test)

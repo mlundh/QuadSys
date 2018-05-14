@@ -26,17 +26,19 @@
 #include "ThreadSafeFifo.hpp"
 #include "QGS_Msg.h"
 #include "QGS_Module.h"
+#include "Msg_Stop.h"
+
 namespace QuadGS
 {
 
-QGS_Router::QGS_Router(std::string name):QGS_MessageHandlerBase(name), mNrModules(0), mName(name), mStop(false)
+QGS_Router::QGS_Router(std::string name): mNrModules(0), mName(name), mStop(false), mLogger(name)
 {
 	mThread = std::thread(std::bind(&QGS_Router::runRouter, this));
 }
 
 QGS_Router::~QGS_Router()
 {
-	QGS_ModuleMsgBase::ptr ptr  = std::make_unique<QGS_ModuleMsgBase>(msgQuit);
+	QGS_ModuleMsgBase::ptr ptr  = std::make_unique<Msg_Stop>(mName);
 	mFifo.push(std::move(ptr)); // send stop to own fifo.
 
 	if(mThread.joinable())
@@ -47,10 +49,10 @@ QGS_Router::~QGS_Router()
 
 void QGS_Router::bind(QGS_Module* module)
 {
-	module->setSendFunc(std::bind(&QGS_Router::incomingPort, this, std::placeholders::_1, mNrModules++)); //bind port number to the caller
-	checkUniqueName(module->getName());
-	mWriteFunctions.push_back(module->getReceivingFcn());
-	mPortNameMaping.push_back(module->getName());
+	module->setSendFunc(std::bind(&QGS_Router::incomingPort, this, std::placeholders::_1));
+	std::string name = module->getName();
+	checkUniqueName(name);
+	mWriteFunctions[name] = module->getReceivingFcn();
 }
 
 bool QGS_Router::done()
@@ -59,9 +61,8 @@ bool QGS_Router::done()
 }
 
 
-void QGS_Router::incomingPort(QGS_ModuleMsgBase::ptr message, int port)
+void QGS_Router::incomingPort(QGS_ModuleMsgBase::ptr message)
 {
-	message->setOriginatingPort(port);
 	mFifo.push(std::move(message));
 }
 
@@ -69,27 +70,24 @@ void QGS_Router::incomingPort(QGS_ModuleMsgBase::ptr message, int port)
 void QGS_Router::sendMsg(QGS_ModuleMsgBase::ptr message)
 {
 	messageTypes_t type = message->getType();
-	if(mSubscriptions.find(type) != mSubscriptions.end())
-	{
 		// If we already know where to send to, then send.
-		int destPort = message->getDestinationPort();
-		if(destPort >= 0) // Did we get a destination?
+		std::string dest = message->getDestination();
+		if(dest.size() >= 0 && dest != "broadcast") // Did we get a destination?
 		{
-			internalSend(std::move(message), destPort);
+			internalSend(std::move(message), dest, false);
 		}
-		else // Did not get a destination, send to all subscribers.
+		else if(dest == "broadcast") // Did not get a destination, send to all subscribers.
 		{
-			int originatingPort = message->getOriginatingPort();
-			for(auto subsPort : mSubscriptions[type])
+			std::string source = message->getSource();
+			for(auto module : mWriteFunctions)
 			{
-				if(subsPort != originatingPort) // Do not return to sender
+				if(module.first != source) // Do not return to sender
 				{
-					internalSend(std::move(message), subsPort);
+					internalSend(std::move(message), module.first, true);
 				}
 			}
 		}
 
-	}
 	else
 	{
 		std::stringstream ss;
@@ -99,18 +97,28 @@ void QGS_Router::sendMsg(QGS_ModuleMsgBase::ptr message)
 }
 
 
-void QGS_Router::internalSend(QGS_ModuleMsgBase::ptr message, int port)
+void QGS_Router::internalSend(QGS_ModuleMsgBase::ptr message, std::string port, bool broadcast)
 {
 	//Make sure we have a write function.
-	if((mWriteFunctions.size() >= static_cast<size_t>(port)) && (mWriteFunctions[port] != NULL))
+	std::map<std::string, WriteFcn>::iterator it = mWriteFunctions.find(port);
+	if(it != mWriteFunctions.end())
 	{
-		// each module gets its own copy. This ensures thread safety. Naive but works...
-		QGS_ModuleMsgBase::ptr ptr(message->clone());
-		mWriteFunctions[port](std::move(ptr));
+		if(broadcast)
+		{
+			// each module gets its own copy. This ensures thread safety.
+			QGS_ModuleMsgBase::ptr ptr(message->clone());
+			mWriteFunctions[port](std::move(ptr));
+		}
+		else
+		{
+			// only one destination, move!
+			mWriteFunctions[port](std::move(message));
+		}
+
 	}
 	else
 	{
-        throw std::runtime_error("No message write function set. Set the function before binding.");
+		throw std::runtime_error( "Port: " + port + " not available, error in topology?");
 	}
 }
 
@@ -130,41 +138,24 @@ void QGS_Router::runRouter()
 
 void QGS_Router::checkUniqueName(std::string &name)
 {
-	for (auto& item : mPortNameMaping)
+	std::map<std::string,WriteFcn>::iterator it = mWriteFunctions.find(name);
+	if(it != mWriteFunctions.end())
 	{
-		if(item == name)
-		{
-			mLogger.QuadLog(severity_level::warning, "Name collision, two modules named: " + name + ". Advice to change name.");
-		}
+		mLogger.QuadLog(severity_level::warning, "Name collision, two modules named: " + name + ". Advice to change name.");
 	}
 }
 
 void QGS_Router::route(QGS_ModuleMsgBase::ptr msg)
 {
-	switch (msg->getType())
-	{
-	// This check is only done since we only want subscription messages, but receives and forwards all other.
-	// Normal modules will just call msg->dispatch(this) on the incoming message.
-	case messageTypes_t::msgSubscription:
-	{
-		msg->dispatch(this);
-	}
-	break;
-
-	case messageTypes_t::msgQuit:
+	if(msg->getType() == messageTypes_t::Msg_Stop_e)
 	{
 		mStop = true;
 	}
-	break;
-	default:
+	else
+	{
 		sendMsg(std::move(msg));
-		break;
 	}
 
-}
-void QGS_Router::process(QGS_ModuleSubMsg* msg)
-{
-	mSubscriptions[msg->getSubscription()].push_back(msg->getOriginatingPort());
 }
 
 } /* namespace QuadGS */

@@ -1,15 +1,17 @@
 list(APPEND src "QGS_IoHeader.cpp"
                 "QGS_ParamMsg.cpp"
                 "QGS_DebugMsg.cpp"
-                "QGS_LogMsg.cpp")
+                "QGS_LogMsg.cpp"
+                "QGS_Msg.cpp"
+                "QGS_ModuleMsg.cpp")
                 
 list(APPEND dep "BinaryStream"
-				"AppLog"
-				"QGS_Module")
+				"AppLog")
 				
 qgs_make_shared_lib( IoMessages src dep)
 
-list(APPEND src_DataMsgTest "DataMsgTest.cpp")
+list(APPEND src_DataMsgTest "DataMsgTest.cpp"
+                            "QGS_ModuleMsgTest.cpp")
 list(APPEND dep_DataMsgTest "gtest_main"
                             "IoMessages")
 

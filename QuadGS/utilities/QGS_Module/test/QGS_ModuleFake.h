@@ -26,17 +26,15 @@
 #define QUADGS_UTILITIES_QGS_MODULE_TEST_QGS_MODULEFAKE_H_
 #include <atomic>
 #include "QGS_Module.h"
-#include "QGS_ModuleIoMsg.h"
-#include "QGS_ParamMsg.h"
-#include "QGS_DebugMsg.h"
+#include "Msg_Param.h"
+#include "Msg_Debug.h"
 
 namespace QuadGS {
 
 class QGS_ModuleFake
 		: public QGS_ReactiveModule
-		, public QGS_MessageHandler<QGS_CommandRsltMsg>
-		, public QGS_MessageHandler<QGS_ModuleIoMsg<QGS_DebugMsg>>
-		, public QGS_MessageHandler<QGS_ModuleIoMsg<QGSParamMsg>>
+		, public QGS_MessageHandler<Msg_Param>
+		, public QGS_MessageHandler<Msg_Debug>
 
 {
 public:
@@ -46,11 +44,9 @@ public:
 
 	int getNrMsg();
 
-	void subscribeMsg(messageTypes_t type);
+	void sendDummyDebugIoMsg(std::string dest);
 
-	void sendDummyDebugIoMsg();
-
-	void sendDummyParamIoMsg();
+	void sendDummyParamIoMsg(std::string dest);
 
 	void returnNxtMsg(bool flag);
 
@@ -58,9 +54,8 @@ public:
 private:
 
 	virtual void process_internal(QGS_ModuleMsgBase* ptr);
-	virtual void process(QGS_CommandRsltMsg* message);
-	virtual void process(QGS_ModuleIoMsg<QGS_DebugMsg>* message);
-	virtual void process(QGS_ModuleIoMsg<QGSParamMsg>* message);
+	virtual void process(Msg_Param* message);
+	virtual void process(Msg_Debug* message);
 
 	std::atomic<int> mNrMsg;
 	std::atomic<int> mReturnNxtMsg;
@@ -71,9 +66,8 @@ private:
 
 class QGS_ThreadedModuleFake
 		: public QGS_ThreadedModule
-			, public QGS_MessageHandler<QGS_CommandRsltMsg>
-		, public QGS_MessageHandler<QGS_ModuleIoMsg<QGS_DebugMsg>>
-		, public QGS_MessageHandler<QGS_ModuleIoMsg<QGSParamMsg>>
+		, public QGS_MessageHandler<Msg_Debug>
+		, public QGS_MessageHandler<Msg_Param>
 {
 public:
 	QGS_ThreadedModuleFake(std::string name);
@@ -84,17 +78,16 @@ public:
 
 	void subscribeMsg(messageTypes_t type);
 
-	void sendDummyDebugMsg();
+	void sendDummyDebugMsg(std::string dest);
 
-	void sendDummyParamMsg();
+	void sendDummyParamMsg(std::string dest);
 
 	void returnNxtMsg(bool flag);
 private:
 
 	virtual void process_internal(QGS_ModuleMsgBase* ptr);
-	virtual void process(QGS_CommandRsltMsg* message);
-	virtual void process(QGS_ModuleIoMsg<QGS_DebugMsg>* message);
-	virtual void process(QGS_ModuleIoMsg<QGSParamMsg>* message);
+	virtual void process(Msg_Debug* message);
+	virtual void process(Msg_Param* message);
 
 	virtual void module();
 
@@ -106,28 +99,18 @@ private:
 
 class QGS_IoModuleFake
 		: public QGS_ThreadedModule
-		, public virtual QGS_MessageHandler<QGS_CommandRsltMsg>
-		, public virtual QGS_MessageHandler<QGS_CommandReqRspMsg>
+
 {
 public:
 	QGS_IoModuleFake(std::string name);
 
 	virtual ~QGS_IoModuleFake();
 
-	void getCommands();
-
 	void subscribeMsg(messageTypes_t type);
 
-	void sendCommandMsg();
-
-	virtual void process(QGS_CommandRsltMsg* message);
-
-	virtual void process(QGS_CommandReqRspMsg* message);
 
 	virtual void module();
 
-
-	std::vector<QGS_UiCommandDesc> mCommands;
 	std::atomic<int> mNrMsg;
 	std::vector<std::string> mResponce;
 };
