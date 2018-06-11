@@ -140,7 +140,7 @@ include_directories(Interfaces)
 enable_testing()
 add_subdirectory(Core)
 add_subdirectory(Modules)
-add_subdirectory(utilities)
+add_subdirectory(Common)
 add_subdirectory(top)
 
 

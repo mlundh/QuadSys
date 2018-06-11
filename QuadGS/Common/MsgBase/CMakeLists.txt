@@ -8,7 +8,7 @@ list(APPEND src "QGS_IoHeader.cpp"
 list(APPEND dep "BinaryStream"
 				"AppLog")
 				
-qgs_make_shared_lib( IoMessages src dep)
+qgs_make_shared_lib( MsgBase src dep)
 
 list(APPEND src_DataMsgTest "DataMsgTest.cpp"
                             "QGS_ModuleMsgTest.cpp")

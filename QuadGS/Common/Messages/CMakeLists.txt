@@ -4,7 +4,7 @@ list(APPEND src "Msg_Debug.cpp"
                 "Msg_Stop.cpp")
                 
 list(APPEND dep "BinaryStream"
-				"IoMessages"
+				"MsgBase"
 				"AppLog")
 				
 qgs_make_shared_lib( Messages src dep)

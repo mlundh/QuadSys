@@ -10,13 +10,6 @@ parser.add_argument('--include', nargs=1, action='append', help='Includes needed
 
 args = parser.parse_args()
 
-#debug prints...
-#print(args.className)
-#if args.member:
-#	print(args.member)
-#	print(args.member[0][0])
-#	print(args.include)
-
 directory = 'src/'
 if not os.path.exists(directory):
     os.makedirs(directory)

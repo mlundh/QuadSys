@@ -3,7 +3,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 pythonDIR="$DIR/../../pythonGenerator"
 filename="$DIR/messages.txt"
 echo "Generating enum."
-python $pythonDIR/genTypes.py $filename $DIR/../IoMessages
+python $pythonDIR/genTypes.py $filename $DIR/../MsgBase
 retVal=$?
 if [ $retVal -ne 0 ]; then
 	echo "Error processing enum."

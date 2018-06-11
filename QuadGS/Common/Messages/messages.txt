@@ -1,4 +1,4 @@
-Msg_Stop 
+Msg_Stop
 Msg_Debug --member std::unique_ptr<QGS_DebugMsg> dbgMsg --include QGS_DebugMsg.h
 Msg_Param --member std::unique_ptr<QGSParamMsg> paramMsg --include QGS_ParamMsg.h
 Msg_Log --member std::unique_ptr<QGS_LogMsg> paramMsg --include QGS_LogMsg.h

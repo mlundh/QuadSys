@@ -14,7 +14,7 @@ dir = sys.path[0] + '/'
 with open(args.file, "r") as file:
 	array = []
 	for line in file:
-		types += (line.split(' ',1)[0]) + '_e,\n	'
+		types += (line.split()[0]) + '_e,\n	'
 subst={}
 subst['types'] = types
 with open(dir+'msgTypesTemplate', 'r') as ftemp:
