@@ -44,9 +44,9 @@ public:
 
 	int getNrMsg();
 
-	void sendDummyDebugIoMsg(std::string dest);
+	void sendDummyDebugMsg(std::string dest);
 
-	void sendDummyParamIoMsg(std::string dest);
+	void sendDummyParamMsg(std::string dest);
 
 	void returnNxtMsg(bool flag);
 
@@ -94,27 +94,6 @@ private:
 	std::atomic<int> mNrMsg;
 	std::atomic<int> mReturnNxtMsg;
 };
-
-
-
-class QGS_IoModuleFake
-		: public QGS_ThreadedModule
-
-{
-public:
-	QGS_IoModuleFake(std::string name);
-
-	virtual ~QGS_IoModuleFake();
-
-	void subscribeMsg(messageTypes_t type);
-
-
-	virtual void module();
-
-	std::atomic<int> mNrMsg;
-	std::vector<std::string> mResponce;
-};
-
 
 } /* namespace QuadGS */
 

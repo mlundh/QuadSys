@@ -54,12 +54,12 @@ TEST_F(ModuleTest, SendAndReceive)
 
 
 	module_1.returnNxtMsg(true);
-	module_2.sendDummyDebugIoMsg(module_1.getName());;
+	module_2.sendDummyDebugMsg(module_1.getName());;
 	module_1.returnNxtMsg(true);
-	module_2.sendDummyParamIoMsg(module_1.getName());
+	module_2.sendDummyParamMsg(module_1.getName());
 	for(int i = 0; i < 100; i++)
 	{
-		if((module_1.getNrMsg() == 2) && (module_2.getNrMsg() == 1))
+		if((module_1.getNrMsg() == 2) && (module_2.getNrMsg() == 2))
 		{
 			break;
 		}
@@ -86,12 +86,13 @@ TEST_F(ModuleTest, TwoSameName)
 // Test fixture to setup the topology.
 class ThreadedModuleTest : public ::testing::Test {
 protected:
-	ThreadedModuleTest(): module_1("module_1"),module_2("module_2"),router("router")
+	ThreadedModuleTest(): module_1("module_1"),module_2("module_2"),module_3("module_3"),router("router")
 {
 		QuadGS::AppLog::Init("app_log", "msg_log", std::cout, QuadGS::severity_level::warning, false);
 
 		router.bind(&module_1);
 		router.bind(&module_2);
+		router.bind(&module_3);
 }
 
 	virtual void SetUp()
@@ -101,6 +102,7 @@ protected:
 
 	QGS_ThreadedModuleFake module_1;
 	QGS_ThreadedModuleFake module_2;
+	QGS_ThreadedModuleFake module_3;
 	QGS_Router router;
 };
 
@@ -126,16 +128,58 @@ TEST_F(ThreadedModuleTest, SendAndGetReturned)
 	EXPECT_EQ(module_2.getNrMsg(), 1); // only param msg should be returned.
 }
 
+
+
+TEST_F(ThreadedModuleTest, SendABunch)
+{
+
+	module_2.sendDummyDebugMsg(module_1.getName());
+	module_2.sendDummyParamMsg(module_1.getName());
+	module_2.sendDummyDebugMsg(module_1.getName());
+	module_2.sendDummyDebugMsg(module_1.getName());
+
+	module_1.sendDummyDebugMsg(module_2.getName());
+	module_1.sendDummyDebugMsg(module_2.getName());
+	module_1.sendDummyDebugMsg(module_2.getName());
+	module_1.sendDummyDebugMsg(module_2.getName());
+
+	module_1.sendDummyDebugMsg(module_3.getName());
+	module_1.sendDummyDebugMsg(module_3.getName());
+	module_1.sendDummyDebugMsg(module_3.getName());
+	module_1.sendDummyDebugMsg(module_3.getName());
+
+	module_3.sendDummyDebugMsg(module_1.getName());
+	module_3.sendDummyDebugMsg(module_1.getName());
+	module_3.sendDummyDebugMsg(module_1.getName());
+	module_3.sendDummyDebugMsg(module_1.getName());
+
+	for(int i = 0; i < 100; i++)
+	{
+		if((module_1.getNrMsg() == 8) && (module_2.getNrMsg() == 4))
+		{
+			break;
+		}
+		usleep(5); // make sure that all messages are processed.
+	}
+	EXPECT_EQ(module_1.getNrMsg(), 8);
+	EXPECT_EQ(module_2.getNrMsg(), 4);
+	EXPECT_EQ(module_3.getNrMsg(), 4);
+
+}
+
+
 // Test fixture to setup the topology.
-class IoModuleTest : public ::testing::Test {
+class MultipleModuleTypesTest : public ::testing::Test {
 protected:
-	IoModuleTest(): threadedModule("threadedModule"),reactiveModule("reactiveModule"),ioModule("ioModule"), router("router")
+	MultipleModuleTypesTest(): tmodule_1("module_1"),tmodule_2("module_2"),tmodule_3("module_3"),rmodule_1("rmodule_1"),rmodule_2("rmodule_2"), router("router")
 {
 		QuadGS::AppLog::Init("app_log", "msg_log", std::cout, QuadGS::severity_level::warning, false);
 
-		router.bind(&threadedModule);
-		router.bind(&reactiveModule);
-		router.bind(&ioModule);
+		router.bind(&tmodule_1);
+		router.bind(&tmodule_2);
+		router.bind(&tmodule_3);
+		router.bind(&rmodule_1);
+		router.bind(&rmodule_2);
 
 }
 
@@ -144,33 +188,47 @@ protected:
 
 	}
 
-	QGS_ThreadedModuleFake threadedModule;
-	QGS_ModuleFake reactiveModule;
-	QGS_IoModuleFake ioModule;
+	QGS_ThreadedModuleFake tmodule_1;
+	QGS_ThreadedModuleFake tmodule_2;
+	QGS_ThreadedModuleFake tmodule_3;
+	QGS_ModuleFake rmodule_1;
+	QGS_ModuleFake rmodule_2;
+
+
+
 	QGS_Router router;
 };
 
 
-TEST_F(IoModuleTest, CommandTest)
+TEST_F(MultipleModuleTypesTest, SendABunch)
 {
 
-//	ioModule.getCommands();
-//
-//
-//	for(int i = 0; i < 100; i++)
-//	{
-//		if(ioModule.mCommands.size() == 1 && ioModule.mResponce.size() == 1)
-//		{
-//			break;
-//		}
-//		usleep(10); // make sure that all messages are processed.
-//	}
-//	ASSERT_EQ(ioModule.mCommands.size(), 1);
-//	ASSERT_EQ(ioModule.mResponce.size(), 1);
-//	EXPECT_EQ(ioModule.mCommands[0].mName, "TestFcn");
-//	EXPECT_EQ(ioModule.mResponce[0], "OK");
+	tmodule_2.sendDummyDebugMsg(rmodule_1.getName());
+	tmodule_2.sendDummyParamMsg(rmodule_1.getName());
+	tmodule_2.sendDummyDebugMsg(rmodule_1.getName());
+	tmodule_2.sendDummyDebugMsg(rmodule_1.getName());
 
-	EXPECT_EQ("OK", "OK");
+	rmodule_1.sendDummyDebugMsg(tmodule_2.getName());
+	rmodule_1.sendDummyDebugMsg(tmodule_2.getName());
+	rmodule_1.sendDummyDebugMsg(tmodule_2.getName());
+	rmodule_1.sendDummyDebugMsg(tmodule_2.getName());
+
+	rmodule_1.sendDummyDebugMsg(tmodule_3.getName());
+	rmodule_1.sendDummyDebugMsg(tmodule_3.getName());
+	rmodule_1.sendDummyDebugMsg(tmodule_3.getName());
+	rmodule_1.sendDummyDebugMsg(tmodule_3.getName());
+
+
+	for(int i = 0; i < 100; i++)
+	{
+		if((rmodule_1.getNrMsg() == 4) && (tmodule_2.getNrMsg() == 4) && (tmodule_3.getNrMsg() == 4))
+		{
+			break;
+		}
+		usleep(5); // make sure that all messages are processed.
+	}
+	EXPECT_EQ(rmodule_1.getNrMsg(), 4);
+	EXPECT_EQ(tmodule_2.getNrMsg(), 4);
+	EXPECT_EQ(tmodule_3.getNrMsg(), 4);
 
 }
-

@@ -46,7 +46,7 @@ int QGS_ModuleFake::getNrMsg()
 	return mNrMsg.load();
 }
 
-void QGS_ModuleFake::sendDummyDebugIoMsg(std::string dest)
+void QGS_ModuleFake::sendDummyDebugMsg(std::string dest)
 {
 	QGS_DebugMsg::ptr dbgMsg = std::make_unique<QGS_DebugMsg>(0,"NoDebugData");
 	QGS_ModuleMsgBase::ptr msg = std::make_unique<Msg_Debug>(dest, std::move(dbgMsg));
@@ -54,7 +54,7 @@ void QGS_ModuleFake::sendDummyDebugIoMsg(std::string dest)
 }
 
 
-void QGS_ModuleFake::sendDummyParamIoMsg(std::string dest)
+void QGS_ModuleFake::sendDummyParamMsg(std::string dest)
 {
 	QGSParamMsg::ptr paramMsg = std::make_unique<QGSParamMsg>(0, "NoValidData", 0, 1);
 	QGS_ModuleMsgBase::ptr msg = std::make_unique<Msg_Param>(dest, std::move(paramMsg));
@@ -158,31 +158,6 @@ void QGS_ThreadedModuleFake::module()
 {
 	// do work...
 	usleep(500);
-
-	// process messages, non blocking
-	handleMessages(false);
-}
-
-
-QGS_IoModuleFake::QGS_IoModuleFake(std::string name)
-:QGS_MessageHandlerBase(name), mNrMsg(0)
-{
-	setProcessingFcn(std::bind(&QGS_IoModuleFake::module, this));
-	startProcessing();
-
-}
-
-QGS_IoModuleFake::~QGS_IoModuleFake()
-{
-	stopProcessing();
-
-}
-
-
-void QGS_IoModuleFake::module()
-{
-	// do work...
-	usleep(5);
 
 	// process messages, non blocking
 	handleMessages(false);
