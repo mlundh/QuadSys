@@ -1,26 +1,26 @@
-#ifndef QUADGS_MESSAGE_MSG_DEBUG_H_
-#define QUADGS_MESSAGE_MSG_DEBUG_H_
+#ifndef QUADGS_MESSAGE_MSG_DEBUGIO_H_
+#define QUADGS_MESSAGE_MSG_DEBUGIO_H_
 #include "QGS_ModuleMsg.h"
 #include "QGS_DebugMsg.h"
 
 namespace QuadGS {
 
-class Msg_Debug: public QGS_ModuleMsg<Msg_Debug>
+class Msg_DebugIo: public QGS_ModuleMsg<Msg_DebugIo>
 {
 public:
 
-	Msg_Debug(std::string destination, std::unique_ptr<QGS_DebugMsg> dbgMsg);
+	Msg_DebugIo(std::string destination, std::unique_ptr<QGS_DebugMsg> dbgMsg);
 
-	Msg_Debug(const Msg_Debug& msg);
+	Msg_DebugIo(const Msg_DebugIo& msg);
 
-	virtual ~Msg_Debug();
+	virtual ~Msg_DebugIo();
 
 	virtual void dispatch(QGS_MessageHandlerBase* handler) 
 	{ 
 		this->dynamicDispatch(handler,this); 
 	}
 	
-	typedef std::unique_ptr<Msg_Debug> ptr;
+	typedef std::unique_ptr<Msg_DebugIo> ptr;
 
 	virtual BinaryOStream& stream(BinaryOStream& os) const;
 	
@@ -39,5 +39,5 @@ private:
 };
 }
 
-#endif /* QUADGS_MESSAGE_MSG_DEBUG_H_ */
+#endif /* QUADGS_MESSAGE_MSG_DEBUGIO_H_ */
 

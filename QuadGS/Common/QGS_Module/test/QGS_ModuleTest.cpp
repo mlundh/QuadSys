@@ -43,8 +43,8 @@ protected:
 		router.bind(&module_2);
 }
 
-	QGS_ModuleFake module_1;
-	QGS_ModuleFake module_2;
+	FakeModule module_1;
+	FakeModule module_2;
 	QGS_Router router;
 
 };
@@ -74,7 +74,7 @@ TEST_F(ModuleTest, TwoSameName)
 {
 
 	testing::internal::CaptureStdout();
-	QGS_ModuleFake module_3("module_1");
+	FakeModule module_3("module_1");
 	router.bind(&module_3);
 
 	usleep(500); // allow time to print to stdout
@@ -191,8 +191,8 @@ protected:
 	QGS_ThreadedModuleFake tmodule_1;
 	QGS_ThreadedModuleFake tmodule_2;
 	QGS_ThreadedModuleFake tmodule_3;
-	QGS_ModuleFake rmodule_1;
-	QGS_ModuleFake rmodule_2;
+	FakeModule rmodule_1;
+	FakeModule rmodule_2;
 
 
 

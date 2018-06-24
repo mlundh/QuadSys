@@ -1,7 +1,6 @@
 #ifndef QUADGS_MESSAGE_MSG_PARAM_H_
 #define QUADGS_MESSAGE_MSG_PARAM_H_
 #include "QGS_ModuleMsg.h"
-#include "QGS_ParamMsg.h"
 
 namespace QuadGS {
 
@@ -9,7 +8,7 @@ class Msg_Param: public QGS_ModuleMsg<Msg_Param>
 {
 public:
 
-	Msg_Param(std::string destination, std::unique_ptr<QGSParamMsg> paramMsg);
+	Msg_Param(std::string destination, uint8_t control, uint8_t sequenceNr, uint8_t lastInSequence, std::string payload);
 
 	Msg_Param(const Msg_Param& msg);
 
@@ -26,15 +25,25 @@ public:
 	
 	virtual BinaryIStream& stream(BinaryIStream& is);
 	
-	std::unique_ptr<QGSParamMsg> getCloneParammsg() const;
+		uint8_t getControl() const;
 
-	std::unique_ptr<QGSParamMsg> getParammsg() ;
+	void setControl(uint8_t control);
+	uint8_t getSequencenr() const;
 
-	void setParammsg(std::unique_ptr<QGSParamMsg> paramMsg);
+	void setSequencenr(uint8_t sequenceNr);
+	uint8_t getLastinsequence() const;
+
+	void setLastinsequence(uint8_t lastInSequence);
+	std::string getPayload() const;
+
+	void setPayload(std::string payload);
 
 	
 private:
-	std::unique_ptr<QGSParamMsg> mParammsg;
+	uint8_t mControl;
+	uint8_t mSequencenr;
+	uint8_t mLastinsequence;
+	std::string mPayload;
 	
 };
 }

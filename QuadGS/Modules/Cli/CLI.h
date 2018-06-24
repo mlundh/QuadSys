@@ -27,61 +27,72 @@
 #include <string>
 #include <vector>
 
-#include "AppLog.h"
-#include "QGS_Tree.h"
-#include "QGS_UiInterface.h"
-#include "QGS_CoreInterface.h"
-#include "QGS_IoInterface.h"
+#include "QGS_Module.h"
+
+#include "Msg_GetUiCommands.h"
+#include "Msg_RegUiCommand.h"
+#include "Msg_FireUiCommand.h"
+#include "Msg_UiCommandResult.h"
+
 namespace QuadGS {
-  
-class CLI : public AppLog, public QGS_UiInterface
+
+class CLI
+		: public QGS_ThreadedModule
+		, public QGS_MessageHandler<Msg_RegUiCommand>
+		, public QGS_MessageHandler<Msg_UiCommandResult>
 {
-public:
-
-  CLI();
-
-  virtual ~CLI();
-  
-  virtual bool RunUI();
-
-  virtual void registerCommands(std::vector< QGS_UiCommand::ptr > commands);
-  
-  virtual void bind(QGS_CoreInterface* ptr);
-
-  virtual void Display(std::string str);
 private:
 
 
-  void SetPrompt(std::string prompt);
+	class UiCommand
+	{
+		UiCommand(std::string command,  std::string doc, std::string address);
+		std::string command;
+		std::string doc;
+		std::string address;
+	};
 
-  static size_t FindCommand(std::string& line);
+	CLI();
 
-  std::string ExecuteLine(std::string line);
+	virtual ~CLI();
 
-  void BuildPrompt();
+	virtual void registerCommand(std::string command, std::string doc, std::string address);
 
-  std::string Stop(std::string);
+	static size_t FindCommand(std::string& line);
 
-  static char ** completion (const char *text, int start, int );
-  
-  static char * command_generator (const char *text, int state);
+	std::string ExecuteLine(std::string line);
 
-  static char * path_generator (const char *text, int state);
+	void Display(std::string str);
 
-  static char * dupstr (const char * s);
+	void BuildPrompt();
 
+	std::string Stop(std::string);
+
+	virtual bool RunUI();
+
+	void SetPrompt(std::string prompt);
+
+	static char ** completion (const char *text, int start, int );
+
+	static char * command_generator (const char *text, int state);
+
+	static char * path_generator (const char *text, int state);
+
+	static char * dupstr (const char * s);
+
+	virtual void process(Msg_RegUiCommand* message);
+	virtual void process(Msg_UiCommandResult* message);
 
 
 public:
-  static std::vector< QGS_UiCommand::ptr > mCommands;
-  static QGS_CoreInterface* mCore;
-  std::string mPromptStatus;
-  std::string mPromptBase;
-  std::string mPrompt;
-  bool mContinue;
-  static char WordBreakPath[];
-  static char WordBreak[];
-  
+	static std::vector<UiCommand> mCommands;
+	std::string mPromptStatus;
+	std::string mPromptBase;
+	std::string mPrompt;
+	bool mContinue;
+	static char WordBreakPath[];
+	static char WordBreak[];
+
 
 
 };

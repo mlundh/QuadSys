@@ -27,20 +27,20 @@
 #include <atomic>
 #include "QGS_Module.h"
 #include "Msg_Param.h"
-#include "Msg_Debug.h"
+#include "Msg_DebugIo.h"
 
 namespace QuadGS {
 
-class QGS_ModuleFake
+class FakeModule
 		: public QGS_ReactiveModule
 		, public QGS_MessageHandler<Msg_Param>
-		, public QGS_MessageHandler<Msg_Debug>
+		, public QGS_MessageHandler<Msg_DebugIo>
 
 {
 public:
-	QGS_ModuleFake(std::string name);
+	FakeModule(std::string name);
 
-	virtual ~QGS_ModuleFake();
+	virtual ~FakeModule();
 
 	int getNrMsg();
 
@@ -55,7 +55,7 @@ private:
 
 	virtual void process_internal(QGS_ModuleMsgBase* ptr);
 	virtual void process(Msg_Param* message);
-	virtual void process(Msg_Debug* message);
+	virtual void process(Msg_DebugIo* message);
 
 	std::atomic<int> mNrMsg;
 	std::atomic<int> mReturnNxtMsg;
@@ -66,7 +66,7 @@ private:
 
 class QGS_ThreadedModuleFake
 		: public QGS_ThreadedModule
-		, public QGS_MessageHandler<Msg_Debug>
+		, public QGS_MessageHandler<Msg_DebugIo>
 		, public QGS_MessageHandler<Msg_Param>
 {
 public:
@@ -86,7 +86,7 @@ public:
 private:
 
 	virtual void process_internal(QGS_ModuleMsgBase* ptr);
-	virtual void process(Msg_Debug* message);
+	virtual void process(Msg_DebugIo* message);
 	virtual void process(Msg_Param* message);
 
 	virtual void module();

@@ -1,26 +1,26 @@
-#ifndef QUADGS_MESSAGE_MSG_LOG_H_
-#define QUADGS_MESSAGE_MSG_LOG_H_
+#ifndef QUADGS_MESSAGE_MSG_LOGIO_H_
+#define QUADGS_MESSAGE_MSG_LOGIO_H_
 #include "QGS_ModuleMsg.h"
 #include "QGS_LogMsg.h"
 
 namespace QuadGS {
 
-class Msg_Log: public QGS_ModuleMsg<Msg_Log>
+class Msg_LogIo: public QGS_ModuleMsg<Msg_LogIo>
 {
 public:
 
-	Msg_Log(std::string destination, std::unique_ptr<QGS_LogMsg> paramMsg);
+	Msg_LogIo(std::string destination, std::unique_ptr<QGS_LogMsg> paramMsg);
 
-	Msg_Log(const Msg_Log& msg);
+	Msg_LogIo(const Msg_LogIo& msg);
 
-	virtual ~Msg_Log();
+	virtual ~Msg_LogIo();
 
 	virtual void dispatch(QGS_MessageHandlerBase* handler) 
 	{ 
 		this->dynamicDispatch(handler,this); 
 	}
 	
-	typedef std::unique_ptr<Msg_Log> ptr;
+	typedef std::unique_ptr<Msg_LogIo> ptr;
 
 	virtual BinaryOStream& stream(BinaryOStream& os) const;
 	
@@ -39,5 +39,5 @@ private:
 };
 }
 
-#endif /* QUADGS_MESSAGE_MSG_LOG_H_ */
+#endif /* QUADGS_MESSAGE_MSG_LOGIO_H_ */
 

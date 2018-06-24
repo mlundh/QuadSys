@@ -13,6 +13,7 @@ qgs_make_shared_lib( MsgBase src dep)
 list(APPEND src_DataMsgTest "DataMsgTest.cpp"
                             "QGS_ModuleMsgTest.cpp")
 list(APPEND dep_DataMsgTest "gtest_main"
-                            "IoMessages")
+                            "MsgBase"
+                            "Messages")
 
 qgs_add_test(DataMsgTest src_DataMsgTest dep_DataMsgTest)

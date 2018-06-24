@@ -48,6 +48,7 @@ if args.member:
 		mSubst['nameFcn'] = nameFcn
 		mSubst['type'] = type
 		mSubst['name'] = name
+		mSubst['const'] = const
 		#special case for unique_ptr
 		if (type.find('std::unique_ptr') != -1): 
 			move = 'std::move('
@@ -81,8 +82,10 @@ if args.member:
 		ctorArgs += ', ' + type + ' ' + value[1] 
 		ctorInit += ', ' + name + '(' + move + value[1] + moveEnd + ')'
 		ctorCpyInit += ', ' + name + '(' + move + 'msg.' + cpyname +  moveEnd + ')'
-		istream += 'is >> ' + deref + name + ';\n		'
-		ostream += 'os << ' + deref + name + ';\n		'
+		if(type.find('std::string') != -1):
+			istream += name+'.erase();\n	'
+		istream += 'is >> ' + deref + name + ';\n	'
+		ostream += 'os << ' + deref + name + ';\n	'
 
 
 subst = {}

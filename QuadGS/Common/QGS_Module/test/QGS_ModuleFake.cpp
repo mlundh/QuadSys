@@ -23,50 +23,50 @@
  */
 
 #include "QGS_ModuleFake.h"
-#include "Msg_Param.h"
-#include "Msg_Debug.h"
+#include "Msg_ParamIo.h"
+#include "Msg_DebugIo.h"
 
 namespace QuadGS {
 
 
-QGS_ModuleFake::QGS_ModuleFake(std::string name)
+FakeModule::FakeModule(std::string name)
 :QGS_MessageHandlerBase(name), mNrMsg(0),mReturnNxtMsg(false)
 {
 
 }
 
-QGS_ModuleFake::~QGS_ModuleFake()
+FakeModule::~FakeModule()
 {
 
 }
 
 
-int QGS_ModuleFake::getNrMsg()
+int FakeModule::getNrMsg()
 {
 	return mNrMsg.load();
 }
 
-void QGS_ModuleFake::sendDummyDebugMsg(std::string dest)
+void FakeModule::sendDummyDebugMsg(std::string dest)
 {
 	QGS_DebugMsg::ptr dbgMsg = std::make_unique<QGS_DebugMsg>(0,"NoDebugData");
-	QGS_ModuleMsgBase::ptr msg = std::make_unique<Msg_Debug>(dest, std::move(dbgMsg));
+	QGS_ModuleMsgBase::ptr msg = std::make_unique<Msg_DebugIo>(dest, std::move(dbgMsg));
 	sendMsg(std::move(msg));
 }
 
 
-void QGS_ModuleFake::sendDummyParamMsg(std::string dest)
+void FakeModule::sendDummyParamMsg(std::string dest)
 {
 	QGSParamMsg::ptr paramMsg = std::make_unique<QGSParamMsg>(0, "NoValidData", 0, 1);
 	QGS_ModuleMsgBase::ptr msg = std::make_unique<Msg_Param>(dest, std::move(paramMsg));
 	sendMsg(std::move(msg));
 }
 
-void QGS_ModuleFake::returnNxtMsg(bool flag)
+void FakeModule::returnNxtMsg(bool flag)
 {
 	mReturnNxtMsg++;
 }
 
-void QGS_ModuleFake::process_internal(QGS_ModuleMsgBase* bptr)
+void FakeModule::process_internal(QGS_ModuleMsgBase* bptr)
 {
 	mNrMsg++;
 	if(mReturnNxtMsg.load() > 0)
@@ -78,11 +78,11 @@ void QGS_ModuleFake::process_internal(QGS_ModuleMsgBase* bptr)
 	}
 }
 
-void QGS_ModuleFake::process(Msg_Param* message)
+void FakeModule::process(Msg_Param* message)
 {
 	process_internal(message);
 }
-void QGS_ModuleFake::process(Msg_Debug* message)
+void FakeModule::process(Msg_DebugIo* message)
 {
 	process_internal(message);
 }
@@ -119,7 +119,7 @@ void QGS_ThreadedModuleFake::returnNxtMsg(bool flag)
 void QGS_ThreadedModuleFake::sendDummyDebugMsg(std::string dest)
 {
 	QGS_DebugMsg::ptr dbgMsg = std::make_unique<QGS_DebugMsg>(0,"NoDebugData");
-	QGS_ModuleMsgBase::ptr msg = std::make_unique<Msg_Debug>(dest, std::move(dbgMsg));
+	QGS_ModuleMsgBase::ptr msg = std::make_unique<Msg_DebugIo>(dest, std::move(dbgMsg));
 	sendMsg(std::move(msg));
 }
 
@@ -144,7 +144,7 @@ void QGS_ThreadedModuleFake::process_internal(QGS_ModuleMsgBase* bptr)
 	}
 }
 
-void QGS_ThreadedModuleFake::process(Msg_Debug* message)
+void QGS_ThreadedModuleFake::process(Msg_DebugIo* message)
 {
 	process_internal(message);
 }

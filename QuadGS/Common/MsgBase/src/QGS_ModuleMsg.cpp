@@ -87,6 +87,8 @@ std::string QGS_ModuleMsgBase::toString() const
 
 BinaryIStream& QGS_ModuleMsgBase::stream(BinaryIStream& is)
 {
+	mDestination.clear();
+	mSource.clear();
 	is >> SetBits(32)  >> mType;
 	is >> mDestination;
 	is >> mSource;

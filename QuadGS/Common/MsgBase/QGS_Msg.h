@@ -49,7 +49,7 @@ public:
 
 	virtual void unhandledMsg()
 	{
-		mLogger.QuadLog( severity_level::warning ,"Received unhandled message. Install handler or remove subscription.");
+		mLogger.QuadLog( severity_level::error ,"Received unhandled message.");
 	}
 
 	std::string getName()

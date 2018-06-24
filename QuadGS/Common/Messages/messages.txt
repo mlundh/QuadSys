@@ -1,4 +1,9 @@
 Msg_Stop
-Msg_Debug --member std::unique_ptr<QGS_DebugMsg> dbgMsg --include QGS_DebugMsg.h
-Msg_Param --member std::unique_ptr<QGSParamMsg> paramMsg --include QGS_ParamMsg.h
-Msg_Log --member std::unique_ptr<QGS_LogMsg> paramMsg --include QGS_LogMsg.h
+Msg_DebugIo --member std::unique_ptr<QGS_DebugMsg> dbgMsg --include QGS_DebugMsg.h
+Msg_ParamIo --member std::unique_ptr<QGSParamMsg> paramMsg --include QGS_ParamMsg.h
+Msg_Param --member uint8_t control --member uint8_t sequenceNr --member uint8_t lastInSequence --member std::string payload
+Msg_LogIo --member std::unique_ptr<QGS_LogMsg> paramMsg --include QGS_LogMsg.h
+Msg_GetUiCommands
+Msg_RegUiCommand --member std::string command --member std::string doc 
+Msg_FireUiCommand --member std::string command --member std::string args
+Msg_UiCommandResult --member std::string result

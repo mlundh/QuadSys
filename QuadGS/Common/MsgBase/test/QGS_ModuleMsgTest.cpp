@@ -8,13 +8,15 @@
 
 #include "gtest/gtest.h"
 #include "QGS_ModuleMsg.h"
-#include "QGS_Module.h"
+#include "Msg_Stop.h"
+
 using namespace QuadGS;
 
 
 TEST(QGSModuleMsgTest, StreamInOut)
 {
-	QGS_ModuleMsgBase::ptr msg = std::make_unique< QGS_ModuleMsgBase>(msgQuit, "Destination");
+
+	QGS_ModuleMsgBase::ptr msg = std::make_unique< Msg_Stop>("dest");
 	msg->setSource("Source");
 
 	BinaryOStream os;
@@ -22,7 +24,7 @@ TEST(QGSModuleMsgTest, StreamInOut)
 
 	BinaryIStream is(os.get_internal_vec());
 
-	QGS_ModuleMsgBase::ptr msgVerify = std::make_unique<QGS_ModuleMsgBase>(msgQuit);
+	Msg_Stop::ptr msgVerify = std::make_unique<Msg_Stop>("dest");
 
 	is >> *msgVerify;
 

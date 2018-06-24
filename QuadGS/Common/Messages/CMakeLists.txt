@@ -1,7 +1,13 @@
-list(APPEND src "Msg_Debug.cpp"
-                "Msg_Param.cpp"
-                "Msg_Log.cpp"
-                "Msg_Stop.cpp")
+list(APPEND src "Msg_Stop.cpp"
+				"Msg_DebugIo.cpp"
+				"Msg_ParamIo.cpp"
+				"Msg_Param.cpp"
+				"Msg_LogIo.cpp"
+				"Msg_GetUiCommands.cpp"
+				"Msg_RegUiCommand.cpp"
+				"Msg_FireUiCommand.cpp"
+				"Msg_UiCommandResult.cpp"
+				)
                 
 list(APPEND dep "BinaryStream"
 				"MsgBase"
@@ -9,8 +15,3 @@ list(APPEND dep "BinaryStream"
 				
 qgs_make_shared_lib( Messages src dep)
 
-#list(APPEND src_DataMsgTest "DataMsgTest.cpp")
-#list(APPEND dep_DataMsgTest "gtest_main"
-#                            "IoMessages")
-
-#qgs_add_test(DataMsgTest src_DataMsgTest dep_DataMsgTest)

@@ -23,11 +23,13 @@
  */
 
 #include "Parameters.h"
+#include "FakeModule.h"
+#include "QGS_Router.h"
 
-#include <memory>
-
-#include "QGS_ParamMsg.h"
 #include "QGS_IoHeader.h"
+#include <memory>
+#include <iostream>
+#include "QGS_ParamMsg.h"
 #include "gtest/gtest.h"
 
 
@@ -35,7 +37,7 @@ using namespace QuadGS;
 
 void defaultMsgHandler(std::shared_ptr<QGS_IoHeader>, std::shared_ptr<QGS_Msg>)
 {
-    std::cout << "Got a message!" << std::endl;
+	std::cout << "Got a message!" << std::endl;
 }
 
 
@@ -43,157 +45,193 @@ void defaultMsgHandler(std::shared_ptr<QGS_IoHeader>, std::shared_ptr<QGS_Msg>)
 
 class ParamTest : public ::testing::Test {
 protected:
-    virtual void SetUp() {
-        QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error);
-        mParameters =  Parameters::create();
+	ParamTest():mParameters("GS_Param"), mFake("FC_Param"), router("Router") {
 
-        std::string payload_str = "/root/tmp<5>[8]/test[3]";
-        mVerifyStr = {"root<0>             \n    tmp<5>              [8]       \n        test<5>             [3]       \n"};
+		QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error);
 
-        QGSParamMsg::ptr payload = QGSParamMsg::Create(payload_str,0,1);
+		std::string payload_str = "/root/tmp<5>[8]/test[3]";
+		mParameters.SetAndRegister(payload_str);
+		mVerifyStr = {"root<0>             \n    tmp<5>              [8]       \n        test<5>             [3]       \n"};
 
-        mParameters->RegisterWriteFcn(std::bind(&defaultMsgHandler, std::placeholders::_1, std::placeholders::_2));
-        QGS_IoHeader::ptr header = QGS_IoHeader::Create(QGS_IoHeader::addresses::Parameters,
-                QGS_IoHeader::ParametersControl::SetTree,
-                0,
-                1+payload_str.length());
-        mParameters->ParameterHandler(header, payload);
 
-    }
+		router.bind(&mParameters);
+		router.bind(&mFake);
+	}
 
-    // virtual void TearDown() {}
-    std::string mVerifyStr;
+	// virtual void TearDown() {}
+	std::string mVerifyStr;
+	Parameters mParameters;
+	FakeModuleParam mFake;
+	QGS_Router router;
 
-    std::shared_ptr<Parameters> mParameters;
 };
 
 
 TEST(Parameters, TestRegisterAndDump)
 {
-    QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error);
-    std::shared_ptr<Parameters> mParameters =  Parameters::create();
-    std::string payload_str = "/root/tmp<5>[8]/test[3]";
-    QGSParamMsg::ptr payload = QGSParamMsg::Create(payload_str,0,1);
+	QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error);
+	Parameters mParameters("FC_Param");
+	std::string payload_str = "/root/tmp<5>[8]/test[3]";
 
-    QGS_IoHeader::ptr header = QGS_IoHeader::Create(QGS_IoHeader::addresses::Parameters,
-            QGS_IoHeader::ParametersControl::SetTree,
-            0,
-            1+payload_str.length());
 
-    mParameters->ParameterHandler(header, payload);
-    std::string dump = mParameters->dump("");
+	mParameters.SetAndRegister(payload_str);
 
-    std::string verify_str = {"root<0>             \n    tmp<5>              [8]       \n        test<5>             [3]       \n"};
+	std::string dump = mParameters.dump("");
 
-    EXPECT_EQ(verify_str, dump);
+	std::string verify_str = {"root<0>             \n    tmp<5>              [8]       \n        test<5>             [3]       \n"};
+
+	EXPECT_EQ(verify_str, dump);
 }
 
 TEST(Parameters, TestRegisterSecondMsg)
 {
-    QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error);
-    std::shared_ptr<Parameters> mParameters =  Parameters::create();
+	QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error);
 
-    // Bind dummy write function.
-    mParameters->RegisterWriteFcn(std::bind(&defaultMsgHandler, std::placeholders::_1, std::placeholders::_2));
+	// Create and register the first message.
+	std::string payload_str = "/root/tmp<5>[8]/test[3]";
+	Parameters mParameters("FC_Param");
 
-    // Create and register the first message.
-    std::string payload_str = "/root/tmp<5>[8]/test[3]";
-    QGSParamMsg::ptr payload = QGSParamMsg::Create(payload_str,0,0);
-    QGS_IoHeader::ptr header = QGS_IoHeader::Create(QGS_IoHeader::addresses::Parameters,
-            QGS_IoHeader::ParametersControl::SetTree,
-            0,
-            1+payload_str.length());
-    mParameters->ParameterHandler(header, payload);
+	mParameters.SetAndRegister(payload_str);
 
-    // Create and register the second message.
-    std::string payload_str2 = "/root/tmp<5>[8]/jus<7>/another<7>[65536]/value<7>[249037]";
-    QGSParamMsg::ptr payload2 = QGSParamMsg::Create(payload_str2,1,1);
-    QGS_IoHeader::ptr header2 = QGS_IoHeader::Create(QGS_IoHeader::addresses::Parameters,
-            QGS_IoHeader::ParametersControl::SetTree,
-            0,
-            1+payload_str2.length());
-    mParameters->ParameterHandler(header2, payload2);
+	// Create and register the second message.
+	std::string payload_str2 = "/root/tmp<5>[8]/jus<7>/another<7>[65536]/value<7>[249037]";
 
-    // Use dump to verify the registration. Remember that the ParameterHandler expects the integer representation of the fp,
-    // but the dump function prints the decimal number.
-    std::string dump = mParameters->dump("");
-    std::string verify = "root<0>             \n    tmp<5>              [8]       \n"
-            "        test<5>             [3]       \n        jus<7>              [0.000000]\n"
-            "            another<7>          [1.000000]\n                value<7>            [3.800003]\n";
-    EXPECT_EQ(verify, dump);
+	mParameters.SetAndRegister(payload_str2);
+
+	// Use dump to verify the registration. Remember that the ParameterHandler expects the integer representation of the fp,
+	// but the dump function prints the decimal number.
+	std::string dump = mParameters.dump("");
+	std::string verify = "root<0>             \n    tmp<5>              [8]       \n"
+			"        test<5>             [3]       \n        jus<7>              [0.000000]\n"
+			"            another<7>          [1.000000]\n                value<7>            [3.800003]\n";
+	EXPECT_EQ(verify, dump);
 }
 
 TEST(Parameters, TestSetAndRegister)
 {
-    QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error);
-    std::string payload_str = "/root/tmp<5>[8]/test[3]";
-    std::shared_ptr<Parameters> mParameters =  Parameters::create();
+	QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error);
+	std::string payload_str = "/root/tmp<5>[8]/test[3]";
+	Parameters mParameters("FC_Param");
 
-    mParameters->SetAndRegister(payload_str);
-    std::string dump = mParameters->dump("");
+	mParameters.SetAndRegister(payload_str);
+	std::string dump = mParameters.dump("");
 
-    std::string verify_str = {"root<0>             \n    tmp<5>              [8]       \n        test<5>             [3]       \n"};
+	std::string verify_str = {"root<0>             \n    tmp<5>              [8]       \n        test<5>             [3]       \n"};
 
-    EXPECT_EQ(verify_str, dump);
+	EXPECT_EQ(verify_str, dump);
 }
 
 TEST(ParamValue, TestFpStringToValue)
 {
-    QGS_TreeValue TreeValue(QGS_TreeValue::fp_16_16_variable_type);
+	QGS_TreeValue TreeValue(QGS_TreeValue::fp_16_16_variable_type);
 
-    int32_t value = TreeValue.StringToIntFixed("5.5");
+	int32_t value = TreeValue.StringToIntFixed("5.5");
 
-    EXPECT_EQ(DOUBLE_TO_FIXED(5.5, MAX16f), value);
+	EXPECT_EQ(DOUBLE_TO_FIXED(5.5, MAX16f), value);
 
-    value = TreeValue.StringToIntFixed("-5.5");
+	value = TreeValue.StringToIntFixed("-5.5");
 
-    EXPECT_EQ(DOUBLE_TO_FIXED(-5.5, MAX16f), value);
+	EXPECT_EQ(DOUBLE_TO_FIXED(-5.5, MAX16f), value);
 
 }
 
 TEST(ParamValue, TestModifyValueFp)
 {
-    QGS_TreeValue TreeValue(QGS_TreeValue::fp_16_16_variable_type);
+	QGS_TreeValue TreeValue(QGS_TreeValue::fp_16_16_variable_type);
 
-    TreeValue.SetValue("5.5");
+	TreeValue.SetValue("5.5");
 
-    TreeValue.ModifyValue("-5.5");
+	TreeValue.ModifyValue("-5.5");
 
-    EXPECT_EQ("0.000015", TreeValue.GetValue(true));
+	EXPECT_EQ("0.000015", TreeValue.GetValue(true));
 }
 
 TEST_F(ParamTest, TestSetup)
 {
-    std::string dump = mParameters->dump("");
-    EXPECT_EQ(mVerifyStr, dump);
+	std::string dump = mParameters.dump("");
+	EXPECT_EQ(mVerifyStr, dump);
 }
 
 
+TEST_F(ParamTest, TestMessage)
+{
+	std::string payload_str = "/root/tmp/test[555]";
+	mFake.sendDummyParamMsg(QGS_IoHeader::ParametersControl_t::SetTree, payload_str);
+	mFake.waitForMsg();
+
+	std::string result = mParameters.get("/root/tmp/test");
+	EXPECT_EQ("555", result);
+}
+
+TEST_F(ParamTest, TestGetCommands)
+{
+	mFake.sendGetCommands();
+	mFake.waitForMsg();
+	int i = 0;
+	while((mFake.mCommands.size() < mParameters.mCommands.size()) && (i < 500))
+	{
+		mFake.waitForMsg();
+		i++;
+	}
+
+	EXPECT_EQ(mFake.mCommands.size(), mParameters.mCommands.size());
+
+	for(size_t i = 0; i < mFake.mCommands.size(); i++)
+	{
+		EXPECT_EQ(mFake.mCommands[i].first, mParameters.mCommands[i].command);
+		EXPECT_EQ(mFake.mCommands[i].second, mParameters.mCommands[i].doc);
+
+	}
+}
+
+
+TEST_F(ParamTest, TestFireCommand)
+{
+	mFake.sendFireCommand("paramAdd","/root/tmp/test 1");
+	mFake.waitForMsg();
+	if(mFake.getNrResult() != 1)
+	{
+		mFake.waitForMsg();
+	}
+	ASSERT_EQ(mFake.getNrResult(), 1);
+	std::string result = mFake.getLastResult();
+	EXPECT_EQ("4", result);
+}
+
+TEST_F(ParamTest, TestFireCommand2)
+{
+	mFake.sendFireCommand("paramDumpTree","");
+	mFake.waitForMsg();
+
+	ASSERT_EQ(mFake.getNrResult(), 1);
+	std::string result = mFake.getLastResult();
+	EXPECT_EQ(mVerifyStr, result);
+}
 
 TEST_F(ParamTest, TestInc)
 {
-    mParameters->add("/root/tmp 5");
-    std::string result = mParameters->get("/root/tmp");
+	mParameters.add("/root/tmp 5");
+	std::string result = mParameters.get("/root/tmp");
 
-    EXPECT_EQ(result, "13");
+	EXPECT_EQ(result, "13");
 
 }
 
 TEST_F(ParamTest, TestIncTwice)
 {
-    mParameters->add("/root/tmp 5");
-    mParameters->add("/root/tmp 1");
-    std::string result = mParameters->get("/root/tmp");
+	mParameters.add("/root/tmp 5");
+	mParameters.add("/root/tmp 1");
+	std::string result = mParameters.get("/root/tmp");
 
-    EXPECT_EQ(result, "14");
+	EXPECT_EQ(result, "14");
 
 }
 
 TEST_F(ParamTest, TestDec)
 {
-    mParameters->add("/root/tmp -5");
-    std::string result = mParameters->get("/root/tmp");
+	mParameters.add("/root/tmp -5");
+	std::string result = mParameters.get("/root/tmp");
 
-    EXPECT_EQ(result, "3");
+	EXPECT_EQ(result, "3");
 
 }

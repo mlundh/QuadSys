@@ -89,7 +89,7 @@ TEST(QCMsgHeaderTest, TestStreamThroughBase)
 	BinaryOStream os;
 	BinaryOStream osVerify;
 
-	QGS_Msg::Ptr basePtr = std::static_pointer_cast<QGS_Msg>(msg);
+	QGS_Msg *basePtr = static_cast<QGS_Msg*>(msg.get());
 	// Stream to an output stream. Verify that the resulting vector is equal.
 	os << *basePtr;
 	osVerify << *msgVerify;

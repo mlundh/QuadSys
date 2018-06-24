@@ -1,0 +1,8 @@
+list(APPEND src {files})
+                
+list(APPEND dep "BinaryStream"
+				"MsgBase"
+				"AppLog")
+				
+qgs_make_shared_lib( Messages src dep)
+
