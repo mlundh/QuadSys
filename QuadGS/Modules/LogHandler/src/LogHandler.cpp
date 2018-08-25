@@ -14,201 +14,185 @@
 #include "QGS_Tree.h"
 #include "QGS_Module.h"
 
+#include "Msg_RegUiCommand.h"
+#include "Msg_UiCommandResult.h"
+
 namespace QuadGS {
 
-LogHandler::LogHandler() :
-                                                mNames(),
-                                                mWriteFcn()
-
+LogHandler::UiCommand::UiCommand(std::string command,  std::string doc, UiFcn function):
+		command(command), doc(doc), function(function)
 {
-    mLogFile.open ("LogFile.txt", std::ofstream::out);
-    mMapFile.open ("MapFile.txt", std::ofstream::out);
+
+}
+LogHandler::LogHandler(std::string name)
+		:QGS_MessageHandlerBase(name)
+		,mNames()
+{
+	mLogFile.open ("LogFile.txt", std::ofstream::out);
+	mMapFile.open ("MapFile.txt", std::ofstream::out);
+
+	mCommands.push_back(UiCommand("logGetNames","Get name id mapping of logs.",std::bind(&LogHandler::getLogNames, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("logPrintNameMapping","Print name id mapping of logs.",std::bind(&LogHandler::FormatLogMapping, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("logGetEntries","Get runtime logs from QuadFC.",std::bind(&LogHandler::getLogEntries, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("logStopAll","Stop all logging.",std::bind(&LogHandler::stopAllLogs, this, std::placeholders::_1)));
 }
 LogHandler::~LogHandler()
 {
-    if (mLogFile.is_open())
-    {
-        mLogFile.close();
-    }
-    if (mMapFile.is_open())
-    {
-        mMapFile.close();
-    }
-}
-
-LogHandler::ptr LogHandler::create()
-{
-    ptr tmp = ptr(new LogHandler);
-    return tmp;
-}
-
-void LogHandler::RegisterWriteFcn(WriteFcn fcn)
-{
-    mWriteFcn = fcn;
-}
-
-std::vector< QGS_UiCommand::ptr > LogHandler::getCommands()
-{
-    std::vector<std::shared_ptr < QGS_UiCommand > > mCommands;
-    mCommands.push_back(std::make_shared<QGS_UiCommand> ("logGetNames",
-            std::bind(&LogHandler::getLogNames, this, std::placeholders::_1),
-            "Get name id mapping of logs.", QGS_UiCommand::ActOn::Core));
-    mCommands.push_back(std::make_shared<QGS_UiCommand> ("logPrintNameMapping",
-            std::bind(&LogHandler::FormatLogMapping, this, std::placeholders::_1),
-            "Print name id mapping of logs.", QGS_UiCommand::ActOn::Core));
-    mCommands.push_back(std::make_shared<QGS_UiCommand> ("logGetEntries",
-            std::bind(&LogHandler::getLogEntries, this, std::placeholders::_1),
-            "Get runtime logs from QuadFC.", QGS_UiCommand::ActOn::Core));
-    mCommands.push_back(std::make_shared<QGS_UiCommand> ("logStopAll",
-            std::bind(&LogHandler::stopAllLogs, this, std::placeholders::_1),
-            "Stop all logging.", QGS_UiCommand::ActOn::Core));
-    return mCommands;
+	if (mLogFile.is_open())
+	{
+		mLogFile.close();
+	}
+	if (mMapFile.is_open())
+	{
+		mMapFile.close();
+	}
 }
 
 std::string LogHandler::getLogNames(std::string )
 {
-    QGS_IoHeader::ptr header = QGS_IoHeader::Create(QGS_IoHeader::addresses::Log, QGS_IoHeader::LogControl::Name, 0, 0);
-    std::shared_ptr<QGS_Msg> payload;
-    if(mWriteFcn)
-    {
-        mWriteFcn( header, payload );
-    }
-    else
-    {
-        return "Can not perform request, no write function registered.";
-    }
-    return "";
+	Msg_Log::ptr ptr = std::make_unique<Msg_Log>("FC_Log",QGS_IoHeader::LogControl::Name,"");
+	sendMsg(std::move(ptr));
+	return "";
 }
 
 std::string LogHandler::getLogEntries(std::string )
 {
-    QGS_IoHeader::ptr header = QGS_IoHeader::Create(QGS_IoHeader::addresses::Log, QGS_IoHeader::LogControl::Entry, 0, 0);
-    std::shared_ptr<QGS_Msg> payload;
-    if(mWriteFcn)
-    {
-        mWriteFcn( header, payload );
-    }
-    else
-    {
-        return "Can not perform request, no write function registered.";
-    }
-    return "";
+	Msg_Log::ptr ptr = std::make_unique<Msg_Log>("FC_Log",QGS_IoHeader::LogControl::Entry,"");
+	sendMsg(std::move(ptr));
+	return "";
 }
 
 std::string LogHandler::stopAllLogs(std::string )
 {
-    QGS_IoHeader::ptr header = QGS_IoHeader::Create(QGS_IoHeader::addresses::Log, QGS_IoHeader::LogControl::StopAll, 0, 0);
-    std::shared_ptr<QGS_Msg> payload;
-    if(mWriteFcn)
-    {
-        mWriteFcn( header, payload );
-    }
-    else
-    {
-        return "Can not perform request, no write function registered.";
-    }
-    return "";
+	Msg_Log::ptr ptr = std::make_unique<Msg_Log>("FC_Log",QGS_IoHeader::LogControl::StopAll,"");
+	sendMsg(std::move(ptr));
+	return "";
 }
 
 std::string LogHandler::FormatLogMapping(std::string)
 {
-    if(mNames.size() == 0)
-    {
-        return "No mapping registered.";
-    }
-    std::stringstream          ss;
-    std::vector<std::string>   parts;
-    for (auto it = mNames.begin(); it != mNames.end(); ++it) {
-        ss << std::left << std::setw(12) <<  it->first << std::setw(12) << it->second << std::endl;
-    }
-    return ss.str();
+	if(mNames.size() == 0)
+	{
+		return "No mapping registered.";
+	}
+	std::stringstream          ss;
+	std::vector<std::string>   parts;
+	for (auto it = mNames.begin(); it != mNames.end(); ++it) {
+		ss << std::left << std::setw(12) <<  it->first << std::setw(12) << it->second << std::endl;
+	}
+	return ss.str();
 }
 
-
-void LogHandler::Handler(std::shared_ptr<QGS_IoHeader> header, std::shared_ptr<QGS_LogMsg> payload)
+void LogHandler::process(Msg_GetUiCommands* message)
 {
-    uint8_t control = header->GetControl();
-    switch (control)
-    {
-    case QGS_IoHeader::LogControl::Name:
-    {
-        std::string payloadStr = payload->GetPayload();
-        while(!payloadStr.empty())
-        {
-            std::string module = QGS_Tree::RemoveModuleString(payloadStr);
+	for(UiCommand command : mCommands)
+	{
+		Msg_RegUiCommand::ptr ptr = std::make_unique<Msg_RegUiCommand>(message->getSource(), command.command, command.doc);
+		sendMsg(std::move(ptr));
+	}
+}
+void LogHandler::process(Msg_FireUiCommand* message)
+{
+	for(UiCommand command : mCommands)
+	{
+		if(command.command.compare(message->getCommand()) == 0)
+		{
+			std::string result = command.function(message->getArgs());
+			Msg_UiCommandResult::ptr ptr = std::make_unique<Msg_UiCommandResult>(message->getSource(), result);
+			sendMsg(std::move(ptr));
+			return;
+		}
+	}
+	std::cout << "no such command.";
 
-            if(!module.empty())
-            {
-                std::string name = QGS_Tree::GetModuleName(module);
-                std::string valueType = QGS_Tree::GetValueTypeString(module);
-                std::string id_str = QGS_Tree::GetValueString(module);
-                if(!id_str.empty() && !valueType.empty())
-                {
-                    int id = std::stoi(id_str);
-                    int type = std::stoi(valueType);
-                    auto search = mNames.find(name);
-                    if(search == mNames.end())
-                    {
-                        mNames[name] = id;
-                        mMapFile << name << "," << id << "," << type << std::endl;
+	Msg_UiCommandResult::ptr ptr = std::make_unique<Msg_UiCommandResult>(message->getSource(), "No such command.");
+	sendMsg(std::move(ptr));
+	return;
+}
+void LogHandler::process(Msg_Log* message)
+{
+	switch (message->getControl())
+	{
+	case QGS_IoHeader::LogControl::Name: //TODO move enum to messages.txt when the generator scripts can handle enums...
+	{
+		std::string payloadStr = message->getPayload();
+		while(!payloadStr.empty())
+		{
+			std::string module = QGS_Tree::RemoveModuleString(payloadStr);
 
-                    }
-                    else
-                    {
-                        // already have this, lets make sure it is the same.
-                        if(mNames[name] != id)
-                        {
-                            // TODO clear the file!
-                            mNames.clear();
-                            throw std::runtime_error("Conflicting name-id mapping for log entries. Discarding all names.");
-                        }
-                    }
-                }
-                else
-                {
-                    throw std::runtime_error("No ID given.");
-                }
+			if(!module.empty())
+			{
+				std::string name = QGS_Tree::GetModuleName(module);
+				std::string valueType = QGS_Tree::GetValueTypeString(module);
+				std::string id_str = QGS_Tree::GetValueString(module);
+				if(!id_str.empty() && !valueType.empty())
+				{
+					int id = std::stoi(id_str);
+					int type = std::stoi(valueType);
+					auto search = mNames.find(name);
+					if(search == mNames.end())
+					{
+						mNames[name] = id;
+						mMapFile << name << "," << id << "," << type << std::endl;
 
-            }
-        }
-    }
-    break;
-    case QGS_IoHeader::LogControl::Entry:
-    {
-        std::string payloadStr = payload->GetPayload();
-        bool end = false;
-        if(payloadStr.empty())
-        {
-            end = true;
-        }
-        while(!payloadStr.empty())
-        {
-            std::string module = QGS_Tree::RemoveModuleString(payloadStr);
-            for(int i = 0; i < NR_LOG_FIELDS; i++)
-            {
-                std::string value = QGS_Tree::RemoveValueString(module);
-                mLogFile << value;
-                if(i < NR_LOG_FIELDS - 1)
-                {
-                    mLogFile << ",";
-                }
-                else
-                {
-                    mLogFile << std::endl;
-                }
+					}
+					else
+					{
+						// already have this, lets make sure it is the same.
+						if(mNames[name] != id)
+						{
+							// TODO clear the file!
+							mNames.clear();
+							throw std::runtime_error("Conflicting name-id mapping for log entries. Discarding all names.");
+						}
+					}
+				}
+				else
+				{
+					throw std::runtime_error("No ID given.");
+				}
 
-            }
-        }
-        if(!end)
-        {
-            getLogEntries("");
-        }
-    }
-    break;
-    default:
-        break;
-    }
+			}
+		}
+	}
+	break;
+	case QGS_IoHeader::LogControl::Entry:
+	{
+		std::string payloadStr = message->getPayload();
+		bool end = false;
+		if(payloadStr.empty())
+		{
+			end = true;
+		}
+		while(!payloadStr.empty())
+		{
+			std::string module = QGS_Tree::RemoveModuleString(payloadStr);
+			for(int i = 0; i < NR_LOG_FIELDS; i++)
+			{
+				std::string value = QGS_Tree::RemoveValueString(module);
+				mLogFile << value;
+				if(i < NR_LOG_FIELDS - 1)
+				{
+					mLogFile << ",";
+				}
+				else
+				{
+					mLogFile << std::endl;
+				}
+
+			}
+		}
+		if(!end)
+		{
+			getLogEntries("");
+		}
+	}
+	break;
+	default:
+		break;
+	}
 
 
 }
+
 } /* namespace QuadGS */

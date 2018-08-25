@@ -32,40 +32,55 @@
 #include <cstdlib>
 #include <cstring>
 #include <boost/algorithm/string.hpp>
+#include <chrono>
+
+#include "Msg_Stop.h"
 
 namespace QuadGS {
 
 char  CLI::WordBreakPath[] = " \t\n\"\\'`@$><=;|&{(/";
-char  CLI::WordBreak[] = " \t\n\"\\'`@$><=;|&{(";
+char  CLI::WordBreak[]     = " \t\n\"\\'`@$><=;|&{(";
+CLI* CLI::cli = NULL;
 
 CLI::UiCommand::UiCommand(std::string command, std::string args, std::string address):
-		command(command), doc(args), address(address)
+						command(command), doc(args), address(address)
 {
 
 }
 
-CLI::CLI():
-        		 AppLog("CLI"),
-				 mPromptStatus("N/A"),
-				 mPromptBase("QuadGS"),
-				 mPrompt(),
-				 mContinue(true)
+CLI::CLI(std::string name)
+:QGS_MessageHandlerBase(name)
+,mCommands()
+,mPromptStatus("N/A")
+,mPromptBase("QuadGS")
+,mPrompt()
 {
+	cli = this;
 	rl_attempted_completion_function = completion;
 	read_history(NULL);
+	mCommands.push_back(UiCommand("quit","",getName()));
+	setProcessingFcn(std::bind(&CLI::processingFcn, this));
+	startProcessing();
 }
 
 CLI::~CLI()
 {
+	cli = NULL;
 	write_history(NULL);
 	history_truncate_file(NULL, 100);
 }
 
-void CLI::registerCommand(std::string command, std::string doc, std::string address)
+void CLI::processingFcn()
 {
-
-	mCommands.push_back(UiCommand(command, doc, address));
+	handleMessages(true);
 }
+
+std::string CLI::stop(std::string)
+{
+	stopProcessing();
+	return "";
+}
+
 
 size_t CLI::FindCommand(std::string& line)
 {
@@ -80,9 +95,9 @@ size_t CLI::FindCommand(std::string& line)
 	line.erase(line.begin(), line.begin() + command.size());
 	boost::trim(line);
 
-	for(size_t i = 0; i < mCommands.size(); i++)
+	for(size_t i = 0; i < cli->mCommands.size(); i++)
 	{
-		if(!mCommands[i].first.compare(command))
+		if(!cli->mCommands[i].command.find(command))
 		{
 			return i;
 		}
@@ -92,18 +107,17 @@ size_t CLI::FindCommand(std::string& line)
 
 std::string CLI::ExecuteLine(std::string line)
 {
-
-	size_t i = FindCommand(line);
-	if(mCommands[i]->mFunc)
+	size_t i = FindCommand(line); // FindCommands leaves only args in line.
+	mLogger.QuadLog(debug, "Calling command: " + mCommands[i].command);
+	if(mCommands[i].address == getName() && mCommands[i].command == "quit")
 	{
-		mLogger(info, "Calling command: " + mCommands[i].first);
-		// Send and wait for reply...
-		//return (mCommands[i]->mFunc(line));
+		stopProcessing();
+		return"";
 	}
-	else
-	{
-		throw std::invalid_argument("Command not valid.");
-	}
+	// Send and wait for reply...
+	Msg_FireUiCommand::ptr ptr = std::make_unique<Msg_FireUiCommand>(mCommands[i].address, mCommands[i].command, line);
+	sendMsg(std::move(ptr));
+	waitForUiResult();
 	return "";
 }
 
@@ -124,13 +138,19 @@ void CLI::BuildPrompt()
 	}
 }
 
-std::string CLI::Stop(std::string)
-{
-	mContinue = false;
-	return "";
-}
+
 bool CLI::RunUI()
 {
+	if(!mIsInitilized)
+	{
+		mLogger.QuadLog(debug, "Requesting messages from GS_Param");
+
+		Msg_GetUiCommands::ptr ptr = std::make_unique<Msg_GetUiCommands>("GS_Param");
+		sendMsg(std::move(ptr));
+		Msg_GetUiCommands::ptr ptrLh = std::make_unique<Msg_GetUiCommands>("GS_LogHandler");
+		sendMsg(std::move(ptrLh));
+		mIsInitilized = true;
+	}
 	try
 	{
 		char * tmp_line;
@@ -153,21 +173,21 @@ bool CLI::RunUI()
 	}
 	catch(const std::invalid_argument& e)
 	{
-		QuadLog(error, e.what());
+		mLogger.QuadLog(error, e.what());
 		return true;
 	}
 	catch(const std::runtime_error& e)
 	{
-		QuadLog(error, e.what());
+		mLogger.QuadLog(error, e.what());
 		return true;
 	}
 
 	catch(const std::exception& e)
 	{
-		QuadLog(error, e.what());
+		mLogger.QuadLog(error, e.what());
 		return true;
 	}
-	return mContinue;
+	return !mStop;
 }
 
 
@@ -205,29 +225,19 @@ char ** CLI::completion (const char *text, int start, int)
 			return (matches);
 		}
 
-		switch (mCommands[i]->mActOn)
+		if(cli->mCommands[i].address == "GS_Param")
 		{
-		case QGS_UiCommand::ActOn::Core:
 			rl_completer_word_break_characters = WordBreakPath;
 			rl_attempted_completion_over = 1;
-			//temporarily change branch for the completion function.
-			mCore->mParameters->SaveBranch();
-			mCore->mParameters->ChangeBranch(tmpLine);
-			matches = rl_completion_matches (text, path_generator);
-			// Restore the current branch.
-			mCore->mParameters->RestoreBranch();
-			break;
-		case QGS_UiCommand::ActOn::IO:
-			rl_attempted_completion_over = 1;
-			break;
-		case QGS_UiCommand::ActOn::UI:
-			rl_attempted_completion_over = 1;
-			break;
-		case  QGS_UiCommand::ActOn::File:
+
+			matches = rl_completion_matches (tmpLine.c_str(), path_generator);
+
 			rl_completer_word_break_characters = WordBreak;
-			break;
-		default:
-			break;
+
+		}
+		else if(cli->mCommands[i].address != "GS_Param")
+		{
+
 		}
 
 	}
@@ -252,11 +262,11 @@ char * CLI::command_generator (const char *text, int state)
 	}
 
 	/* Return the next name which partially matches from the command list. */
-	while(list_index < mCommands.size())
+	while(list_index < cli->mCommands.size())
 	{
 		list_index++;
-		if (strncmp (mCommands[list_index - 1]->mName.c_str(), text, len) == 0)
-			return (dupstr(mCommands[list_index - 1]->mName.c_str()));
+		if (strncmp (cli->mCommands[list_index - 1].command.c_str(), text, len) == 0)
+			return (dupstr(cli->mCommands[list_index - 1].command.c_str()));
 	}
 
 	/* If no names matched, then return NULL. */
@@ -277,14 +287,45 @@ char * CLI::path_generator (const char *text, int state)
 	/* If this is a new word to complete, initialize now.  This includes
      saving the length of TEXT for efficiency, and initializing the index
      variable to 0. */
+	std::string text_s(text);
+
 	if (!state)
 	{
 		list_index = 0;
 		vec.clear();
-		std::string text_s(text);
-		mCore->mParameters->FindPartial(text_s, vec);
+		Msg_FindParam::ptr ptr = std::make_unique<Msg_FindParam>("GS_Param", text_s, "");
+		cli->sendMsg(std::move(ptr));
+
+		// Now wait for message to get back
+		std::unique_lock<std::mutex> l(cli->mMutex);
+
+		if(!cli->cvFindParam.wait_for(l, std::chrono::milliseconds(5), [](){return cli->newFindParam; }))
+		{
+			throw std::runtime_error("Did not get a find param result");
+		}
+		cli->newUiRsp = false;
+
+		text_s = cli->mFindParamToFind;
+
+		// Msg_FindParam returns a comma separated list, we should convert this to a vector of strings.
+		while(!cli->mFindParamResult.empty())
+		{
+			size_t pos = 0;
+			std::string token;
+			if ((pos = cli->mFindParamResult.find(",")) != std::string::npos)
+			{
+				token = cli->mFindParamResult.substr(0, pos);
+				cli->mFindParamResult.erase(0, pos + 1);
+				vec.push_back(token);
+			}
+			else
+			{
+				token = cli->mFindParamResult;
+				cli->mFindParamResult.clear();
+				vec.push_back(token);
+			}
+		}
 	}
-	std::string text_s(text);
 	boost::trim(text_s);
 
 	/* Return the next name which partially matches from the command list. */
@@ -315,11 +356,40 @@ char * CLI::dupstr (const char * s)
 
 void CLI::process(Msg_RegUiCommand* message)
 {
-	registerCommand(message->getCommand(), message->getDoc(), message->getSource() );
+	mLogger.QuadLog(debug, "Received UI command: " + message->getCommand() + " from " + message->getSource());
+	mCommands.push_back(UiCommand(message->getCommand(), message->getDoc(), message->getSource()));
 }
 void CLI::process(Msg_UiCommandResult* message)
 {
+	std::lock_guard<std::mutex> lock(mMutex);
+
+	newUiRsp = true;
 	Display(message->getResult());
+
+	mMutex.unlock();
+	cvNewUiRsp.notify_one();
+}
+void CLI::process(Msg_FindParam* message)
+{
+	std::lock_guard<std::mutex> lock(mMutex);
+
+	mFindParamResult = message->getFound();
+	mFindParamToFind = message->getTofind();
+	newFindParam = true;
+
+	mMutex.unlock();
+	cvFindParam.notify_one();
+
+}
+
+void CLI::waitForUiResult()
+{
+	std::unique_lock<std::mutex> l(mMutex);
+	if(!cvNewUiRsp.wait_for(l, std::chrono::milliseconds(5), [this](){return newUiRsp; }))
+	{
+		throw std::runtime_error("Did not get a ui command result");
+	}
+	newUiRsp = false;
 }
 
 } /* namespace QuadGS */

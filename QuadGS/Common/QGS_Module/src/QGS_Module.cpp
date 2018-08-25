@@ -168,6 +168,12 @@ void QGS_ThreadedModule::handleMessages(bool blocking)
 		msg->dispatch(this);
 	}
 }
+
+void QGS_ThreadedModule::waitForFinish()
+{
+	mThread.join();
+
+}
 void QGS_ThreadedModule::ReceivingFcn(std::unique_ptr<QGS_ModuleMsgBase> message)
 {
 	mFifo.push(std::move(message));

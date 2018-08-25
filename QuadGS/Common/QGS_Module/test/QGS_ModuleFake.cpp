@@ -25,7 +25,7 @@
 #include "QGS_ModuleFake.h"
 #include "Msg_ParamIo.h"
 #include "Msg_DebugIo.h"
-
+#include "Msg_Param.h"
 namespace QuadGS {
 
 
@@ -57,7 +57,7 @@ void FakeModule::sendDummyDebugMsg(std::string dest)
 void FakeModule::sendDummyParamMsg(std::string dest)
 {
 	QGSParamMsg::ptr paramMsg = std::make_unique<QGSParamMsg>(0, "NoValidData", 0, 1);
-	QGS_ModuleMsgBase::ptr msg = std::make_unique<Msg_Param>(dest, std::move(paramMsg));
+	QGS_ModuleMsgBase::ptr msg = std::make_unique<Msg_ParamIo>(dest, std::move(paramMsg));
 	sendMsg(std::move(msg));
 }
 
@@ -78,7 +78,7 @@ void FakeModule::process_internal(QGS_ModuleMsgBase* bptr)
 	}
 }
 
-void FakeModule::process(Msg_Param* message)
+void FakeModule::process(Msg_ParamIo* message)
 {
 	process_internal(message);
 }
@@ -127,7 +127,7 @@ void QGS_ThreadedModuleFake::sendDummyDebugMsg(std::string dest)
 void QGS_ThreadedModuleFake::sendDummyParamMsg(std::string dest)
 {
 	QGSParamMsg::ptr paramMsg = std::make_unique<QGSParamMsg>(0, "NoValidData", 0, 1);
-	QGS_ModuleMsgBase::ptr msg = std::make_unique<Msg_Param>(dest,std::move(paramMsg));
+	QGS_ModuleMsgBase::ptr msg = std::make_unique<Msg_ParamIo>(dest,std::move(paramMsg));
 	sendMsg(std::move(msg));
 }
 
@@ -148,7 +148,7 @@ void QGS_ThreadedModuleFake::process(Msg_DebugIo* message)
 {
 	process_internal(message);
 }
-void QGS_ThreadedModuleFake::process(Msg_Param* message)
+void QGS_ThreadedModuleFake::process(Msg_ParamIo* message)
 {
 	process_internal(message);
 }

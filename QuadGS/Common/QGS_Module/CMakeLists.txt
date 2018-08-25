@@ -4,7 +4,7 @@ list(APPEND src "QGS_Module.cpp"
 list(APPEND dep "AppLog"
                 "Fifo"
                 "BinaryStream"
-                "Messages")
+                "GS_System")
 
 qgs_make_shared_lib( QGS_Module src dep)
 
@@ -13,6 +13,7 @@ list(APPEND src_Test "QGS_ModuleTest.cpp"
                      
 list(APPEND dep_Test "gtest_main"
                      "QGS_Module"
-                     "Messages")
+                     "FC_IO"
+                     "Param")
 
 qgs_add_test(QGS_ModuleTest src_Test dep_Test)

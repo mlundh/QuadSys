@@ -35,6 +35,7 @@
 #include "Msg_GetUiCommands.h"
 #include "Msg_FireUiCommand.h"
 #include "QGS_Tree.h"
+#include "Msg_FindParam.h"
 
 namespace QuadGS {
 
@@ -43,6 +44,8 @@ class Parameters
 		, public QGS_MessageHandler<Msg_Param>
 		, public QGS_MessageHandler<Msg_GetUiCommands>
 		, public QGS_MessageHandler<Msg_FireUiCommand>
+		, public QGS_MessageHandler<Msg_FindParam>
+
 {
 public:
 	typedef std::function<std::string(std::string) > UiFcn;
@@ -119,6 +122,7 @@ public:
 	virtual void process(Msg_Param* message);
 	virtual void process(Msg_GetUiCommands* message);
 	virtual void process(Msg_FireUiCommand* message);
+	virtual void process(Msg_FindParam* message);
 
 	std::vector<UiCommand> mCommands;
 	QGS_Tree::ptr mTmpBranch;

@@ -103,6 +103,8 @@ void QGS_Router::internalSend(QGS_ModuleMsgBase::ptr message, std::string port, 
 	std::map<std::string, WriteFcn>::iterator it = mWriteFunctions.find(port);
 	if(it != mWriteFunctions.end())
 	{
+		try
+		{
 		if(broadcast)
 		{
 			// each module gets its own copy. This ensures thread safety.
@@ -114,11 +116,15 @@ void QGS_Router::internalSend(QGS_ModuleMsgBase::ptr message, std::string port, 
 			// only one destination, move!
 			mWriteFunctions[port](std::move(message));
 		}
-
+		}
+		catch (std::runtime_error& e)
+		{
+			mLogger.QuadLog(severity_level::error, "Module: " + port + " encountered an error: " + e.what());
+		}
 	}
 	else
 	{
-		throw std::runtime_error( "Port: " + port + " not available, error in topology?");
+		mLogger.QuadLog(severity_level::error, "No port: " + port + ", error in topology? ");
 	}
 }
 
@@ -147,7 +153,7 @@ void QGS_Router::checkUniqueName(std::string &name)
 
 void QGS_Router::route(QGS_ModuleMsgBase::ptr msg)
 {
-	if(msg->getType() == messageTypes_t::Msg_Stop_e)
+	if(msg->getDestination() == mName && msg->getType() == messageTypes_t::Msg_Stop_e)
 	{
 		mStop = true;
 	}

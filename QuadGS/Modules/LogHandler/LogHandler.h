@@ -14,45 +14,47 @@
 #include <map>
 #include <vector>
 
-#include "QGS_LogMsg.h"
+#include "QGS_Module.h"
+
+#include "Msg_GetUiCommands.h"
+#include "Msg_FireUiCommand.h"
+#include "Msg_Log.h"
 
 #define NR_LOG_FIELDS (3)
+
 namespace QuadGS {
 
-class QGS_IoHeader;
-class QGS_UiCommand;
-class QGS_LogMsg;
-class QGS_Msg;
-class LogHandler: public std::enable_shared_from_this<LogHandler>
+/**
+ * Message format:
+ * Name:
+ * NameOfModule<valueType>[uniqueId]
+ *
+ * Entry:
+ * [ID][TIME][DATA]
+ *
+ */
+class LogHandler
+		: public QGS_ReactiveModule
+		, public QGS_MessageHandler<Msg_GetUiCommands>
+		, public QGS_MessageHandler<Msg_FireUiCommand>
+		, public QGS_MessageHandler<Msg_Log>
 {
-    typedef std::function<void(std::shared_ptr<QGS_IoHeader>, std::shared_ptr<QGS_Msg>) > WriteFcn;
-    typedef std::shared_ptr<LogHandler> ptr;
-    /**
-     * Private constructor, use create instead.
-     */
-    LogHandler();
-
+	typedef std::function<std::string(std::string) > UiFcn;
+	class UiCommand
+	{
+	public:
+		UiCommand(std::string command,  std::string doc, UiFcn function);
+		std::string command;
+		std::string doc;
+		UiFcn function;
+	};
 public:
+
+    LogHandler(std::string name);
+
 
     virtual ~LogHandler();
 
-    /**
-     * Create a LogHandler object.
-     * @return  Shared ptr to the object.
-     */
-    static ptr create();
-
-    /**
-     * Register the function that will write the packet to the client.
-     * @param fcn   write function.
-     */
-    void RegisterWriteFcn(WriteFcn fcn);
-
-    /**
-     * Get the user commands this module supports.
-     * @return
-     */
-    std::vector<std::shared_ptr<QGS_UiCommand> > getCommands();
 
     /**
      * Get the name id mapping of all loggers.
@@ -82,18 +84,16 @@ public:
      */
     std::string FormatLogMapping(std::string string);
 
-    /**
-     * Handle the incoming log messages.
-     * @param header    Header of the message.
-     * @param payload   Payload of the message.
-     */
-    void Handler(std::shared_ptr<QGS_IoHeader> header, std::shared_ptr<QGS_LogMsg> payload);
 
-private:
+	virtual void process(Msg_GetUiCommands* message);
+	virtual void process(Msg_FireUiCommand* message);
+	virtual void process(Msg_Log* message);
+
     std::ofstream mLogFile;
     std::ofstream mMapFile;
     std::map<std::string, int> mNames;
-    WriteFcn mWriteFcn;
+	std::vector<UiCommand> mCommands;
+
 
 };
 

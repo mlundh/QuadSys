@@ -1,9 +1,32 @@
+#All interfaces must start with:'*{NameOfInterface}' and end with a single '*'
+#TODO update script to create enums needed for the message types, this includes members and possible addresses.
+*GS_System 
 Msg_Stop
+*
+
+*FC_IO FC_IO
 Msg_DebugIo --member std::unique_ptr<QGS_DebugMsg> dbgMsg --include QGS_DebugMsg.h
 Msg_ParamIo --member std::unique_ptr<QGSParamMsg> paramMsg --include QGS_ParamMsg.h
-Msg_Param --member uint8_t control --member uint8_t sequenceNr --member uint8_t lastInSequence --member std::string payload
 Msg_LogIo --member std::unique_ptr<QGS_LogMsg> paramMsg --include QGS_LogMsg.h
+*
+
+*Param GS_Param FC_Param
+Msg_Param --member uint8_t control --member uint8_t sequenceNr --member uint8_t lastInSequence --member std::string payload
+*
+*Log GS_Log FC_Log
+Msg_Log --member uint8_t control --member std::string payload
+*
+
+*Ui_Command GUI FC_Param
+Msg_FindParam --member std::string toFind --member std::string found
+*
+
+*Ui_CommandSlave FC_Param
 Msg_GetUiCommands
-Msg_RegUiCommand --member std::string command --member std::string doc 
 Msg_FireUiCommand --member std::string command --member std::string args
+*
+
+*Ui_CommandMaster GUI
+Msg_RegUiCommand --member std::string command --member std::string doc 
 Msg_UiCommandResult --member std::string result
+*

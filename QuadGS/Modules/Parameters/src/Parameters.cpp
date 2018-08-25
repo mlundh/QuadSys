@@ -33,7 +33,6 @@
 #include "Msg_UiCommandResult.h"
 
 #include "QGS_ParamMsg.h"
-#include "QGS_IoHeader.h"
 #include "QGS_Module.h"
 
 using namespace std::placeholders;
@@ -426,6 +425,22 @@ void Parameters::process(Msg_FireUiCommand* message)
 	sendMsg(std::move(ptr));
 	return;
 }
+
+void Parameters::process(Msg_FindParam* message)
+{
+	std::vector<std::string> vec;
+	std::string toFind = message->getTofind();
+	FindPartial(toFind, vec);
+	std::string result;
+	// serialize the result, find param message uses comma separated results.
+	for(auto item : vec)
+	{
+		result = result + item + ",";
+	}
+	Msg_FindParam::ptr ptr = std::make_unique<Msg_FindParam>(message->getSource(),toFind, result);
+	sendMsg(std::move(ptr));
+}
+
 
 }
 /* namespace QuadGS */

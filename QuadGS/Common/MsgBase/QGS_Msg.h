@@ -60,7 +60,6 @@ public:
 protected:
 	AppLog mLogger;
 	std::string mName;
-	std::vector<messageTypes_t> subscriptions;
 };
 
 

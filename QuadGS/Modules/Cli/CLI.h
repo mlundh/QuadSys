@@ -28,11 +28,14 @@
 #include <vector>
 
 #include "QGS_Module.h"
-
+#include <mutex>
+#include <condition_variable>
 #include "Msg_GetUiCommands.h"
 #include "Msg_RegUiCommand.h"
 #include "Msg_FireUiCommand.h"
 #include "Msg_UiCommandResult.h"
+#include "Msg_FindParam.h"
+#include "Msg_Stop.h"
 
 namespace QuadGS {
 
@@ -40,23 +43,29 @@ class CLI
 		: public QGS_ThreadedModule
 		, public QGS_MessageHandler<Msg_RegUiCommand>
 		, public QGS_MessageHandler<Msg_UiCommandResult>
+		, public QGS_MessageHandler<Msg_FindParam>
+
 {
 private:
 
 
 	class UiCommand
 	{
+	public:
 		UiCommand(std::string command,  std::string doc, std::string address);
 		std::string command;
 		std::string doc;
 		std::string address;
 	};
 
-	CLI();
+public:
+	CLI(std::string name);
 
 	virtual ~CLI();
 
-	virtual void registerCommand(std::string command, std::string doc, std::string address);
+	void processingFcn();
+
+	std::string stop(std::string);
 
 	static size_t FindCommand(std::string& line);
 
@@ -66,9 +75,7 @@ private:
 
 	void BuildPrompt();
 
-	std::string Stop(std::string);
-
-	virtual bool RunUI();
+	bool RunUI();
 
 	void SetPrompt(std::string prompt);
 
@@ -82,16 +89,30 @@ private:
 
 	virtual void process(Msg_RegUiCommand* message);
 	virtual void process(Msg_UiCommandResult* message);
+	virtual void process(Msg_FindParam* message);
 
+	void waitForUiResult();
 
 public:
-	static std::vector<UiCommand> mCommands;
+	std::vector<UiCommand> mCommands;
+	bool mIsInitilized = false;
 	std::string mPromptStatus;
 	std::string mPromptBase;
 	std::string mPrompt;
-	bool mContinue;
 	static char WordBreakPath[];
 	static char WordBreak[];
+	static CLI* cli;
+
+	std::mutex mMutex;
+
+	std::string mFindParamResult;
+	std::string mFindParamToFind;
+
+	bool newFindParam = false; // c++11, fancy! :)
+	std::condition_variable cvFindParam;
+
+	bool newUiRsp = false;
+	std::condition_variable cvNewUiRsp;
 
 
 

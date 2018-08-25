@@ -1,8 +1,9 @@
-list(APPEND src {files})
+list(APPEND src "Msg_Stop.cpp"
+				)
                 
 list(APPEND dep "BinaryStream"
 				"MsgBase"
 				"AppLog")
 				
-qgs_make_shared_lib( {interface} src dep)
+qgs_make_shared_lib( GS_System src dep)
 

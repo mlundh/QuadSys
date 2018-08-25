@@ -157,14 +157,20 @@ protected:
 	 */
 	void handleMessages(bool blocking);
 
+	/**
+	 * Call this from any other thread to wait for the processing to finish.
+	 */
+	void waitForFinish();
+
 private:
 
 	void ReceivingFcn(std::unique_ptr<QGS_ModuleMsgBase> message);
 
 	void runThread();
 
-private:
+protected:
     bool mStop;
+private:
 	std::thread mThread;
 	ThreadSafeFifo<QGS_ModuleMsgBase::ptr> mFifo; // ,essage, originating port
 	processingFcn mProcessingFcn;
