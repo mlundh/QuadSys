@@ -1,5 +1,5 @@
 /*
- * ArduinoDue_memory.c
+ * MB85RS64V_fram.h
  *
  * Copyright (C) 2017 Martin Lundh
  *
@@ -21,40 +21,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+#ifndef PORTLAYER_CY15B104Q_SX_SPI_FRAM_INC_MB85RS64V_FRAM_H_
+#define PORTLAYER_CY15B104Q_SX_SPI_FRAM_INC_MB85RS64V_FRAM_H_
+#define CY15B104Q_SX_SIZE 500000
 
-#include "HAL/QuadFC/QuadFC_Memory.h"
-#include "PortLayer/MB85RC_i2c_fram/inc/MB85RC_i2c_memory.h"
-#include "PortLayer/CY15B104Q_SX_spi_fram/inc/CY15B104Q-SX_fram.h"
-
-uint8_t Mem_Init()
+#include "stdint.h"
+#include "stddef.h"
+typedef enum opcodes
 {
-  //MB85RS64V_TestWriteEnable();
-  return 1;//MB85RS64V_WriteEnable(1);
-}
+  OPCODE_WREN   = 0b0110,     //!< Write Enable Latch
+  OPCODE_WRDI   = 0b0100,     //!< Reset Write Enable Latch */
+  OPCODE_RDSR   = 0b0101,     //!< Read Status Register */
+  OPCODE_WRSR   = 0b0001,     //!< Write Status Register */
+  OPCODE_READ   = 0b0011,     //!< Read Memory */
+  OPCODE_WRITE  = 0b0010,     //!< Write Memory */
+  OPCODE_RDID   = 0b10011111  //!< Read Device ID */
+} opcodes_t;
 
+uint8_t CY15B104Q_SX_MemRead(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size);
 
-uint8_t Mem_Read(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size)
-{
-  if(addr < MB85RC_SIZE) // i2c memory
-  {
-    return MB85RC_MemRead(addr, size, buffer, buffer_size);
-  }
-  else if((addr >= MB85RC_SIZE) && (addr < (MB85RC_SIZE + CY15B104Q_SX_SIZE))) // SPI memory
-  {
-    return CY15B104Q_SX_MemRead(addr - MB85RC_SIZE, size, buffer, buffer_size);
-  }
-  else return 0;
-}
+uint8_t CY15B104Q_SX_MemWrite(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size);
+uint8_t CY15B104Q_SX_WriteEnable(uint8_t enable);
 
-uint8_t Mem_Write(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size)
-{
-  if(addr < MB85RC_SIZE) // i2c memory
-  {
-    return MB85RC_MemWrite(addr, size, buffer, buffer_size);
-  }
-  else if((addr >= MB85RC_SIZE) && (addr < (MB85RC_SIZE + CY15B104Q_SX_SIZE))) // SPI memory
-  {
-    return CY15B104Q_SX_MemWrite(addr - MB85RC_SIZE, size, buffer, buffer_size);
-  }
-  else return 0;
-}
+uint8_t CY15B104Q_SX_TestWriteEnable();
+
+#endif /* PORTLAYER_CY15B104Q_SX_SPI_FRAM_INC_MB85RS64V_FRAM_H_ */

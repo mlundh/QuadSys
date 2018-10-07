@@ -29,8 +29,8 @@
 #include "HAL/QuadFC/QuadFC_Memory.h"
 #include "Utilities/inc/serialization.h"
 
-#define LOG_BACKEND_SIZE 600
 #define LOG_BACKEND_ITEM_SIZE (12)
+#define LOG_BACKEND_SIZE (500000/LOG_BACKEND_ITEM_SIZE)
 #define LOG_BACKEND_BASE_ADDR 32000
 
 struct logBackEnd
@@ -69,7 +69,7 @@ uint8_t LogBackend_Report(LogBackEnd_t* obj, logEntry_t* entry)
     obj->count--;
   }
 
-  // TODO optimize the transfer, allow for multiple entries to be read at the same time. This will minimize SPI overhead.
+  // TODO optimize the transfer, allow for multiple entries to be written at the same time. This will minimize SPI overhead.
   uint8_t buffer[LOG_BACKEND_ITEM_SIZE] = {0};
 
   uint32_t bufferIdx = serialize_int32(&buffer[0], LOG_BACKEND_ITEM_SIZE, entry->data);
@@ -99,7 +99,7 @@ uint8_t LogBackend_GetLog(LogBackEnd_t* obj, logEntry_t* entry, uint32_t nrEleme
   *nrLogs = 0;
   while(obj->count > 0 && nrElements > 0)
   {
-    // TODO Serialize everything first, then write to memory, will save much SPI overhead.
+	  // TODO optimize the transfer, allow for multiple entries to be read at the same time. This will minimize SPI overhead.
     uint8_t buffer[LOG_BACKEND_ITEM_SIZE] = {0};
     if(!Mem_Read(LOG_BACKEND_BASE_ADDR + (obj->tail * LOG_BACKEND_ITEM_SIZE), LOG_BACKEND_ITEM_SIZE, buffer, LOG_BACKEND_ITEM_SIZE))
     {

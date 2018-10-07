@@ -26,8 +26,8 @@
 #include "HAL/QuadFC/QuadFC_Memory.h"
 void Board_GetTCs(TestFw_t* obj)
 {
-  TestFW_RegisterTest(obj, "SPI fram", Board_TestSpiFram_1);
-  TestFW_RegisterTest(obj, "SPI fram", Board_TestSpiFram_2);
+  TestFW_RegisterTest(obj, "SPI fram 1", Board_TestSpiFram_1);
+  TestFW_RegisterTest(obj, "SPI fram 2", Board_TestSpiFram_2);
 
 }
 #define BASE_ADDR_SPI 32000
@@ -54,6 +54,7 @@ uint8_t Board_TestSpiFram_1(TestFw_t* obj)
 
   }
   Mem_Init();
+
   {
     uint8_t data [4] = {0};
     uint8_t data_verify [4] = {0};

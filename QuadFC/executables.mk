@@ -37,8 +37,8 @@ EXECUTABLES := QuadFC TestFC_RTOS TestFC_RTOS_1 TestFC_Utilities
 QuadFC_DEPS:= Top/QuadFC HAL/QuadFC
 QuadFC_DEPS+= $(addprefix Modules/, Communication FlightController HMI Parameters EventHandler)
 QuadFC_DEPS+= $(addprefix Modules/, StateEstimator Utilities SetpointHandler FlightModeHandler Log LogMemBackend)
-QuadFC_DEPS+= $(addprefix PortLayer/, Actuators Board Communication HMI MB85RS64V_spi_fram)
-QuadFC_DEPS+= $(addprefix PortLayer/, MB85RC_i2c_fram Sensors MB85RS64V_spi_fram)
+QuadFC_DEPS+= $(addprefix PortLayer/, Actuators Board Communication HMI CY15B104Q_SX_spi_fram)
+QuadFC_DEPS+= $(addprefix PortLayer/, MB85RC_i2c_fram Sensors)
 QuadFC_DEPS+= $(addprefix ThirdParty/, asf freertos asf_freertos)
 
 TestFC_Utilities_DEPS:= ThirdParty/asf Top/TestFC_Utilities 
@@ -49,12 +49,12 @@ TestFC_RTOS_DEPS:= Top/TestFC_RTOS HAL/QuadFC
 TestFC_RTOS_DEPS+= $(addprefix Test/,TestFW DummyI2C SignalProcessing EventHandler Log)
 TestFC_RTOS_DEPS+= $(addprefix Modules/, Utilities StateEstimator Parameters EventHandler FlightController HMI)
 TestFC_RTOS_DEPS+= $(addprefix Modules/, Log LogMemBackend)
-TestFC_RTOS_DEPS+= $(addprefix PortLayer/, Sensors Communication HMI Board MB85RS64V_spi_fram MB85RC_i2c_fram)
+TestFC_RTOS_DEPS+= $(addprefix PortLayer/, Sensors Communication HMI Board CY15B104Q_SX_spi_fram MB85RC_i2c_fram)
 TestFC_RTOS_DEPS+= $(addprefix ThirdParty/, asf freertos)
 
 TestFC_RTOS_1_DEPS:= Top/TestFC_RTOS_1 HAL/QuadFC
 TestFC_RTOS_1_DEPS+= $(addprefix Test/,TestFW ArduinoDueBoard)
 TestFC_RTOS_1_DEPS+= $(addprefix Modules/, Utilities )
 TestFC_RTOS_1_DEPS+= $(addprefix Modules/, Log LogMemBackend)
-TestFC_RTOS_1_DEPS+= $(addprefix PortLayer/, Board MB85RS64V_spi_fram MB85RC_i2c_fram)
+TestFC_RTOS_1_DEPS+= $(addprefix PortLayer/, Board CY15B104Q_SX_spi_fram MB85RC_i2c_fram)
 TestFC_RTOS_1_DEPS+= $(addprefix ThirdParty/, asf freertos asf_freertos)
