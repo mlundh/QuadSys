@@ -34,28 +34,41 @@
 
 #include "SerialPort.h"
 #include "ThreadSafeFifo.hpp"
-#include "AppLog.h"
-#include "QGS_IoInterface.h"
+
+#include "QGS_Module.h"
+#include "Msg_GetUiCommands.h"
+#include "Msg_FireUiCommand.h"
+#include "Msg_IoWrapper.h"
 
 
 using namespace boost::asio;
 namespace QuadGS {
 
-class QGS_UiCommand;
-class QGS_IoHeader;
-class QGS_Msg;
 /**
  * @class Serial_Manager
  *
  * Class handling the serial port. Implements the IoBase, and can thus
  * be connected to a Core object.
  */
-class Serial_Manager:
-          public QGS_IoInterface
+class Serial_Manager
+		: public QGS_ThreadedModule
+		, public QGS_MessageHandler<Msg_GetUiCommands>
+		, public QGS_MessageHandler<Msg_FireUiCommand>
+		, public QGS_MessageHandler<Msg_IoWrapper>
+
 {
+	typedef std::function<std::string(std::string) > UiFcn;
+	class UiCommand
+	{
+	public:
+		UiCommand(std::string command,  std::string doc, UiFcn function);
+		std::string command;
+		std::string doc;
+		UiFcn function;
+	};
 public:
 
-    Serial_Manager();
+    Serial_Manager(std::string name);
 
 
     virtual ~Serial_Manager();
@@ -66,29 +79,10 @@ public:
     virtual void initialize();
 
     /**
-     * Write function used by users of the Io module.
-     * @param ptr   The QSP that should be sent.
-     */
-    virtual void write( std::shared_ptr<QGS_IoHeader> header, std::shared_ptr<QGS_Msg> payload);
-
-    /**
      * Start the read operation. Can be used as soon as the serial
      * port has been opened.
      */
     virtual void startRead( void );
-
-    /**
-     * Set a read callback. The callback will get called when the
-     * I/O module has received a complete QSP.
-     * @param fcn   The callback function.
-     */
-    virtual void setMessageCallback( MessageHandlerFcn fcn );
-
-    /**
-     * Get the user commands available for the module.
-     * @return  A vector of commands.
-     */
-    virtual std::vector<std::shared_ptr< QGS_UiCommand > > getCommands( );
 
     /**
      * Get the current status of the io link.
@@ -107,6 +101,10 @@ public:
     std::string setStopBitsCmd( std::string stop_bits );
     std::string startReadCmd(std::string);
 
+	virtual void process(Msg_GetUiCommands* message);
+	virtual void process(Msg_FireUiCommand* message);
+	virtual void process(Msg_IoWrapper* message);
+
 
 private:
 
@@ -123,11 +121,10 @@ private:
     void timeoutHandler();
 
     /**
-     * Handler function for a complete message. Will pass the message to any
-     * registered message handler. Also handles logging of messages.
-     * @param ptr   The received message.
+     * The serial port will call this  TODO!!!
+     * @param msg   The received message.
      */
-    void messageHandler(std::shared_ptr<QGS_IoHeader> header, std::shared_ptr<QGS_Msg> payload);
+    void messageHandler(QGS_ModuleMsgBase::ptr msg);
 
     /**
      * Internal write message. This is the only function allowed to write to the
@@ -136,15 +133,15 @@ private:
     void doWrite();
 
 
+	std::vector<UiCommand> mCommands;
     QuadGS::SerialPort::ptr mPort;
     boost::asio::io_service mIo_service;
     std::unique_ptr<boost::asio::io_service::work> mWork;
     std::thread *mThread_io;
-    ThreadSafeFifo<std::pair< std::shared_ptr<QGS_IoHeader>, std::shared_ptr<QGS_Msg> > >mOutgoingFifo;
-    QGS_IoInterface::MessageHandlerFcn mMessageHandler;
+    ThreadSafeFifo<QGS_ModuleMsgBase::ptr>mOutgoingFifo;
     int mRetries;
     bool mOngoing;
-    AppLog mLog;
+    uint8_t mMsgNr = 0;
 
 
 };

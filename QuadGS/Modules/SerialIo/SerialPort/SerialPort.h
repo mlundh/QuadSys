@@ -32,6 +32,7 @@
 
 #include "AppLog.h"
 #include "QGS_Msg.h"
+#include "QGS_ModuleMsg.h"
 #include "QGS_IoInterface.h"
 
 typedef boost::asio::serial_port b_a_sp;
@@ -80,6 +81,9 @@ class SerialPort
         : public std::enable_shared_from_this< SerialPort >
         , public AppLog
 {
+	typedef std::function<void(QGS_ModuleMsgBase::ptr) > msgCallbackFcn;
+	typedef std::function<void() > timeoutHandlerFcn;
+
 public:
     /**
      * @brief pointer type to the serial port.
@@ -107,9 +111,9 @@ public:
     /**
      * @brief Start an async write operation on the configured
      * and opened serial port.
-     * @param ptr to a QSP instance to be transmitted.
+     * @param msg to a QSP instance to be transmitted.
      */
-    void write( std::shared_ptr<QGS_IoHeader> header, std::shared_ptr<QGS_Msg> payload);
+    void write( QGS_ModuleMsgBase::ptr msg);
 
     /**
      * Start the read timer. If timeout occurs then the read will be considered failed.
@@ -138,7 +142,6 @@ public:
      * @param parity
      * @param stop_bits
      */
-    void setName( std::string port_name );
 
     void setBaudRate( unsigned int baud_rate );
 
@@ -158,13 +161,13 @@ public:
      * Set the function to be called when a message is ready.
      * @param fcn
      */
-    void setReadCallback( QGS_IoInterface::MessageHandlerFcn fcn  );
+    void setReadCallback( msgCallbackFcn fcn  );
 
     /**
      * Set the function to be called when a read has timed out.
      * @param fcn
      */
-    void setReadTimeoutCallback(  QGS_IoInterface::TimeoutHandlerFcn fcn  );
+    void setReadTimeoutCallback(  timeoutHandlerFcn fcn  );
 
 private:
     /**
@@ -223,8 +226,8 @@ private:
     std::shared_ptr<std::vector<unsigned char> > mWriteBuff;
     std::shared_ptr<std::vector<unsigned char> > mReadBuff;
     ParserBase::ptr mParser;
-    QGS_IoInterface::MessageHandlerFcn mMessageHandler;
-    QGS_IoInterface::TimeoutHandlerFcn mReadTimeoutHandler;
+    msgCallbackFcn mMessageHandler;
+    timeoutHandlerFcn mReadTimeoutHandler;
 };
 
 } /* namespace QuadGS */

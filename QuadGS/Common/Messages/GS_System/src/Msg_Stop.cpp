@@ -1,6 +1,13 @@
 #include "Msg_Stop.h"
 namespace QuadGS {
 
+
+Msg_Stop::Msg_Stop(QGS_ModuleMsgBase& msg)
+:QGS_ModuleMsg<Msg_Stop>(msg)
+{
+
+}
+
 Msg_Stop::Msg_Stop(std::string destination)
 :QGS_ModuleMsg<Msg_Stop>(messageTypes_t::Msg_Stop_e, destination)
 {

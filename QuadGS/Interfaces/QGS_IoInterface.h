@@ -29,58 +29,6 @@
 #include <vector>
 namespace QuadGS {
 
-class QGS_CoreInterface;
-class QGS_UiCommand;
-class QGS_IoHeader;
-class QGS_Msg;
-
-class QGS_IoInterface
-{
-public:
-	/**
-	 * @brief Callback typedefs.
-	 */
-	typedef std::function<void( std::shared_ptr<QGS_IoHeader>, std::shared_ptr<QGS_Msg> )> MessageHandlerFcn;
-	typedef std::function<void( void )> TimeoutHandlerFcn;
-
-	QGS_IoInterface(){}
-	virtual ~QGS_IoInterface() {};
-
-	/**
-	 * Initialize the module.
-	 */
-    virtual void initialize() = 0;
-
-	/**
-	 * Write a message consisting of a header and payload to the io module.
-	 * @param header	Header data
-	 * @param data		Payload data.
-	 */
-	virtual void write( std::shared_ptr<QGS_IoHeader> header, std::shared_ptr<QGS_Msg> payload) = 0;
-
-	/**
-	 * Start a read operation. The read operation will continue until the program
-	 * is closed, or an error occurs.
-	 */
-	virtual void startRead( void ) = 0;
-
-	/**
-	 * Set the function to be called when a new message has arrived.
-	 * @param The fuction to be called.
-	 */
-	virtual void setMessageCallback( MessageHandlerFcn ) = 0;
-
-	/**
-	 * Get the available commands of the io module. These are for human interaction
-	 * usage only.
-	 * @return A vector with pointer to commands.
-	 */
-	virtual std::vector< std::shared_ptr<QGS_UiCommand> > getCommands( ) = 0;
-
-
-	virtual std::string getStatus( ) = 0;
-};
-
 /**
  * @class ParserBase
  * Abstract base to all parsers that the i/o module should use.

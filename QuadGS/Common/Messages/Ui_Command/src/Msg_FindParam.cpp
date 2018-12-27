@@ -1,6 +1,13 @@
 #include "Msg_FindParam.h"
 namespace QuadGS {
 
+
+Msg_FindParam::Msg_FindParam(QGS_ModuleMsgBase& msg)
+:QGS_ModuleMsg<Msg_FindParam>(msg)
+{
+
+}
+
 Msg_FindParam::Msg_FindParam(std::string destination, std::string toFind, std::string found)
 :QGS_ModuleMsg<Msg_FindParam>(messageTypes_t::Msg_FindParam_e, destination), mTofind(toFind), mFound(found)
 {

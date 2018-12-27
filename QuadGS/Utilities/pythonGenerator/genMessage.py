@@ -153,11 +153,12 @@ args = parser.parse_args()
 interfaces = []
 interface = ''
 dir = sys.path[0] + '/'
+#Go through all interfaces and generate messages based on that. 
 with open(args.file, "r") as file:
 	files=''
 	types=''
 	for line in file:
-		if (line[0] == '*'):
+		if (line[0] == '*'): # Interface divider.
 			interfaceTest = line.split()[0][1:]
 			if (len(interfaceTest) > 1):
 				interface = interfaceTest
@@ -166,7 +167,7 @@ with open(args.file, "r") as file:
 				genCmake(files, interface, args.outputDir+'/'+interface)
 				files = ''
 			continue
-		if (line == '\n' or line == '' or line[0] == '#'):
+		if (line == '\n' or line == '' or line[0] == '#'): #Skipp newline, empty line and comments.
 			continue
 		print('Generating: ' + line)
 		genMessage(line, args.outputDir+'/'+interface)
@@ -174,8 +175,10 @@ with open(args.file, "r") as file:
 		files += '"' + (line.split()[0]) + '.cpp"\n				'
 genTypes(types, 'messageTypes', args.outputDir + '/../MsgBase')
 
+# Generate the top level Message cmakelist.
 messageCmake = ''
 for member in interfaces:
 	messageCmake += 'add_subdirectory(' + member + ')\n' 
+messageCmake += "add_subdirectory(FcParser)\n" # Parser is a special case.
 with open(args.outputDir+'/CMakeLists.txt', 'w') as f:
 	f.write(messageCmake)

@@ -1,6 +1,13 @@
 #include "Msg_Log.h"
 namespace QuadGS {
 
+
+Msg_Log::Msg_Log(QGS_ModuleMsgBase& msg)
+:QGS_ModuleMsg<Msg_Log>(msg)
+{
+
+}
+
 Msg_Log::Msg_Log(std::string destination, uint8_t control, std::string payload)
 :QGS_ModuleMsg<Msg_Log>(messageTypes_t::Msg_Log_e, destination), mControl(control), mPayload(payload)
 {

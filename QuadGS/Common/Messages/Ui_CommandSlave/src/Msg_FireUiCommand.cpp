@@ -1,6 +1,13 @@
 #include "Msg_FireUiCommand.h"
 namespace QuadGS {
 
+
+Msg_FireUiCommand::Msg_FireUiCommand(QGS_ModuleMsgBase& msg)
+:QGS_ModuleMsg<Msg_FireUiCommand>(msg)
+{
+
+}
+
 Msg_FireUiCommand::Msg_FireUiCommand(std::string destination, std::string command, std::string args)
 :QGS_ModuleMsg<Msg_FireUiCommand>(messageTypes_t::Msg_FireUiCommand_e, destination), mCommand(command), mArgs(args)
 {

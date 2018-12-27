@@ -8,6 +8,8 @@ class {className}: public QGS_ModuleMsg<{className}>
 {{
 public:
 
+	{className}(QGS_ModuleMsgBase& msg);
+
 	{className}(std::string destination{ctorArgs});
 
 	{className}(const {className}& msg);

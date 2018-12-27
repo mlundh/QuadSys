@@ -1,6 +1,13 @@
 #include "Msg_UiCommandResult.h"
 namespace QuadGS {
 
+
+Msg_UiCommandResult::Msg_UiCommandResult(QGS_ModuleMsgBase& msg)
+:QGS_ModuleMsg<Msg_UiCommandResult>(msg)
+{
+
+}
+
 Msg_UiCommandResult::Msg_UiCommandResult(std::string destination, std::string result)
 :QGS_ModuleMsg<Msg_UiCommandResult>(messageTypes_t::Msg_UiCommandResult_e, destination), mResult(result)
 {

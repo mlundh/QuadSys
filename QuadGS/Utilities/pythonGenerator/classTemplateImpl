@@ -1,6 +1,13 @@
 #include "{className}.h"
 namespace QuadGS {{
 
+
+{className}::{className}(QGS_ModuleMsgBase& msg)
+:QGS_ModuleMsg<{className}>(msg)
+{{
+
+}}
+
 {className}::{className}(std::string destination{ctorArgs})
 :QGS_ModuleMsg<{className}>(messageTypes_t::{className}_e, destination){ctorInit}
 {{

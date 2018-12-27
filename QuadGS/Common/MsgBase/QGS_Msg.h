@@ -135,9 +135,9 @@ protected:
 public:
 
 	/**
-	 * Shared pointer type for this type.
+	 * unique pointer type for this type.
 	 */
-	typedef std::shared_ptr<QGS_Msg> Ptr;
+	typedef std::unique_ptr<QGS_Msg> Ptr;
 
 	/**
 	 * Dispatch the processing. The processing will be handled by the appropriate message handler. The

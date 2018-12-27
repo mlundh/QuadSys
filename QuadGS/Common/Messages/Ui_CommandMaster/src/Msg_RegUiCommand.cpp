@@ -1,6 +1,13 @@
 #include "Msg_RegUiCommand.h"
 namespace QuadGS {
 
+
+Msg_RegUiCommand::Msg_RegUiCommand(QGS_ModuleMsgBase& msg)
+:QGS_ModuleMsg<Msg_RegUiCommand>(msg)
+{
+
+}
+
 Msg_RegUiCommand::Msg_RegUiCommand(std::string destination, std::string command, std::string doc)
 :QGS_ModuleMsg<Msg_RegUiCommand>(messageTypes_t::Msg_RegUiCommand_e, destination), mCommand(command), mDoc(doc)
 {

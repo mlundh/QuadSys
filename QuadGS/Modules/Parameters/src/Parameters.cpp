@@ -51,9 +51,9 @@ Parameters::Parameters(std::string name):QGS_MessageHandlerBase(name)
     mCurrentBranch = QGS_Tree::ptr();
     mTmpBranch = QGS_Tree::ptr();
     mSavedBranch = QGS_Tree::ptr();
-    mCommands.push_back(UiCommand("cd","Change working branch",std::bind(&Parameters::ChangeBranchCmd, this, std::placeholders::_1)));
-    mCommands.push_back(UiCommand("pwd","Print current branch",std::bind(&Parameters::PrintCurrentPath, this, std::placeholders::_1)));
-    mCommands.push_back(UiCommand("ls","List children on branch",std::bind(&Parameters::list, this, std::placeholders::_1)));
+    mCommands.push_back(UiCommand("ParamCd","Change working branch",std::bind(&Parameters::ChangeBranchCmd, this, std::placeholders::_1)));
+    mCommands.push_back(UiCommand("ParamPrintBranch","Print current branch",std::bind(&Parameters::PrintCurrentPath, this, std::placeholders::_1)));
+    mCommands.push_back(UiCommand("ParamList","List children on branch",std::bind(&Parameters::list, this, std::placeholders::_1)));
     mCommands.push_back(UiCommand("paramSet","Set value of the command tree. [parameter] [value]",std::bind(&Parameters::set, this, std::placeholders::_1)));
     mCommands.push_back(UiCommand("paramGet","Get value of the command tree. [parameter]",std::bind(&Parameters::get, this, std::placeholders::_1)));
     mCommands.push_back(UiCommand("paramAdd","Add the given value to the specified node. [parameter] [value]",std::bind(&Parameters::add, this, std::placeholders::_1)));

@@ -28,8 +28,17 @@
 
 namespace QuadGS {
 
+QGS_ModuleMsgBase::QGS_ModuleMsgBase()
+:mType(0),
+ mSource(""),
+ mDestination(""),
+ mMsgNr(0)
+{
+
+}
+
 QGS_ModuleMsgBase::QGS_ModuleMsgBase(messageTypes type, std::string desination)
-:mType(type), mSource(), mDestination(desination)
+:mType(type), mSource(), mDestination(desination), mMsgNr(0)
 {
 
 }
@@ -38,6 +47,7 @@ QGS_ModuleMsgBase::QGS_ModuleMsgBase(const QGS_ModuleMsgBase& msg)
 :mType(static_cast<uint8_t>(msg.getType()))
 , mSource(msg.getSource())
 , mDestination(msg.getDestination())
+, mMsgNr(0)
 {
 
 }
@@ -75,6 +85,22 @@ messageTypes_t QGS_ModuleMsgBase::getType() const
 	return static_cast<messageTypes_t>(mType);
 }
 
+void QGS_ModuleMsgBase::setMsgNr(uint8_t nr)
+{
+	mMsgNr = nr;
+}
+
+uint8_t QGS_ModuleMsgBase::getMsgNr() const
+{
+	return mMsgNr;
+}
+
+void QGS_ModuleMsgBase::setSkipStreamHeader()
+{
+	mSkipStreamHeader = true;
+}
+
+
 std::string QGS_ModuleMsgBase::toString() const
 {
 	std::stringstream ss;
@@ -87,12 +113,15 @@ std::string QGS_ModuleMsgBase::toString() const
 
 BinaryIStream& QGS_ModuleMsgBase::stream(BinaryIStream& is)
 {
-	mDestination.clear();
-	mSource.clear();
-	is >> SetBits(32)  >> mType;
-	is >> mDestination;
-	is >> mSource;
-
+	if(!mSkipStreamHeader)
+	{
+		mDestination.clear();
+		mSource.clear();
+		is >> SetBits(32)  >> mType;
+		is >> mDestination;
+		is >> mSource;
+		mSkipStreamHeader = false;
+	}
 	return is;
 }
 

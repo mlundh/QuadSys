@@ -1,6 +1,13 @@
 #include "Msg_LogIo.h"
 namespace QuadGS {
 
+
+Msg_LogIo::Msg_LogIo(QGS_ModuleMsgBase& msg)
+:QGS_ModuleMsg<Msg_LogIo>(msg)
+{
+
+}
+
 Msg_LogIo::Msg_LogIo(std::string destination, std::unique_ptr<QGS_LogMsg> paramMsg)
 :QGS_ModuleMsg<Msg_LogIo>(messageTypes_t::Msg_LogIo_e, destination), mParammsg(std::move(paramMsg))
 {

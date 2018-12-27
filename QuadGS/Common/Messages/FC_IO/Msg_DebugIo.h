@@ -9,6 +9,8 @@ class Msg_DebugIo: public QGS_ModuleMsg<Msg_DebugIo>
 {
 public:
 
+	Msg_DebugIo(QGS_ModuleMsgBase& msg);
+
 	Msg_DebugIo(std::string destination, std::unique_ptr<QGS_DebugMsg> dbgMsg);
 
 	Msg_DebugIo(const Msg_DebugIo& msg);

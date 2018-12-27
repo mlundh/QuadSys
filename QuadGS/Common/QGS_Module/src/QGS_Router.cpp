@@ -27,6 +27,7 @@
 #include "QGS_Msg.h"
 #include "QGS_Module.h"
 #include "Msg_Stop.h"
+#include "Msg_RegisterName.h"
 
 namespace QuadGS
 {
@@ -50,7 +51,7 @@ QGS_Router::~QGS_Router()
 void QGS_Router::bind(QGS_Module* module)
 {
 	module->setSendFunc(std::bind(&QGS_Router::incomingPort, this, std::placeholders::_1));
-	std::string name = module->getName();
+	std::string name = module->getName(); // TODO add support for multiple addresses/names per module (normally only one, but usage for IO)
 	checkUniqueName(name);
 	mWriteFunctions[name] = module->getReceivingFcn();
 }
@@ -153,9 +154,33 @@ void QGS_Router::checkUniqueName(std::string &name)
 
 void QGS_Router::route(QGS_ModuleMsgBase::ptr msg)
 {
-	if(msg->getDestination() == mName && msg->getType() == messageTypes_t::Msg_Stop_e)
+
+	if(msg->getDestination() == mName)
 	{
-		mStop = true;
+		switch (msg->getType())
+		{
+			case messageTypes_t::Msg_Stop_e:
+				mStop = true;
+				break;
+			case messageTypes_t::Msg_RegisterName_e:
+			{
+
+				Msg_RegisterName* nameMsg = dynamic_cast<Msg_RegisterName*>(msg.get());
+				if(!nameMsg)
+				{
+					throw std::runtime_error("No conversion possible, ERROR! ");
+				}
+				std::string name = nameMsg->getName();
+				checkUniqueName(name);
+
+				// Now get the receiving function of the registering module, it exists in the writeFunction map.
+				WriteFcn fcn = mWriteFunctions[msg->getSource()];
+				mWriteFunctions[name] = fcn;
+			}
+				break;
+			default:
+				break;
+		}
 	}
 	else
 	{

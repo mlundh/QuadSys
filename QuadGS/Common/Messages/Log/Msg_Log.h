@@ -8,6 +8,8 @@ class Msg_Log: public QGS_ModuleMsg<Msg_Log>
 {
 public:
 
+	Msg_Log(QGS_ModuleMsgBase& msg);
+
 	Msg_Log(std::string destination, uint8_t control, std::string payload);
 
 	Msg_Log(const Msg_Log& msg);

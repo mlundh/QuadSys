@@ -8,6 +8,8 @@ class Msg_Param: public QGS_ModuleMsg<Msg_Param>
 {
 public:
 
+	Msg_Param(QGS_ModuleMsgBase& msg);
+
 	Msg_Param(std::string destination, uint8_t control, uint8_t sequenceNr, uint8_t lastInSequence, std::string payload);
 
 	Msg_Param(const Msg_Param& msg);
@@ -42,7 +44,7 @@ public:
 private:
 	uint8_t mControl;
 	uint8_t mSequencenr;
-	uint8_t mLastinsequence;
+	uint8_t mLastinsequence = 0;
 	std::string mPayload;
 	
 };

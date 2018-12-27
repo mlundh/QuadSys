@@ -1,6 +1,13 @@
 #include "Msg_GetUiCommands.h"
 namespace QuadGS {
 
+
+Msg_GetUiCommands::Msg_GetUiCommands(QGS_ModuleMsgBase& msg)
+:QGS_ModuleMsg<Msg_GetUiCommands>(msg)
+{
+
+}
+
 Msg_GetUiCommands::Msg_GetUiCommands(std::string destination)
 :QGS_ModuleMsg<Msg_GetUiCommands>(messageTypes_t::Msg_GetUiCommands_e, destination)
 {

@@ -1,5 +1,5 @@
 /*
- * FcParser.h
+ * Parser.h
  *
  *  Copyright (C) 2017 Martin Lundh
  *
@@ -24,15 +24,17 @@
 
 #ifndef IO_SERIAL_PARSER_SRC_FCPARSER_H_
 #define IO_SERIAL_PARSER_SRC_FCPARSER_H_
-#include "QGS_IoInterface.h"
+#include <memory>
+#include <vector>
+#include "QGS_ModuleMsg.h"
 
 namespace QuadGS {
 
-	class FcParser: public ParserBase
+	class Parser
 	{
 	public:
-		FcParser();
-		virtual ~FcParser();
+		Parser();
+		virtual ~Parser();
 
 		/**
 		 * Parse the data in the given vector.
@@ -42,25 +44,7 @@ namespace QuadGS {
 		 * @param data	buffer of raw data.
 		 * @return	according to above.
 		 */
-		virtual int parse( std::shared_ptr<std::vector<unsigned char> > data);
-
-		/**
-		 * Get the shared ptr of the header. Will return a NULL ptr if no data has
-		 * been parsed, or if there was no header data. After the function is called
-		 * the internal shared ptr is reset so that another call to getHeader will
-		 * return a null ptr.
-		 * @return pointer to a header.
-		 */
-		virtual std::shared_ptr<QGS_IoHeader> getHeader( void );
-
-		/**
-		 * Get the shared ptr of the payload. Will return a NULL ptr if no data has
-		 * been parsed, or if there was no payload data. After the function is called
-		 * the internal shared ptr is reset so that another call to getPayload will
-		 * return a null ptr.
-		 * @return
-		 */
-		virtual std::shared_ptr<QGS_Msg> getPayload( void );
+		QGS_ModuleMsgBase::ptr parse( std::vector<unsigned char> data);
 	};
 
 } /* namespace QuadGS */

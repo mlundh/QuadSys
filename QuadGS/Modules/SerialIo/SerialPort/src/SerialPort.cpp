@@ -107,10 +107,6 @@ void SerialPort::open( std::string port_name )
     return;
 }
 
-void SerialPort::setName( std::string port_name )
-{
-    mName = port_name;
-}
 
 void SerialPort::setBaudRate( unsigned int baud_rate )
 {
@@ -139,13 +135,13 @@ void SerialPort::setParser(  ParserBase::ptr parser  )
 }
 
 
-void SerialPort::setReadCallback( QGS_IoInterface::MessageHandlerFcn fcn  )
+void SerialPort::setReadCallback( msgCallbackFcn fcn  )
 {
 	mMessageHandler = fcn;
     return;
 }
 
-void SerialPort::setReadTimeoutCallback(  QGS_IoInterface::TimeoutHandlerFcn fcn  )
+void SerialPort::setReadTimeoutCallback(  timeoutHandlerFcn fcn  )
 {
     mReadTimeoutHandler = fcn;
     return;
@@ -170,7 +166,7 @@ void SerialPort::doClose( const boost::system::error_code& error )
     QuadLog(severity_level::info, "Serial Port closed");
     return;
 }
-void SerialPort::write(QGS_IoHeader::ptr header, QGS_Msg::Ptr payload)
+void SerialPort::write(QGS_ModuleMsgBase::ptr msg)
 {
     if( ! mSerialPort.is_open() )
     {
@@ -184,14 +180,9 @@ void SerialPort::write(QGS_IoHeader::ptr header, QGS_Msg::Ptr payload)
     }
     //Package into a slip packet and send the packeged data.
     BinaryOStream os;
-    if(header)
+    if(msg)
     {
-    	os << *header;
-    }
-    if(payload)
-    {
-        os << *payload;
-
+    	os << *msg;
     }
 
     {

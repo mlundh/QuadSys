@@ -5,6 +5,7 @@ namespace QuadGS {
 enum messageTypes
 {
 	Msg_Stop_e,
+	Msg_RegisterName_e,
 	Msg_DebugIo_e,
 	Msg_ParamIo_e,
 	Msg_LogIo_e,
@@ -15,6 +16,8 @@ enum messageTypes
 	Msg_FireUiCommand_e,
 	Msg_RegUiCommand_e,
 	Msg_UiCommandResult_e,
+	Msg_IoWrapper_e,
+	Msg_Transmission_e,
 	
 };
 typedef enum messageTypes messageTypes_t;

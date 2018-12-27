@@ -1,6 +1,13 @@
 #include "Msg_Param.h"
 namespace QuadGS {
 
+
+Msg_Param::Msg_Param(QGS_ModuleMsgBase& msg)
+:QGS_ModuleMsg<Msg_Param>(msg)
+{
+
+}
+
 Msg_Param::Msg_Param(std::string destination, uint8_t control, uint8_t sequenceNr, uint8_t lastInSequence, std::string payload)
 :QGS_ModuleMsg<Msg_Param>(messageTypes_t::Msg_Param_e, destination), mControl(control), mSequencenr(sequenceNr), mLastinsequence(lastInSequence), mPayload(payload)
 {

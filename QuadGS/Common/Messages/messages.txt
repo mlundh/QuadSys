@@ -2,6 +2,7 @@
 #TODO update script to create enums needed for the message types, this includes members and possible addresses.
 *GS_System 
 Msg_Stop
+Msg_RegisterName --member std::string name
 *
 
 *FC_IO FC_IO
@@ -27,6 +28,11 @@ Msg_FireUiCommand --member std::string command --member std::string args
 *
 
 *Ui_CommandMaster GUI
-Msg_RegUiCommand --member std::string command --member std::string doc 
+Msg_RegUiCommand --member std::string command --member std::string doc
 Msg_UiCommandResult --member std::string result
+*
+
+*OI Serial_IO
+Msg_IoWrapper --member std::unique_ptr<QGS_ModuleMsgBase> baseMsg
+Msg_Transmission --member uint8_t status
 *

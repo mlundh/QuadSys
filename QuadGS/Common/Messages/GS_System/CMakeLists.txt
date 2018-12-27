@@ -1,4 +1,5 @@
 list(APPEND src "Msg_Stop.cpp"
+				"Msg_RegisterName.cpp"
 				)
                 
 list(APPEND dep "BinaryStream"

@@ -1,6 +1,13 @@
 #include "Msg_DebugIo.h"
 namespace QuadGS {
 
+
+Msg_DebugIo::Msg_DebugIo(QGS_ModuleMsgBase& msg)
+:QGS_ModuleMsg<Msg_DebugIo>(msg)
+{
+
+}
+
 Msg_DebugIo::Msg_DebugIo(std::string destination, std::unique_ptr<QGS_DebugMsg> dbgMsg)
 :QGS_ModuleMsg<Msg_DebugIo>(messageTypes_t::Msg_DebugIo_e, destination), mDbgmsg(std::move(dbgMsg))
 {

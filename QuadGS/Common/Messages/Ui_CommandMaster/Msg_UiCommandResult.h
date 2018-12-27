@@ -8,6 +8,8 @@ class Msg_UiCommandResult: public QGS_ModuleMsg<Msg_UiCommandResult>
 {
 public:
 
+	Msg_UiCommandResult(QGS_ModuleMsgBase& msg);
+
 	Msg_UiCommandResult(std::string destination, std::string result);
 
 	Msg_UiCommandResult(const Msg_UiCommandResult& msg);

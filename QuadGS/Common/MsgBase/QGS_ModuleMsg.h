@@ -26,7 +26,6 @@
 #define QUADGS_UTILITIES_QGS_MODULE_SRC_QGS_MODULEMSG_H_
 #include "QGS_Msg.h"
 
-
 namespace QuadGS {
 class QGS_ModuleMsgBase;
 typedef std::function<void(std::unique_ptr<QGS_ModuleMsgBase>) > WriteFcn;
@@ -37,6 +36,8 @@ class QGS_ModuleMsgBase: public QGS_Msg
 public:
 
 	typedef std::unique_ptr<QGS_ModuleMsgBase> ptr;
+
+	QGS_ModuleMsgBase();
 
 	QGS_ModuleMsgBase(messageTypes_t type, std::string desination);
 
@@ -56,6 +57,12 @@ public:
 
 	messageTypes_t getType() const;
 
+	void setMsgNr(uint8_t nr);
+
+	uint8_t getMsgNr() const;
+
+	void setSkipStreamHeader();
+
 	std::string toString() const;
 
 	virtual BinaryOStream& stream(BinaryOStream& os) const;
@@ -68,6 +75,8 @@ private:
 	uint32_t mType;
 	std::string mSource;
 	std::string mDestination;
+	std::uint8_t mMsgNr;
+	bool mSkipStreamHeader = false;
 };
 
 

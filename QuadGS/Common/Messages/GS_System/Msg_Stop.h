@@ -8,6 +8,8 @@ class Msg_Stop: public QGS_ModuleMsg<Msg_Stop>
 {
 public:
 
+	Msg_Stop(QGS_ModuleMsgBase& msg);
+
 	Msg_Stop(std::string destination);
 
 	Msg_Stop(const Msg_Stop& msg);

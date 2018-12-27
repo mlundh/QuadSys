@@ -9,6 +9,8 @@ class Msg_LogIo: public QGS_ModuleMsg<Msg_LogIo>
 {
 public:
 
+	Msg_LogIo(QGS_ModuleMsgBase& msg);
+
 	Msg_LogIo(std::string destination, std::unique_ptr<QGS_LogMsg> paramMsg);
 
 	Msg_LogIo(const Msg_LogIo& msg);

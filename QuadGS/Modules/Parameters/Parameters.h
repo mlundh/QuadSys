@@ -42,9 +42,9 @@ namespace QuadGS {
 class Parameters
 		: public QGS_ReactiveModule
 		, public QGS_MessageHandler<Msg_Param>
+		, public QGS_MessageHandler<Msg_FindParam>
 		, public QGS_MessageHandler<Msg_GetUiCommands>
 		, public QGS_MessageHandler<Msg_FireUiCommand>
-		, public QGS_MessageHandler<Msg_FindParam>
 
 {
 public:
