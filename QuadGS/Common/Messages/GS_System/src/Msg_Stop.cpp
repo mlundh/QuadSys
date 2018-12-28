@@ -8,7 +8,7 @@ Msg_Stop::Msg_Stop(QGS_ModuleMsgBase& msg)
 
 }
 
-Msg_Stop::Msg_Stop(const std::string& destination)
+Msg_Stop::Msg_Stop(const msgAddr_t destination)
 :QGS_ModuleMsg<Msg_Stop>(messageTypes_t::Msg_Stop_e, destination)
 {
 

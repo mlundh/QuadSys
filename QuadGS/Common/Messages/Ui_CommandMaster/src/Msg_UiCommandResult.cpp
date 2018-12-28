@@ -8,7 +8,7 @@ Msg_UiCommandResult::Msg_UiCommandResult(QGS_ModuleMsgBase& msg)
 
 }
 
-Msg_UiCommandResult::Msg_UiCommandResult(const std::string& destination, std::string result)
+Msg_UiCommandResult::Msg_UiCommandResult(const msgAddr_t destination, std::string result)
 :QGS_ModuleMsg<Msg_UiCommandResult>(messageTypes_t::Msg_UiCommandResult_e, destination), mResult(result)
 {
 

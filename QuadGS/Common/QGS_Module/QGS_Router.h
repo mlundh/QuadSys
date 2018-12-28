@@ -39,7 +39,7 @@ class QGS_Module;
 class QGS_Router
 {
 public:
-	QGS_Router(std::string name);
+	QGS_Router(msgAddr_t name);
 	virtual ~QGS_Router();
 
 	void bind(QGS_Module* module);
@@ -54,19 +54,19 @@ private:
 
 	void sendMsg(QGS_ModuleMsgBase::ptr message);
 
-	void internalSend(QGS_ModuleMsgBase::ptr message, std::string port, bool broadcast);
+	void internalSend(QGS_ModuleMsgBase::ptr message, msgAddr_t port, bool broadcast);
 
 	void runRouter();
 
-	void checkUniqueName(std::string &name);
+	void checkUniqueName(msgAddr_t name);
 
 	void route(QGS_ModuleMsgBase::ptr fifoEntry);
 
 	ThreadSafeFifo<QGS_ModuleMsgBase::ptr> mFifo;
-	std::map<std::string, WriteFcn> mWriteFunctions;
+	std::map<msgAddr_t, WriteFcn> mWriteFunctions;
     std::thread mThread;
 	unsigned int mNrModules;
-    std::string mName;
+	msgAddr_t mName;
     bool mStop;
 	AppLog mLogger;
 

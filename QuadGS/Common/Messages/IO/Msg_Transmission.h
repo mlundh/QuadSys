@@ -10,7 +10,7 @@ public:
 
 	Msg_Transmission(QGS_ModuleMsgBase& msg);
 
-	Msg_Transmission(const std::string& destination, uint8_t status);
+	Msg_Transmission(const msgAddr_t destination, uint8_t status);
 
 	Msg_Transmission(const Msg_Transmission& msg);
 

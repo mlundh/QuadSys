@@ -21,7 +21,7 @@ class FakeLogModule: public FakeUiComModuleBase
 					, public QGS_MessageHandler<Msg_Log>
 {
 public:
-	FakeLogModule(std::string name):
+	FakeLogModule(msgAddr_t name):
 		QGS_MessageHandlerBase(name),FakeUiComModuleBase(name)
 	{
 

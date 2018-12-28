@@ -38,10 +38,10 @@ using namespace QuadGS;
 int main(int ac, char* av[])
 {
     QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::debug);
-    Parameters mParameters("GS_Param");
-    CLI mCli("GS_Cli");
-    LogHandler mLogHandler("GS_LogHandler");
-    QGS_Router mRouter("Router");
+    Parameters mParameters(msgAddr_t::GS_Param_e);
+    CLI mCli(msgAddr_t::GUI_e);
+    LogHandler mLogHandler(msgAddr_t::GS_Log_e);
+    QGS_Router mRouter(msgAddr_t::Router);
 
     mRouter.bind(&mParameters);
     mRouter.bind(&mCli);

@@ -45,7 +45,7 @@ void defaultMsgHandler(std::shared_ptr<QGS_IoHeader>, std::shared_ptr<QGS_Msg>)
 
 class ParamTest : public ::testing::Test {
 protected:
-	ParamTest():mParameters("GS_Param"), mFake("FC_Param"), router("Router") {
+	ParamTest():mParameters(msgAddr_t::GS_Param_e), mFake(msgAddr_t::FC_Param_e), router(msgAddr_t::Router) {
 
 		QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error);
 
@@ -70,7 +70,7 @@ protected:
 TEST(Parameters, TestRegisterAndDump)
 {
 	QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error);
-	Parameters mParameters("FC_Param");
+	Parameters mParameters(msgAddr_t::FC_Param_e);
 	std::string payload_str = "/root/tmp<5>[8]/test[3]";
 
 
@@ -89,7 +89,7 @@ TEST(Parameters, TestRegisterSecondMsg)
 
 	// Create and register the first message.
 	std::string payload_str = "/root/tmp<5>[8]/test[3]";
-	Parameters mParameters("FC_Param");
+	Parameters mParameters(msgAddr_t::FC_Param_e);
 
 	mParameters.SetAndRegister(payload_str);
 
@@ -111,7 +111,7 @@ TEST(Parameters, TestSetAndRegister)
 {
 	QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error);
 	std::string payload_str = "/root/tmp<5>[8]/test[3]";
-	Parameters mParameters("FC_Param");
+	Parameters mParameters(msgAddr_t::FC_Param_e);
 
 	mParameters.SetAndRegister(payload_str);
 	std::string dump = mParameters.dump("");

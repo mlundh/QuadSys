@@ -36,6 +36,7 @@
 #include "Msg_FireUiCommand.h"
 #include "QGS_Tree.h"
 #include "Msg_FindParam.h"
+#include "msgAddr.h"
 
 namespace QuadGS {
 
@@ -58,7 +59,7 @@ public:
 		UiFcn function;
 	};
 
-	Parameters(std::string name);
+	Parameters(msgAddr_t name);
 
 	virtual ~Parameters();
 

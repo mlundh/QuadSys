@@ -35,7 +35,7 @@ class FakeUiComModuleBase
 
 {
 public:
-	FakeUiComModuleBase(std::string name):
+	FakeUiComModuleBase(msgAddr_t name):
 		QGS_MessageHandlerBase(name), mCommands(), lastResult(), nrResults(0), newMsg(false), mutex(), cv()
 	{
 
@@ -46,13 +46,13 @@ public:
 
 	}
 
-	void sendGetCommands(std::string address)
+	void sendGetCommands(msgAddr_t address)
 	{
 		Msg_GetUiCommands::ptr ptr = std::make_unique<Msg_GetUiCommands>(address);
 		sendMsg(std::move(ptr));
 	}
 
-	void sendFireCommand(std::string address, std::string command, std::string args)
+	void sendFireCommand(msgAddr_t address, std::string command, std::string args)
 	{
 		Msg_FireUiCommand::ptr ptr = std::make_unique<Msg_FireUiCommand>(address, command, args);
 		sendMsg(std::move(ptr));

@@ -32,7 +32,7 @@ class FakeModuleParam
 
 {
 public:
-	FakeModuleParam(std::string name):
+	FakeModuleParam(msgAddr_t name):
 		QGS_MessageHandlerBase(name), lastPayload(), mCommands(), lastResult(), nrResults(0), newMsg(false), mutex(), cv()
 	{
 
@@ -45,19 +45,19 @@ public:
 
 	void sendGetCommands()
 	{
-		Msg_GetUiCommands::ptr ptr = std::make_unique<Msg_GetUiCommands>("GS_Param");
+		Msg_GetUiCommands::ptr ptr = std::make_unique<Msg_GetUiCommands>(msgAddr_t::GS_Param_e);
 		sendMsg(std::move(ptr));
 	}
 
 	void sendFireCommand(std::string command, std::string args)
 	{
-		Msg_FireUiCommand::ptr ptr = std::make_unique<Msg_FireUiCommand>("GS_Param", command, args);
+		Msg_FireUiCommand::ptr ptr = std::make_unique<Msg_FireUiCommand>(msgAddr_t::GS_Param_e, command, args);
 		sendMsg(std::move(ptr));
 	}
 
 	void sendDummyParamMsg(uint8_t control, std::string payload)
 	{
-		QGS_ModuleMsgBase::ptr msg = std::make_unique<Msg_Param>("GS_Param", control, 0, 1, payload);
+		QGS_ModuleMsgBase::ptr msg = std::make_unique<Msg_Param>(msgAddr_t::GS_Param_e, control, 0, 1, payload);
 		sendMsg(std::move(msg));
 	}
 

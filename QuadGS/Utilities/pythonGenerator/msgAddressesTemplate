@@ -1,15 +1,23 @@
 #ifndef QUADGS_MESSAGE_ADDRESSES_H_
 #define QUADGS_MESSAGE_ADDRESSES_H_
+#include <vector>
+#include <string>
 namespace QuadGS {{
 
 enum {enumName}
 {{
+	Unassigned,
+	Router,
+	Broadcast,
 {addresses}
 }};
 typedef enum {enumName} {enumName}_t;
 
 static const std::vector<std::string> {enumName}Str =
 {{
+	"Unassigned",
+	"Router",
+	"Broadcast",
 {strings}
 }};
 }}

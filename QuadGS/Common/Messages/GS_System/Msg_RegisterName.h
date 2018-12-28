@@ -10,7 +10,7 @@ public:
 
 	Msg_RegisterName(QGS_ModuleMsgBase& msg);
 
-	Msg_RegisterName(const std::string& destination, std::string name);
+	Msg_RegisterName(const msgAddr_t destination, uint32_t name);
 
 	Msg_RegisterName(const Msg_RegisterName& msg);
 
@@ -27,13 +27,13 @@ public:
 	
 	virtual BinaryIStream& stream(BinaryIStream& is);
 	
-		std::string getName() const;
+		uint32_t getName() const;
 
-	void setName(std::string name);
+	void setName(uint32_t name);
 
 	
 private:
-	std::string mName;
+	uint32_t mName;
 	
 };
 }

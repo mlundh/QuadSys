@@ -21,7 +21,7 @@ using namespace QuadGS;
 
 class LogHandlerTest : public ::testing::Test {
 protected:
-	LogHandlerTest():mLog("GS_Log"), mFake("FC_Log"), router("Router") {
+	LogHandlerTest():mLog(msgAddr_t::GS_Log_e), mFake(msgAddr_t::FC_Log_e), router(msgAddr_t::Router) {
 
 		QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error);
 
@@ -39,7 +39,7 @@ protected:
 
 TEST_F(LogHandlerTest, TestGetCommands)
 {
-	mFake.sendGetCommands("GS_Log");
+	mFake.sendGetCommands(msgAddr_t::GS_Log_e);
 	mFake.waitForMsg();
 	int timeout = 100;
 	while((mFake.mCommands.size() < mLog.mCommands.size()) && (timeout > 0))
@@ -61,13 +61,13 @@ TEST_F(LogHandlerTest, TestGetCommands)
 
 TEST_F(LogHandlerTest, TestPrintNames)
 {
-	Msg_Log msg("GS_Log", QGS_IoHeader::LogControl::Name, "/test<2>[5]/test2<1>[6]");
+	Msg_Log msg(msgAddr_t::GS_Log_e, QGS_IoHeader::LogControl::Name, "/test<2>[5]/test2<1>[6]");
 	std::string verify = "test        5           \ntest2       6           \n";
 	// Do not do this in real code!This is only for testing. Real code should
 	// rely on messages from FC to populate the mapping.
 	mLog.process(&msg);
 
-	mFake.sendFireCommand("GS_Log", "logPrintNameMapping","");
+	mFake.sendFireCommand(msgAddr_t::GS_Log_e, "logPrintNameMapping","");
 	mFake.waitForMsg();
 	if(mFake.getNrResult() != 1)
 	{
@@ -80,12 +80,12 @@ TEST_F(LogHandlerTest, TestPrintNames)
 
 TEST_F(LogHandlerTest, TestGetEntry)
 {
-	Msg_Log msg("GS_Log", QGS_IoHeader::LogControl::Name, "/test<2>[5]/test2<1>[6]");
+	Msg_Log msg(msgAddr_t::GS_Log_e, QGS_IoHeader::LogControl::Name, "/test<2>[5]/test2<1>[6]");
 	// Do not do this in real code!This is only for testing. Real code should
 	// rely on messages from FC to populate the mapping.
 	mLog.process(&msg);
 
-	Msg_Log msgEntry("GS_Log", QGS_IoHeader::LogControl::Entry, "[6][11111][7]/[5][11111][8]");
+	Msg_Log msgEntry(msgAddr_t::GS_Log_e, QGS_IoHeader::LogControl::Entry, "[6][11111][7]/[5][11111][8]");
 	mLog.process(&msgEntry);
 
     std::ifstream LogFile("LogFile.txt");

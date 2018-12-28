@@ -8,7 +8,7 @@ namespace QuadGS {{
 
 }}
 
-{className}::{className}(const std::string& destination{ctorArgs})
+{className}::{className}(const msgAddr_t destination{ctorArgs})
 :QGS_ModuleMsg<{className}>(messageTypes_t::{className}_e, destination){ctorInit}
 {{
 

@@ -24,7 +24,7 @@ LogHandler::UiCommand::UiCommand(std::string command,  std::string doc, UiFcn fu
 {
 
 }
-LogHandler::LogHandler(std::string name)
+LogHandler::LogHandler(msgAddr_t name)
 		:QGS_MessageHandlerBase(name)
 		,mNames()
 {
@@ -50,21 +50,21 @@ LogHandler::~LogHandler()
 
 std::string LogHandler::getLogNames(std::string )
 {
-	Msg_Log::ptr ptr = std::make_unique<Msg_Log>("FC_Log",QGS_IoHeader::LogControl::Name,"");
+	Msg_Log::ptr ptr = std::make_unique<Msg_Log>(msgAddr_t::FC_Log_e, QGS_IoHeader::LogControl::Name,"");
 	sendMsg(std::move(ptr));
 	return "";
 }
 
 std::string LogHandler::getLogEntries(std::string )
 {
-	Msg_Log::ptr ptr = std::make_unique<Msg_Log>("FC_Log",QGS_IoHeader::LogControl::Entry,"");
+	Msg_Log::ptr ptr = std::make_unique<Msg_Log>(msgAddr_t::FC_Log_e, QGS_IoHeader::LogControl::Entry,"");
 	sendMsg(std::move(ptr));
 	return "";
 }
 
 std::string LogHandler::stopAllLogs(std::string )
 {
-	Msg_Log::ptr ptr = std::make_unique<Msg_Log>("FC_Log",QGS_IoHeader::LogControl::StopAll,"");
+	Msg_Log::ptr ptr = std::make_unique<Msg_Log>(msgAddr_t::FC_Log_e, QGS_IoHeader::LogControl::StopAll,"");
 	sendMsg(std::move(ptr));
 	return "";
 }

@@ -10,7 +10,7 @@ public:
 
 	Msg_GetUiCommands(QGS_ModuleMsgBase& msg);
 
-	Msg_GetUiCommands(const std::string& destination);
+	Msg_GetUiCommands(const msgAddr_t destination);
 
 	Msg_GetUiCommands(const Msg_GetUiCommands& msg);
 

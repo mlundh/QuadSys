@@ -2,7 +2,7 @@
 #TODO update script to create enums needed for the message types, this includes members and possible addresses.
 *GS_System 
 Msg_Stop
-Msg_RegisterName --member std::string name
+Msg_RegisterName --member uint32_t name
 *
 
 *FC_IO FC_IO

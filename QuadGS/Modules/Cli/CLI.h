@@ -52,14 +52,14 @@ private:
 	class UiCommand
 	{
 	public:
-		UiCommand(std::string command,  std::string doc, std::string address);
+		UiCommand(std::string command,  std::string doc, msgAddr_t address);
 		std::string command;
 		std::string doc;
-		std::string address;
+		msgAddr_t address;
 	};
 
 public:
-	CLI(std::string name);
+	CLI(msgAddr_t name);
 
 	virtual ~CLI();
 

@@ -40,251 +40,251 @@ using namespace std::placeholders;
 namespace QuadGS {
 
 Parameters::UiCommand::UiCommand(std::string command,  std::string doc, UiFcn function):
-		command(command), doc(doc), function(function)
+				command(command), doc(doc), function(function)
 {
 
 }
-Parameters::Parameters(std::string name):QGS_MessageHandlerBase(name)
+Parameters::Parameters(msgAddr_t name):QGS_MessageHandlerBase(name)
 
 {
-    mTree = QGS_Tree::ptr();
-    mCurrentBranch = QGS_Tree::ptr();
-    mTmpBranch = QGS_Tree::ptr();
-    mSavedBranch = QGS_Tree::ptr();
-    mCommands.push_back(UiCommand("ParamCd","Change working branch",std::bind(&Parameters::ChangeBranchCmd, this, std::placeholders::_1)));
-    mCommands.push_back(UiCommand("ParamPrintBranch","Print current branch",std::bind(&Parameters::PrintCurrentPath, this, std::placeholders::_1)));
-    mCommands.push_back(UiCommand("ParamList","List children on branch",std::bind(&Parameters::list, this, std::placeholders::_1)));
-    mCommands.push_back(UiCommand("paramSet","Set value of the command tree. [parameter] [value]",std::bind(&Parameters::set, this, std::placeholders::_1)));
-    mCommands.push_back(UiCommand("paramGet","Get value of the command tree. [parameter]",std::bind(&Parameters::get, this, std::placeholders::_1)));
-    mCommands.push_back(UiCommand("paramAdd","Add the given value to the specified node. [parameter] [value]",std::bind(&Parameters::add, this, std::placeholders::_1)));
-    mCommands.push_back(UiCommand("paramRegisterTree","SetAndRegister a new value in the tree.[parameter tree]",std::bind(&Parameters::SetAndRegister, this, std::placeholders::_1)));
-    mCommands.push_back(UiCommand("paramDumpTree","Dump the command tree.",std::bind(&Parameters::dump, this, std::placeholders::_1)));
-    mCommands.push_back(UiCommand("paramWrite","Write tree to port, relative to current node and path.[parameter]",std::bind(&Parameters::writeCmd, this, std::placeholders::_1)));
-    mCommands.push_back(UiCommand("paramRead","Request an update from FC.",std::bind(&Parameters::requestUpdateCmd, this, std::placeholders::_1)));
-    mCommands.push_back(UiCommand("paramSave","Tell fc to save current parameters.",std::bind(&Parameters::saveParamCmd, this, std::placeholders::_1)));
-    mCommands.push_back(UiCommand("paramLoad","Tell fc to load saved parameters.",std::bind(&Parameters::loadParamCmd, this, std::placeholders::_1)));
+	mTree = QGS_Tree::ptr();
+	mCurrentBranch = QGS_Tree::ptr();
+	mTmpBranch = QGS_Tree::ptr();
+	mSavedBranch = QGS_Tree::ptr();
+	mCommands.push_back(UiCommand("ParamCd","Change working branch",std::bind(&Parameters::ChangeBranchCmd, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("ParamPrintBranch","Print current branch",std::bind(&Parameters::PrintCurrentPath, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("ParamList","List children on branch",std::bind(&Parameters::list, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("paramSet","Set value of the command tree. [parameter] [value]",std::bind(&Parameters::set, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("paramGet","Get value of the command tree. [parameter]",std::bind(&Parameters::get, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("paramAdd","Add the given value to the specified node. [parameter] [value]",std::bind(&Parameters::add, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("paramRegisterTree","SetAndRegister a new value in the tree.[parameter tree]",std::bind(&Parameters::SetAndRegister, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("paramDumpTree","Dump the command tree.",std::bind(&Parameters::dump, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("paramWrite","Write tree to port, relative to current node and path.[parameter]",std::bind(&Parameters::writeCmd, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("paramRead","Request an update from FC.",std::bind(&Parameters::requestUpdateCmd, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("paramSave","Tell fc to save current parameters.",std::bind(&Parameters::saveParamCmd, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("paramLoad","Tell fc to load saved parameters.",std::bind(&Parameters::loadParamCmd, this, std::placeholders::_1)));
 }
 
 Parameters::~Parameters()
 {
-    // TODO Auto-generated destructor stub
+	// TODO Auto-generated destructor stub
 }
 
 bool Parameters::UpdateTmp(std::string& path)
 {
-    if(!mTree)
-    {
-        throw std::runtime_error("No tree registered");
-    }
-    size_t pos = path.find(QGS_Tree::mBranchDelimiter);
-    if (pos == 0) // Update from root.
-    {
+	if(!mTree)
+	{
+		throw std::runtime_error("No tree registered");
+	}
+	size_t pos = path.find(QGS_Tree::mBranchDelimiter);
+	if (pos == 0) // Update from root.
+	{
 
-        mTmpBranch = mTree;
+		mTmpBranch = mTree;
 
-        path.erase(0, pos + QGS_Tree::mBranchDelimiter.length());
+		path.erase(0, pos + QGS_Tree::mBranchDelimiter.length());
 
-        if(mTmpBranch->NeedUpdate(path))
-        {
-            return true;
-        }
-        //else remove module from string and continue.
-        QGS_Tree::RemoveModuleString(path);
-    }
-    else
-    {
-        mTmpBranch = mCurrentBranch;
-    }
-    while(!path.empty())
-    {
-        // Find will return shared_ptr to next element, or current if there is work to do in current node.
-        QGS_Tree::ptr tmp = mTmpBranch->Find(path);
+		if(mTmpBranch->NeedUpdate(path))
+		{
+			return true;
+		}
+		//else remove module from string and continue.
+		QGS_Tree::RemoveModuleString(path);
+	}
+	else
+	{
+		mTmpBranch = mCurrentBranch;
+	}
+	while(!path.empty())
+	{
+		// Find will return shared_ptr to next element, or current if there is work to do in current node.
+		QGS_Tree::ptr tmp = mTmpBranch->Find(path);
 
-        // Node not found, return.
-        if(!tmp)
-        {
-            return false;
-        }
-        else
-        {
-            // Change to branch.
-            mTmpBranch = tmp;
+		// Node not found, return.
+		if(!tmp)
+		{
+			return false;
+		}
+		else
+		{
+			// Change to branch.
+			mTmpBranch = tmp;
 
-            // If branch need update then return.
-            if(mTmpBranch->NeedUpdate(path))
-            {
-                return true;
-            }
-            //else remove module from string and continue.
-            QGS_Tree::RemoveModuleString(path);
-        }
-    }
-    //we found the whole path! Return true, we found a node.
-    return true;
+			// If branch need update then return.
+			if(mTmpBranch->NeedUpdate(path))
+			{
+				return true;
+			}
+			//else remove module from string and continue.
+			QGS_Tree::RemoveModuleString(path);
+		}
+	}
+	//we found the whole path! Return true, we found a node.
+	return true;
 }
 
 void Parameters::SaveBranch()
 {
-    mSavedBranch = mCurrentBranch;
+	mSavedBranch = mCurrentBranch;
 }
 
 void Parameters::RestoreBranch()
 {
-    mCurrentBranch = mSavedBranch;
+	mCurrentBranch = mSavedBranch;
 }
 
 bool Parameters::ChangeBranch(std::string& path)
 {
-    bool found = UpdateTmp(path);
-    mCurrentBranch = mTmpBranch;
-    return found;
+	bool found = UpdateTmp(path);
+	mCurrentBranch = mTmpBranch;
+	return found;
 }
 
 std::string Parameters::ChangeBranchCmd(std::string path)
 {
-    ChangeBranch(path);
-    if(!path.empty())
-    {
-        throw std::runtime_error("Path does not exist: " + path + ".");
-    }
-    return "";
+	ChangeBranch(path);
+	if(!path.empty())
+	{
+		throw std::runtime_error("Path does not exist: " + path + ".");
+	}
+	return "";
 }
 
 std::string Parameters::PrintCurrentPath(std::string)
 {
-    if(!mTree)
-    {
-        throw std::runtime_error("No tree registered");
-    }
-    std::string Path = mCurrentBranch->GetName();
-    QGS_Tree* tmp = mCurrentBranch->GetParent();
-    while(tmp)
-    {
-        std::string parentName = tmp->GetName();
-        Path = parentName + QGS_Tree::mBranchDelimiter + Path;
-        tmp = tmp->GetParent();
-    }
-    Path = "/" + Path;
-    return Path;
+	if(!mTree)
+	{
+		throw std::runtime_error("No tree registered");
+	}
+	std::string Path = mCurrentBranch->GetName();
+	QGS_Tree* tmp = mCurrentBranch->GetParent();
+	while(tmp)
+	{
+		std::string parentName = tmp->GetName();
+		Path = parentName + QGS_Tree::mBranchDelimiter + Path;
+		tmp = tmp->GetParent();
+	}
+	Path = "/" + Path;
+	return Path;
 }
 
 std::string Parameters::list(std::string path)
 {
-    UpdateTmp(path);
-    if(!path.empty())
-    {
-        throw std::runtime_error("Path does not exist: " + path + ".");
-    }
-    std::string resp = mTmpBranch->ListChildren();
-    return resp;
+	UpdateTmp(path);
+	if(!path.empty())
+	{
+		throw std::runtime_error("Path does not exist: " + path + ".");
+	}
+	std::string resp = mTmpBranch->ListChildren();
+	return resp;
 }
 
 
 std::string Parameters::get(std::string path)
 {
-    UpdateTmp(path);
-    if(!path.empty())
-    {
-        throw std::runtime_error("Get command can not contain set information.");
-    }
-    std::string value = mTmpBranch->GetValue();
-    return value;
+	UpdateTmp(path);
+	if(!path.empty())
+	{
+		throw std::runtime_error("Get command can not contain set information.");
+	}
+	std::string value = mTmpBranch->GetValue();
+	return value;
 }
 std::string Parameters::set(std::string path)
 {
-    std::exception_ptr eptr;
-    SaveBranch();
-    try
-    {
-        while(!path.empty())
-        {
-            ChangeBranch(path);
-            if(!path.empty())
-            {
-                mTmpBranch->SetValue(path);
-                QGS_Tree::RemoveModuleString(path);
-            }
-        }
-    }
-    catch(...)
-    {
-        eptr = std::current_exception();
-        RestoreBranch();
-        std::rethrow_exception(eptr);
-    }
-    RestoreBranch();
-    writeCmd("");
-    return "";
+	std::exception_ptr eptr;
+	SaveBranch();
+	try
+	{
+		while(!path.empty())
+		{
+			ChangeBranch(path);
+			if(!path.empty())
+			{
+				mTmpBranch->SetValue(path);
+				QGS_Tree::RemoveModuleString(path);
+			}
+		}
+	}
+	catch(...)
+	{
+		eptr = std::current_exception();
+		RestoreBranch();
+		std::rethrow_exception(eptr);
+	}
+	RestoreBranch();
+	writeCmd("");
+	return "";
 }
 
 std::string Parameters::add(std::string path)
 {
-    std::vector<std::string> args;
-    boost::split( args, path, boost::is_any_of(" ") );
+	std::vector<std::string> args;
+	boost::split( args, path, boost::is_any_of(" ") );
 
 
-    if(args.size() != 2)
-    {
-        throw std::runtime_error("inc takes two parameters!");
-    }
-    UpdateTmp(args[0]);
+	if(args.size() != 2)
+	{
+		throw std::runtime_error("inc takes two parameters!");
+	}
+	UpdateTmp(args[0]);
 
-    std::string value = mTmpBranch->ModifyValue(args[1]);
+	std::string value = mTmpBranch->ModifyValue(args[1]);
 
-    writeCmd(args[0]);
-    return value;
+	writeCmd(args[0]);
+	return value;
 }
 
 
 std::string Parameters::SetAndRegister(std::string path)
 {
-    if(!mTree)
-    {
-        size_t pos = path.find(QGS_Tree::mBranchDelimiter);
-        if (pos == 0)
-        {
-            path.erase(0, pos + QGS_Tree::mBranchDelimiter.length());
-            mTree = QGS_Tree::ptr(new QGS_Tree(path));
-            mCurrentBranch = mTree;
-            mTmpBranch = mTree;
-            mSavedBranch = mTree;
-            QGS_Tree::RemoveModuleString(path);
-        }
-        else
-        {
-            mLogger.QuadLog(QuadGS::error, "Packet not relative root: " + path );
-            return "";
-        }
-    }
-    std::exception_ptr eptr;
-    SaveBranch();
-    try
-    {
-        while(!path.empty())
-        {
-            bool found = ChangeBranch(path);
-            if(!path.empty())
-            {
-                if(!found)
-                {
-                    mTmpBranch->Register(path);
-                }
-                else
-                {
-                    mTmpBranch->SetValue(path);
-                    QGS_Tree::RemoveModuleString(path);
-                }
-            }
-        }
-    }
-    catch(...)
-    {
-        eptr = std::current_exception();
-        RestoreBranch();
-        std::rethrow_exception(eptr);
-    }
-    RestoreBranch();
-    return "";
+	if(!mTree)
+	{
+		size_t pos = path.find(QGS_Tree::mBranchDelimiter);
+		if (pos == 0)
+		{
+			path.erase(0, pos + QGS_Tree::mBranchDelimiter.length());
+			mTree = QGS_Tree::ptr(new QGS_Tree(path));
+			mCurrentBranch = mTree;
+			mTmpBranch = mTree;
+			mSavedBranch = mTree;
+			QGS_Tree::RemoveModuleString(path);
+		}
+		else
+		{
+			mLogger.QuadLog(QuadGS::error, "Packet not relative root: " + path );
+			return "";
+		}
+	}
+	std::exception_ptr eptr;
+	SaveBranch();
+	try
+	{
+		while(!path.empty())
+		{
+			bool found = ChangeBranch(path);
+			if(!path.empty())
+			{
+				if(!found)
+				{
+					mTmpBranch->Register(path);
+				}
+				else
+				{
+					mTmpBranch->SetValue(path);
+					QGS_Tree::RemoveModuleString(path);
+				}
+			}
+		}
+	}
+	catch(...)
+	{
+		eptr = std::current_exception();
+		RestoreBranch();
+		std::rethrow_exception(eptr);
+	}
+	RestoreBranch();
+	return "";
 }
 
 
@@ -309,94 +309,94 @@ std::string Parameters::writeCmd(std::string path_dump)
 		cont = !(mTmpBranch->DumpTree(Path, StartPosition, Depth, 256));
 		Path += "/";
 
-		Msg_Param::ptr ptr = std::make_unique<Msg_Param>("FC_Param",QGS_IoHeader::ParametersControl::SetTree, SequenceNumber++, 0, Path);
+		Msg_Param::ptr ptr = std::make_unique<Msg_Param>(msgAddr_t::FC_Param_e,QGS_IoHeader::ParametersControl::SetTree, SequenceNumber++, 0, Path);
 		sendMsg(std::move(ptr));
-	    return "";
+		return "";
 	}
 	return "";
 }
 
 std::string Parameters::requestUpdateCmd(std::string )
 {
-    RequestTree();
-    return "";
+	RequestTree();
+	return "";
 }
 
 std::string Parameters::saveParamCmd(std::string )
 {
-	Msg_Param::ptr ptr = std::make_unique<Msg_Param>("FC_Param",QGS_IoHeader::ParametersControl::Save,0,0,"");
+	Msg_Param::ptr ptr = std::make_unique<Msg_Param>(msgAddr_t::FC_Param_e,QGS_IoHeader::ParametersControl::Save,0,0,"");
 	sendMsg(std::move(ptr));
-    return "";
+	return "";
 }
 
 std::string Parameters::loadParamCmd(std::string )
 {
-	Msg_Param::ptr ptr = std::make_unique<Msg_Param>("FC_Param",QGS_IoHeader::ParametersControl::Load,0,0,"");
+	Msg_Param::ptr ptr = std::make_unique<Msg_Param>(msgAddr_t::FC_Param_e,QGS_IoHeader::ParametersControl::Load,0,0,"");
 	sendMsg(std::move(ptr));
-    return "";
+	return "";
 }
 
 std::string Parameters::dump(std::string path)
 {
-    UpdateTmp(path);
-    return  mTmpBranch->DumpTreeFormatted(0);
+	UpdateTmp(path);
+	return  mTmpBranch->DumpTreeFormatted(0);
 
 }
 
 void Parameters::FindPartial(std::string& name, std::vector<std::string>& vec)
 {
-    UpdateTmp(name);
-    mTmpBranch->FindPartial(name, vec);
+	UpdateTmp(name);
+	mTmpBranch->FindPartial(name, vec);
 }
 
 
 
 void Parameters::RequestTree()
 {
-	Msg_Param::ptr ptr = std::make_unique<Msg_Param>("FC_Param",QGS_IoHeader::ParametersControl::GetTree,0,0,"");
+	Msg_Param::ptr ptr = std::make_unique<Msg_Param>(msgAddr_t::FC_Param_e,QGS_IoHeader::ParametersControl::GetTree,0,0,"");
 	sendMsg(std::move(ptr));
 }
 
 
 void Parameters::process(Msg_Param* message)
 {
-    uint8_t control = message->getControl();
+	uint8_t control = message->getControl();
 
-    static uint8_t lastSequenceNo = 0;
-    uint8_t sequenceNo = message->getSequencenr();
-    uint8_t lastInSeq = message->getLastinsequence();
-    std::string path = message->getPayload();
+	static uint8_t lastSequenceNo = 0;
+	uint8_t sequenceNo = message->getSequencenr();
+	uint8_t lastInSeq = message->getLastinsequence();
+	std::string path = message->getPayload();
 
-    switch (control){
-    case QGS_IoHeader::ParametersControl::SetTree:
-        if((lastSequenceNo++) != sequenceNo)
-        {
-            mLogger.QuadLog(QuadGS::error, "Lost a setTree package, try again!" );
-            SetAndRegister(message->getPayload());
-            lastSequenceNo = 0;
-            RequestTree(); // We have not yet got the whole tree, continue!
-            return;
-        }
+	switch (control){
+	case QGS_IoHeader::ParametersControl::SetTree:
+		if((lastSequenceNo++) != sequenceNo)
+		{
+			mLogger.QuadLog(QuadGS::error, "Lost a setTree package, try again!" );
+			SetAndRegister(message->getPayload());
+			lastSequenceNo = 0;
+			RequestTree(); // We have not yet got the whole tree, continue!
+			return;
+		}
 
-        SetAndRegister(message->getPayload());
-        if(lastInSeq)
-        {
-            lastSequenceNo = 0;
-        }
-        else
-        {
-            RequestTree(); // We have not yet got the whole tree, continue!
-        }
-        break;
-    case QGS_IoHeader::ParametersControl::GetTree:
-        mLogger.QuadLog(QuadGS::error, "GetTree command not implemented in GS!" + path );
-        break;
-    case QGS_IoHeader::ParametersControl::Value:
-        break;
+		SetAndRegister(message->getPayload());
+		if(lastInSeq)
+		{
+			lastSequenceNo = 0;
+		}
+		else
+		{
+			RequestTree(); // We have not yet got the whole tree, continue!
+		}
+		break;
+	case QGS_IoHeader::ParametersControl::GetTree:
+		mLogger.QuadLog(QuadGS::error, "GetTree command not implemented in GS!" + path );
+		break;
+	case QGS_IoHeader::ParametersControl::Value:
+		break;
 
-    default:
-        break;
-    }
+	default:
+		break;
+	}
 }
 
 void Parameters::process(Msg_GetUiCommands* message)

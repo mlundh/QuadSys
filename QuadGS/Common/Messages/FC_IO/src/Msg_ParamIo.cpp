@@ -8,7 +8,7 @@ Msg_ParamIo::Msg_ParamIo(QGS_ModuleMsgBase& msg)
 
 }
 
-Msg_ParamIo::Msg_ParamIo(const std::string& destination, std::unique_ptr<QGSParamMsg> paramMsg)
+Msg_ParamIo::Msg_ParamIo(const msgAddr_t destination, std::unique_ptr<QGSParamMsg> paramMsg)
 :QGS_ModuleMsg<Msg_ParamIo>(messageTypes_t::Msg_ParamIo_e, destination), mParammsg(std::move(paramMsg))
 {
 

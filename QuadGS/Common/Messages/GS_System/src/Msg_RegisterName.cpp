@@ -8,7 +8,7 @@ Msg_RegisterName::Msg_RegisterName(QGS_ModuleMsgBase& msg)
 
 }
 
-Msg_RegisterName::Msg_RegisterName(const std::string& destination, std::string name)
+Msg_RegisterName::Msg_RegisterName(const msgAddr_t destination, uint32_t name)
 :QGS_ModuleMsg<Msg_RegisterName>(messageTypes_t::Msg_RegisterName_e, destination), mName(name)
 {
 
@@ -36,18 +36,17 @@ BinaryOStream& Msg_RegisterName::stream(BinaryOStream& os) const
 BinaryIStream& Msg_RegisterName::stream(BinaryIStream& is)
 {
 	QGS_ModuleMsgBase::stream(is);
-	mName.erase();
 	is >> mName;
 	
 	return is;
 }
 
-std::string Msg_RegisterName::getName() const
+uint32_t Msg_RegisterName::getName() const
 {
 	return mName;
 }
 	
-void Msg_RegisterName::setName(std::string name)
+void Msg_RegisterName::setName(uint32_t name)
 {
 	mName = name;
 }

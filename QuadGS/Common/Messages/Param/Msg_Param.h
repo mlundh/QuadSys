@@ -10,7 +10,7 @@ public:
 
 	Msg_Param(QGS_ModuleMsgBase& msg);
 
-	Msg_Param(const std::string& destination, uint8_t control, uint8_t sequenceNr, uint8_t lastInSequence, std::string payload);
+	Msg_Param(const msgAddr_t destination, uint8_t control, uint8_t sequenceNr, uint8_t lastInSequence, std::string payload);
 
 	Msg_Param(const Msg_Param& msg);
 

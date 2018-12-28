@@ -30,6 +30,7 @@
 #include <sstream>
 
 #include "messageTypes.h"
+#include "msgAddr.h"
 #include "AppLog.h"
 #include "BinaryStream.h"
 #include "messageTypes.h"
@@ -41,7 +42,7 @@ namespace QuadGS {
 class QGS_MessageHandlerBase
 {
 public:
-	QGS_MessageHandlerBase(std::string name):mLogger(name), mName(name)
+	QGS_MessageHandlerBase(msgAddr_t address):mLogger(msgAddrStr[address]), mName(address)
 	{
 
 	}
@@ -52,14 +53,14 @@ public:
 		mLogger.QuadLog( severity_level::error ,"Received unhandled message.");
 	}
 
-	std::string getName()
+	msgAddr_t getName()
 	{
 		return mName;
 	}
 
 protected:
 	AppLog mLogger;
-	std::string mName;
+	msgAddr_t mName;
 };
 
 
@@ -94,7 +95,7 @@ class B = QGS_Msg, class = typename std::enable_if<std::is_base_of<B,MessageType
 class QGS_MessageHandler: public virtual QGS_MessageHandlerBase
 {
 public:
-	QGS_MessageHandler():QGS_MessageHandlerBase("baseHandler")
+	QGS_MessageHandler():QGS_MessageHandlerBase(msgAddr_t::Unassigned)
 {
 }
 	virtual ~QGS_MessageHandler() = default;

@@ -42,13 +42,13 @@ char  CLI::WordBreakPath[] = " \t\n\"\\'`@$><=;|&{(/";
 char  CLI::WordBreak[]     = " \t\n\"\\'`@$><=;|&{(";
 CLI* CLI::cli = NULL;
 
-CLI::UiCommand::UiCommand(std::string command, std::string args, std::string address):
+CLI::UiCommand::UiCommand(std::string command, std::string args, msgAddr_t address):
 						command(command), doc(args), address(address)
 {
 
 }
 
-CLI::CLI(std::string name)
+CLI::CLI(msgAddr_t name)
 :QGS_MessageHandlerBase(name)
 ,mCommands()
 ,mPromptStatus("N/A")
@@ -145,9 +145,9 @@ bool CLI::RunUI()
 	{
 		mLogger.QuadLog(debug, "Requesting messages from GS_Param");
 
-		Msg_GetUiCommands::ptr ptr = std::make_unique<Msg_GetUiCommands>("GS_Param");
+		Msg_GetUiCommands::ptr ptr = std::make_unique<Msg_GetUiCommands>(msgAddr_t::GS_Param_e);
 		sendMsg(std::move(ptr));
-		Msg_GetUiCommands::ptr ptrLh = std::make_unique<Msg_GetUiCommands>("GS_LogHandler");
+		Msg_GetUiCommands::ptr ptrLh = std::make_unique<Msg_GetUiCommands>(msgAddr_t::GS_Log_e);
 		sendMsg(std::move(ptrLh));
 		mIsInitilized = true;
 	}
@@ -225,7 +225,7 @@ char ** CLI::completion (const char *text, int start, int)
 			return (matches);
 		}
 
-		if(cli->mCommands[i].address == "GS_Param")
+		if(cli->mCommands[i].address == msgAddr_t::GS_Param_e)
 		{
 			rl_completer_word_break_characters = WordBreakPath;
 			rl_attempted_completion_over = 1;
@@ -235,7 +235,7 @@ char ** CLI::completion (const char *text, int start, int)
 			rl_completer_word_break_characters = WordBreak;
 
 		}
-		else if(cli->mCommands[i].address != "GS_Param")
+		else if(cli->mCommands[i].address != msgAddr_t::GS_Param_e)
 		{
 
 		}
@@ -293,7 +293,7 @@ char * CLI::path_generator (const char *text, int state)
 	{
 		list_index = 0;
 		vec.clear();
-		Msg_FindParam::ptr ptr = std::make_unique<Msg_FindParam>("GS_Param", text_s, "");
+		Msg_FindParam::ptr ptr = std::make_unique<Msg_FindParam>(msgAddr_t::GS_Param_e, text_s, "");
 		cli->sendMsg(std::move(ptr));
 
 		// Now wait for message to get back
@@ -356,7 +356,7 @@ char * CLI::dupstr (const char * s)
 
 void CLI::process(Msg_RegUiCommand* message)
 {
-	mLogger.QuadLog(debug, "Received UI command: " + message->getCommand() + " from " + message->getSource());
+	mLogger.QuadLog(debug, "Received UI command: " + message->getCommand() + " from " + msgAddrStr[message->getSource()]);
 	mCommands.push_back(UiCommand(message->getCommand(), message->getDoc(), message->getSource()));
 }
 void CLI::process(Msg_UiCommandResult* message)

@@ -38,15 +38,15 @@ class FakeModule
 
 {
 public:
-	FakeModule(std::string name);
+	FakeModule(msgAddr_t name);
 
 	virtual ~FakeModule();
 
 	int getNrMsg();
 
-	void sendDummyDebugMsg(std::string dest);
+	void sendDummyDebugMsg(msgAddr_t dest);
 
-	void sendDummyParamMsg(std::string dest);
+	void sendDummyParamMsg(msgAddr_t dest);
 
 	void returnNxtMsg(bool flag);
 
@@ -70,7 +70,7 @@ class QGS_ThreadedModuleFake
 		, public QGS_MessageHandler<Msg_ParamIo>
 {
 public:
-	QGS_ThreadedModuleFake(std::string name);
+	QGS_ThreadedModuleFake(msgAddr_t  name);
 
 	virtual ~QGS_ThreadedModuleFake();
 
@@ -78,9 +78,9 @@ public:
 
 	void subscribeMsg(messageTypes_t type);
 
-	void sendDummyDebugMsg(std::string dest);
+	void sendDummyDebugMsg(msgAddr_t dest);
 
-	void sendDummyParamMsg(std::string dest);
+	void sendDummyParamMsg(msgAddr_t dest);
 
 	void returnNxtMsg(bool flag);
 private:

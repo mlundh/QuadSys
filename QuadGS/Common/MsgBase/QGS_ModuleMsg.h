@@ -25,6 +25,7 @@
 #ifndef QUADGS_UTILITIES_QGS_MODULE_SRC_QGS_MODULEMSG_H_
 #define QUADGS_UTILITIES_QGS_MODULE_SRC_QGS_MODULEMSG_H_
 #include "QGS_Msg.h"
+#include "msgAddr.h"
 
 namespace QuadGS {
 class QGS_ModuleMsgBase;
@@ -39,7 +40,7 @@ public:
 
 	QGS_ModuleMsgBase();
 
-	QGS_ModuleMsgBase(messageTypes_t type, const std::string& desination);
+	QGS_ModuleMsgBase(messageTypes_t type, const msgAddr_t desination);
 
 	QGS_ModuleMsgBase(const QGS_ModuleMsgBase& msg);
 
@@ -47,13 +48,13 @@ public:
 
 	virtual ~QGS_ModuleMsgBase();
 
-	void setSource(std::string originator);
+	void setSource(msgAddr_t originator);
 
-	std::string getSource() const;
+	msgAddr_t getSource() const;
 
-	void setDestination(std::string port);
+	void setDestination(msgAddr_t port);
 
-	std::string getDestination() const;
+	msgAddr_t getDestination() const;
 
 	messageTypes_t getType() const;
 
@@ -73,8 +74,8 @@ public:
 
 private:
 	uint32_t mType;
-	std::string mSource;
-	std::string mDestination;
+	uint32_t mSource;
+	uint32_t mDestination;
 	std::uint8_t mMsgNr;
 	bool mSkipStreamHeader = false;
 };
@@ -85,7 +86,7 @@ class QGS_ModuleMsg : public QGS_ModuleMsgBase
 {
 public:
 
-	QGS_ModuleMsg(messageTypes_t type, const std::string& desination)
+	QGS_ModuleMsg(messageTypes_t type, const msgAddr_t desination)
 	:QGS_ModuleMsgBase(type, desination)
 	{
 

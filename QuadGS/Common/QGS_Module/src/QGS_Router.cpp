@@ -32,7 +32,7 @@
 namespace QuadGS
 {
 
-QGS_Router::QGS_Router(std::string name): mNrModules(0), mName(name), mStop(false), mLogger(name)
+QGS_Router::QGS_Router(msgAddr_t name): mNrModules(0), mName(name), mStop(false), mLogger(msgAddrStr[name])
 {
 	mThread = std::thread(std::bind(&QGS_Router::runRouter, this));
 }
@@ -51,7 +51,7 @@ QGS_Router::~QGS_Router()
 void QGS_Router::bind(QGS_Module* module)
 {
 	module->setSendFunc(std::bind(&QGS_Router::incomingPort, this, std::placeholders::_1));
-	std::string name = module->getName(); // TODO add support for multiple addresses/names per module (normally only one, but usage for IO)
+	msgAddr_t name = module->getName(); // TODO add support for multiple addresses/names per module (normally only one, but usage for IO)
 	checkUniqueName(name);
 	mWriteFunctions[name] = module->getReceivingFcn();
 }
@@ -72,14 +72,14 @@ void QGS_Router::sendMsg(QGS_ModuleMsgBase::ptr message)
 {
 	messageTypes_t type = message->getType();
 		// If we already know where to send to, then send.
-		std::string dest = message->getDestination();
-		if(dest.size() >= 0 && dest != "broadcast") // Did we get a destination?
+		msgAddr_t dest = message->getDestination();
+		if(dest != msgAddr_t::Unassigned && dest != msgAddr_t::Broadcast) // Did we get a destination?
 		{
 			internalSend(std::move(message), dest, false);
 		}
-		else if(dest == "broadcast") // Did not get a destination, send to all subscribers.
+		else if(dest == msgAddr_t::Broadcast) // Did not get a destination, send to all subscribers.
 		{
-			std::string source = message->getSource();
+			msgAddr_t source = message->getSource();
 			for(auto module : mWriteFunctions)
 			{
 				if(module.first != source) // Do not return to sender
@@ -98,10 +98,10 @@ void QGS_Router::sendMsg(QGS_ModuleMsgBase::ptr message)
 }
 
 
-void QGS_Router::internalSend(QGS_ModuleMsgBase::ptr message, std::string port, bool broadcast)
+void QGS_Router::internalSend(QGS_ModuleMsgBase::ptr message, msgAddr_t port, bool broadcast)
 {
 	//Make sure we have a write function.
-	std::map<std::string, WriteFcn>::iterator it = mWriteFunctions.find(port);
+	std::map<msgAddr_t, WriteFcn>::iterator it = mWriteFunctions.find(port);
 	if(it != mWriteFunctions.end())
 	{
 		try
@@ -120,12 +120,12 @@ void QGS_Router::internalSend(QGS_ModuleMsgBase::ptr message, std::string port, 
 		}
 		catch (std::runtime_error& e)
 		{
-			mLogger.QuadLog(severity_level::error, "Module: " + port + " encountered an error: " + e.what());
+			mLogger.QuadLog(severity_level::error, "Module: " + msgAddrStr[port] + " encountered an error: " + e.what());
 		}
 	}
 	else
 	{
-		mLogger.QuadLog(severity_level::error, "No port: " + port + ", error in topology? ");
+		mLogger.QuadLog(severity_level::error, "No port: " + msgAddrStr[port] + ", error in topology? ");
 	}
 }
 
@@ -143,12 +143,12 @@ void QGS_Router::runRouter()
 }
 
 
-void QGS_Router::checkUniqueName(std::string &name)
+void QGS_Router::checkUniqueName(msgAddr_t name)
 {
-	std::map<std::string,WriteFcn>::iterator it = mWriteFunctions.find(name);
+	std::map<msgAddr_t,WriteFcn>::iterator it = mWriteFunctions.find(name);
 	if(it != mWriteFunctions.end())
 	{
-		mLogger.QuadLog(severity_level::warning, "Name collision, two modules named: " + name + ". Advice to change name.");
+		mLogger.QuadLog(severity_level::warning, "Name collision, two modules named: " + msgAddrStr[name] + ". Advice to change name.");
 	}
 }
 
@@ -170,7 +170,7 @@ void QGS_Router::route(QGS_ModuleMsgBase::ptr msg)
 				{
 					throw std::runtime_error("No conversion possible, ERROR! ");
 				}
-				std::string name = nameMsg->getName();
+				msgAddr_t name = static_cast<msgAddr_t>(nameMsg->getName());
 				checkUniqueName(name);
 
 				// Now get the receiving function of the registering module, it exists in the writeFunction map.
@@ -184,7 +184,7 @@ void QGS_Router::route(QGS_ModuleMsgBase::ptr msg)
 	}
 	else
 	{
-		mLogger.QuadLog(severity_level::debug, "sending to " + msg->getDestination());
+		mLogger.QuadLog(severity_level::debug, "sending to " + msgAddrStr[msg->getDestination()]);
 		sendMsg(std::move(msg));
 	}
 

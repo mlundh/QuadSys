@@ -60,6 +60,7 @@ std::ostream& operator<< (std::ostream& strm, QuadGS::severity_level level)
 {
 	static const char* strings[] =
 	{
+			"off",
 			"error",
 			"warning",
 			"info",

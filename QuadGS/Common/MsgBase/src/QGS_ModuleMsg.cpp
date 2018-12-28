@@ -30,14 +30,14 @@ namespace QuadGS {
 
 QGS_ModuleMsgBase::QGS_ModuleMsgBase()
 :mType(0),
- mSource(""),
- mDestination(""),
+ mSource(msgAddr_t::Unassigned),
+ mDestination(msgAddr_t::Unassigned),
  mMsgNr(0)
 {
 
 }
 
-QGS_ModuleMsgBase::QGS_ModuleMsgBase(messageTypes type, const std::string& desination)
+QGS_ModuleMsgBase::QGS_ModuleMsgBase(messageTypes type, const msgAddr_t desination)
 :mType(type), mSource(), mDestination(desination), mMsgNr(0)
 {
 
@@ -60,24 +60,24 @@ QGS_ModuleMsgBase::~QGS_ModuleMsgBase()
 
 
 
-void QGS_ModuleMsgBase::setSource(std::string originator)
+void QGS_ModuleMsgBase::setSource(msgAddr_t originator)
 {
-	mSource = originator;
+	mSource = static_cast<uint32_t>(originator);
 }
 
-std::string QGS_ModuleMsgBase::getSource() const
+msgAddr_t QGS_ModuleMsgBase::getSource() const
 {
-	return mSource;;
+	return static_cast<msgAddr_t>(mSource);
 }
 
-void QGS_ModuleMsgBase::setDestination(std::string port)
+void QGS_ModuleMsgBase::setDestination(msgAddr_t port)
 {
-	mDestination = port;
+	mDestination = static_cast<uint32_t>(port);
 }
 
-std::string QGS_ModuleMsgBase::getDestination() const
+msgAddr_t QGS_ModuleMsgBase::getDestination() const
 {
-	return mDestination;
+	return static_cast<msgAddr_t>(mDestination);
 }
 
 messageTypes_t QGS_ModuleMsgBase::getType() const
@@ -115,8 +115,6 @@ BinaryIStream& QGS_ModuleMsgBase::stream(BinaryIStream& is)
 {
 	if(!mSkipStreamHeader)
 	{
-		mDestination.clear();
-		mSource.clear();
 		is >> SetBits(32)  >> mType;
 		is >> mDestination;
 		is >> mSource;

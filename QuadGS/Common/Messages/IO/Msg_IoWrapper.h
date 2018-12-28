@@ -10,7 +10,7 @@ public:
 
 	Msg_IoWrapper(QGS_ModuleMsgBase& msg);
 
-	Msg_IoWrapper(const std::string& destination, std::unique_ptr<QGS_ModuleMsgBase> baseMsg);
+	Msg_IoWrapper(const msgAddr_t destination, std::unique_ptr<QGS_ModuleMsgBase> baseMsg);
 
 	Msg_IoWrapper(const Msg_IoWrapper& msg);
 

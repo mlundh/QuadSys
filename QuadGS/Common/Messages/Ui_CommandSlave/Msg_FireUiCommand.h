@@ -10,7 +10,7 @@ public:
 
 	Msg_FireUiCommand(QGS_ModuleMsgBase& msg);
 
-	Msg_FireUiCommand(const std::string& destination, std::string command, std::string args);
+	Msg_FireUiCommand(const msgAddr_t destination, std::string command, std::string args);
 
 	Msg_FireUiCommand(const Msg_FireUiCommand& msg);
 

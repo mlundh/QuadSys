@@ -1,9 +1,14 @@
 #ifndef QUADGS_MESSAGE_ADDRESSES_H_
 #define QUADGS_MESSAGE_ADDRESSES_H_
+#include <vector>
+#include <string>
 namespace QuadGS {
 
 enum msgAddr
 {
+	Unassigned,
+	Router,
+	Broadcast,
 	FC_Log_e,
 	FC_SerialIO_e,
 	GUI_e,
@@ -17,6 +22,9 @@ typedef enum msgAddr msgAddr_t;
 
 static const std::vector<std::string> msgAddrStr =
 {
+	"Unassigned",
+	"Router",
+	"Broadcast",
 	"FC_Log",
 	"FC_SerialIO",
 	"GUI",

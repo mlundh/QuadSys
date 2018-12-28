@@ -11,7 +11,7 @@ public:
 
 	Msg_DebugIo(QGS_ModuleMsgBase& msg);
 
-	Msg_DebugIo(const std::string& destination, std::unique_ptr<QGS_DebugMsg> dbgMsg);
+	Msg_DebugIo(const msgAddr_t destination, std::unique_ptr<QGS_DebugMsg> dbgMsg);
 
 	Msg_DebugIo(const Msg_DebugIo& msg);
 

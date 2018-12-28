@@ -10,7 +10,7 @@ public:
 
 	Msg_Stop(QGS_ModuleMsgBase& msg);
 
-	Msg_Stop(const std::string& destination);
+	Msg_Stop(const msgAddr_t destination);
 
 	Msg_Stop(const Msg_Stop& msg);
 

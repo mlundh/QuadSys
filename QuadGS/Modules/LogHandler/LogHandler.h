@@ -50,7 +50,7 @@ class LogHandler
 	};
 public:
 
-    LogHandler(std::string name);
+    LogHandler(msgAddr_t name);
 
 
     virtual ~LogHandler();

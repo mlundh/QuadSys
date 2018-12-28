@@ -10,7 +10,7 @@ public:
 
 	{className}(QGS_ModuleMsgBase& msg);
 
-	{className}(const std::string& destination{ctorArgs});
+	{className}(const msgAddr_t destination{ctorArgs});
 
 	{className}(const {className}& msg);
 

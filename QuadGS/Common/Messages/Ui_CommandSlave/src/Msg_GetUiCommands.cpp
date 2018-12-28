@@ -8,7 +8,7 @@ Msg_GetUiCommands::Msg_GetUiCommands(QGS_ModuleMsgBase& msg)
 
 }
 
-Msg_GetUiCommands::Msg_GetUiCommands(const std::string& destination)
+Msg_GetUiCommands::Msg_GetUiCommands(const msgAddr_t destination)
 :QGS_ModuleMsg<Msg_GetUiCommands>(messageTypes_t::Msg_GetUiCommands_e, destination)
 {
 

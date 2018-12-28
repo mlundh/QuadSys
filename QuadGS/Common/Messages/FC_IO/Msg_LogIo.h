@@ -11,7 +11,7 @@ public:
 
 	Msg_LogIo(QGS_ModuleMsgBase& msg);
 
-	Msg_LogIo(const std::string& destination, std::unique_ptr<QGS_LogMsg> paramMsg);
+	Msg_LogIo(const msgAddr_t destination, std::unique_ptr<QGS_LogMsg> paramMsg);
 
 	Msg_LogIo(const Msg_LogIo& msg);
 

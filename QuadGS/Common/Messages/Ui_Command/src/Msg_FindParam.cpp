@@ -8,7 +8,7 @@ Msg_FindParam::Msg_FindParam(QGS_ModuleMsgBase& msg)
 
 }
 
-Msg_FindParam::Msg_FindParam(const std::string& destination, std::string toFind, std::string found)
+Msg_FindParam::Msg_FindParam(const msgAddr_t destination, std::string toFind, std::string found)
 :QGS_ModuleMsg<Msg_FindParam>(messageTypes_t::Msg_FindParam_e, destination), mTofind(toFind), mFound(found)
 {
 

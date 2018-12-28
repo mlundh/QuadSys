@@ -31,7 +31,7 @@ namespace QuadGS
 {
 
 QGS_Module::QGS_Module()
-:QGS_MessageHandlerBase("QGS_Module"), mSendFcn(NULL)
+:QGS_MessageHandlerBase(msgAddr_t::Unassigned), mSendFcn(NULL)
 {
 
 }
@@ -89,7 +89,7 @@ void QGS_Module::setSendFunc(WriteFcn func)
 }
 
 QGS_ReactiveModule::QGS_ReactiveModule()
-:QGS_MessageHandlerBase("reactiveModule")
+:QGS_MessageHandlerBase(msgAddr_t::Unassigned)
 {
 	setReceivingFcn(std::bind(&QGS_ReactiveModule::ReceivingFcn, this, std::placeholders::_1));
 }
@@ -107,7 +107,7 @@ void QGS_ReactiveModule::ReceivingFcn(std::unique_ptr<QGS_ModuleMsgBase> message
 
 
 QGS_ThreadedModule::QGS_ThreadedModule()
-:QGS_MessageHandlerBase("threadedModule"), mStop(false)
+:QGS_MessageHandlerBase(msgAddr_t::Unassigned), mStop(false)
 {
 	setReceivingFcn(std::bind(&QGS_ThreadedModule::ReceivingFcn, this, std::placeholders::_1));
 }
