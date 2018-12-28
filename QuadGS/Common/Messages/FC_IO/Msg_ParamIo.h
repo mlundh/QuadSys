@@ -11,7 +11,7 @@ public:
 
 	Msg_ParamIo(QGS_ModuleMsgBase& msg);
 
-	Msg_ParamIo(std::string destination, std::unique_ptr<QGSParamMsg> paramMsg);
+	Msg_ParamIo(const std::string& destination, std::unique_ptr<QGSParamMsg> paramMsg);
 
 	Msg_ParamIo(const Msg_ParamIo& msg);
 

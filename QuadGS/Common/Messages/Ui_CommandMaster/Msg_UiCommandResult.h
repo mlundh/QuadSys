@@ -10,7 +10,7 @@ public:
 
 	Msg_UiCommandResult(QGS_ModuleMsgBase& msg);
 
-	Msg_UiCommandResult(std::string destination, std::string result);
+	Msg_UiCommandResult(const std::string& destination, std::string result);
 
 	Msg_UiCommandResult(const Msg_UiCommandResult& msg);
 

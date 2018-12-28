@@ -10,7 +10,7 @@ public:
 
 	Msg_FindParam(QGS_ModuleMsgBase& msg);
 
-	Msg_FindParam(std::string destination, std::string toFind, std::string found);
+	Msg_FindParam(const std::string& destination, std::string toFind, std::string found);
 
 	Msg_FindParam(const Msg_FindParam& msg);
 

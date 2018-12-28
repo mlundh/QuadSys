@@ -37,7 +37,7 @@ QGS_ModuleMsgBase::QGS_ModuleMsgBase()
 
 }
 
-QGS_ModuleMsgBase::QGS_ModuleMsgBase(messageTypes type, std::string desination)
+QGS_ModuleMsgBase::QGS_ModuleMsgBase(messageTypes type, const std::string& desination)
 :mType(type), mSource(), mDestination(desination), mMsgNr(0)
 {
 

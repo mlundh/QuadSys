@@ -22,7 +22,7 @@ Msg_Log --member uint8_t control --member std::string payload
 Msg_FindParam --member std::string toFind --member std::string found
 *
 
-*Ui_CommandSlave FC_Param
+*Ui_CommandSlave FC_Param FC_SerialIO
 Msg_GetUiCommands
 Msg_FireUiCommand --member std::string command --member std::string args
 *
@@ -32,7 +32,7 @@ Msg_RegUiCommand --member std::string command --member std::string doc
 Msg_UiCommandResult --member std::string result
 *
 
-*OI Serial_IO
+*IO FC_SerialIO
 Msg_IoWrapper --member std::unique_ptr<QGS_ModuleMsgBase> baseMsg
 Msg_Transmission --member uint8_t status
 *

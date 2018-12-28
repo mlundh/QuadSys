@@ -6,5 +6,5 @@ list(APPEND dep "BinaryStream"
 				"MsgBase"
 				"AppLog")
 				
-qgs_make_shared_lib( OI src dep)
+qgs_make_shared_lib( IO src dep)
 

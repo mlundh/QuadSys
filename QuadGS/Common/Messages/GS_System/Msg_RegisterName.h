@@ -10,7 +10,7 @@ public:
 
 	Msg_RegisterName(QGS_ModuleMsgBase& msg);
 
-	Msg_RegisterName(std::string destination, std::string name);
+	Msg_RegisterName(const std::string& destination, std::string name);
 
 	Msg_RegisterName(const Msg_RegisterName& msg);
 

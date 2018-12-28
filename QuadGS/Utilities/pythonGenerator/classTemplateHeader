@@ -10,7 +10,7 @@ public:
 
 	{className}(QGS_ModuleMsgBase& msg);
 
-	{className}(std::string destination{ctorArgs});
+	{className}(const std::string& destination{ctorArgs});
 
 	{className}(const {className}& msg);
 

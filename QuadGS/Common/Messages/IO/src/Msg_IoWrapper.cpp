@@ -8,7 +8,7 @@ Msg_IoWrapper::Msg_IoWrapper(QGS_ModuleMsgBase& msg)
 
 }
 
-Msg_IoWrapper::Msg_IoWrapper(std::string destination, std::unique_ptr<QGS_ModuleMsgBase> baseMsg)
+Msg_IoWrapper::Msg_IoWrapper(const std::string& destination, std::unique_ptr<QGS_ModuleMsgBase> baseMsg)
 :QGS_ModuleMsg<Msg_IoWrapper>(messageTypes_t::Msg_IoWrapper_e, destination), mBasemsg(std::move(baseMsg))
 {
 

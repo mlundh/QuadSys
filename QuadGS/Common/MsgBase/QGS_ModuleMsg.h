@@ -39,7 +39,7 @@ public:
 
 	QGS_ModuleMsgBase();
 
-	QGS_ModuleMsgBase(messageTypes_t type, std::string desination);
+	QGS_ModuleMsgBase(messageTypes_t type, const std::string& desination);
 
 	QGS_ModuleMsgBase(const QGS_ModuleMsgBase& msg);
 
@@ -85,7 +85,7 @@ class QGS_ModuleMsg : public QGS_ModuleMsgBase
 {
 public:
 
-	QGS_ModuleMsg(messageTypes_t type, std::string desination)
+	QGS_ModuleMsg(messageTypes_t type, const std::string& desination)
 	:QGS_ModuleMsgBase(type, desination)
 	{
 

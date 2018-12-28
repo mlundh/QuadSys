@@ -8,7 +8,7 @@ Msg_RegUiCommand::Msg_RegUiCommand(QGS_ModuleMsgBase& msg)
 
 }
 
-Msg_RegUiCommand::Msg_RegUiCommand(std::string destination, std::string command, std::string doc)
+Msg_RegUiCommand::Msg_RegUiCommand(const std::string& destination, std::string command, std::string doc)
 :QGS_ModuleMsg<Msg_RegUiCommand>(messageTypes_t::Msg_RegUiCommand_e, destination), mCommand(command), mDoc(doc)
 {
 

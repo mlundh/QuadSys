@@ -11,6 +11,7 @@
 #include "Msg_Param.h"
 #include "BinaryStream.h"
 #include "gtest/gtest.h"
+#include "msgAddr.h"
 
 
 namespace QuadGS {
@@ -19,7 +20,7 @@ namespace QuadGS {
 TEST(FcParser, TestParserParamMsg)
 {
 	Parser parser;
-	Msg_Param paramMsg("dest", 3, 0, 1, "payload");
+	Msg_Param paramMsg(msgAddrStr[FC_Log_e], 3, 0, 1, "payload");
 
 	BinaryOStream os;
 

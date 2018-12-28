@@ -141,6 +141,54 @@ def genTypes( types, enumName, outputDir ):
 	with open(outputDir+'/messageTypes.h', 'w') as f:
 		f.write(templateStringEnum.format(**substTypes))
 
+def genParser( types, interfaces, outputDir ):
+	dir = sys.path[0] + '/'
+	typeParser = ""
+	headers = ""
+	for type in types:
+		headers += '#include "' + type + '.h"\n'
+		substTypes={}
+		substTypes['type'] = type
+		with open(dir+'messageTypeParserTemplate', 'r') as ftemp:
+			templateString = ftemp.read()
+			typeParser += templateString.format(**substTypes)
+	substTypes = {}
+	substTypes['headers'] = headers
+	substTypes['typeParser']=typeParser
+	with open(dir+'parserTemplate', 'r') as ftemp:
+		templateStringParser = ftemp.read()
+		
+	with open(outputDir+'/Parser.cpp', 'w') as f:
+		f.write(templateStringParser.format(**substTypes))
+		
+	deps=''
+	for interface in interfaces:
+		deps += interface + '\n				'
+	subst = {}
+	subst['dep'] = deps
+	with open(dir+'parserCmakeTemplate', 'r') as ftemp:
+		templateStringCmake = ftemp.read()
+		
+
+	with open(outputDir+'/../CMakeLists.txt', 'w') as f:
+		f.write(templateStringCmake.format(**subst))
+
+def genAdresses(addresses, enumName, outputDir):
+	uniqueAddress = set(addresses)
+	enumString = ''
+	addressString = ''
+	for address in uniqueAddress:
+		enumString += '	' + address + '_e,\n'
+		addressString += '	"' + address + '",\n'
+	substTypes = {}
+	substTypes['enumName'] = enumName
+	substTypes['addresses'] = enumString
+	substTypes['strings'] = addressString
+	with open(dir+'msgAddressesTemplate', 'r') as ftemp:
+		templateStringEnum = ftemp.read()
+		
+	with open(outputDir+'/msgAddr.h', 'w') as f:
+		f.write(templateStringEnum.format(**substTypes))
 
 # Generate enums and messages.
 parser = argparse.ArgumentParser(description='Script to generate a cmake file to build the message class.')
@@ -152,8 +200,10 @@ args = parser.parse_args()
 
 interfaces = []
 interface = ''
+addresses = []
 dir = sys.path[0] + '/'
-#Go through all interfaces and generate messages based on that. 
+cppTypes = []
+#Go through all interfaces and generate messages, enums and addresses based on that. 
 with open(args.file, "r") as file:
 	files=''
 	types=''
@@ -163,6 +213,9 @@ with open(args.file, "r") as file:
 			if (len(interfaceTest) > 1):
 				interface = interfaceTest
 				interfaces.append(interface)
+				addressesInLine = line.split()[1:]
+				for item in addressesInLine:
+					addresses.append(item)				
 			else:
 				genCmake(files, interface, args.outputDir+'/'+interface)
 				files = ''
@@ -172,13 +225,15 @@ with open(args.file, "r") as file:
 		print('Generating: ' + line)
 		genMessage(line, args.outputDir+'/'+interface)
 		types += (line.split()[0]) + '_e,\n	'
+		cppTypes.append(line.split()[0])
 		files += '"' + (line.split()[0]) + '.cpp"\n				'
 genTypes(types, 'messageTypes', args.outputDir + '/../MsgBase')
-
+genAdresses(addresses, 'msgAddr', args.outputDir + '/../MsgBase')
+genParser(cppTypes, interfaces, args.outputDir + '/Parser/src')
 # Generate the top level Message cmakelist.
 messageCmake = ''
 for member in interfaces:
 	messageCmake += 'add_subdirectory(' + member + ')\n' 
-messageCmake += "add_subdirectory(FcParser)\n" # Parser is a special case.
+messageCmake += "add_subdirectory(Parser)\n" # Parser is a special case.
 with open(args.outputDir+'/CMakeLists.txt', 'w') as f:
 	f.write(messageCmake)

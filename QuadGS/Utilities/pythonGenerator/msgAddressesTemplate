@@ -1,0 +1,16 @@
+#ifndef QUADGS_MESSAGE_ADDRESSES_H_
+#define QUADGS_MESSAGE_ADDRESSES_H_
+namespace QuadGS {{
+
+enum {enumName}
+{{
+{addresses}
+}};
+typedef enum {enumName} {enumName}_t;
+
+static const std::vector<std::string> {enumName}Str =
+{{
+{strings}
+}};
+}}
+#endif /* QUADGS_MESSAGE_ADDRESSES_H_ */

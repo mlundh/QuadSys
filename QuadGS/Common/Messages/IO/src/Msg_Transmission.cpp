@@ -8,7 +8,7 @@ Msg_Transmission::Msg_Transmission(QGS_ModuleMsgBase& msg)
 
 }
 
-Msg_Transmission::Msg_Transmission(std::string destination, uint8_t status)
+Msg_Transmission::Msg_Transmission(const std::string& destination, uint8_t status)
 :QGS_ModuleMsg<Msg_Transmission>(messageTypes_t::Msg_Transmission_e, destination), mStatus(status)
 {
 

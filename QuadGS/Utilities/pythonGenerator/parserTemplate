@@ -1,5 +1,5 @@
 /*
- * Parser.h
+ * Parser.cpp
  *
  *  Copyright (C) 2017 Martin Lundh
  *
@@ -22,28 +22,45 @@
  * THE SOFTWARE.
  */
 
-#ifndef IO_SERIAL_PARSER_SRC_FCPARSER_H_
-#define IO_SERIAL_PARSER_SRC_FCPARSER_H_
-#include <memory>
-#include <vector>
-#include "QGS_ModuleMsg.h"
+#include "Parser.h"
 
-namespace QuadGS {
+#include "messageTypes.h"
+{headers}
 
-	class Parser
-	{
-	public:
-		Parser();
-		virtual ~Parser();
 
-		/**
-		 * Parse the data in the given vector.
-		 * @param data	buffer of raw data.
-		 * @return	Pointer to the parsed message. Null if failed.
-		 */
-		QGS_ModuleMsgBase::ptr parse( std::vector<unsigned char> data);
-	};
+namespace QuadGS
+{{
 
-} /* namespace QuadGS */
 
-#endif /* IO_SERIAL_PARSER_SRC_FCPARSER_H_ */
+Parser::Parser()
+{{
+
+}}
+
+Parser::~Parser()
+{{
+}}
+
+
+QGS_ModuleMsgBase::ptr Parser::parse( std::vector<unsigned char>  data)
+{{
+
+	QGS_ModuleMsgBase msgBase;
+
+	BinaryIStream is(data);
+
+	QGS_ModuleMsgBase::ptr returnPtr;
+
+	is >> msgBase;
+	msgBase.setSkipStreamHeader();
+	switch (msgBase.getType())
+	{{
+	{typeParser}
+	default:
+		break;
+	}}
+
+	return returnPtr;
+}}
+
+}} /* namespace QuadGS */

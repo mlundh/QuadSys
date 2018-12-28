@@ -8,7 +8,7 @@ Msg_Log::Msg_Log(QGS_ModuleMsgBase& msg)
 
 }
 
-Msg_Log::Msg_Log(std::string destination, uint8_t control, std::string payload)
+Msg_Log::Msg_Log(const std::string& destination, uint8_t control, std::string payload)
 :QGS_ModuleMsg<Msg_Log>(messageTypes_t::Msg_Log_e, destination), mControl(control), mPayload(payload)
 {
 
