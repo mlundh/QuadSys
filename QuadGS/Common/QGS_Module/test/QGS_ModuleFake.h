@@ -26,15 +26,15 @@
 #define QUADGS_UTILITIES_QGS_MODULE_TEST_QGS_MODULEFAKE_H_
 #include <atomic>
 #include "QGS_Module.h"
-#include "Msg_ParamIo.h"
-#include "Msg_DebugIo.h"
+#include "Msg_Param.h"
+#include "Msg_Log.h"
 
 namespace QuadGS {
 
 class FakeModule
 		: public QGS_ReactiveModule
-		, public QGS_MessageHandler<Msg_ParamIo>
-		, public QGS_MessageHandler<Msg_DebugIo>
+		, public QGS_MessageHandler<Msg_Param>
+		, public QGS_MessageHandler<Msg_Log>
 
 {
 public:
@@ -54,8 +54,8 @@ public:
 private:
 
 	virtual void process_internal(QGS_ModuleMsgBase* ptr);
-	virtual void process(Msg_ParamIo* message);
-	virtual void process(Msg_DebugIo* message);
+	virtual void process(Msg_Param* message);
+	virtual void process(Msg_Log* message);
 
 	std::atomic<int> mNrMsg;
 	std::atomic<int> mReturnNxtMsg;
@@ -66,8 +66,8 @@ private:
 
 class QGS_ThreadedModuleFake
 		: public QGS_ThreadedModule
-		, public QGS_MessageHandler<Msg_DebugIo>
-		, public QGS_MessageHandler<Msg_ParamIo>
+		, public QGS_MessageHandler<Msg_Log>
+		, public QGS_MessageHandler<Msg_Param>
 {
 public:
 	QGS_ThreadedModuleFake(msgAddr_t  name);
@@ -78,7 +78,7 @@ public:
 
 	void subscribeMsg(messageTypes_t type);
 
-	void sendDummyDebugMsg(msgAddr_t dest);
+	void sendDummyLogMsg(msgAddr_t dest);
 
 	void sendDummyParamMsg(msgAddr_t dest);
 
@@ -86,8 +86,8 @@ public:
 private:
 
 	virtual void process_internal(QGS_ModuleMsgBase* ptr);
-	virtual void process(Msg_DebugIo* message);
-	virtual void process(Msg_ParamIo* message);
+	virtual void process(Msg_Log* message);
+	virtual void process(Msg_Param* message);
 
 	virtual void module();
 

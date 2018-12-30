@@ -23,8 +23,6 @@
  */
 
 #include "QGS_ModuleFake.h"
-#include "Msg_ParamIo.h"
-#include "Msg_DebugIo.h"
 #include "Msg_Param.h"
 namespace QuadGS {
 
@@ -48,16 +46,14 @@ int FakeModule::getNrMsg()
 
 void FakeModule::sendDummyDebugMsg(msgAddr_t dest)
 {
-	QGS_DebugMsg::ptr dbgMsg = std::make_unique<QGS_DebugMsg>(0,"NoDebugData");
-	QGS_ModuleMsgBase::ptr msg = std::make_unique<Msg_DebugIo>(dest, std::move(dbgMsg));
+	QGS_ModuleMsgBase::ptr msg = std::make_unique<Msg_Log>(dest, 0,"NoLogData" );
 	sendMsg(std::move(msg));
 }
 
 
 void FakeModule::sendDummyParamMsg(msgAddr_t dest)
 {
-	QGSParamMsg::ptr paramMsg = std::make_unique<QGSParamMsg>(0, "NoValidData", 0, 1);
-	QGS_ModuleMsgBase::ptr msg = std::make_unique<Msg_ParamIo>(dest, std::move(paramMsg));
+	QGS_ModuleMsgBase::ptr msg = std::make_unique<Msg_Param>(dest, 0, 0, 0, "NoValidData");
 	sendMsg(std::move(msg));
 }
 
@@ -78,11 +74,11 @@ void FakeModule::process_internal(QGS_ModuleMsgBase* bptr)
 	}
 }
 
-void FakeModule::process(Msg_ParamIo* message)
+void FakeModule::process(Msg_Param* message)
 {
 	process_internal(message);
 }
-void FakeModule::process(Msg_DebugIo* message)
+void FakeModule::process(Msg_Log* message)
 {
 	process_internal(message);
 }
@@ -116,18 +112,16 @@ void QGS_ThreadedModuleFake::returnNxtMsg(bool flag)
 }
 
 
-void QGS_ThreadedModuleFake::sendDummyDebugMsg(msgAddr_t dest)
+void QGS_ThreadedModuleFake::sendDummyLogMsg(msgAddr_t dest)
 {
-	QGS_DebugMsg::ptr dbgMsg = std::make_unique<QGS_DebugMsg>(0,"NoDebugData");
-	QGS_ModuleMsgBase::ptr msg = std::make_unique<Msg_DebugIo>(dest, std::move(dbgMsg));
+	QGS_ModuleMsgBase::ptr msg = std::make_unique<Msg_Log>(dest, 0,"NoLogData" );
 	sendMsg(std::move(msg));
 }
 
 
 void QGS_ThreadedModuleFake::sendDummyParamMsg(msgAddr_t dest)
 {
-	QGSParamMsg::ptr paramMsg = std::make_unique<QGSParamMsg>(0, "NoValidData", 0, 1);
-	QGS_ModuleMsgBase::ptr msg = std::make_unique<Msg_ParamIo>(dest,std::move(paramMsg));
+	QGS_ModuleMsgBase::ptr msg = std::make_unique<Msg_Param>(dest, 0, 0, 0, "NoValidData");
 	sendMsg(std::move(msg));
 }
 
@@ -144,11 +138,11 @@ void QGS_ThreadedModuleFake::process_internal(QGS_ModuleMsgBase* bptr)
 	}
 }
 
-void QGS_ThreadedModuleFake::process(Msg_DebugIo* message)
+void QGS_ThreadedModuleFake::process(Msg_Log* message)
 {
 	process_internal(message);
 }
-void QGS_ThreadedModuleFake::process(Msg_ParamIo* message)
+void QGS_ThreadedModuleFake::process(Msg_Param* message)
 {
 	process_internal(message);
 }

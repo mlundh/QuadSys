@@ -39,11 +39,6 @@ using namespace std::placeholders;
 
 namespace QuadGS {
 
-Parameters::UiCommand::UiCommand(std::string command,  std::string doc, UiFcn function):
-				command(command), doc(doc), function(function)
-{
-
-}
 Parameters::Parameters(msgAddr_t name):QGS_MessageHandlerBase(name)
 
 {
@@ -67,7 +62,6 @@ Parameters::Parameters(msgAddr_t name):QGS_MessageHandlerBase(name)
 
 Parameters::~Parameters()
 {
-	// TODO Auto-generated destructor stub
 }
 
 bool Parameters::UpdateTmp(std::string& path)

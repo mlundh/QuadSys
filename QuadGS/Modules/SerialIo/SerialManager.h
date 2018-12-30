@@ -38,7 +38,7 @@
 #include "QGS_Module.h"
 #include "Msg_GetUiCommands.h"
 #include "Msg_FireUiCommand.h"
-#include "Msg_IoWrapper.h"
+#include "Msg_Test.h"
 
 
 using namespace boost::asio;
@@ -51,24 +51,17 @@ namespace QuadGS {
  * be connected to a Core object.
  */
 class Serial_Manager
-		: public QGS_ThreadedModule
+		: public QGS_ReactiveModule
 		, public QGS_MessageHandler<Msg_GetUiCommands>
 		, public QGS_MessageHandler<Msg_FireUiCommand>
-		, public QGS_MessageHandler<Msg_IoWrapper>
+		, public QGS_MessageHandler<Msg_Test>
+
 
 {
-	typedef std::function<std::string(std::string) > UiFcn;
-	class UiCommand
-	{
-	public:
-		UiCommand(std::string command,  std::string doc, UiFcn function);
-		std::string command;
-		std::string doc;
-		UiFcn function;
-	};
+
 public:
 
-    Serial_Manager(std::string name);
+    Serial_Manager(msgAddr_t name);
 
 
     virtual ~Serial_Manager();
@@ -103,7 +96,7 @@ public:
 
 	virtual void process(Msg_GetUiCommands* message);
 	virtual void process(Msg_FireUiCommand* message);
-	virtual void process(Msg_IoWrapper* message);
+	virtual void process(Msg_Test* message);
 
 
 private:
@@ -138,9 +131,9 @@ private:
     boost::asio::io_service mIo_service;
     std::unique_ptr<boost::asio::io_service::work> mWork;
     std::thread *mThread_io;
-    ThreadSafeFifo<QGS_ModuleMsgBase::ptr>mOutgoingFifo;
+    ThreadSafeFifo<QGS_ModuleMsgBase::ptr> mOutgoingFifo;
     int mRetries;
-    bool mOngoing;
+    QGS_ModuleMsgBase::ptr mOngoing;
     uint8_t mMsgNr = 0;
 
 

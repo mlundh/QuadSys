@@ -1,5 +1,4 @@
-list(APPEND src "Msg_IoWrapper.cpp"
-				"Msg_Transmission.cpp"
+list(APPEND src "Msg_Transmission.cpp"
 				)
                 
 list(APPEND dep "BinaryStream"

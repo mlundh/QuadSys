@@ -35,7 +35,7 @@ using namespace QuadGS;
 // Test fixture to setup the topology.
 class ModuleTest : public ::testing::Test {
 protected:
-	ModuleTest(): module_1(msgAddr_t::FC_IO_e),module_2(msgAddr_t::FC_Log_e),router(msgAddr_t::Router)
+	ModuleTest(): module_1(msgAddr_t::FC_SerialIO_e),module_2(msgAddr_t::FC_Log_e),router(msgAddr_t::Router)
 {
 		QuadGS::AppLog::Init("app_log", "msg_log", std::cout, QuadGS::severity_level::warning, false);
 
@@ -74,7 +74,7 @@ TEST_F(ModuleTest, TwoSameName)
 {
 
 	testing::internal::CaptureStdout();
-	FakeModule module_3(msgAddr_t::FC_IO_e);
+	FakeModule module_3(msgAddr_t::FC_SerialIO_e);
 	router.bind(&module_3);
 
 	usleep(500); // allow time to print to stdout
@@ -86,7 +86,7 @@ TEST_F(ModuleTest, TwoSameName)
 // Test fixture to setup the topology.
 class ThreadedModuleTest : public ::testing::Test {
 protected:
-	ThreadedModuleTest(): module_1(msgAddr_t::FC_IO_e),module_2(msgAddr_t::FC_Log_e),module_3(msgAddr_t::FC_Param_e),router(msgAddr_t::Router)
+	ThreadedModuleTest(): module_1(msgAddr_t::FC_SerialIO_e),module_2(msgAddr_t::FC_Log_e),module_3(msgAddr_t::FC_Param_e),router(msgAddr_t::Router)
 {
 		QuadGS::AppLog::Init("app_log", "msg_log", std::cout, QuadGS::severity_level::warning, false);
 
@@ -112,7 +112,7 @@ TEST_F(ThreadedModuleTest, SendAndGetReturned)
 {
 
 	module_1.returnNxtMsg(true);
-	module_2.sendDummyDebugMsg(module_1.getName());
+	module_2.sendDummyLogMsg(module_1.getName());
 	module_1.returnNxtMsg(true);
 	module_2.sendDummyParamMsg(module_1.getName());
 
@@ -133,25 +133,25 @@ TEST_F(ThreadedModuleTest, SendAndGetReturned)
 TEST_F(ThreadedModuleTest, SendABunch)
 {
 
-	module_2.sendDummyDebugMsg(module_1.getName());
+	module_2.sendDummyLogMsg(module_1.getName());
 	module_2.sendDummyParamMsg(module_1.getName());
-	module_2.sendDummyDebugMsg(module_1.getName());
-	module_2.sendDummyDebugMsg(module_1.getName());
+	module_2.sendDummyLogMsg(module_1.getName());
+	module_2.sendDummyLogMsg(module_1.getName());
 
-	module_1.sendDummyDebugMsg(module_2.getName());
-	module_1.sendDummyDebugMsg(module_2.getName());
-	module_1.sendDummyDebugMsg(module_2.getName());
-	module_1.sendDummyDebugMsg(module_2.getName());
+	module_1.sendDummyLogMsg(module_2.getName());
+	module_1.sendDummyLogMsg(module_2.getName());
+	module_1.sendDummyLogMsg(module_2.getName());
+	module_1.sendDummyLogMsg(module_2.getName());
 
-	module_1.sendDummyDebugMsg(module_3.getName());
-	module_1.sendDummyDebugMsg(module_3.getName());
-	module_1.sendDummyDebugMsg(module_3.getName());
-	module_1.sendDummyDebugMsg(module_3.getName());
+	module_1.sendDummyLogMsg(module_3.getName());
+	module_1.sendDummyLogMsg(module_3.getName());
+	module_1.sendDummyLogMsg(module_3.getName());
+	module_1.sendDummyLogMsg(module_3.getName());
 
-	module_3.sendDummyDebugMsg(module_1.getName());
-	module_3.sendDummyDebugMsg(module_1.getName());
-	module_3.sendDummyDebugMsg(module_1.getName());
-	module_3.sendDummyDebugMsg(module_1.getName());
+	module_3.sendDummyLogMsg(module_1.getName());
+	module_3.sendDummyLogMsg(module_1.getName());
+	module_3.sendDummyLogMsg(module_1.getName());
+	module_3.sendDummyLogMsg(module_1.getName());
 
 	for(int i = 0; i < 100; i++)
 	{
@@ -171,7 +171,7 @@ TEST_F(ThreadedModuleTest, SendABunch)
 // Test fixture to setup the topology.
 class MultipleModuleTypesTest : public ::testing::Test {
 protected:
-	MultipleModuleTypesTest(): tmodule_1(msgAddr_t::FC_IO_e),tmodule_2(msgAddr_t::FC_Log_e),tmodule_3(msgAddr_t::FC_Param_e),rmodule_1(msgAddr_t::FC_SerialIO_e),rmodule_2(msgAddr_t::GS_Log_e), router(msgAddr_t::Router)
+	MultipleModuleTypesTest(): tmodule_1(msgAddr_t::Unassigned),tmodule_2(msgAddr_t::FC_Log_e),tmodule_3(msgAddr_t::FC_Param_e),rmodule_1(msgAddr_t::FC_SerialIO_e),rmodule_2(msgAddr_t::GS_Log_e), router(msgAddr_t::Router)
 {
 		QuadGS::AppLog::Init("app_log", "msg_log", std::cout, QuadGS::severity_level::warning, false);
 
@@ -203,10 +203,10 @@ protected:
 TEST_F(MultipleModuleTypesTest, SendABunch)
 {
 
-	tmodule_2.sendDummyDebugMsg(rmodule_1.getName());
+	tmodule_2.sendDummyLogMsg(rmodule_1.getName());
 	tmodule_2.sendDummyParamMsg(rmodule_1.getName());
-	tmodule_2.sendDummyDebugMsg(rmodule_1.getName());
-	tmodule_2.sendDummyDebugMsg(rmodule_1.getName());
+	tmodule_2.sendDummyLogMsg(rmodule_1.getName());
+	tmodule_2.sendDummyLogMsg(rmodule_1.getName());
 
 	rmodule_1.sendDummyDebugMsg(tmodule_2.getName());
 	rmodule_1.sendDummyDebugMsg(tmodule_2.getName());

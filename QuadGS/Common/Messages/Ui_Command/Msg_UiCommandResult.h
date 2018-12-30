@@ -27,9 +27,10 @@ public:
 	
 	virtual BinaryIStream& stream(BinaryIStream& is);
 	
-		std::string getResult() const;
+	std::string getResult() const;
 
 	void setResult(std::string result);
+	
 
 	
 private:

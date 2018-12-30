@@ -35,6 +35,7 @@
 #include <chrono>
 
 #include "Msg_Stop.h"
+#include "msgAddr.h"
 
 namespace QuadGS {
 
@@ -143,12 +144,9 @@ bool CLI::RunUI()
 {
 	if(!mIsInitilized)
 	{
-		mLogger.QuadLog(debug, "Requesting messages from GS_Param");
-
-		Msg_GetUiCommands::ptr ptr = std::make_unique<Msg_GetUiCommands>(msgAddr_t::GS_Param_e);
+		Msg_GetUiCommands::ptr ptr = std::make_unique<Msg_GetUiCommands>(static_cast<msgAddr_t>(msgAddr_t::Broadcast));
 		sendMsg(std::move(ptr));
-		Msg_GetUiCommands::ptr ptrLh = std::make_unique<Msg_GetUiCommands>(msgAddr_t::GS_Log_e);
-		sendMsg(std::move(ptrLh));
+
 		mIsInitilized = true;
 	}
 	try
@@ -380,6 +378,11 @@ void CLI::process(Msg_FindParam* message)
 	mMutex.unlock();
 	cvFindParam.notify_one();
 
+}
+
+void CLI::process(Msg_Display* message)
+{
+	Display(message->getMessage());
 }
 
 void CLI::waitForUiResult()

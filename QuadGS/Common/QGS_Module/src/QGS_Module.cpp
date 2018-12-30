@@ -30,6 +30,12 @@
 namespace QuadGS
 {
 
+QGS_Module::UiCommand::UiCommand(std::string command,  std::string doc, UiFcn function):
+				command(command), doc(doc), function(function)
+{
+
+}
+
 QGS_Module::QGS_Module()
 :QGS_MessageHandlerBase(msgAddr_t::Unassigned), mSendFcn(NULL)
 {

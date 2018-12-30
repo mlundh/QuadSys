@@ -27,12 +27,14 @@ public:
 	
 	virtual BinaryIStream& stream(BinaryIStream& is);
 	
-		std::string getTofind() const;
+	std::string getTofind() const;
 
 	void setTofind(std::string toFind);
+	
 	std::string getFound() const;
 
 	void setFound(std::string found);
+	
 
 	
 private:

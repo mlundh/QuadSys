@@ -132,9 +132,15 @@ def genCmake( files, interface, outputDir ):
 
 def genTypes( types, enumName, outputDir ):
 	dir = sys.path[0] + '/'
+	enum = ''
+	enumStr = ''
 	substTypes={}
+	for type in types:
+		enum += '	' + type + '_e,\n'
+		enumStr += '	"' + type + '",\n'
 	substTypes['enumName'] = enumName
-	substTypes['types'] = types
+	substTypes['enum'] = enum
+	substTypes['enumStr'] = enumStr
 	with open(dir+'msgTypesTemplate', 'r') as ftemp:
 		templateStringEnum = ftemp.read()
 		
@@ -206,7 +212,6 @@ cppTypes = []
 #Go through all interfaces and generate messages, enums and addresses based on that. 
 with open(args.file, "r") as file:
 	files=''
-	types=''
 	for line in file:
 		if (line[0] == '*'): # Interface divider.
 			interfaceTest = line.split()[0][1:]
@@ -224,10 +229,9 @@ with open(args.file, "r") as file:
 			continue
 		print('Generating: ' + line)
 		genMessage(line, args.outputDir+'/'+interface)
-		types += (line.split()[0]) + '_e,\n	'
 		cppTypes.append(line.split()[0])
 		files += '"' + (line.split()[0]) + '.cpp"\n				'
-genTypes(types, 'messageTypes', args.outputDir + '/../MsgBase')
+genTypes(cppTypes, 'messageTypes', args.outputDir + '/../MsgBase')
 genAdresses(addresses, 'msgAddr', args.outputDir + '/../MsgBase')
 genParser(cppTypes, interfaces, args.outputDir + '/Parser/src')
 # Generate the top level Message cmakelist.

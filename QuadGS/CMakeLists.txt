@@ -138,7 +138,6 @@ include_directories(Interfaces)
 
 # Targets that we develop
 enable_testing()
-add_subdirectory(Core)
 add_subdirectory(Modules)
 add_subdirectory(Common)
 add_subdirectory(top)

@@ -27,18 +27,22 @@ public:
 	
 	virtual BinaryIStream& stream(BinaryIStream& is);
 	
-		uint8_t getControl() const;
+	uint8_t getControl() const;
 
 	void setControl(uint8_t control);
+	
 	uint8_t getSequencenr() const;
 
 	void setSequencenr(uint8_t sequenceNr);
+	
 	uint8_t getLastinsequence() const;
 
 	void setLastinsequence(uint8_t lastInSequence);
+	
 	std::string getPayload() const;
 
 	void setPayload(std::string payload);
+	
 
 	
 private:

@@ -32,7 +32,7 @@
 namespace QuadGS
 {
 
-QGS_Router::QGS_Router(msgAddr_t name): mNrModules(0), mName(name), mStop(false), mLogger(msgAddrStr[name])
+QGS_Router::QGS_Router(msgAddr_t name): mFifo(200), mNrModules(0), mName(name), mStop(false), mLogger(msgAddrStr[name])
 {
 	mThread = std::thread(std::bind(&QGS_Router::runRouter, this));
 }
@@ -82,9 +82,9 @@ void QGS_Router::sendMsg(QGS_ModuleMsgBase::ptr message)
 			msgAddr_t source = message->getSource();
 			for(auto module : mWriteFunctions)
 			{
-				if(module.first != source) // Do not return to sender
+				if(module.first != source && message) // Do not return to sender
 				{
-					internalSend(std::move(message), module.first, true);
+					message = internalSend(std::move(message), module.first, true);
 				}
 			}
 		}
@@ -92,13 +92,13 @@ void QGS_Router::sendMsg(QGS_ModuleMsgBase::ptr message)
 	else
 	{
 		std::stringstream ss;
-		ss << "No subscriber to message type: " << type;
+		ss << "No subscriber to message type: " << messageTypesStr[type];
 		mLogger.QuadLog(severity_level::warning, ss.str() );
 	}
 }
 
 
-void QGS_Router::internalSend(QGS_ModuleMsgBase::ptr message, msgAddr_t port, bool broadcast)
+QGS_ModuleMsgBase::ptr QGS_Router::internalSend(QGS_ModuleMsgBase::ptr message, msgAddr_t port, bool broadcast)
 {
 	//Make sure we have a write function.
 	std::map<msgAddr_t, WriteFcn>::iterator it = mWriteFunctions.find(port);
@@ -127,6 +127,7 @@ void QGS_Router::internalSend(QGS_ModuleMsgBase::ptr message, msgAddr_t port, bo
 	{
 		mLogger.QuadLog(severity_level::error, "No port: " + msgAddrStr[port] + ", error in topology? ");
 	}
+	return message;
 }
 
 

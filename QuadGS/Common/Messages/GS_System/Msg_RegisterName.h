@@ -27,9 +27,10 @@ public:
 	
 	virtual BinaryIStream& stream(BinaryIStream& is);
 	
-		uint32_t getName() const;
+	uint32_t getName() const;
 
 	void setName(uint32_t name);
+	
 
 	
 private:

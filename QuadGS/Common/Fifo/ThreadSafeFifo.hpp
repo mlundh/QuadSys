@@ -35,10 +35,28 @@ class ThreadSafeFifo
 {
 public:
 	ThreadSafeFifo(unsigned int size = 0): mQueue(), mMutex(), mSize(size)
-{}
+	{}
 
 	~ThreadSafeFifo()
 	{}
+
+	void pushWait(T item)
+	{
+		{
+		std::unique_lock<std::mutex> l(mMutex);
+		while((mQueue.size() >= mSize))
+		{
+			// release lock, wait and then reaquire it.
+			mCv.wait(l);
+		}
+		if((mQueue.size() >= mSize)) // Should never happen...
+		{
+			throw std::runtime_error("FIFO fifo full, even after wait...!");
+		}
+		mQueue.push(std::move(item));
+		}
+		mCv.notify_all();
+	}
 
 	void push(T item)
 	{
@@ -65,17 +83,6 @@ public:
 			mCv.wait(lock);
 		}
 		return mQueue.front();
-	}
-
-	T& frontMove()
-	{
-		std::unique_lock<std::mutex> lock(mMutex);
-		while(mQueue.empty())
-		{
-			// release lock, wait and then reaquire it.
-			mCv.wait(lock);
-		}
-		return std::move(mQueue.front());
 	}
 
 	void pop()

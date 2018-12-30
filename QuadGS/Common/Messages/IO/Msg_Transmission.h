@@ -27,9 +27,10 @@ public:
 	
 	virtual BinaryIStream& stream(BinaryIStream& is);
 	
-		uint8_t getStatus() const;
+	uint8_t getStatus() const;
 
 	void setStatus(uint8_t status);
+	
 
 	
 private:

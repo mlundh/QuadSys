@@ -49,15 +49,6 @@ class Parameters
 
 {
 public:
-	typedef std::function<std::string(std::string) > UiFcn;
-	class UiCommand
-	{
-	public:
-		UiCommand(std::string command,  std::string doc, UiFcn function);
-		std::string command;
-		std::string doc;
-		UiFcn function;
-	};
 
 	Parameters(msgAddr_t name);
 

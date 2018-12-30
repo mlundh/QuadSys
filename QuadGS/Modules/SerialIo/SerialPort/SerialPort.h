@@ -31,9 +31,8 @@
 #include <memory>
 
 #include "AppLog.h"
-#include "QGS_Msg.h"
 #include "QGS_ModuleMsg.h"
-#include "QGS_IoInterface.h"
+#include "Parser.h"
 
 typedef boost::asio::serial_port b_a_sp;
 
@@ -113,7 +112,7 @@ public:
      * and opened serial port.
      * @param msg to a QSP instance to be transmitted.
      */
-    void write( QGS_ModuleMsgBase::ptr msg);
+    QGS_ModuleMsgBase::ptr write( QGS_ModuleMsgBase::ptr msg);
 
     /**
      * Start the read timer. If timeout occurs then the read will be considered failed.
@@ -150,12 +149,6 @@ public:
     void setParity( b_a_sp::parity::type parity );
     
     void setStopBits( b_a_sp::stop_bits::type stop_bits );
-    
-    /**
-     * Set the parser that parses raw data into messages.
-     * @param fcn
-     */
-    void setParser(  ParserBase::ptr parser  );
 
     /**
      * Set the function to be called when a message is ready.
@@ -225,7 +218,7 @@ private:
     boost::asio::deadline_timer mTimeoutWrite;
     std::shared_ptr<std::vector<unsigned char> > mWriteBuff;
     std::shared_ptr<std::vector<unsigned char> > mReadBuff;
-    ParserBase::ptr mParser;
+    Parser mParser;
     msgCallbackFcn mMessageHandler;
     timeoutHandlerFcn mReadTimeoutHandler;
 };

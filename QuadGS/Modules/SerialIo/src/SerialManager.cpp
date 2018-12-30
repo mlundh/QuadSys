@@ -26,7 +26,6 @@
 #include <boost/algorithm/string.hpp>
 
 #include "QGS_IoHeader.h"
-#include "FcParser.h"
 #include "SlipPacket.h"
 
 #include "QGS_Msg.h"
@@ -36,14 +35,16 @@
 #include "Msg_Transmission.h"
 
 namespace QuadGS {
-Serial_Manager::Serial_Manager(std::string name)
+
+
+Serial_Manager::Serial_Manager(msgAddr_t name)
 	:QGS_MessageHandlerBase(name)
 	,mIo_service()
 	,mWork(new boost::asio::io_service::work(mIo_service))
 	,mThread_io(NULL)
 	,mOutgoingFifo(10)
 	,mRetries(0)
-	,mOngoing(false)
+	,mOngoing()
 {
 	 mCommands.push_back(UiCommand("serialSetBaudRate","Set the baud rate of the serial port.",std::bind(&Serial_Manager::setBaudRateCmd, this, std::placeholders::_1)));
 	 mCommands.push_back(UiCommand("serialSetFlowControl","Set the flow control of the serial port.",std::bind(&Serial_Manager::setFlowControlCmd, this, std::placeholders::_1)));
@@ -51,6 +52,8 @@ Serial_Manager::Serial_Manager(std::string name)
 	 mCommands.push_back(UiCommand("serialSetStopBits","Set the number of stop bits used. ",std::bind(&Serial_Manager::setStopBitsCmd, this, std::placeholders::_1)));
 	 mCommands.push_back(UiCommand("serialOpenPort","Open the serial port.",std::bind(&Serial_Manager::openCmd, this, std::placeholders::_1)));
 	 mCommands.push_back(UiCommand("serialStartReadPort","Start the read operation.",std::bind(&Serial_Manager::startReadCmd, this, std::placeholders::_1)));
+
+	 initialize();
 }
 
 
@@ -60,7 +63,10 @@ Serial_Manager::~Serial_Manager()
 	mWork.reset();
 	mPort.reset();
 	mIo_service.stop();
-	mThread_io->join();
+	if(mThread_io && mThread_io->joinable())
+	{
+		mThread_io->join();
+	}
 }
 
 void Serial_Manager::initialize()
@@ -69,7 +75,6 @@ void Serial_Manager::initialize()
 	mPort = QuadGS::SerialPort::create(mIo_service);
 	mPort->setReadCallback( std::bind(&Serial_Manager::messageHandler, this, std::placeholders::_1) );
 	mPort->setReadTimeoutCallback( std::bind(&Serial_Manager::timeoutHandler, this) );
-	mPort->setParser(std::make_shared<FcParser>());
 
 }
 
@@ -156,12 +161,15 @@ void Serial_Manager::process(Msg_FireUiCommand* message)
 }
 
 
-void Serial_Manager::process(Msg_IoWrapper* message)
+void Serial_Manager::process(Msg_Test* message)
 {
-	Msg_IoWrapper::ptr msg(message->clone());
-	mOutgoingFifo.push(std::move(msg));
-	doWrite();
+	Msg_Test::ptr clone = std::make_unique<Msg_Test>(message->clone());
+
+	mOutgoingFifo.push(std::move(clone));
+	Msg_Test::ptr ptr = std::make_unique<Msg_Test>(msgAddr_t::GUI_e);
+	sendMsg(std::move(ptr));
 }
+
 void Serial_Manager::runThread()
 {
 	try
@@ -185,17 +193,16 @@ void Serial_Manager::timeoutHandler()
 	{
 		mRetries++;
 		mLogger.QuadLog(severity_level::warning, "No reply, retrying");
+		mOngoing = mPort->write( std::move(mOngoing) ); // resend.
 
 	}
 	else
 	{
 		mRetries = 0;
-		mOutgoingFifo.pop();
-		mLogger.QuadLog(severity_level::error, "Transmission failed timeout.");
+		mOngoing.release();
+		mLogger.QuadLog(severity_level::warning, "Transmission failed timeout.");
+		doWrite();// Poll doWrite to see if there is more to be written.
 	}
-	// Poll doWrite to see if there is more to be written.
-	mOngoing = false;
-	doWrite();
 }
 
 void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
@@ -205,16 +212,12 @@ void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 	{
 		Msg_Transmission* nameMsg = dynamic_cast<Msg_Transmission*>(msg.get());
 
-		mOngoing = false; // we got a transmission message, this is the end of an ongoing transmission.
+		mOngoing.release(); // we got a transmission message, this is the end of an ongoing transmission.
 		if(nameMsg->getStatus() == 1) // TODO make enum...
 		{
 			// Transmission ok, discard the outgoing message, no need to save after successful transmission.
 			mLogger.QuadLog(severity_level::message_trace, "Received: TransmissionOK ");
 
-			if(!mOutgoingFifo.empty())
-			{
-				mOutgoingFifo.pop();
-			}
 			mRetries = 0;
 		}
 		else if(nameMsg->getStatus() == 2)
@@ -229,7 +232,6 @@ void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 			else
 			{
 				mRetries = 0;
-				mOutgoingFifo.pop();
 				mLogger.QuadLog(severity_level::error, "Transmission failed NOK.");
 			}
 
@@ -256,12 +258,14 @@ void Serial_Manager::doWrite()
 	{
 		return;
 	}
-	QGS_ModuleMsgBase::ptr msg = mOutgoingFifo.frontMove();
-	msg->setMsgNr(mRetries > 0 ? (mMsgNr) : (mMsgNr++)%256);
-	mLogger.QuadLog(severity_level::message_trace, "Transmitting: " + msg->toString()));
+	QGS_ModuleMsgBase::ptr msg = mOutgoingFifo.dequeue();
 
-	mOngoing = true;
-	mPort->write( msg );
+	msg->setMsgNr(mRetries > 0 ? (mMsgNr) : (mMsgNr++)%256);
+	mLogger.QuadLog(severity_level::message_trace, "Transmitting: " + msg->toString());
+
+	//TODO save the msg after write!!
+	mOngoing = mPort->write( std::move(msg) );
+
 }
 
 

@@ -1,8 +1,6 @@
 set(src "LogHandler.cpp")
 set(dep "CommandTree"
         "Ui_Command"
-        "Ui_CommandSlave"
-        "Ui_CommandMaster"
         "Log"
         "QGS_Module")
 

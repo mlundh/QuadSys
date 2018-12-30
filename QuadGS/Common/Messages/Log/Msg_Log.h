@@ -27,12 +27,14 @@ public:
 	
 	virtual BinaryIStream& stream(BinaryIStream& is);
 	
-		uint8_t getControl() const;
+	uint8_t getControl() const;
 
 	void setControl(uint8_t control);
+	
 	std::string getPayload() const;
 
 	void setPayload(std::string payload);
+	
 
 	
 private:

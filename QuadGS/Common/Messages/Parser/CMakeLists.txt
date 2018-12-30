@@ -1,12 +1,9 @@
 list(APPEND src "Parser.cpp" )
 
 list(APPEND dep GS_System
-				FC_IO
 				Param
 				Log
 				Ui_Command
-				Ui_CommandSlave
-				Ui_CommandMaster
 				IO
 				)
 

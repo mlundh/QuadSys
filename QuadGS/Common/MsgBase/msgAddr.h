@@ -9,14 +9,16 @@ enum msgAddr
 	Unassigned,
 	Router,
 	Broadcast,
+	GS_SerialIO_e,
 	FC_Log_e,
-	FC_SerialIO_e,
+	FC_Dbg_e,
 	GUI_e,
 	GS_Log_e,
-	FC_IO_e,
 	FC_Param_e,
 	GS_Param_e,
+	FC_SerialIO_e,
 
+	Last
 };
 typedef enum msgAddr msgAddr_t;
 
@@ -25,14 +27,16 @@ static const std::vector<std::string> msgAddrStr =
 	"Unassigned",
 	"Router",
 	"Broadcast",
+	"GS_SerialIO",
 	"FC_Log",
-	"FC_SerialIO",
+	"FC_Dbg",
 	"GUI",
 	"GS_Log",
-	"FC_IO",
 	"FC_Param",
 	"GS_Param",
+	"FC_SerialIO",
 
+	"Last",
 };
 }
 #endif /* QUADGS_MESSAGE_ADDRESSES_H_ */

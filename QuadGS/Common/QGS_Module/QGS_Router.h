@@ -54,7 +54,7 @@ private:
 
 	void sendMsg(QGS_ModuleMsgBase::ptr message);
 
-	void internalSend(QGS_ModuleMsgBase::ptr message, msgAddr_t port, bool broadcast);
+	QGS_ModuleMsgBase::ptr internalSend(QGS_ModuleMsgBase::ptr message, msgAddr_t port, bool broadcast);
 
 	void runRouter();
 

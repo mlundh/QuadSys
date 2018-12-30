@@ -36,6 +36,8 @@
 #include "Msg_UiCommandResult.h"
 #include "Msg_FindParam.h"
 #include "Msg_Stop.h"
+#include "Msg_Display.h"
+
 
 namespace QuadGS {
 
@@ -44,6 +46,7 @@ class CLI
 		, public QGS_MessageHandler<Msg_RegUiCommand>
 		, public QGS_MessageHandler<Msg_UiCommandResult>
 		, public QGS_MessageHandler<Msg_FindParam>
+		, public QGS_MessageHandler<Msg_Display>
 
 {
 private:
@@ -90,6 +93,7 @@ public:
 	virtual void process(Msg_RegUiCommand* message);
 	virtual void process(Msg_UiCommandResult* message);
 	virtual void process(Msg_FindParam* message);
+	virtual void process(Msg_Display* message);
 
 	void waitForUiResult();
 

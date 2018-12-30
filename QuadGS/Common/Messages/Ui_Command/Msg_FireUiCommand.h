@@ -27,12 +27,14 @@ public:
 	
 	virtual BinaryIStream& stream(BinaryIStream& is);
 	
-		std::string getCommand() const;
+	std::string getCommand() const;
 
 	void setCommand(std::string command);
+	
 	std::string getArgs() const;
 
 	void setArgs(std::string args);
+	
 
 	
 private:

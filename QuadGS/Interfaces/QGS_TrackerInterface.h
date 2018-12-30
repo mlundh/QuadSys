@@ -27,7 +27,6 @@
 #include <memory>
 #include <functional>
 
-#include "QGS_IoHeader.h"
 #include "QGS_Msg.h"
 
 namespace QuadGS
@@ -70,39 +69,6 @@ struct state_data
   uint16_t state_valid_bf;        //!< bits used to determine if the state is valid.
   double state_if[nr_states_if];  //!< Inertial frame state vector.
   uint16_t state_valid_if;        //!< bits used to determine if the state is valid.
-};
-
-class QGS_TrackerInterface
-{
-public:
-    typedef std::function<void(std::shared_ptr<QGS_IoHeader>, std::shared_ptr<QGS_Msg>) > WriteFcn;
-
-
-	QGS_TrackerInterface(){};
-	virtual ~QGS_TrackerInterface() {};
-
-	/**
-	 * Write function to send state information to the FC.
-	 * @param fcn
-	 */
-    virtual void RegisterWriteFcn(WriteFcn fcn) = 0;
-
-    /**
-     * Handle incoming messages.
-     * @param header
-     * @param payload
-     */
-    virtual void msgHandler(std::shared_ptr<QGS_IoHeader> header, std::shared_ptr<QGS_Msg> payload) = 0;
-
-    /**
-     * Get the user commands available for the module.
-     * @return  A vector of commands.
-     */
-    virtual std::vector<std::shared_ptr<QGS_UiCommand>> getCommands( ) = 0;
-
-protected:
-    WriteFcn mWriteFcn;
-
 };
 
 } /* namespace QuadGS */

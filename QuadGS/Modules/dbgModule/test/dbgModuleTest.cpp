@@ -1,7 +1,7 @@
 /*
- * ParametersTest.cpp
+ * dbgModuleTest.cpp
  *
- * Copyright (C) 2017 Martin Lundh
+ * Copyright (C) 2018 Martin Lundh
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,42 +21,3 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
-#include "Parameters.h"
-#include "QGS_Router.h"
-#include "CLI.h"
-#include "LogHandler.h"
-#include "QGS_IoHeader.h"
-#include "SerialManager.h"
-#include "dbgModule.h"
-#include <memory>
-#include <iostream>
-
-
-using namespace QuadGS;
-
-
-int main(int ac, char* av[])
-{
-	QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::debug);
-
-	//Instantiate modules.
-	Parameters mParameters(msgAddr_t::GS_Param_e);
-	CLI mCli(msgAddr_t::GUI_e);
-	LogHandler mLogHandler(msgAddr_t::GS_Log_e);
-	Serial_Manager serialIo(msgAddr_t::GS_SerialIO_e);
-	dbgModule dbgModule(msgAddr_t::FC_Dbg_e);
-	//Instantiate the router.
-	QGS_Router mRouter(msgAddr_t::Router);
-
-	//Bind all modules to the router.
-	mRouter.bind(&mParameters);
-	mRouter.bind(&mCli);
-	mRouter.bind(&mLogHandler);
-	mRouter.bind(&serialIo);
-	mRouter.bind(&dbgModule);
-	//Run the CLI.
-	while(mCli.RunUI());
-
-	return 0;
-}

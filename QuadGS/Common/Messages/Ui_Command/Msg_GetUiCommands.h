@@ -27,7 +27,7 @@ public:
 	
 	virtual BinaryIStream& stream(BinaryIStream& is);
 	
-	
+
 	
 private:
 	

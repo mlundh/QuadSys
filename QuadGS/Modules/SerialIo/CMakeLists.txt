@@ -9,7 +9,7 @@ list(APPEND dep "SerialPort"
                 "crc"
                 "AppLog"
                 "Parameters"
-                "Parser"
-                "QGS_Module")
+                "QGS_Module"
+                "Ui_Command")
 
 qgs_make_shared_lib( serial_io src dep)

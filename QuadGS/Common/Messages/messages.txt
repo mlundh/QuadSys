@@ -1,14 +1,10 @@
 #All interfaces must start with:'*{NameOfInterface}' and end with a single '*'
 #TODO update script to create enums needed for the message types, this includes members and possible addresses.
-*GS_System 
+*GS_System FC_Dbg GUI
 Msg_Stop
 Msg_RegisterName --member uint32_t name
-*
-
-*FC_IO FC_IO
-Msg_DebugIo --member std::unique_ptr<QGS_DebugMsg> dbgMsg --include QGS_DebugMsg.h
-Msg_ParamIo --member std::unique_ptr<QGSParamMsg> paramMsg --include QGS_ParamMsg.h
-Msg_LogIo --member std::unique_ptr<QGS_LogMsg> paramMsg --include QGS_LogMsg.h
+Msg_Display --member std::string message
+Msg_Test 
 *
 
 *Param GS_Param FC_Param
@@ -18,21 +14,14 @@ Msg_Param --member uint8_t control --member uint8_t sequenceNr --member uint8_t 
 Msg_Log --member uint8_t control --member std::string payload
 *
 
-*Ui_Command GUI FC_Param
+*Ui_Command GUI FC_Param FC_Param FC_SerialIO GS_SerialIO
 Msg_FindParam --member std::string toFind --member std::string found
-*
-
-*Ui_CommandSlave FC_Param FC_SerialIO
 Msg_GetUiCommands
 Msg_FireUiCommand --member std::string command --member std::string args
-*
-
-*Ui_CommandMaster GUI
 Msg_RegUiCommand --member std::string command --member std::string doc
 Msg_UiCommandResult --member std::string result
 *
 
-*IO FC_SerialIO
-Msg_IoWrapper --member std::unique_ptr<QGS_ModuleMsgBase> baseMsg
+*IO FC_SerialIO GS_SerialIO
 Msg_Transmission --member uint8_t status
 *

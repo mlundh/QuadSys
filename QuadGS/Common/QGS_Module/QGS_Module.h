@@ -52,6 +52,16 @@ class QGS_Router;
 class QGS_Module: public virtual QGS_MessageHandlerBase
 {
 public:
+	typedef std::function<std::string(std::string) > UiFcn;
+	class UiCommand
+	{
+	public:
+		UiCommand(std::string command,  std::string doc, UiFcn function);
+		std::string command;
+		std::string doc;
+		UiFcn function;
+	};
+
     friend QGS_Router;
 	typedef std::function<void(std::unique_ptr<QGS_ModuleMsgBase>) > receivingFcn_t;
 
