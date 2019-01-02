@@ -105,8 +105,8 @@ std::string QGS_ModuleMsgBase::toString() const
 {
 	std::stringstream ss;
 	ss << "ModuleMsg type: " << messageTypesStr[mType] << std::endl;
-	ss << "Source: " << mSource << std::endl;
-	ss << "Destination: " << mDestination << std::endl;
+	ss << "Source: " << msgAddrStr[mSource] << std::endl;
+	ss << "Destination: " << msgAddrStr[mDestination] << std::endl;
 
 	return ss.str();
 }

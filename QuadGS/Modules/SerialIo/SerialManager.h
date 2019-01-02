@@ -54,8 +54,6 @@ class Serial_Manager
 		: public QGS_ReactiveModule
 		, public QGS_MessageHandler<Msg_GetUiCommands>
 		, public QGS_MessageHandler<Msg_FireUiCommand>
-		, public QGS_MessageHandler<Msg_Test>
-
 
 {
 
@@ -96,8 +94,8 @@ public:
 
 	virtual void process(Msg_GetUiCommands* message);
 	virtual void process(Msg_FireUiCommand* message);
-	virtual void process(Msg_Test* message);
 
+	void ReceivingFcnIo(std::unique_ptr<QGS_ModuleMsgBase> message);
 
 private:
 
@@ -126,10 +124,24 @@ private:
     void doWrite();
 
 
+    /**
+     * Start the read timer. If timeout occurs then the read will be considered failed.
+     * @param timeout
+     */
+   void startReadTimer(int timeout = 1000);
+
+
+   /**
+    * @brief read timeout timer callback.
+    * @param error
+    */
+   void timerReadCallback( const boost::system::error_code& error );
+
 	std::vector<UiCommand> mCommands;
     QuadGS::SerialPort::ptr mPort;
     boost::asio::io_service mIo_service;
     std::unique_ptr<boost::asio::io_service::work> mWork;
+    boost::asio::deadline_timer mTimeoutRead;
     std::thread *mThread_io;
     ThreadSafeFifo<QGS_ModuleMsgBase::ptr> mOutgoingFifo;
     int mRetries;

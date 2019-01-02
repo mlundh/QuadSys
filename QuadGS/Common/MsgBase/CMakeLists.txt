@@ -14,6 +14,6 @@ list(APPEND src_DataMsgTest "DataMsgTest.cpp"
                             "QGS_ModuleMsgTest.cpp")
 list(APPEND dep_DataMsgTest "gtest_main"
                             "MsgBase"
-                            "Messages")
+                            "GS_System")
 
 qgs_add_test(DataMsgTest src_DataMsgTest dep_DataMsgTest)

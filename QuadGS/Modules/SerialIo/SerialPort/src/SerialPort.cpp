@@ -44,7 +44,6 @@ SerialPort::SerialPort(  boost::asio::io_service &io_service ) :
 , mStopBits( b_a_sp::stop_bits::one )
 , mIoService( io_service )
 , mSerialPort( io_service )
-, mTimeoutRead( io_service )
 , mTimeoutWrite( io_service )
 , mParser()
 , mReadTimeoutHandler()
@@ -71,7 +70,7 @@ void SerialPort::close()
 					boost::system::error_code() ) );
 }
 
-void SerialPort::open( std::string port_name )
+std::string SerialPort::open( std::string port_name )
 {
 	boost::trim(port_name);
 	if(port_name.empty())
@@ -102,9 +101,14 @@ void SerialPort::open( std::string port_name )
 	else
 	{
 		QuadLog(severity_level::warning, "Serial Port already open");
-		return;
+		return "";
 	}
-	return;
+	return "Port opened.";
+}
+
+bool SerialPort::isOpen()
+{
+	return mSerialPort.is_open();
 }
 
 
@@ -154,7 +158,6 @@ void SerialPort::doClose( const boost::system::error_code& error )
 	{
 		return;
 	}
-	mTimeoutRead.cancel();
 	mTimeoutWrite.cancel();
 	mSerialPort.close();
 	QuadLog(severity_level::info, "Serial Port closed");
@@ -183,8 +186,7 @@ QGS_ModuleMsgBase::ptr SerialPort::write(QGS_ModuleMsgBase::ptr msg)
 		SlipPacket::ptr tmpSlip = SlipPacket::Create(os.get_internal_vec(), true);
 		mWriteBuff =  std::make_shared<std::vector<unsigned char> >(std::move(tmpSlip->GetPacket())); // Do not use tmpSlip after move!
 	}
-	startReadTimer();
-	mTimeoutWrite.expires_from_now( boost::posix_time::milliseconds( 10000 ) );
+	mTimeoutWrite.expires_from_now( boost::posix_time::milliseconds( 1000 ) );
 	mTimeoutWrite.async_wait(
 			boost::bind( & SerialPort::timerWriteCallback,
 					shared_from_this(),
@@ -198,14 +200,7 @@ QGS_ModuleMsgBase::ptr SerialPort::write(QGS_ModuleMsgBase::ptr msg)
 	return std::move(msg);
 }
 
-void SerialPort::startReadTimer(int timeout)
-{
-	mTimeoutRead.expires_from_now( boost::posix_time::milliseconds( timeout ) );
-	mTimeoutRead.async_wait(
-			boost::bind( & SerialPort::timerReadCallback,
-					shared_from_this(),
-					boost::asio::placeholders::error ) );
-}
+
 
 /*Start an async read operation.*/
 void SerialPort::read()
@@ -285,12 +280,10 @@ void SerialPort::readCallback( const boost::system::error_code& error,
 		}
 
 		mReadBuff.reset();
-		mTimeoutRead.cancel();
 	}
 	catch (const std::runtime_error& e)
 	{
 		mReadBuff.reset(); // TODO move this! might cause error if slip creation fails.
-		mTimeoutRead.cancel();
 		QuadLog(severity_level::error, e.what() );
 	}
 	read();
@@ -316,33 +309,6 @@ void SerialPort::timerWriteCallback( const boost::system::error_code& error )
 	QuadLog(severity_level::warning, "Write timeout fired.");
 	mSerialPort.cancel(); // Close all asynchronous operation with serial port.
 	//will cause read_callback to fire with an error
-	return;
-}
-
-/* Called when the read timer's deadline expire. Do not cancel payload read, it is still used. */
-void SerialPort::timerReadCallback( const boost::system::error_code& error )
-{ 
-	if( error )
-	{
-		/*If the timer was called with the operation_aborted error code then
-		 * the timer was canceled and did not fire. Everything else is an error*/
-		if( error != boost::asio::error::operation_aborted )
-		{
-			QuadLog(severity_level::error, "Read timer callback: " + error.message());
-			doClose( error );
-			throw std::runtime_error(error.message());
-		}
-		return;
-	}
-	else
-	{
-		QuadLog(severity_level::warning, " Read timeout fired.");
-	}
-	if( mReadTimeoutHandler )
-	{
-		mReadTimeoutHandler();
-	}
-
 	return;
 }
 

@@ -16,15 +16,15 @@ using namespace QuadGS;
 TEST(QGSModuleMsgTest, StreamInOut)
 {
 
-	QGS_ModuleMsgBase::ptr msg = std::make_unique< Msg_Stop>("dest");
-	msg->setSource("Source");
+	QGS_ModuleMsgBase::ptr msg = std::make_unique< Msg_Stop>(msgAddr_t::FC_Dbg_e);
+	msg->setSource(msgAddr_t::FC_Param_e);
 
 	BinaryOStream os;
 	os << *msg;
 
 	BinaryIStream is(os.get_internal_vec());
 
-	Msg_Stop::ptr msgVerify = std::make_unique<Msg_Stop>("dest");
+	Msg_Stop::ptr msgVerify = std::make_unique<Msg_Stop>(msgAddr_t::FC_Dbg_e);
 
 	is >> *msgVerify;
 

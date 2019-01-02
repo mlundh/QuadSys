@@ -150,9 +150,4 @@ void dbgModule::process(Msg_FireUiCommand* message)
 	return;
 }
 
-void dbgModule::process(Msg_Test* message)
-{
-	Msg_Test::ptr ptr = std::make_unique<Msg_Test>(msgAddr_t::GUI_e);
-	sendMsg(std::move(ptr));
-}
 } /* namespace QuadGS */

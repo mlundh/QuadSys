@@ -114,11 +114,6 @@ public:
      */
     QGS_ModuleMsgBase::ptr write( QGS_ModuleMsgBase::ptr msg);
 
-    /**
-     * Start the read timer. If timeout occurs then the read will be considered failed.
-     * @param timeout
-     */
-   void startReadTimer(int timeout = 1000);
 
     /**
      * @brief Close the serial port.
@@ -131,7 +126,13 @@ public:
      *                  "/dev/ttyusb1"
      * @return true if success.
      */
-    void open( std::string port_name );
+    std::string open( std::string port_name );
+
+    /**
+     * Is the serial port already open?
+     * @return true if open, false otherwise.
+     */
+    bool isOpen();
 
     /**
      * @brief Set the options of the serial port.
@@ -194,12 +195,6 @@ private:
             std::size_t bytes_transferred );
 
     /**
-     * @brief read timeout timer callback.
-     * @param error
-     */
-    void timerReadCallback( const boost::system::error_code& error );
-
-    /**
      * @brief write timeout timer callback.
      * @param error
      */
@@ -214,7 +209,6 @@ private:
     boost::asio::io_service& mIoService;
     boost::asio::serial_port mSerialPort;
     boost::system::error_code mError;
-    boost::asio::deadline_timer mTimeoutRead;
     boost::asio::deadline_timer mTimeoutWrite;
     std::shared_ptr<std::vector<unsigned char> > mWriteBuff;
     std::shared_ptr<std::vector<unsigned char> > mReadBuff;

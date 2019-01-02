@@ -25,7 +25,6 @@
 
 #include "ZedTracker.h"
 
-#include "QGS_CoreInterface.h"
 #include <thread>
 #include <functional>
 #include <stdio.h>
@@ -55,28 +54,6 @@ ZedTracker::ZedTracker():mQuit(true)
 	mTrackParam.initial_world_transform = sl::Transform::identity();
 	mTrackParam.enable_spatial_memory = true;
 
-}
-
-void ZedTracker::RegisterWriteFcn(WriteFcn fcn)
-{
-	mWriteFcn = fcn;
-}
-
-void ZedTracker::msgHandler(std::shared_ptr<QGS_IoHeader> header, std::shared_ptr<QGS_Msg> payload)
-{
-
-}
-
-std::vector<std::shared_ptr<QGS_UiCommand>> ZedTracker::getCommands( )
-{
-	std::vector<std::shared_ptr<QGS_UiCommand>> commands;
-	commands.push_back(std::make_shared<QGS_UiCommand> ("trackerStart",
-			std::bind(&ZedTracker::startTracking, this, std::placeholders::_1),
-			"Start the tracker interface.", QGS_UiCommand::ActOn::NoAction));
-	commands.push_back(std::make_shared<QGS_UiCommand> ("trackerStop",
-			std::bind(&ZedTracker::stopTracking, this, std::placeholders::_1),
-			"Stop the tracker interface.", QGS_UiCommand::ActOn::NoAction));
-	return commands;
 }
 
 std::string ZedTracker::startTracking(std::string str)

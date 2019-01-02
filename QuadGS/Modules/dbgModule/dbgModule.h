@@ -37,7 +37,6 @@ namespace QuadGS {
 
 class dbgModule
 : public QGS_ReactiveModule
-, public QGS_MessageHandler<Msg_Test>
 , public QGS_MessageHandler<Msg_GetUiCommands>
 , public QGS_MessageHandler<Msg_FireUiCommand>
 {
@@ -54,7 +53,6 @@ public:
 
 	virtual void process(Msg_GetUiCommands* message);
 	virtual void process(Msg_FireUiCommand* message);
-	virtual void process(Msg_Test* message);
 
 	std::vector<UiCommand> mCommands;
 

@@ -1,6 +1,6 @@
 #All interfaces must start with:'*{NameOfInterface}' and end with a single '*'
 #TODO update script to create enums needed for the message types, this includes members and possible addresses.
-*GS_System FC_Dbg GUI
+*GS_System FC_Dbg GS_Dbg GUI
 Msg_Stop
 Msg_RegisterName --member uint32_t name
 Msg_Display --member std::string message

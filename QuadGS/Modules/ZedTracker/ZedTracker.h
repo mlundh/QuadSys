@@ -34,26 +34,12 @@ using namespace sl;
 namespace QuadGS
 {
 
-class ZedTracker : public QGS_TrackerInterface
+class ZedTracker
 {
 public:
 	ZedTracker();
 	virtual ~ZedTracker();
 
-	/**
-	 * Register the function used to write to the fc.
-	 * @param fcn
-	 */
-	virtual void RegisterWriteFcn(WriteFcn fcn);
-
-	/**
-	 * Handle incoming messages.
-	 * @param header
-	 * @param payload
-	 */
-	virtual void msgHandler(std::shared_ptr<QGS_IoHeader> header, std::shared_ptr<QGS_Msg> payload);
-
-	virtual std::vector<std::shared_ptr<QGS_UiCommand>> getCommands( );
 
 	std::string startTracking(std::string str);
 

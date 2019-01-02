@@ -29,8 +29,6 @@
 #include "QGS_IoHeader.h"
 #include "SerialManager.h"
 #include "dbgModule.h"
-#include <memory>
-#include <iostream>
 
 
 using namespace QuadGS;
@@ -38,14 +36,14 @@ using namespace QuadGS;
 
 int main(int ac, char* av[])
 {
-	QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::debug);
+	QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::message_trace);
 
 	//Instantiate modules.
 	Parameters mParameters(msgAddr_t::GS_Param_e);
 	CLI mCli(msgAddr_t::GUI_e);
 	LogHandler mLogHandler(msgAddr_t::GS_Log_e);
 	Serial_Manager serialIo(msgAddr_t::GS_SerialIO_e);
-	dbgModule dbgModule(msgAddr_t::FC_Dbg_e);
+	dbgModule dbgModule(msgAddr_t::GS_Dbg_e);
 	//Instantiate the router.
 	QGS_Router mRouter(msgAddr_t::Router);
 

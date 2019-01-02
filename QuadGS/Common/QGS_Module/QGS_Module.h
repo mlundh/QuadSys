@@ -26,7 +26,7 @@
 #ifndef QUADGS_UTILITIES_QGS_MODULE_QGS_MODULE_H_
 #define QUADGS_UTILITIES_QGS_MODULE_QGS_MODULE_H_
 
-
+#include <map>
 #include <memory>
 #include <functional>
 #include <string>
@@ -81,13 +81,13 @@ protected:
 	/**
 	 * Set the method that receives the messages.
 	 */
-	void setReceivingFcn(receivingFcn_t fcn);
+	void setReceivingFcn(receivingFcn_t fcn, msgAddr_t address);
 
 	/**
 	 * Get the receiving port of the module. This is used for binding.
-	 * @return
+	 * @return write function, NULL if not set.
 	 */
-	WriteFcn getReceivingFcn();
+	std::map<msgAddr_t, WriteFcn>& getReceivingFcns();
 
 	/**
 	 * Send messages. This function can be used by the module in the processMsg implementation to
@@ -97,6 +97,14 @@ protected:
 	void sendMsg(std::unique_ptr<QGS_ModuleMsgBase> message);
 
 	/**
+	 * Send messages, but do not add yourself as the sender. This method should only be used by forwarding
+	 * modules.
+	 * send a message.
+	 * @param message
+	 */
+	void sendExternalMsg(std::unique_ptr<QGS_ModuleMsgBase> message);
+
+	/**
 	 * Used internally during binding. Sets the send function and enables the module to
 	 * send messages to the router (and through the router to other modules).
 	 * @param func
@@ -104,7 +112,7 @@ protected:
 	void setSendFunc(WriteFcn func);
 
 protected:
-	WriteFcn mReceiveFcn;
+	std::map<msgAddr_t, WriteFcn> mReceiveFcns;
     WriteFcn mSendFcn;
 };
 

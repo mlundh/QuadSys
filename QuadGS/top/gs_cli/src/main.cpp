@@ -28,16 +28,13 @@
 #include <boost/bind.hpp>
 namespace po = boost::program_options;
 
-#include "SerialManager.h"
+#include "Parameters.h"
+#include "QGS_Router.h"
 #include "CLI.h"
-#ifdef WITH_VISION
-	#include "ZedTracker.h"
-#endif
-#include "QGS_UiInterface.h"
-#include "QGS_IoInterface.h"
-#include "QGS_CoreInterface.h"
-#include "QGS_TrackerInterface.h"
-
+#include "LogHandler.h"
+#include "QGS_IoHeader.h"
+#include "SerialManager.h"
+#include "dbgModule.h"
 
 #include <iostream>
 #include <fstream>
@@ -73,7 +70,7 @@ struct program_args
     severity_level lvl;
 };
 }
-
+using namespace QuadGS;
 void handle_program_args(int ac, char* av[], QuadGS::program_args& args);
 
 int main(int ac, char* av[])
@@ -89,30 +86,27 @@ int main(int ac, char* av[])
         std::cerr << "Error: " << e.what() << "\n";
         return 1;
     }
-
+    //Initialize the app log.
     QuadGS::AppLog::Init("app_log", "msg_log", std::clog, args.lvl);
-    // Create the modules.
-    QuadGS::QGS_IoInterface* mIO = new QuadGS::Serial_Manager();
-    QuadGS::QGS_UiInterface* mUI = new QuadGS::CLI();
-    QuadGS::QGS_CoreInterface* mCore = new QuadGS::QGS_CoreInterface();
-#ifdef WITH_VISION
-    QuadGS::QGS_TrackerInterface* mTracker = new QuadGS::ZedTracker();
-#endif
-    mCore->bind(mIO);
-    mCore->bind(mUI);
-#ifdef WITH_VISION
-    mCore->bind(mTracker);
-#endif
-    mCore->initialize();
-    // Read input.
-    while(mUI->RunUI());
 
-    delete mIO;
-    delete mUI;
-    delete mCore;
-#ifdef WITH_VISION
-    delete mTracker;
-#endif
+	//Instantiate modules.
+	Parameters mParameters(msgAddr_t::GS_Param_e);
+	CLI mCli(msgAddr_t::GUI_e);
+	LogHandler mLogHandler(msgAddr_t::GS_Log_e);
+	Serial_Manager serialIo(msgAddr_t::GS_SerialIO_e);
+	dbgModule dbgModule(msgAddr_t::GS_Dbg_e);
+
+	//Instantiate the router.
+	QGS_Router mRouter(msgAddr_t::Router);
+
+	//Bind all modules to the router.
+	mRouter.bind(&mParameters);
+	mRouter.bind(&mCli);
+	mRouter.bind(&mLogHandler);
+	mRouter.bind(&serialIo);
+	mRouter.bind(&dbgModule);
+
+    while(mCli.RunUI());
 
     return 0;
 }
@@ -126,7 +120,6 @@ void handle_program_args(int ac, char* av[], QuadGS::program_args& args)
     generic.add_options()
                     ("help,h", "produce help message")
                     ("version,v", "print version string")
-                    ("gui,g", "Gui mode")
                     ("LogLevel,l", po::value< std::string >(&args.logLevel)->default_value("error"),
                             "Log level for outputing to screen.");
     po::variables_map opts;
@@ -138,11 +131,6 @@ void handle_program_args(int ac, char* av[], QuadGS::program_args& args)
     }
     if (opts.count("version")) {
         cout << "QuadGS, unofficial version\n";
-        return;
-    }
-    if (opts.count("gui")) {
-        cout << "gui mode not yet supported\n";
-        //TODO add support for gui mode.
         return;
     }
     if (opts.count("LogLevel")) {
@@ -161,6 +149,10 @@ void handle_program_args(int ac, char* av[], QuadGS::program_args& args)
       else if(!args.logLevel.compare("debug"))
       {
         args.lvl = QuadGS::severity_level::debug;
+      }
+      else if(!args.logLevel.compare("message_trace"))
+      {
+        args.lvl = QuadGS::severity_level::message_trace;
       }
       else
       {

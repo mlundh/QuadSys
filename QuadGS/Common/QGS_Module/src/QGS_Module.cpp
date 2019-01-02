@@ -52,19 +52,19 @@ void QGS_Module::bind(QGS_Router* router)
 }
 
 
-void QGS_Module::setReceivingFcn(receivingFcn_t fcn)
+void QGS_Module::setReceivingFcn(receivingFcn_t fcn, msgAddr_t address)
 {
 	if(fcn)
 	{
-		mReceiveFcn = fcn;
+		mReceiveFcns[address] = fcn;
 	}
 }
 
-WriteFcn QGS_Module::getReceivingFcn()
+std::map<msgAddr_t, WriteFcn>& QGS_Module::getReceivingFcns()
 {
-	if(mReceiveFcn)
+	if(!mReceiveFcns.empty())
 	{
-		return mReceiveFcn;
+		return mReceiveFcns;
 	}
 	else
 	{
@@ -85,6 +85,18 @@ void QGS_Module::sendMsg(std::unique_ptr<QGS_ModuleMsgBase> message)
 	}
 }
 
+void QGS_Module::sendExternalMsg(std::unique_ptr<QGS_ModuleMsgBase> message)
+{
+	if(mSendFcn)
+	{
+		mSendFcn(std::move(message));
+	}
+	else
+	{
+		throw std::runtime_error("No send function set. Bind before sending messages.");
+	}
+}
+
 
 void QGS_Module::setSendFunc(WriteFcn func)
 {
@@ -97,7 +109,7 @@ void QGS_Module::setSendFunc(WriteFcn func)
 QGS_ReactiveModule::QGS_ReactiveModule()
 :QGS_MessageHandlerBase(msgAddr_t::Unassigned)
 {
-	setReceivingFcn(std::bind(&QGS_ReactiveModule::ReceivingFcn, this, std::placeholders::_1));
+	setReceivingFcn(std::bind(&QGS_ReactiveModule::ReceivingFcn, this, std::placeholders::_1), getName());
 }
 
 QGS_ReactiveModule::~QGS_ReactiveModule()
@@ -115,7 +127,7 @@ void QGS_ReactiveModule::ReceivingFcn(std::unique_ptr<QGS_ModuleMsgBase> message
 QGS_ThreadedModule::QGS_ThreadedModule()
 :QGS_MessageHandlerBase(msgAddr_t::Unassigned), mStop(false)
 {
-	setReceivingFcn(std::bind(&QGS_ThreadedModule::ReceivingFcn, this, std::placeholders::_1));
+	setReceivingFcn(std::bind(&QGS_ThreadedModule::ReceivingFcn, this, std::placeholders::_1), getName());
 }
 
 QGS_ThreadedModule::~QGS_ThreadedModule()

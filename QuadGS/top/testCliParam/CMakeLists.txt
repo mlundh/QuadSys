@@ -5,4 +5,4 @@ list(APPEND dep_testTop   "Parameters"
                           "serial_io"
                           "dbgModule")
 
-qgs_add_test(testTop src_testTop dep_testTop)
+qgs_add_exe(testTop src_testTop dep_testTop)

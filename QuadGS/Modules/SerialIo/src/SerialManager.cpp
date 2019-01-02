@@ -38,22 +38,29 @@ namespace QuadGS {
 
 
 Serial_Manager::Serial_Manager(msgAddr_t name)
-	:QGS_MessageHandlerBase(name)
-	,mIo_service()
-	,mWork(new boost::asio::io_service::work(mIo_service))
-	,mThread_io(NULL)
-	,mOutgoingFifo(10)
-	,mRetries(0)
-	,mOngoing()
+:QGS_MessageHandlerBase(name)
+,mIo_service()
+,mWork(new boost::asio::io_service::work(mIo_service))
+,mTimeoutRead(mIo_service)
+,mThread_io(NULL)
+,mOutgoingFifo(10)
+,mRetries(0)
+,mOngoing()
 {
-	 mCommands.push_back(UiCommand("serialSetBaudRate","Set the baud rate of the serial port.",std::bind(&Serial_Manager::setBaudRateCmd, this, std::placeholders::_1)));
-	 mCommands.push_back(UiCommand("serialSetFlowControl","Set the flow control of the serial port.",std::bind(&Serial_Manager::setFlowControlCmd, this, std::placeholders::_1)));
-	 mCommands.push_back(UiCommand("serialSetParity","Set the parity of the serial port.",std::bind(&Serial_Manager::setParityCmd, this, std::placeholders::_1)));
-	 mCommands.push_back(UiCommand("serialSetStopBits","Set the number of stop bits used. ",std::bind(&Serial_Manager::setStopBitsCmd, this, std::placeholders::_1)));
-	 mCommands.push_back(UiCommand("serialOpenPort","Open the serial port.",std::bind(&Serial_Manager::openCmd, this, std::placeholders::_1)));
-	 mCommands.push_back(UiCommand("serialStartReadPort","Start the read operation.",std::bind(&Serial_Manager::startReadCmd, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("serialSetBaudRate","Set the baud rate of the serial port.",std::bind(&Serial_Manager::setBaudRateCmd, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("serialSetFlowControl","Set the flow control of the serial port.",std::bind(&Serial_Manager::setFlowControlCmd, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("serialSetParity","Set the parity of the serial port.",std::bind(&Serial_Manager::setParityCmd, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("serialSetStopBits","Set the number of stop bits used. ",std::bind(&Serial_Manager::setStopBitsCmd, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("serialOpenPort","Open the serial port.",std::bind(&Serial_Manager::openCmd, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("serialStartReadPort","Start the read operation.",std::bind(&Serial_Manager::startReadCmd, this, std::placeholders::_1)));
 
-	 initialize();
+	// TODO make a config file!
+	setReceivingFcn(std::bind(&Serial_Manager::ReceivingFcnIo, this, std::placeholders::_1),msgAddr_t::FC_Dbg_e);
+	setReceivingFcn(std::bind(&Serial_Manager::ReceivingFcnIo, this, std::placeholders::_1),msgAddr_t::FC_Log_e);
+	setReceivingFcn(std::bind(&Serial_Manager::ReceivingFcnIo, this, std::placeholders::_1),msgAddr_t::FC_Param_e);
+	setReceivingFcn(std::bind(&Serial_Manager::ReceivingFcnIo, this, std::placeholders::_1),msgAddr_t::FC_SerialIO_e);
+
+	initialize();
 }
 
 
@@ -74,7 +81,6 @@ void Serial_Manager::initialize()
 	mThread_io = new std::thread(std::bind(&Serial_Manager::runThread, this));
 	mPort = QuadGS::SerialPort::create(mIo_service);
 	mPort->setReadCallback( std::bind(&Serial_Manager::messageHandler, this, std::placeholders::_1) );
-	mPort->setReadTimeoutCallback( std::bind(&Serial_Manager::timeoutHandler, this) );
 
 }
 
@@ -85,43 +91,53 @@ void Serial_Manager::startRead()
 
 std::string Serial_Manager::openCmd(std::string path)
 {
-	mPort->open( path );
-	startRead();
-	return "";
+	std::string returnStr;
+	if(mPort->isOpen())
+	{
+		returnStr = "Port already open.";
+	}
+	else
+	{
+		returnStr = mPort->open( path );
+		startRead();
+		doWrite();
+	}
+
+	return returnStr;
 }
 
 std::string Serial_Manager::setBaudRateCmd( std::string baud )
 {
 	int baudInt = std::stoi(baud);
 	mPort->setBaudRate(baudInt);
-	return "";
+	return "Baud rate changed.";
 }
 
 std::string Serial_Manager::setFlowControlCmd(  std::string flow_ctrl )
 {
 	int flowCtrl = std::stoi(flow_ctrl);
 	mPort->setFlowControl(static_cast<b_a_sp::flow_control::type>(flowCtrl));
-	return "";
+	return "Flow control changed.";
 }
 
 std::string Serial_Manager::setParityCmd( std::string parity )
 {
 	int par = std::stoi(parity);
 	mPort->setParity(static_cast<b_a_sp::parity::type>(par));
-	return "";
+	return "Parity changed.";
 }
 
 std::string Serial_Manager::setStopBitsCmd( std::string stop_bits )
 {
 	int stopBits = std::stoi(stop_bits);
 	mPort->setStopBits(static_cast<b_a_sp::stop_bits::type>(stopBits));
-	return "";
+	return "Stop bits changed.";
 }
 
 std::string Serial_Manager::startReadCmd(std::string)
 {
 	startRead();
-	return "";
+	return "Reading from port.";
 }
 
 
@@ -160,14 +176,10 @@ void Serial_Manager::process(Msg_FireUiCommand* message)
 	return;
 }
 
-
-void Serial_Manager::process(Msg_Test* message)
+void Serial_Manager::ReceivingFcnIo(std::unique_ptr<QGS_ModuleMsgBase> message)
 {
-	Msg_Test::ptr clone = std::make_unique<Msg_Test>(message->clone());
-
-	mOutgoingFifo.push(std::move(clone));
-	Msg_Test::ptr ptr = std::make_unique<Msg_Test>(msgAddr_t::GUI_e);
-	sendMsg(std::move(ptr));
+	mOutgoingFifo.push(std::move(message));
+	doWrite();
 }
 
 void Serial_Manager::runThread()
@@ -189,20 +201,7 @@ void Serial_Manager::runThread()
 
 void Serial_Manager::timeoutHandler()
 {
-	if(mRetries < 2)
-	{
-		mRetries++;
-		mLogger.QuadLog(severity_level::warning, "No reply, retrying");
-		mOngoing = mPort->write( std::move(mOngoing) ); // resend.
 
-	}
-	else
-	{
-		mRetries = 0;
-		mOngoing.release();
-		mLogger.QuadLog(severity_level::warning, "Transmission failed timeout.");
-		doWrite();// Poll doWrite to see if there is more to be written.
-	}
 }
 
 void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
@@ -241,34 +240,76 @@ void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 	else
 	{
 		// Log message.
-		mLogger.QuadLog(severity_level::message_trace, "Received: " + msg->toString() );
+		mLogger.QuadLog(severity_level::message_trace, "Received: \n" + msg->toString() );
 		// then send to the router.
-		sendMsg(std::move(msg));
+		sendExternalMsg(std::move(msg));
 	}
 
 
 }
 void Serial_Manager::doWrite()
 {
-	if(mOngoing)
+	if(mOngoing || mOutgoingFifo.empty() || !mPort->isOpen())
 	{
 		return;
 	}
-	if(mOutgoingFifo.empty())
-	{
-		return;
-	}
+
 	QGS_ModuleMsgBase::ptr msg = mOutgoingFifo.dequeue();
 
 	msg->setMsgNr(mRetries > 0 ? (mMsgNr) : (mMsgNr++)%256);
-	mLogger.QuadLog(severity_level::message_trace, "Transmitting: " + msg->toString());
+	mLogger.QuadLog(severity_level::message_trace, "Transmitting: \n"  + msg->toString());
 
-	//TODO save the msg after write!!
+	startReadTimer();
 	mOngoing = mPort->write( std::move(msg) );
 
 }
 
+void Serial_Manager::startReadTimer(int timeout)
+{
+	mTimeoutRead.expires_from_now( boost::posix_time::milliseconds( timeout ) );
+	mTimeoutRead.async_wait(
+			boost::bind( & Serial_Manager::timerReadCallback,
+					this,
+					boost::asio::placeholders::error ) );
+}
 
+/* Called when the read timer's deadline expire. Do not cancel payload read, it is still used. */
+void Serial_Manager::timerReadCallback( const boost::system::error_code& error )
+{
+	if( error )
+	{
+		/*If the timer was called with the operation_aborted error code then
+		 * the timer was canceled and did not fire. Everything else is an error*/
+		if( error != boost::asio::error::operation_aborted )
+		{
+			mLogger.QuadLog(severity_level::error, "Read timer callback: " + error.message());
+			throw std::runtime_error(error.message());
+		}
+		return;
+	}
+	else
+	{
+		mLogger.QuadLog(severity_level::warning, " Read timeout fired.");
+	}
 
+	if(mRetries < 2)
+	{
+		mRetries++;
+		mLogger.QuadLog(severity_level::warning, "No reply, retrying");
+		mLogger.QuadLog(severity_level::message_trace, "Transmitting: \n"  + mOngoing->toString());
+		startReadTimer();
+		mOngoing = mPort->write( std::move(mOngoing) ); // resend.
+
+	}
+	else
+	{
+		mRetries = 0;
+		mOngoing.release();
+		mLogger.QuadLog(severity_level::error, "Transmission failed: timeout.");
+		doWrite();// Poll doWrite to see if there is more to be written.
+	}
+
+	return;
+}
 
 } /* namespace QuadGS */

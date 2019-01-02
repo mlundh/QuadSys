@@ -334,7 +334,7 @@ TEST(BinaryIStreamTest, StreamCharBytes)
 	is >> SetBytes(4) >> vp;
 
 
-	EXPECT_TRUE( 0 == std::memcmp( expected, verify, sizeof( expected ) ) );
+	EXPECT_TRUE( 0 == std::memcmp( expected, verify, (sizeof(verify)/sizeof(*verify) )  ) );
 }
 
 TEST(BinaryIStreamTest, StreamCharBytes1)
@@ -350,7 +350,7 @@ TEST(BinaryIStreamTest, StreamCharBytes1)
 	is >> SetBytes(4) >> vp;
 
 
-	EXPECT_TRUE( 0 == std::memcmp( expected, verify, sizeof( expected ) ) );
+	EXPECT_TRUE( 0 == std::memcmp( expected, verify, (sizeof(verify)/sizeof(*verify) ) ));
 }
 TEST(BinaryIStreamTest, StreamString)
 {

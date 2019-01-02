@@ -1,6 +1,8 @@
 QuadGS/out/
 QuadGS/build/
 QuadGS/make/
+LogFile.txt
+Mapfile.txt
 *.d
 *.log
 # Eclipse project
