@@ -30,7 +30,6 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include "QGS_IoHeader.h"
 #include "SlipPacket.h"
 
 namespace QuadGS {

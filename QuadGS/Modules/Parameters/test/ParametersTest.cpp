@@ -26,20 +26,14 @@
 #include "FakeModule.h"
 #include "QGS_Router.h"
 
-#include "QGS_IoHeader.h"
 #include <memory>
 #include <iostream>
-#include "QGS_ParamMsg.h"
+
+#include "msgControl.h"
 #include "gtest/gtest.h"
 
 
 using namespace QuadGS;
-
-void defaultMsgHandler(std::shared_ptr<QGS_IoHeader>, std::shared_ptr<QGS_Msg>)
-{
-	std::cout << "Got a message!" << std::endl;
-}
-
 
 // TODO add more tests. Use mock to set up callback handling.
 
@@ -156,7 +150,7 @@ TEST_F(ParamTest, TestSetup)
 TEST_F(ParamTest, TestMessage)
 {
 	std::string payload_str = "/root/tmp/test[555]";
-	mFake.sendDummyParamMsg(QGS_IoHeader::ParametersControl_t::SetTree, payload_str);
+	mFake.sendDummyParamMsg(ParametersControl_t::SetTree, payload_str);
 	mFake.waitForMsg();
 
 	std::string result = mParameters.get("/root/tmp/test");

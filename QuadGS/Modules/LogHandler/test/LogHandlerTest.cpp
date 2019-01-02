@@ -12,9 +12,10 @@
 #include "QGS_Router.h"
 
 #include <memory>
+
+#include "msgControl.h"
 #include "gtest/gtest.h"
 
-#include "QGS_IoHeader.h"
 using namespace QuadGS;
 
 
@@ -61,7 +62,7 @@ TEST_F(LogHandlerTest, TestGetCommands)
 
 TEST_F(LogHandlerTest, TestPrintNames)
 {
-	Msg_Log msg(msgAddr_t::GS_Log_e, QGS_IoHeader::LogControl::Name, "/test<2>[5]/test2<1>[6]");
+	Msg_Log msg(msgAddr_t::GS_Log_e, LogControl::Name, "/test<2>[5]/test2<1>[6]");
 	std::string verify = "test        5           \ntest2       6           \n";
 	// Do not do this in real code!This is only for testing. Real code should
 	// rely on messages from FC to populate the mapping.
@@ -80,12 +81,12 @@ TEST_F(LogHandlerTest, TestPrintNames)
 
 TEST_F(LogHandlerTest, TestGetEntry)
 {
-	Msg_Log msg(msgAddr_t::GS_Log_e, QGS_IoHeader::LogControl::Name, "/test<2>[5]/test2<1>[6]");
+	Msg_Log msg(msgAddr_t::GS_Log_e, LogControl::Name, "/test<2>[5]/test2<1>[6]");
 	// Do not do this in real code!This is only for testing. Real code should
 	// rely on messages from FC to populate the mapping.
 	mLog.process(&msg);
 
-	Msg_Log msgEntry(msgAddr_t::GS_Log_e, QGS_IoHeader::LogControl::Entry, "[6][11111][7]/[5][11111][8]");
+	Msg_Log msgEntry(msgAddr_t::GS_Log_e, LogControl::Entry, "[6][11111][7]/[5][11111][8]");
 	mLog.process(&msgEntry);
 
     std::ifstream LogFile("LogFile.txt");

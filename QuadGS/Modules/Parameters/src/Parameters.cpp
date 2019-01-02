@@ -29,10 +29,10 @@
 
 #include <functional>
 
+#include "msgControl.h"
 #include "Msg_RegUiCommand.h"
 #include "Msg_UiCommandResult.h"
 
-#include "QGS_ParamMsg.h"
 #include "QGS_Module.h"
 
 using namespace std::placeholders;
@@ -303,7 +303,7 @@ std::string Parameters::writeCmd(std::string path_dump)
 		cont = !(mTmpBranch->DumpTree(Path, StartPosition, Depth, 256));
 		Path += "/";
 
-		Msg_Param::ptr ptr = std::make_unique<Msg_Param>(msgAddr_t::FC_Param_e,QGS_IoHeader::ParametersControl::SetTree, SequenceNumber++, 0, Path);
+		Msg_Param::ptr ptr = std::make_unique<Msg_Param>(msgAddr_t::FC_Param_e, ParametersControl::SetTree, SequenceNumber++, 0, Path);
 		sendMsg(std::move(ptr));
 		return "";
 	}
@@ -318,14 +318,14 @@ std::string Parameters::requestUpdateCmd(std::string )
 
 std::string Parameters::saveParamCmd(std::string )
 {
-	Msg_Param::ptr ptr = std::make_unique<Msg_Param>(msgAddr_t::FC_Param_e,QGS_IoHeader::ParametersControl::Save,0,0,"");
+	Msg_Param::ptr ptr = std::make_unique<Msg_Param>(msgAddr_t::FC_Param_e, ParametersControl::Save,0,0,"");
 	sendMsg(std::move(ptr));
 	return "";
 }
 
 std::string Parameters::loadParamCmd(std::string )
 {
-	Msg_Param::ptr ptr = std::make_unique<Msg_Param>(msgAddr_t::FC_Param_e,QGS_IoHeader::ParametersControl::Load,0,0,"");
+	Msg_Param::ptr ptr = std::make_unique<Msg_Param>(msgAddr_t::FC_Param_e, ParametersControl::Load,0,0,"");
 	sendMsg(std::move(ptr));
 	return "";
 }
@@ -347,7 +347,7 @@ void Parameters::FindPartial(std::string& name, std::vector<std::string>& vec)
 
 void Parameters::RequestTree()
 {
-	Msg_Param::ptr ptr = std::make_unique<Msg_Param>(msgAddr_t::FC_Param_e,QGS_IoHeader::ParametersControl::GetTree,0,0,"");
+	Msg_Param::ptr ptr = std::make_unique<Msg_Param>(msgAddr_t::FC_Param_e, ParametersControl::GetTree,0,0,"");
 	sendMsg(std::move(ptr));
 }
 
@@ -362,7 +362,7 @@ void Parameters::process(Msg_Param* message)
 	std::string path = message->getPayload();
 
 	switch (control){
-	case QGS_IoHeader::ParametersControl::SetTree:
+	case ParametersControl::SetTree:
 		if((lastSequenceNo++) != sequenceNo)
 		{
 			mLogger.QuadLog(QuadGS::error, "Lost a setTree package, try again!" );
@@ -382,10 +382,10 @@ void Parameters::process(Msg_Param* message)
 			RequestTree(); // We have not yet got the whole tree, continue!
 		}
 		break;
-	case QGS_IoHeader::ParametersControl::GetTree:
+	case ParametersControl::GetTree:
 		mLogger.QuadLog(QuadGS::error, "GetTree command not implemented in GS!" + path );
 		break;
-	case QGS_IoHeader::ParametersControl::Value:
+	case ParametersControl::Value:
 		break;
 
 	default:

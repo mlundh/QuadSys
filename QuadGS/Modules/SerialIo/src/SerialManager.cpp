@@ -25,7 +25,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include "QGS_IoHeader.h"
+#include "msgControl.h"
 #include "SlipPacket.h"
 
 #include "QGS_Msg.h"

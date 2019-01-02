@@ -26,7 +26,6 @@
 #include "QGS_Router.h"
 #include "CLI.h"
 #include "LogHandler.h"
-#include "QGS_IoHeader.h"
 #include "SerialManager.h"
 #include "dbgModule.h"
 

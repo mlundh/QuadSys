@@ -27,10 +27,9 @@
 
 #include <vector>
 
-#include "QGS_IoHeader.h"
-#include "QGS_ParamMsg.h"
 #include "gtest/gtest.h"
 #include "BinaryStream.h"
+#include "Msg_Param.h"
 
 using namespace QuadGS;
 
@@ -88,7 +87,7 @@ TEST(SlipPacketTest, TestParamPacketSlip)
 {
 
 	std::string payload = "/root/tmp<5>[8]/test[3]";
-	QGSParamMsg paramPacket(1,payload,1,0);
+	Msg_Param paramPacket(msgAddr_t::FC_Param_e, 1,0,1,payload);
 
 
     BinaryOStream os;

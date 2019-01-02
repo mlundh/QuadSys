@@ -10,10 +10,10 @@
 #include <functional>
 #include <memory>
 
-#include "QGS_IoHeader.h"
+#include "msgControl.h"
 #include "QGS_Tree.h"
 #include "QGS_Module.h"
-
+#include "Msg_Log.h"
 #include "Msg_RegUiCommand.h"
 #include "Msg_UiCommandResult.h"
 
@@ -50,21 +50,21 @@ LogHandler::~LogHandler()
 
 std::string LogHandler::getLogNames(std::string )
 {
-	Msg_Log::ptr ptr = std::make_unique<Msg_Log>(msgAddr_t::FC_Log_e, QGS_IoHeader::LogControl::Name,"");
+	Msg_Log::ptr ptr = std::make_unique<Msg_Log>(msgAddr_t::FC_Log_e, LogControl::Name,"");
 	sendMsg(std::move(ptr));
 	return "";
 }
 
 std::string LogHandler::getLogEntries(std::string )
 {
-	Msg_Log::ptr ptr = std::make_unique<Msg_Log>(msgAddr_t::FC_Log_e, QGS_IoHeader::LogControl::Entry,"");
+	Msg_Log::ptr ptr = std::make_unique<Msg_Log>(msgAddr_t::FC_Log_e, LogControl::Entry,"");
 	sendMsg(std::move(ptr));
 	return "";
 }
 
 std::string LogHandler::stopAllLogs(std::string )
 {
-	Msg_Log::ptr ptr = std::make_unique<Msg_Log>(msgAddr_t::FC_Log_e, QGS_IoHeader::LogControl::StopAll,"");
+	Msg_Log::ptr ptr = std::make_unique<Msg_Log>(msgAddr_t::FC_Log_e, LogControl::StopAll,"");
 	sendMsg(std::move(ptr));
 	return "";
 }
@@ -113,7 +113,7 @@ void LogHandler::process(Msg_Log* message)
 {
 	switch (message->getControl())
 	{
-	case QGS_IoHeader::LogControl::Name: //TODO move enum to messages.txt when the generator scripts can handle enums...
+	case LogControl::Name: //TODO move enum to messages.txt when the generator scripts can handle enums...
 	{
 		std::string payloadStr = message->getPayload();
 		while(!payloadStr.empty())
@@ -156,7 +156,7 @@ void LogHandler::process(Msg_Log* message)
 		}
 	}
 	break;
-	case QGS_IoHeader::LogControl::Entry:
+	case LogControl::Entry:
 	{
 		std::string payloadStr = message->getPayload();
 		bool end = false;
