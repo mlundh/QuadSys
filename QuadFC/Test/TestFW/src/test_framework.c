@@ -167,10 +167,10 @@ uint8_t TestFW_ExecuteTests(TestFw_t* obj)
 
 uint8_t* TestFW_GetReport(TestFw_t* obj)
 {
-	  QuadFC_Serial_t data;
-	  data.buffer = (uint8_t*)obj->report;
-	  data.bufferLength = strlen((char*)obj->report);
-	  Test_SerialWrite(&data);
+  QuadFC_Serial_t data;
+  data.buffer = (uint8_t*)obj->report;
+  data.bufferLength = strlen((char*)obj->report);
+  Test_SerialWrite(&data);
   return 0;
 }
 

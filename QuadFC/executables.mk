@@ -32,7 +32,7 @@
 # <nameOfExec>_DEPS. Add all dependencies to this variable.
 #
 
-EXECUTABLES := QuadFC TestFC_RTOS TestFC_RTOS_1 TestFC_Utilities
+EXECUTABLES := QuadFC Test_SigEventLog Test_Board Test_Utilities
 
 QuadFC_DEPS:= Top/QuadFC HAL/QuadFC
 QuadFC_DEPS+= $(addprefix Modules/, Communication FlightController HMI Parameters EventHandler)
@@ -41,20 +41,20 @@ QuadFC_DEPS+= $(addprefix PortLayer/, Actuators Board Communication HMI CY15B104
 QuadFC_DEPS+= $(addprefix PortLayer/, MB85RC_i2c_fram Sensors)
 QuadFC_DEPS+= $(addprefix ThirdParty/, asf freertos asf_freertos)
 
-TestFC_Utilities_DEPS:= ThirdParty/asf Top/TestFC_Utilities  PortLayer/Board
-TestFC_Utilities_DEPS+= $(addprefix Test/,TestFW Math Utilities)
-TestFC_Utilities_DEPS+= $(addprefix Modules/, Utilities )
+Test_Utilities_DEPS:= ThirdParty/asf Top/Test_Utilities  PortLayer/Board
+Test_Utilities_DEPS+= $(addprefix Test/,TestFW Math Utilities)
+Test_Utilities_DEPS+= $(addprefix Modules/, Utilities )
 
-TestFC_RTOS_DEPS:= Top/TestFC_RTOS HAL/QuadFC
-TestFC_RTOS_DEPS+= $(addprefix Test/,TestFW DummyI2C SignalProcessing EventHandler Log)
-TestFC_RTOS_DEPS+= $(addprefix Modules/, Utilities StateEstimator Parameters EventHandler FlightController HMI)
-TestFC_RTOS_DEPS+= $(addprefix Modules/, Log LogMemBackend)
-TestFC_RTOS_DEPS+= $(addprefix PortLayer/, Sensors Communication HMI Board CY15B104Q_SX_spi_fram MB85RC_i2c_fram)
-TestFC_RTOS_DEPS+= $(addprefix ThirdParty/, asf freertos)
+Test_SigEventLog_DEPS:= Top/Test_SigEventLog HAL/QuadFC
+Test_SigEventLog_DEPS+= $(addprefix Test/,TestFW DummyI2C SignalProcessing EventHandler Log LogTestBackend)
+Test_SigEventLog_DEPS+= $(addprefix Modules/, Utilities StateEstimator Parameters EventHandler FlightController HMI)
+Test_SigEventLog_DEPS+= $(addprefix Modules/, Log)
+Test_SigEventLog_DEPS+= $(addprefix PortLayer/, Sensors Communication HMI Board CY15B104Q_SX_spi_fram MB85RC_i2c_fram)
+Test_SigEventLog_DEPS+= $(addprefix ThirdParty/, asf freertos)
 
-TestFC_RTOS_1_DEPS:= Top/TestFC_RTOS_1 HAL/QuadFC
-TestFC_RTOS_1_DEPS+= $(addprefix Test/,TestFW ArduinoDueBoard)
-TestFC_RTOS_1_DEPS+= $(addprefix Modules/, Utilities )
-TestFC_RTOS_1_DEPS+= $(addprefix Modules/, Log LogMemBackend)
-TestFC_RTOS_1_DEPS+= $(addprefix PortLayer/, Board CY15B104Q_SX_spi_fram MB85RC_i2c_fram)
-TestFC_RTOS_1_DEPS+= $(addprefix ThirdParty/, asf freertos asf_freertos)
+Test_Board_DEPS:= Top/Test_Board HAL/QuadFC
+Test_Board_DEPS+= $(addprefix Test/,TestFW ArduinoDueBoard)
+Test_Board_DEPS+= $(addprefix Modules/, Utilities )
+Test_Board_DEPS+= $(addprefix Modules/, Log LogMemBackend)
+Test_Board_DEPS+= $(addprefix PortLayer/, Board CY15B104Q_SX_spi_fram MB85RC_i2c_fram)
+Test_Board_DEPS+= $(addprefix ThirdParty/, asf freertos asf_freertos)

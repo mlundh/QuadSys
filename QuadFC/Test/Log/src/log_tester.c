@@ -28,6 +28,8 @@
 #include <string.h>
 #include "FreeRTOS.h"
 #include "task.h"
+#define SHORT_MSG (50)
+#define LONG_MSG (140)
 
 void Log_GetTCs(TestFw_t* obj)
 {
@@ -50,8 +52,8 @@ uint8_t LogHandler_TestCreate(TestFw_t* obj)
   uint8_t result = 1;
   if(!logHObjM)
   {
-    char tmpstr[40] = {0};
-    snprintf (tmpstr, 40,"Could not create a logHandler object.\n");
+    char tmpstr[SHORT_MSG] = {0};
+    snprintf (tmpstr, SHORT_MSG,"Could not create a logHandler object.\n");
     TestFW_Report(obj, tmpstr);
     result = 0;
   }
@@ -61,8 +63,8 @@ uint8_t LogHandler_TestCreate(TestFw_t* obj)
       !logHObjM->paramObject ||
       !logHObjM->backend) // we are master, and should have a backend.
   {
-    char tmpstr[50] = {0};
-    snprintf (tmpstr, 50,"LogHandler object not correctly initiated.\n");
+    char tmpstr[SHORT_MSG] = {0};
+    snprintf (tmpstr, SHORT_MSG,"LogHandler object not correctly initiated.\n");
     TestFW_Report(obj, tmpstr);
     result = 0;
   }
@@ -70,15 +72,15 @@ uint8_t LogHandler_TestCreate(TestFw_t* obj)
   size_t usedHeapM = heapSize - heapSizeAfterM;
   {
 
-    char tmpstr[50] = {0};
-    snprintf (tmpstr, 50,"LogHandler master uses %d bytes of heap.\n", usedHeapM);
+    char tmpstr[SHORT_MSG] = {0};
+    snprintf (tmpstr, SHORT_MSG,"LogHandler master uses %d bytes of heap.\n", usedHeapM);
     TestFW_Report(obj, tmpstr);
   }
   LogHandler_t* logHObjS = LogHandler_CreateObj(2,NULL,"TestRoot",0); // Not using eventHandler at the moment.
   if(!logHObjS)
   {
-    char tmpstr[50] = {0};
-    snprintf (tmpstr, 50,"Could not create a logHandler object.\n");
+    char tmpstr[SHORT_MSG] = {0};
+    snprintf (tmpstr, SHORT_MSG,"Could not create a logHandler object.\n");
     TestFW_Report(obj, tmpstr);
     result = 0;
   }
@@ -88,8 +90,8 @@ uint8_t LogHandler_TestCreate(TestFw_t* obj)
       !logHObjS->paramObject ||
       logHObjS->backend) // we are a slave, and should not have a backend.
   {
-    char tmpstr[60] = {0};
-    snprintf (tmpstr, 60,"LogHandler object not correctly initiated.\n");
+    char tmpstr[SHORT_MSG] = {0};
+    snprintf (tmpstr, SHORT_MSG,"LogHandler object not correctly initiated.\n");
     TestFW_Report(obj, tmpstr);
     result = 0;
   }
@@ -97,8 +99,8 @@ uint8_t LogHandler_TestCreate(TestFw_t* obj)
   size_t heapSizeAfterS = xPortGetFreeHeapSize();
   size_t usedHeapS = heapSizeAfterM - heapSizeAfterS;
   {
-    char tmpstr[60] = {0};
-    snprintf (tmpstr, 60,"LogHandler slave uses %d bytes of heap.\n", usedHeapS);
+    char tmpstr[SHORT_MSG] = {0};
+    snprintf (tmpstr, SHORT_MSG,"LogHandler slave uses %d bytes of heap.\n", usedHeapS);
     TestFW_Report(obj, tmpstr);
   }
   return result;
@@ -115,15 +117,15 @@ uint8_t Log_TestCreate(TestFw_t* obj)
   size_t heapSizeAfterLog = xPortGetFreeHeapSize();
   size_t usedHeapLog = heapSize - heapSizeAfterLog;
   {
-    char tmpstr[60] = {0};
-    snprintf (tmpstr, 60,"A log obj uses %d bytes of heap.\n", usedHeapLog);
+    char tmpstr[SHORT_MSG] = {0};
+    snprintf (tmpstr, SHORT_MSG,"A log obj uses %d bytes of heap.\n", usedHeapLog);
     TestFW_Report(obj, tmpstr);
   }
   uint8_t result = 1;
   if(!logObj)
   {
-    char tmpstr[60] = {0};
-    snprintf (tmpstr, 60,"Could not create a log object.\n");
+    char tmpstr[SHORT_MSG] = {0};
+    snprintf (tmpstr, SHORT_MSG,"Could not create a log object.\n");
     TestFW_Report(obj, tmpstr);
     result = 0;
   }
@@ -142,8 +144,8 @@ uint8_t Log_TestCreate(TestFw_t* obj)
       logObj->paramObject == NULL )
   {
     result = 0;
-    char tmpstr[40] = {0};
-    snprintf (tmpstr, 40,"Log object not correctly initiated.\n");
+    char tmpstr[SHORT_MSG] = {0};
+    snprintf (tmpstr, SHORT_MSG,"Log object not correctly initiated.\n");
     TestFW_Report(obj, tmpstr);
   }
   return result;
@@ -159,8 +161,8 @@ uint8_t Log_TestSetChild(TestFw_t* obj)
 
   if(!logObj || !child)
   {
-    char tmpstr[40] = {0};
-    snprintf (tmpstr, 40,"Could not create a log object.\n");
+    char tmpstr[SHORT_MSG] = {0};
+    snprintf (tmpstr, SHORT_MSG,"Could not create a log object.\n");
     TestFW_Report(obj, tmpstr);
     result = 0;
   }
@@ -181,8 +183,8 @@ uint8_t Log_TestReport(TestFw_t* obj)
   Log_t* logObj = Log_CreateObj(2,variable_type_int32, &data,NULL,logHObj,"root1");
   if(!logObj)
   {
-    char tmpstr[40] = {0};
-    snprintf (tmpstr, 40,"Could not create a log object.\n");
+    char tmpstr[SHORT_MSG] = {0};
+    snprintf (tmpstr, SHORT_MSG,"Could not create a log object.\n");
     TestFW_Report(obj, tmpstr);
     return 0;
   }
@@ -198,8 +200,8 @@ uint8_t Log_TestReport(TestFw_t* obj)
 
   if(!report_res)
   {
-    char tmpstr[40] = {0};
-    snprintf (tmpstr, 40,"Could not create a log entry..\n");
+    char tmpstr[SHORT_MSG] = {0};
+    snprintf (tmpstr, SHORT_MSG,"Could not create a log entry..\n");
     TestFW_Report(obj, tmpstr);
     result = 0;
   }
@@ -216,8 +218,8 @@ uint8_t Log_TestReport(TestFw_t* obj)
         entryP->id != 0 ||
         entryP->time != time )
     {
-      char tmpstr[40] = {0};
-      snprintf (tmpstr, 40,"First log entry not correct.\n");
+      char tmpstr[LONG_MSG] = {0};
+      snprintf (tmpstr, LONG_MSG,"First log entry not correct. \n Expected data: %d, id: %u, time: %lu\n Got: data: %ld, id: %lu, time: %lu\n", 9, 0, time, entryP->data, entryP->id, entryP->time);
       TestFW_Report(obj, tmpstr);
       result = 0;
     }
@@ -233,8 +235,8 @@ uint8_t Log_TestReport(TestFw_t* obj)
 
   if(!report_res)
   {
-    char tmpstr[40] = {0};
-    snprintf (tmpstr, 40,"Could not create a log entry.\n");
+    char tmpstr[SHORT_MSG] = {0};
+    snprintf (tmpstr, SHORT_MSG,"Could not create a log entry.\n");
     TestFW_Report(obj, tmpstr);
     result = 0;
   }
@@ -251,15 +253,14 @@ uint8_t Log_TestReport(TestFw_t* obj)
         entryP->id != 0 ||
         entryP->time != time )
     {
-      char tmpstr[40] = {0};
-      snprintf (tmpstr, 40,"Second log entry not correct.\n");
+      char tmpstr[LONG_MSG] = {0};
+      snprintf (tmpstr, LONG_MSG,"Second log entry not correct. \n Expected data: %d, id: %u, time: %lu\n Got: data: %ld, id: %lu, time: %lu\n", 9, 0, time, entryP->data, entryP->id, entryP->time);
       TestFW_Report(obj, tmpstr);
       result = 0;
     }
   }
   return result;
 }
-
 
 uint8_t Log_TestMultipleLoggers(TestFw_t* obj)
 {
@@ -308,8 +309,8 @@ uint8_t Log_TestMultipleLoggers(TestFw_t* obj)
         entryP->id != 0 ||
         entryP->time != time )
     {
-      char tmpstr[40] = {0};
-      snprintf (tmpstr, 40,"First log entry not correct.\n");
+      char tmpstr[LONG_MSG] = {0};
+      snprintf (tmpstr, LONG_MSG,"First log entry not correct. \n Expected data: %d, id: %u, time: %lu\n Got: data: %ld, id: %lu, time: %lu\n", 9, 0, time, entryP->data, entryP->id, entryP->time);
       TestFW_Report(obj, tmpstr);
       result = 0;
     }
@@ -318,8 +319,8 @@ uint8_t Log_TestMultipleLoggers(TestFw_t* obj)
         entryP->id != 1 ||
         entryP->time != time )
     {
-      char tmpstr[40] = {0};
-      snprintf (tmpstr, 40,"Second log entry not correct.\n");
+      char tmpstr[LONG_MSG] = {0};
+      snprintf (tmpstr, LONG_MSG,"Second log entry not correct. \n Expected data: %d, id: %u, time: %lu\n Got: data: %ld, id: %lu, time: %lu\n", 9, 0, time, entryP->data, entryP->id, entryP->time);
       TestFW_Report(obj, tmpstr);
       result = 0;
     }
@@ -365,8 +366,8 @@ uint8_t Log_TestMultipleHandlers(TestFw_t* obj)
 
   if(!report_res)
   {
-    char tmpstr[40] = {0};
-    snprintf (tmpstr, 40,"Could not create a log entry..\n");
+    char tmpstr[SHORT_MSG] = {0};
+    snprintf (tmpstr, SHORT_MSG,"Could not create a log entry..\n");
     TestFW_Report(obj, tmpstr);
     result = 0;
   }
@@ -383,8 +384,8 @@ uint8_t Log_TestMultipleHandlers(TestFw_t* obj)
         entryP->id != 0 ||
         entryP->time != time )
     {
-      char tmpstr[40] = {0};
-      snprintf (tmpstr, 40,"First log entry not correct.\n");
+      char tmpstr[LONG_MSG] = {0};
+      snprintf (tmpstr, LONG_MSG,"First log entry not correct. \n Expected data: %d, id: %u, time: %lu\n Got: data: %ld, id: %lu, time: %lu\n", 9, 0, time, entryP->data, entryP->id, entryP->time);
       TestFW_Report(obj, tmpstr);
       result = 0;
     }
@@ -393,8 +394,8 @@ uint8_t Log_TestMultipleHandlers(TestFw_t* obj)
         entryP->id != 0 ||
         entryP->time != time )
     {
-      char tmpstr[40] = {0};
-      snprintf (tmpstr, 40,"Second log entry not correct.\n");
+      char tmpstr[LONG_MSG] = {0};
+      snprintf (tmpstr, LONG_MSG,"Second log entry not correct. \n Expected data: %d, id: %u, time: %lu\n Got: data: %ld, id: %lu, time: %lu\n", 9, 0, time, entryP->data, entryP->id, entryP->time);
       TestFW_Report(obj, tmpstr);
       result = 0;
     }
@@ -403,8 +404,8 @@ uint8_t Log_TestMultipleHandlers(TestFw_t* obj)
         entryP->id != MAX_LOGGERS_PER_HANDLER ||
         entryP->time != time )
     {
-      char tmpstr[40] = {0};
-      snprintf (tmpstr, 40,"Third log entry not correct.\n");
+      char tmpstr[LONG_MSG] = {0};
+      snprintf (tmpstr, LONG_MSG,"Third log entry not correct. \n Expected data: %d, id: %u, time: %lu\n Got: data: %ld, id: %lu, time: %lu\n", 9, 0, time, entryP->data, entryP->id, entryP->time);
       TestFW_Report(obj, tmpstr);
       result = 0;
     }
