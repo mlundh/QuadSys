@@ -47,6 +47,7 @@ typedef struct SigProcessTester
 
 uint8_t SigProsses_InitMpu6050(TestFw_t* obj);
 
+#define REPORT_STR_LEN (50)
 void SigProsses_GetTCs(TestFw_t* obj)
 {
   TestFW_RegisterTest(obj, "ImuToRate", SigProsses_TestImuToRate);
@@ -57,26 +58,26 @@ void SigProsses_GetTCs(TestFw_t* obj)
   TestFW_RegisterTest(obj, "ImuToAngle2", SigProsses_TestImuToAngle2);
   TestFW_RegisterTest(obj, "SpectrumToState", SigProcess_TestSpectrumToState);
 
-  char tmpstr[40] = {0};
+  char tmpstr[REPORT_STR_LEN] = {0};
   // Initialize the handlers and the imu.
   SigProcessTester_t* SigProcessTester = pvPortMalloc(sizeof(SigProcessTester_t));
   if(!SigProcessTester)
   {
-    snprintf (tmpstr, 40,"Failed to create state SigProcessTester.\n");
+    snprintf (tmpstr, REPORT_STR_LEN,"Failed to create state SigProcessTester.\n");
     TestFW_Report(obj, tmpstr);
     return;
   }
   SigProcessTester->CtrlModeHandler = Ctrl_CreateModeHandler();
   if(!SigProcessTester->CtrlModeHandler)
   {
-    snprintf (tmpstr, 40,"Failed to create state CtrlModeHandler.\n");
+    snprintf (tmpstr, REPORT_STR_LEN,"Failed to create state CtrlModeHandler.\n");
     TestFW_Report(obj, tmpstr);
     return;
   }
   SigProcessTester->stateEst = StateEst_Create(SigProcessTester->CtrlModeHandler);
   if(!SigProcessTester->stateEst)
   {
-    snprintf (tmpstr, 40,"Failed to create stateEst.\n");
+    snprintf (tmpstr, REPORT_STR_LEN,"Failed to create stateEst.\n");
     TestFW_Report(obj, tmpstr);
     return;
   }
@@ -85,7 +86,7 @@ void SigProsses_GetTCs(TestFw_t* obj)
   TestFW_SetTestSuiteInternal(obj, (void*)SigProcessTester, SIG_PROCESS_INTENRNAL_IDX);
   if(!SigProsses_InitMpu6050(obj))
   {
-    snprintf (tmpstr, 40,"Failed to create SigProsses_InitMpu6050.\n");
+    snprintf (tmpstr, REPORT_STR_LEN,"Failed to create SigProsses_InitMpu6050.\n");
     TestFW_Report(obj, tmpstr);
     return;
   }
