@@ -160,9 +160,18 @@ uint8_t QuadFC_i2cWrite(QuadFC_I2C_t *i2c_data, uint8_t busIndex, TickType_t blo
  */
 uint8_t QuadFC_i2cRead(QuadFC_I2C_t *i2c_data, uint8_t busIndex, TickType_t blockTimeMs);
 
-//TODO comment
+/**
+ * Serial interface used by the test framework. Implementation should not rely on FreeRTOS.
+ * @return
+ */
 uint8_t Test_SerialInit();
-//TODO comment
+
+/**
+ * Write data to the serial interface used by the test framework. Implementation should
+ * not rely on FreeRTOS.
+ * @param serial_data   Data to be transmitted.
+ * @return
+ */
 uint8_t Test_SerialWrite(QuadFC_Serial_t *serial_data);
 
 /**
@@ -191,16 +200,57 @@ uint8_t QuadFC_SerialWrite(QuadFC_Serial_t *serial_data, uint8_t busIndex, TickT
  */
 uint32_t QuadFC_SerialRead(QuadFC_Serial_t *serial_data, uint8_t busIndex, TickType_t blockTimeMs);
 
+/**
+ * Initialize the Spi master on the spi bus denoted by the index.
+ * @param SpiIndex  Index of the bus.
+ * @return
+ */
 uint8_t SpiMaster_Init(int SpiIndex);
 
+/**
+ * Create an spi slave device. Use this device to send data to the peripheral module.
+ * @param SpiIndex  Bus index the peripheral is connected to.
+ * @param baudRate  Baud rate to use when communicating with the peripheral.
+ * @param csId      Chip select id.
+ * @param bits      Bits per transfer.
+ * @param mode      SPI mode.
+ * @return          Pointer to the initialized slave device. Null if fail.
+ */
 SpiMaster_SlaveDevice_t* SpiMaster_CreateSlaveDevice(uint8_t SpiIndex,
     uint32_t baudRate, uint32_t csId, SpiMaster_BitsPerTransfer_t bits, Spi_Mode_t mode);
 
+/**
+ * Transfer data to the last selected slave. Bytes from buffer will be written, and at the same
+ * time buffer will be populated by the incoming data from the slave. Non blocking version, uses DMA.
+ * @param SpiIndex  Bus index.
+ * @param buffer    Buffer to write.
+ * @param size      Size of the buffer.
+ * @return          1 if success, 0 otherwise.
+ */
 uint8_t SpiMaster_Transfer(uint8_t SpiIndex, uint8_t *buffer, uint32_t size);
+
+/**
+ * Transfer data to the last selected slave. Bytes from buffer will be written, and at the same
+ * time buffer will be populated by the incoming data from the slave. Blocking verstion.
+ * @param SpiIndex  Bus index.
+ * @param buffer    Buffer to write.
+ * @param size      Size of the buffer.
+ * @return          1 if success, 0 otherwise.
+ */
 uint8_t SpiMaster_TransferPoll(uint8_t SpiIndex, uint8_t *buffer, uint32_t size);
 
+/**
+ * Select the slave given by the parameters.
+ * @param SpiIndex  Bus index.
+ * @param slave     Slave to select.
+ */
 void SpiMaster_SelectSlave(uint8_t SpiIndex, SpiMaster_SlaveDevice_t* slave);
 
+/**
+ * Deselect the slave.
+ * @param SpiIndex  Bus index.
+ * @param slave     Slave to deselect.
+ */
 void SpiMaster_DeselectSlave(uint8_t SpiIndex, SpiMaster_SlaveDevice_t* slave);
 
 

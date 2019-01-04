@@ -141,12 +141,12 @@ uint8_t TestFW_Report(TestFw_t* obj, const char* string)
   return 1;
 }
 
-#define STRLEN (60)
+#define STRLEN (110)
 uint8_t TestFW_ExecuteTests(TestFw_t* obj)
 {
   uint8_t SuiteResult = 1;
   char tmpstr[STRLEN] = {0};
-  snprintf(tmpstr, STRLEN, "\n******* Starting Testsuite: %s ******* \n", obj->name);
+  snprintf(tmpstr, STRLEN, "\n*********************** Starting Testsuite: %s *********************** \n", obj->name);
   TestFW_Report(obj, tmpstr);
   for(int i = 0; i < obj->nrRegisteredFunctions; i++)
   {
@@ -160,7 +160,7 @@ uint8_t TestFW_ExecuteTests(TestFw_t* obj)
     SuiteResult &= obj->testFcns[i].testOK;
   }
   char* result = (SuiteResult) ? "PASS" : "FAIL";
-  snprintf(tmpstr, STRLEN, "\n******* Testsuite %s RESULT: %s ******* \n", obj->name, result);
+  snprintf(tmpstr, STRLEN, "\n********************** Testsuite %s RESULT: %s ********************** \n", obj->name, result);
   TestFW_Report(obj, tmpstr);
   return SuiteResult;
 }
