@@ -41,7 +41,7 @@ QuadFC_DEPS+= $(addprefix PortLayer/, Actuators Board Communication HMI CY15B104
 QuadFC_DEPS+= $(addprefix PortLayer/, MB85RC_i2c_fram Sensors)
 QuadFC_DEPS+= $(addprefix ThirdParty/, asf freertos asf_freertos)
 
-TestFC_Utilities_DEPS:= ThirdParty/asf Top/TestFC_Utilities 
+TestFC_Utilities_DEPS:= ThirdParty/asf Top/TestFC_Utilities  PortLayer/Board
 TestFC_Utilities_DEPS+= $(addprefix Test/,TestFW Math Utilities)
 TestFC_Utilities_DEPS+= $(addprefix Modules/, Utilities )
 

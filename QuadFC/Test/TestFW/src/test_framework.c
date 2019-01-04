@@ -32,6 +32,8 @@
 #include "queue.h"
 #include "timers.h"
 
+#include "HAL/QuadFC/QuadFC_Peripherals.h"
+
 #include <gpio.h>
 
 
@@ -82,6 +84,7 @@ void TestFW_CreateMainTestTask(TestFW_mainTestFunction_t mainFcn)
 
 TestFw_t* TestFW_Create(char* name)
 {
+  Test_SerialInit();
   TestFw_t* ptr = malloc(sizeof(TestFw_t));
   ptr->nrRegisteredFunctions = 0;
   ptr->report[0] = '\0';
@@ -138,33 +141,36 @@ uint8_t TestFW_Report(TestFw_t* obj, const char* string)
   return 1;
 }
 
-
+#define STRLEN (60)
 uint8_t TestFW_ExecuteTests(TestFw_t* obj)
 {
   uint8_t SuiteResult = 1;
-  char tmpstr[50] = {0};
-  snprintf(tmpstr, 50, "\n******* Starting Testsuite: %s ******* \n", obj->name);
+  char tmpstr[STRLEN] = {0};
+  snprintf(tmpstr, STRLEN, "\n******* Starting Testsuite: %s ******* \n", obj->name);
   TestFW_Report(obj, tmpstr);
   for(int i = 0; i < obj->nrRegisteredFunctions; i++)
   {
-    snprintf(tmpstr, 50, "\n**** Starting Test: %s ****\n", obj->testFcns[i].tc_names);
+    snprintf(tmpstr, STRLEN, "\n**** Starting Test: %s ****\n", obj->testFcns[i].tc_names);
     TestFW_Report(obj, tmpstr);
     obj->testFcns[i].testOK = obj->testFcns[i].testFcn(obj);
     char* result = (obj->testFcns[i].testOK) ? "PASS" : "FAIL";
-    snprintf(tmpstr, 50, "\n**** RESULT %s: %s **** \n" , obj->testFcns[i].tc_names, result);
+    snprintf(tmpstr, STRLEN, "\n**** RESULT %s: %s **** \n" , obj->testFcns[i].tc_names, result);
     TestFW_Report(obj, tmpstr);
 
     SuiteResult &= obj->testFcns[i].testOK;
   }
   char* result = (SuiteResult) ? "PASS" : "FAIL";
-  snprintf(tmpstr, 50, "\n******* Testsuite %s RESULT: %s ******* \n", obj->name, result);
+  snprintf(tmpstr, STRLEN, "\n******* Testsuite %s RESULT: %s ******* \n", obj->name, result);
   TestFW_Report(obj, tmpstr);
   return SuiteResult;
 }
 
 uint8_t* TestFW_GetReport(TestFw_t* obj)
 {
-
+	  QuadFC_Serial_t data;
+	  data.buffer = (uint8_t*)obj->report;
+	  data.bufferLength = strlen((char*)obj->report);
+	  Test_SerialWrite(&data);
   return 0;
 }
 

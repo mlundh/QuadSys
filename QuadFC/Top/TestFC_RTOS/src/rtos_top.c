@@ -25,6 +25,7 @@
 #include <board.h>
 #include <gpio.h>
 #include <pio.h>
+
 /* Kernel includes. */
 #include "FreeRTOS.h"
 #include "task.h"
@@ -38,7 +39,6 @@
 #include "Test/Log/logEventTester.h"
 #include "HMI/inc/led_control_task.h"
 #include "HAL/QuadFC/QuadFC_Memory.h"
-
 /**
  * @file Top used for regression testing. This top uses freeRTOS and
  * all of its features.
@@ -94,6 +94,7 @@ void mainTester(void *pvParameters)
 
   uint32_t pin = (result ? PIN_31_GPIO : PIN_41_GPIO);
   taskENTER_CRITICAL();
+  TestFW_GetReport(testFW);
 
   while ( 1 )
   {

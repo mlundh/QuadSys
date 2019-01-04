@@ -23,7 +23,7 @@
  */
 #include <sysclk.h>
 #include <board.h>
-#include "../../../Modules/FlightModeHandler/inc/flight_mode_handler.h"
+#include "FlightModeHandler/inc/flight_mode_handler.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"

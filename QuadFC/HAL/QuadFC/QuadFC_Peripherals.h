@@ -160,6 +160,11 @@ uint8_t QuadFC_i2cWrite(QuadFC_I2C_t *i2c_data, uint8_t busIndex, TickType_t blo
  */
 uint8_t QuadFC_i2cRead(QuadFC_I2C_t *i2c_data, uint8_t busIndex, TickType_t blockTimeMs);
 
+//TODO comment
+uint8_t Test_SerialInit();
+//TODO comment
+uint8_t Test_SerialWrite(QuadFC_Serial_t *serial_data);
+
 /**
  * Initialize the serial port on index busIndex.
  * @param busIndex    Index of the serial port the device is connected to.

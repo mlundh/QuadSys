@@ -60,7 +60,7 @@ int main( void )
 
   uint8_t result = TestFW_ExecuteTests(testFW);
   uint32_t heartbeat_counter = 0;
-
+  TestFW_GetReport(testFW);
   uint32_t pin = (result ? PIN_31_GPIO : PIN_41_GPIO);
   while ( 1 )
   {

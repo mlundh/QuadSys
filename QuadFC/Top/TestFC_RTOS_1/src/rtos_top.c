@@ -88,6 +88,7 @@ void mainTester(void *pvParameters)
 
   uint32_t pin = (result ? PIN_31_GPIO : PIN_41_GPIO);
   taskENTER_CRITICAL();
+  TestFW_GetReport(testFW);
 
   while ( 1 )
   {
