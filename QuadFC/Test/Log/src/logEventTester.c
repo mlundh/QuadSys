@@ -64,7 +64,7 @@ void LogEv_slaveTask( void *pvParameters );
 
 void LogEv_GetTCs(TestFw_t* obj)
 {
-  TestFW_RegisterTest(obj, "Log C Handler", LogEv_TestMultipleThreads);
+  TestFW_RegisterTest(obj, "Log Event", LogEv_TestMultipleThreads);
 }
 
 uint8_t LogEv_createTestTasks(TestFw_t* obj, SemaphoreHandle_t semaphore)

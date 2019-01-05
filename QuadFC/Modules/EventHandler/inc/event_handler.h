@@ -164,19 +164,19 @@ uint8_t Event_InitHandler(eventHandler_t* obj);
  * Subscribe to an event type. Events of this type will be put into
  * the current handlers event mailbox.
  * @param obj     Current handler.
- * @param events  Event to subscribe to.
+ * @param event   Event to subscribe to.
  * @return        1 if successful, 0 otherwise.
  */
-uint8_t Event_Subscribe(eventHandler_t* obj, uint32_t events);
+uint8_t Event_Subscribe(eventHandler_t* obj, event_t event);
 
 /**
  * Unsubscribe to an event type. Events of this type will not be
  * delivered into the current handlers event mailbox.
  * @param obj     Current handler.
- * @param events  Event to unsubscribe from.
+ * @param event   Event to unsubscribe from.
  * @return        1 if successful, 0 otherwise.
  */
-uint8_t Event_Unsubscribe(eventHandler_t* obj, uint32_t events);
+uint8_t Event_Unsubscribe(eventHandler_t* obj, event_t event);
 
 /**
  * Send event nr event to all event handlers that has registered for

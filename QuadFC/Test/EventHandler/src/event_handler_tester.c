@@ -223,7 +223,7 @@ uint8_t EventHandler_TestCBFullEmpty(TestFw_t* obj)
   }
   return result;
 }
-
+#define REPORTLEN (100)
 uint8_t EventHandler_TestEvents(TestFw_t* obj)
 {
   eventTester_t* eventTester =  (eventTester_t*)TestFW_GetTestSuiteInternal(obj, EV_HANDLER_INTENRNAL_IDX);
@@ -253,21 +253,32 @@ uint8_t EventHandler_TestEvents(TestFw_t* obj)
   {
     if(xQueueReceive(eventTester->responseQueue, &rsp[i], 1000/portTICK_PERIOD_MS) == pdTRUE)
     {
+      {
+        char tmpstr[REPORTLEN] = {0};
+        snprintf(tmpstr, REPORTLEN, "Received: Handler: %p, event %d\n",rsp[i].evHandler,rsp[i].event);
+        TestFW_Report(obj, tmpstr);
+      }
       // Check received message against all expected messages. If one matches then
       // the event notification succeed for that event.
+
       uint8_t found = 0;
-      for(int j = 0; j < nr_exp_rsp; j++)
+      int j = 0;
+      for( j = 0; j < nr_exp_rsp; j++)
       {
         if((expectedRsp[j].evHandler == rsp[i].evHandler) &&
             (expectedRsp[j].event     == rsp[i].event    ))
         {
           // Event response found.
           found++;
+          break;
         }
       }
       if(found != 1)
       {
         TestFW_Report(obj, "---Expected events was not found.\n");
+        char tmpstr[REPORTLEN] = {0};
+        snprintf(tmpstr, REPORTLEN, "Expected: Handler: %p, event %d\nGot:      Handler: %p, event %d\n",expectedRsp[j].evHandler,expectedRsp[j].event,rsp[i].evHandler,rsp[i].event);
+        TestFW_Report(obj, tmpstr);
         result = 0;
       }
     }
@@ -312,12 +323,10 @@ uint8_t EventHandler_createTestTasks(eventTester_t* obj)
   testEventTaskParams * taskParam1 = pvPortMalloc(sizeof(testEventTaskParams));
   taskParam1->evHandler = Event_CreateHandler(NULL, 4);
   // Task 1 is interested in new state and new control signal.
-  taskParam1->evHandler->subscriptions |= (1 << eNewState) | (1 << eNewCtrlSignal);
   taskParam1->responseQueue = obj->responseQueue;
   obj->evHandler1 = taskParam1->evHandler;
-  Event_RegisterCallback(taskParam1->evHandler, eNewState ,stateCb, taskParam1);
   Event_RegisterCallback(taskParam1->evHandler, eNewCtrlSignal ,ctrlCb, taskParam1);
-  Event_RegisterCallback(taskParam1->evHandler, eNewSetpoint ,setpointCb, taskParam1);
+  Event_RegisterCallback(taskParam1->evHandler, eNewState ,stateCb, taskParam1);
   portBASE_TYPE create_result1 = xTaskCreate( event_test_task,   /* The function that implements the task.  */
       (const char *const) "Test1",                  /* The name of the task. This is not used by the kernel, only aids in debugging*/
       100,                                          /* The stack size for the task*/
@@ -328,12 +337,10 @@ uint8_t EventHandler_createTestTasks(eventTester_t* obj)
   testEventTaskParams * taskParam2 = pvPortMalloc(sizeof(testEventTaskParams));
   taskParam2->evHandler = Event_CreateHandler(taskParam1->evHandler->eventQueue, 0);
   // Task 2 is interested in new state.
-  taskParam2->evHandler->subscriptions |= (1 << eNewState);
   taskParam2->responseQueue = obj->responseQueue;
   obj->evHandler2 = taskParam2->evHandler;
+
   Event_RegisterCallback(taskParam2->evHandler, eNewState ,stateCb, taskParam2);
-  Event_RegisterCallback(taskParam2->evHandler, eNewCtrlSignal ,ctrlCb, taskParam2);
-  Event_RegisterCallback(taskParam2->evHandler, eNewSetpoint ,setpointCb, taskParam2);
   portBASE_TYPE create_result2 = xTaskCreate( event_test_task,   /* The function that implements the task.  */
       (const char *const) "Test2",                  /* The name of the task. This is not used by the kernel, only aids in debugging*/
       100,                                          /* The stack size for the task*/
@@ -344,12 +351,10 @@ uint8_t EventHandler_createTestTasks(eventTester_t* obj)
   testEventTaskParams * taskParam3 = pvPortMalloc(sizeof(testEventTaskParams));
   taskParam3->evHandler = Event_CreateHandler(taskParam1->evHandler->eventQueue, 0);
   // Task 3 is interested in new setpoint.
-  taskParam3->evHandler->subscriptions |= ((1 << eNewSetpoint) | (1 << eTestEvent1) | (1 << eTestEvent2) | ( 1<< eFcFault));
   taskParam3->responseQueue = obj->responseQueue;
   obj->evHandler3 = taskParam3->evHandler;
-  Event_RegisterCallback(taskParam3->evHandler, eNewState ,stateCb, taskParam3);
-  Event_RegisterCallback(taskParam3->evHandler, eNewCtrlSignal ,ctrlCb, taskParam3);
   Event_RegisterCallback(taskParam3->evHandler, eNewSetpoint ,setpointCb, taskParam3);
+
   Event_RegisterCallback(taskParam3->evHandler, eTestEvent1 ,testeTestEvent1Cb, taskParam3);
   Event_RegisterCallback(taskParam3->evHandler, eTestEvent2 ,testTestEvent2Cb, taskParam3);
   Event_RegisterCallback(taskParam3->evHandler, eFcFault ,testeFcFaultCb, taskParam3);
@@ -364,7 +369,6 @@ uint8_t EventHandler_createTestTasks(eventTester_t* obj)
   testEventTaskParams * stimuliTask = pvPortMalloc(sizeof(testEventTaskParams));
   stimuliTask->evHandler = Event_CreateHandler(taskParam1->evHandler->eventQueue, 0);
   // stimuliTask is not interested in any event.
-  stimuliTask->evHandler->subscriptions |= (1 << ePeripheralError);
   stimuliTask->responseQueue = obj->responseQueue;
   obj->evHandler4 = stimuliTask->evHandler;
   Event_RegisterCallback(stimuliTask->evHandler, ePeripheralError ,stimuliPeripheralErrorCb, stimuliTask);
