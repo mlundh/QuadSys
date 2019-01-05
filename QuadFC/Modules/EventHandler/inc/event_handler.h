@@ -148,7 +148,7 @@ struct eventHandler
  *                          used by the master handler.
  * @return
  */
-eventHandler_t* Event_CreateHandler(QueueHandle_t* masterQueue, uint8_t nr_handlers);
+eventHandler_t* Event_CreateHandler(QueueHandle_t masterQueue, uint8_t nr_handlers);
 
 /**
  * Initialize the event handler. This might take some time

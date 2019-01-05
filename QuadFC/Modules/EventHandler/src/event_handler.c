@@ -102,7 +102,7 @@ uint8_t Event_InitializeDone(eventHandler_t* obj, void* data, eventData_t* eData
  */
 uint8_t Event_SendHandlerBC(eventHandler_t* obj, event_t event);
 
-eventHandler_t* Event_CreateHandler(QueueHandle_t* masterQueue, uint8_t nr_handlers)
+eventHandler_t* Event_CreateHandler(QueueHandle_t masterQueue, uint8_t nr_handlers)
 {
   eventHandler_t* obj = pvPortMalloc(sizeof(eventHandler_t));
   if(!obj)
