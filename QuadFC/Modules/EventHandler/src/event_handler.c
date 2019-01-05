@@ -201,7 +201,7 @@ uint8_t Event_InitHandler(eventHandler_t* obj)
 		// Wait for all normal handlers to register. -1 since we are a handler ourselfs.
 		while((obj->nrHandlers-1) != obj->registeredHandlers)
 		{
-			uint8_t result = Event_Receive(obj, portMAX_DELAY);
+			uint8_t result = Event_WaitForEvent(obj,eRegisterHandler,1, 1);
 			if(!result)
 			{
 				return 0;
@@ -248,14 +248,16 @@ uint8_t Event_InitHandler(eventHandler_t* obj)
 		{
 			return 0;
 		}
-		// Handle the response from the master.
-		if(!Event_Receive(obj, portMAX_DELAY))
+		// Handle the response, message with all subscriptions, from the master.
+        //if(!Event_Receive(obj, portMAX_DELAY))
+		if(!Event_WaitForEvent(obj,eRegisterHandler,1, 1))
 		{
 			return 0;
 		}
 
 		// Handle the meshComplete event.
-		if(!Event_Receive(obj, portMAX_DELAY))
+		//if(!Event_Receive(obj, portMAX_DELAY))
+		if(!Event_WaitForEvent(obj,eMeshComplete,1, 1))
 		{
 			return 0;
 		}
@@ -264,7 +266,12 @@ uint8_t Event_InitHandler(eventHandler_t* obj)
 			return 0;
 		}
 
+
 	}
+	// Handle all buffered events from the initialization phase.
+	while(Event_HandleBufferedEvents(obj));
+
+
 	return 1;
 }
 

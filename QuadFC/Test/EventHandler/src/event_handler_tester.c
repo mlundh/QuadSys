@@ -253,11 +253,6 @@ uint8_t EventHandler_TestEvents(TestFw_t* obj)
   {
     if(xQueueReceive(eventTester->responseQueue, &rsp[i], 1000/portTICK_PERIOD_MS) == pdTRUE)
     {
-      {
-        char tmpstr[REPORTLEN] = {0};
-        snprintf(tmpstr, REPORTLEN, "Received: Handler: %p, event %d\n",rsp[i].evHandler,rsp[i].event);
-        TestFW_Report(obj, tmpstr);
-      }
       // Check received message against all expected messages. If one matches then
       // the event notification succeed for that event.
 

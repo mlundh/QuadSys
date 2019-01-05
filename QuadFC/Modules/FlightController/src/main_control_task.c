@@ -155,6 +155,8 @@ void create_main_control_task(eventHandler_t* evHandler,  FlightModeHandler_t* f
  */
 void main_control_task( void *pvParameters )
 {
+
+
   MaintaskParams_t * param = (MaintaskParams_t*)(pvParameters);
   // Initialize event handler.
   Event_StartInitialize(param->evHandler);
