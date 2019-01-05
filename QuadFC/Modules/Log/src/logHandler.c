@@ -432,13 +432,6 @@ uint8_t LogHandler_AppendNodeString(logNameQueueItems_t *items, uint8_t *buffer,
     }
     // append name and update buf_index.
     strncat( (char *) buffer , (const char *) items->logNames[i].name, (unsigned short) MAX_PARAM_NAME_LENGTH);
-
-    //append value type <xx>
-    strncat( (char *) buffer, (const char *) "<", (unsigned short) 1);
-    uint8_t pVTTemp[MAX_VALUE_TYPE_LENGTH];
-    snprintf((char *) pVTTemp, MAX_VALUE_TYPE_LENGTH, "%lu",(uint32_t)items->logNames[i].type);
-    strncat( (char *) buffer, (const char *) pVTTemp, (unsigned short) MAX_LOG_TYPE_DIGITS);
-    strncat( (char *) buffer, (const char *) ">", (unsigned short) 1);
     // append id "[xxx]"
     strncat( (char *) buffer, (const char *) "[", (unsigned short) 1);
     uint8_t pTemp[MAX_LOG_ID_DIGITS_ID];

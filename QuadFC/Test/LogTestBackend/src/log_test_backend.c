@@ -32,6 +32,7 @@ struct logBackEnd
 {
   logEntry_t report[TEST_LOG_LENGTH];
   uint8_t idx;
+  uint8_t read;
 };
 
 LogBackEnd_t* LogBackend_CreateObj()
@@ -42,6 +43,7 @@ LogBackEnd_t* LogBackend_CreateObj()
     return NULL;
   }
   obj->idx = 0;
+  obj->read = 0;
   return obj;
 }
 
@@ -63,10 +65,12 @@ uint8_t LogBackend_Report(LogBackEnd_t* obj, logEntry_t* entry)
 
 uint8_t LogBackend_GetLog(LogBackEnd_t* obj, logEntry_t* entries, uint32_t size, uint32_t* nrLogs)
 {
-  for(*nrLogs = 0; ((*nrLogs) < size) && ((*nrLogs) < obj->idx); (*nrLogs)++)
+  int j = 0;
+  for(; (obj->read < size) && (obj->read < obj->idx); obj->read++)
   {
-    entries[(*nrLogs)] = obj->report[(*nrLogs)];
+    entries[j++] = obj->report[obj->read];
   }
+  *nrLogs = j;
   return 1;
 }
 

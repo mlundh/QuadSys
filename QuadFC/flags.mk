@@ -82,5 +82,5 @@ CFLAGS+= -DBOARD=ARDUINO_DUE_X -DUDD_ENABLE -D__SAM3X8E__
 #
 LDFLAGS= -mthumb -Wl,-Map,"$(@).map" -Wl,--start-group -lm  -Wl,--end-group 
 LDFLAGS+= -Wl,--gc-sections -mcpu=cortex-m3 -T $(SCATTER_QuadFC) -Wl,--cref 
-LDFLAGS+= -Wl,--entry=$(ENTRY_QuadFC) -mthumb  -specs=nano.specs
+LDFLAGS+= -Wl,--entry=$(ENTRY_QuadFC) -mthumb  -specs=nano.specs -Wl,--undefined=uxTopUsedPriority
 

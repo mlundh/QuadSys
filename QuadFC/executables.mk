@@ -37,24 +37,24 @@ EXECUTABLES := QuadFC Test_SigEventLog Test_Board Test_Utilities
 QuadFC_DEPS:= Top/QuadFC HAL/QuadFC
 QuadFC_DEPS+= $(addprefix Modules/, Communication FlightController HMI Parameters EventHandler)
 QuadFC_DEPS+= $(addprefix Modules/, StateEstimator Utilities SetpointHandler FlightModeHandler Log LogMemBackend)
-QuadFC_DEPS+= $(addprefix PortLayer/, Actuators Board Communication HMI CY15B104Q_SX_spi_fram)
+QuadFC_DEPS+= $(addprefix PortLayer/, ArduinoDueBoard SpectrumSatellite HMI CY15B104Q_SX_spi_fram)
 QuadFC_DEPS+= $(addprefix PortLayer/, MB85RC_i2c_fram Sensors)
 QuadFC_DEPS+= $(addprefix ThirdParty/, asf freertos asf_freertos)
 
-Test_Utilities_DEPS:= ThirdParty/asf Top/Test_Utilities  PortLayer/Board
+Test_Utilities_DEPS:= ThirdParty/asf Top/Test_Utilities PortLayer/TestArduinoDue
 Test_Utilities_DEPS+= $(addprefix Test/,TestFW Math Utilities)
 Test_Utilities_DEPS+= $(addprefix Modules/, Utilities )
 
-Test_SigEventLog_DEPS:= Top/Test_SigEventLog HAL/QuadFC
+Test_SigEventLog_DEPS:= Top/Test_SigEventLog HAL/QuadFC 
 Test_SigEventLog_DEPS+= $(addprefix Test/,TestFW DummyI2C SignalProcessing EventHandler Log LogTestBackend)
-Test_SigEventLog_DEPS+= $(addprefix Modules/, Utilities StateEstimator Parameters EventHandler FlightController HMI)
-Test_SigEventLog_DEPS+= $(addprefix Modules/, Log)
-Test_SigEventLog_DEPS+= $(addprefix PortLayer/, Sensors Communication HMI Board CY15B104Q_SX_spi_fram MB85RC_i2c_fram)
+Test_SigEventLog_DEPS+= $(addprefix Modules/, Utilities Parameters EventHandler  SetpointHandler FlightModeHandler StateEstimator)
+Test_SigEventLog_DEPS+= $(addprefix Modules/, Log FlightController)
+Test_SigEventLog_DEPS+= $(addprefix PortLayer/, HMI TestArduinoDue SpectrumSatellite Sensors)
 Test_SigEventLog_DEPS+= $(addprefix ThirdParty/, asf freertos)
 
 Test_Board_DEPS:= Top/Test_Board HAL/QuadFC
-Test_Board_DEPS+= $(addprefix Test/,TestFW ArduinoDueBoard)
+Test_Board_DEPS+= $(addprefix Test/, ArduinoDueBoard TestFW )
 Test_Board_DEPS+= $(addprefix Modules/, Utilities )
 Test_Board_DEPS+= $(addprefix Modules/, Log LogMemBackend)
-Test_Board_DEPS+= $(addprefix PortLayer/, Board CY15B104Q_SX_spi_fram MB85RC_i2c_fram)
+Test_Board_DEPS+= $(addprefix PortLayer/, TestArduinoDue ArduinoDueBoard CY15B104Q_SX_spi_fram MB85RC_i2c_fram)
 Test_Board_DEPS+= $(addprefix ThirdParty/, asf freertos asf_freertos)

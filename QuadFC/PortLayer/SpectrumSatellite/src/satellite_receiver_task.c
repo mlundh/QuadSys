@@ -38,8 +38,8 @@
  * 
  *
  */ 
-#include "PortLayer/Communication/inc/satellite_receiver_task.h"
-#include "PortLayer/Communication/inc/satellite_receiver_public.h"
+#include "PortLayer/SpectrumSatellite/inc/satellite_receiver_task.h"
+#include "PortLayer/SpectrumSatellite/inc/satellite_receiver_public.h"
 #include "QuadFC/QuadFC_Peripherals.h"
 #include "SetpointHandler/inc/setpoint_handler.h"
 #include "EventHandler/inc/event_handler.h"

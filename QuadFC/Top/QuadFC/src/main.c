@@ -33,7 +33,7 @@
 #include "FlightController/inc/main_control_task.h"
 #include "Communication/inc/communication_tasks.h"
 #include "HMI/inc/led_control_task.h"
-#include "PortLayer/Communication/inc/satellite_receiver_public.h"
+#include "PortLayer/SpectrumSatellite/inc/satellite_receiver_public.h"
 
 /*include utilities*/
 #include "Utilities/inc/common_types.h"

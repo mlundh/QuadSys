@@ -44,7 +44,10 @@ typedef struct logNames logNames_t;
  * call Log_Report to create a log entry. The log object will register to either
  * a parent log object, or to a thread safe log handler, but never both. The
  * log object will register a parameter called logLevel that controls if the
- * logging is on or off.
+ * logging is on or off. The log level works according to:
+ * LogLevel = 0 : Logging off.
+ *          = 1 : Logging each time "Log_Report" is called.
+ *          = n : Logging each n:th time "Log_Report" is called.
  *
  * @param num_children  Max number of children the object can have.
  * @param type          Log value type.

@@ -33,7 +33,7 @@
 #include "Test/DummyI2C/Dummy_i2c.h"
 #include "Test/SignalProcessing/signal_processing_tester.h"
 #include "StateEstimator/inc/state_estimator.h"
-#include "PortLayer/Communication/inc/satellite_receiver_task.h"
+#include "PortLayer/SpectrumSatellite/inc/satellite_receiver_task.h"
 #include "Modules/StateEstimator/inc/signal_processing.h"
 #include "FlightController/inc/control_mode_handler.h"
 

@@ -33,7 +33,6 @@
 static  Usart *             usart_inst[]      = {USART0, USART1, USART2, USART3};
 static  freertos_usart_if   freertos_usart[]  = {NULL, NULL, NULL, NULL};
 static  uint32_t            usart_init[]      = {0, 0, 0, 0};
-static  uint32_t			test_usart_init   = 0;
 #define RECEIVE_BUFFER_LENGTH (512)
 
 /**
@@ -63,43 +62,6 @@ static uint32_t DataBits[] =
     US_MR_CHRL_7_BIT,
     US_MR_CHRL_8_BIT
 };
-
-
-uint8_t Test_SerialInit()
-{
-
-  //Return success if the uart is already initialized.
-  if(test_usart_init)
-  {
-    return 1;
-  }
-
-  static usart_serial_options_t usart_options = {
-      .baudrate = 57600,
-      .charlength = US_MR_CHRL_8_BIT,
-      .paritytype = US_MR_PAR_NO,
-      .stopbits = false
-  };
-
-  usart_serial_init(USART1, &usart_options);
-
-  test_usart_init = 1;
-  return 1;
-}
-
-
-uint8_t Test_SerialWrite(QuadFC_Serial_t *serial_data)
-{
-
-  if(!test_usart_init)
-  {
-    return 0;
-  }
-
-  usart_serial_write_packet(USART1, serial_data->buffer, serial_data->bufferLength);
-
-  return 1;
-}
 
 uint8_t QuadFC_SerialInit(int busIndex, QuadFC_SerialOptions_t* opt)
 {

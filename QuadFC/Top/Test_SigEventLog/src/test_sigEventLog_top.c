@@ -80,7 +80,6 @@ int main( void )
 void mainTester(void *pvParameters)
 {
   TestFw_t* testFW = TestFW_Create("Sig & event");
-  //Mem_Init();
 
   /**************Add test module instantiation here***************/
   SigProsses_GetTCs(testFW);

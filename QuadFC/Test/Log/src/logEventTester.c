@@ -280,7 +280,7 @@ void LogEv_slaveTask( void *pvParameters )
 
 
   // Enable the logs.
-  uint8_t string[] = "/QuadFC/logEvTS/logS0[100]/../logS1[100]/0";
+  uint8_t string[] = "/QuadFC/logEvTS/logS0[1]/../logS1[1]/0";
   Param_SetFromRoot(Param_GetRoot(),string ,strlen((const char*)string));
 
   //Log twice before reading and responding to events.

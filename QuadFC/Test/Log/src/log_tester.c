@@ -189,7 +189,7 @@ uint8_t Log_TestReport(TestFw_t* obj)
     return 0;
   }
   // set the log level
-  uint8_t string[] = "/QuadFC/Report/root1[100]/\0";
+  uint8_t string[] = "/QuadFC/Report/root1[1]/\0";
   Param_SetFromRoot(Param_GetRoot(),string ,strlen((const char*)string));
 
   // enter critical to ensure same tick...
@@ -254,7 +254,7 @@ uint8_t Log_TestReport(TestFw_t* obj)
         entryP->time != time )
     {
       char tmpstr[LONG_MSG] = {0};
-      snprintf (tmpstr, LONG_MSG,"Second log entry not correct. \n Expected data: %d, id: %u, time: %lu\n Got: data: %ld, id: %lu, time: %lu\n", 9, 0, time, entryP->data, entryP->id, entryP->time);
+      snprintf (tmpstr, LONG_MSG,"Second log entry not correct. \n Expected data: %d, id: %u, time: %lu\n Got: data: %ld, id: %lu, time: %lu\n", 879, 0, time, entryP->data, entryP->id, entryP->time);
       TestFW_Report(obj, tmpstr);
       result = 0;
     }
@@ -278,9 +278,9 @@ uint8_t Log_TestMultipleLoggers(TestFw_t* obj)
     return 0;
   }
   // set the log level
-  uint8_t string[] = "/QuadFC/Report1/root1[100]/\0";
+  uint8_t string[] = "/QuadFC/Report1/root1[1]/\0";
   Param_SetFromRoot(Param_GetRoot(),string ,strlen((const char*)string));
-  uint8_t string2[] = "/QuadFC/Report1/root1/child1[100]/\0";
+  uint8_t string2[] = "/QuadFC/Report1/root1/child1[1]/\0";
   Param_SetFromRoot(Param_GetRoot(),string2 ,strlen((const char*)string2));
   // enter critical to ensure same tick...
   taskENTER_CRITICAL();
@@ -345,9 +345,9 @@ uint8_t Log_TestMultipleHandlers(TestFw_t* obj)
     return 0;
   }
   // set the log level
-  uint8_t string[] = "/QuadFC/TH1/LogT1[100]/\0";
+  uint8_t string[] = "/QuadFC/TH1/LogT1[1]/\0";
   Param_SetFromRoot(Param_GetRoot(),string ,strlen((const char*)string));
-  uint8_t string2[] = "/QuadFC/TH2/LogT2[100]/\0";
+  uint8_t string2[] = "/QuadFC/TH2/LogT2[1]/\0";
   Param_SetFromRoot(Param_GetRoot(),string2 ,strlen((const char*)string2));
   // enter critical to ensure same tick...
   taskENTER_CRITICAL();
