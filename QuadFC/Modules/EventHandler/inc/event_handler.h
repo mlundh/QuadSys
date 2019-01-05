@@ -151,14 +151,26 @@ struct eventHandler
 eventHandler_t* Event_CreateHandler(QueueHandle_t masterQueue, uint8_t nr_handlers);
 
 /**
- * Initialize the event handler. This might take some time
- * since there will be multiple messages sent on the queues
- * spanning the event mesh. This function has to be called after the
- * scheduler is started.
+ * Initialize the event handler and the task it belongs to.
+ * This might take some time since there will be multiple messages sent on the queues
+ * spanning the event mesh.
+ *
+ * This function has to be called after the scheduler is started.
+ *
+ * If not followed by Event_EndInitialize the thread will hang. The reason
+ * for this behavior is to let the task initialize any resources before any
+ * part of the system is started.
  * @param obj     Current handler.
  * @return
  */
-uint8_t Event_InitHandler(eventHandler_t* obj);
+void Event_StartInitialize(eventHandler_t* obj);
+
+/**
+ * End the initialization of the task.
+ * @param obj
+ */
+void Event_EndInitialize(eventHandler_t* obj);
+
 
 /**
  * Subscribe to an event type. Events of this type will be put into
@@ -231,13 +243,7 @@ uint8_t Event_HandleBufferedEvents(eventHandler_t* obj);
  */
 uint8_t Event_RegisterCallback(eventHandler_t* obj, event_t eventNumber, eventHandlerFcn fcn, void* data);
 
-/**
- * Send the specified event to all handlers, and wait for the same event from all other handlers.
- * Observe that ALL handlers need to subscribe to the event for this function to ever return.
- * @param obj         Current handler
- * @param event       The event to send and wait for.
- * @return
- */
-uint8_t Event_SendAndWaitForAll(eventHandler_t* obj, event_t event);
+
+
 
 #endif /* MODULES_EVENTHANDLER_INC_EVENT_HANDLER_H_ */

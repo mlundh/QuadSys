@@ -390,26 +390,8 @@ uint8_t EventHandler_createTestTasks(eventTester_t* obj)
 void stimuli_test_task( void *pvParameters )
 {
   testEventTaskParams * param = (testEventTaskParams*)(pvParameters);
-  if(Event_InitHandler(param->evHandler) != 1)
-  {
-    for(;;)
-    {
-      // ERROR!
-    }
-  }
-  if(!Event_SendAndWaitForAll(param->evHandler, eInitialize))
-  {
-    for(;;)
-    {
-    }
-  }
-
-  if(!Event_SendAndWaitForAll(param->evHandler, eInitializeDone))
-  {
-    for(;;)
-    {
-    }
-  }
+  Event_StartInitialize(param->evHandler);
+  Event_EndInitialize(param->evHandler);
 
 
   eventData_t evData = {0};
@@ -454,26 +436,9 @@ void stimuli_test_task( void *pvParameters )
 void event_test_task( void *pvParameters )
 {
   testEventTaskParams * param = (testEventTaskParams*)(pvParameters);
-  if(Event_InitHandler(param->evHandler) != 1)
-  {
-    for(;;)
-    {
-      // ERROR!
-    }
-  }
-  if(!Event_SendAndWaitForAll(param->evHandler, eInitialize))
-  {
-    for(;;)
-    {
-    }
-  }
+  Event_StartInitialize(param->evHandler);
+  Event_EndInitialize(param->evHandler);
 
-  if(!Event_SendAndWaitForAll(param->evHandler, eInitializeDone))
-  {
-    for(;;)
-    {
-    }
-  }
 
   for ( ;; )
   {

@@ -157,21 +157,8 @@ void main_control_task( void *pvParameters )
 {
   MaintaskParams_t * param = (MaintaskParams_t*)(pvParameters);
   // Initialize event handler.
-  uint8_t evInitResult = Event_InitHandler(param->evHandler);
-  if(!evInitResult)
-  {
-    for(;;)
-    {
-      // ERROR!
-    }
-  }
+  Event_StartInitialize(param->evHandler);
 
-  if(!Event_SendAndWaitForAll(param->evHandler, eInitialize))
-   {
-     for(;;)
-     {
-     }
-   }
   // Do initializations here.
 
   /*Initialize modules*/
@@ -203,13 +190,8 @@ void main_control_task( void *pvParameters )
 
   /*The main control loop*/
 
-  if(!Event_SendAndWaitForAll(param->evHandler, eInitializeDone))
-   {
-     for(;;)
-     {
-     }
-   }
-   
+  Event_EndInitialize(param->evHandler);
+
   unsigned portBASE_TYPE xLastWakeTime = xTaskGetTickCount();
   for ( ;; )
   {

@@ -155,19 +155,8 @@ uint8_t LogEv_TestMultipleThreads(TestFw_t* obj)
 void LogEv_masterTask( void *pvParameters )
 {
   logEvTestTaskParams_t * param = (logEvTestTaskParams_t*)(pvParameters);
-  if(Event_InitHandler(param->evHandler) != 1)
-  {
-    for(;;)
-    {
-      // ERROR!
-    }
-  }
-  if(!Event_SendAndWaitForAll(param->evHandler, eInitialize))
-  {
-    for(;;)
-    {
-    }
-  }
+  Event_StartInitialize(param->evHandler);
+
 
   Log_t* logObj0 = Log_CreateObj(2,variable_type_int32, &param->logValue0,NULL,param->logHObj,"logM0");
   Log_t* logObj1 = Log_CreateObj(2,variable_type_int32, &param->logValue1,NULL,param->logHObj,"logM1");
@@ -179,12 +168,8 @@ void LogEv_masterTask( void *pvParameters )
     }
   }
 
-  if(!Event_SendAndWaitForAll(param->evHandler, eInitializeDone))
-  {
-    for(;;)
-    {
-    }
-  }
+  Event_EndInitialize(param->evHandler);
+
 
 
   // first, get name!
@@ -249,19 +234,9 @@ void LogEv_slaveTask( void *pvParameters )
 {
 
   logEvTestTaskParams_t * param = (logEvTestTaskParams_t*)(pvParameters);
-  if(Event_InitHandler(param->evHandler) != 1)
-  {
-    for(;;)
-    {
-      // ERROR!
-    }
-  }
-  if(!Event_SendAndWaitForAll(param->evHandler, eInitialize))
-  {
-    for(;;)
-    {
-    }
-  }
+
+  Event_StartInitialize(param->evHandler);
+
   Log_t* logObj0 = Log_CreateObj(2,variable_type_int32, &param->logValue0,NULL,param->logHObj,"logS0");
   Log_t* logObj1 = Log_CreateObj(2,variable_type_int32, &param->logValue1,NULL,param->logHObj,"logS1");
   if(!logObj0 || !logObj1)
@@ -271,12 +246,7 @@ void LogEv_slaveTask( void *pvParameters )
 
     }
   }
-  if(!Event_SendAndWaitForAll(param->evHandler, eInitializeDone))
-  {
-    for(;;)
-    {
-    }
-  }
+  Event_EndInitialize(param->evHandler);
 
 
   // Enable the logs.

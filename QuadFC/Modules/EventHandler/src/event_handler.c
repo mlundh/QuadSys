@@ -27,6 +27,17 @@
 #define NO_ID (255)
 
 /**
+ * Initialize the event handler. This might take some time
+ * since there will be multiple messages sent on the queues
+ * spanning the event mesh. This function has to be called after the
+ * scheduler is started.
+ * @param obj     Current handler.
+ * @return
+ */
+uint8_t Event_InitHandler(eventHandler_t* obj);
+
+
+/**
  * Internal function. Will fire the event in event_data if it matches event, or if bufferEvents is set to 0. If
  * the event is not fired then it will be written to the back of the circular buffer.
  * @param obj           Current event handler object.
@@ -38,6 +49,14 @@
  */
 uint8_t Event_FireOrBufferEvent(eventHandler_t* obj, event_t event, uint8_t* found, eventData_t event_data, uint8_t bufferEvents);
 
+/**
+ * Send the specified event to all handlers, and wait for the same event from all other handlers.
+ * Observe that ALL handlers need to subscribe to the event for this function to ever return.
+ * @param obj         Current handler
+ * @param event       The event to send and wait for.
+ * @return
+ */
+uint8_t Event_SendAndWaitForAll(eventHandler_t* obj, event_t event);
 
 /**
  * Fire the callback registered to the event in event_data.
@@ -141,6 +160,34 @@ eventHandler_t* Event_CreateHandler(QueueHandle_t masterQueue, uint8_t nr_handle
 		obj->nrHandlers = nr_handlers;
 	}
 	return obj;
+}
+
+void Event_StartInitialize(eventHandler_t* obj)
+{
+  if(Event_InitHandler(obj) != 1)
+  {
+    for(;;)
+    {
+      // ERROR!
+    }
+  }
+  if(!Event_SendAndWaitForAll(obj, eInitialize))
+  {
+    for(;;)
+    {
+      // ERROR!
+    }
+  }
+}
+
+void Event_EndInitialize(eventHandler_t* obj)
+{
+  if(!Event_SendAndWaitForAll(obj, eInitializeDone))
+  {
+    for(;;)
+    {
+    }
+  }
 }
 
 uint8_t Event_InitHandler(eventHandler_t* obj)

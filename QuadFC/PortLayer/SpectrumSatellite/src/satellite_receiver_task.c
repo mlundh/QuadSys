@@ -131,9 +131,6 @@ void Satellite_CreateReceiverTask(  QueueHandle_t eventMaster, FlightModeHandler
     }
   }
 
-  SatelliteParam->evHandler->subscriptions |= 0;
-
-
 
   /*Create the worker task*/
   xTaskCreate(  Satellite_ReceiverTask,   /* The task that implements the test. */
@@ -166,29 +163,9 @@ void Satellite_ReceiverTask(void *pvParameters)
   Satellite_t* param = (Satellite_t*)pvParameters;
 
   // Initialize event handler.
-  uint8_t evInitResult = Event_InitHandler(param->evHandler);
-  if(!evInitResult)
-  {
-    for(;;)
-    {
-      // ERROR!
-    }
-  }
+  Event_StartInitialize(param->evHandler);
 
-  if(!Event_SendAndWaitForAll(param->evHandler, eInitialize))
-   {
-     for(;;)
-     {
-     }
-   }
-
-  // Do initializations here.
-  if(!Event_SendAndWaitForAll(param->evHandler, eInitializeDone))
-   {
-     for(;;)
-     {
-     }
-   }
+  Event_EndInitialize(param->evHandler);
 
   spektrum_data_t* decoded_data = param->decoded_data;
   spectrum_config_t* configuration = param->configuration;

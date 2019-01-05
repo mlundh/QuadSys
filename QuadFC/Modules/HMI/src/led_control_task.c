@@ -111,9 +111,6 @@ void Led_CreateLedControlTask( QueueHandle_t eventMaster )
   Event_RegisterCallback(ledParams->evHandler, eNewCtrlMode      ,Led_HandleCtrltMode, ledParams);
   Event_RegisterCallback(ledParams->evHandler, ePeripheralError  ,Led_HandlePeripheralError, ledParams);
 
-  // Subscribe to the events that should cause led-state change.
-  ledParams->evHandler->subscriptions |= (1 << eNewFlightMode) | (1 << eNewCtrlMode)
-                                      | (1 << ePeripheralError);
 
   portBASE_TYPE create_result;
   create_result = xTaskCreate( Led_ControlTask,   /* The function that implements the task.  */
@@ -138,29 +135,9 @@ void Led_ControlTask( void *pvParameters )
 {
   ledTaskParams * param = (ledTaskParams*)(pvParameters);
 
-  uint8_t evInitResult = Event_InitHandler(param->evHandler);
-  if(!evInitResult)
-  {
-    for(;;)
-    {
-      // ERROR!
-    }
-  }
+  Event_StartInitialize(param->evHandler);
+  Event_EndInitialize(param->evHandler);
 
-  if(!Event_SendAndWaitForAll(param->evHandler, eInitialize))
-  {
-    for(;;)
-    {
-    }
-  }
-  // Do initializations here.
-
-  if(!Event_SendAndWaitForAll(param->evHandler, eInitializeDone))
-  {
-    for(;;)
-    {
-    }
-  }
 
 
   unsigned portBASE_TYPE xLastWakeTime = xTaskGetTickCount();

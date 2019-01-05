@@ -299,30 +299,12 @@ void Com_TxTask( void *pvParameters )
   TxCom_t * obj = (TxCom_t *) pvParameters;
 
   // Initialize event handler.
-  uint8_t evInitResult = Event_InitHandler(obj->evHandler);
-  if(!evInitResult)
-  {
-    for(;;)
-    {
-      // ERROR!
-    }
-  }
-
-  if(!Event_SendAndWaitForAll(obj->evHandler, eInitialize))
-  {
-    for(;;)
-    {
-    }
-  }
+  Event_StartInitialize(obj->evHandler);
 
   QSP_t *txPacket;            //!< Handle for a QSP packet, used for receiving from queue.
 
-  if(!Event_SendAndWaitForAll(obj->evHandler, eInitializeDone))
-  {
-    for(;;)
-    {
-    }
-  }
+  Event_EndInitialize(obj->evHandler);
+
 
   for ( ;; )
   {
@@ -377,29 +359,10 @@ void Com_RxTask( void *pvParameters )
   RxCom_t * obj = (RxCom_t *) pvParameters;
 
   // Initialize event handler.
-  uint8_t evInitResult = Event_InitHandler(obj->evHandler);
-  if(!evInitResult)
-  {
-    for(;;)
-    {
-      // ERROR!
-    }
-  }
+  Event_StartInitialize(obj->evHandler);
 
+  Event_EndInitialize(obj->evHandler);
 
-  if(!Event_SendAndWaitForAll(obj->evHandler, eInitialize))
-  {
-    for(;;)
-    {
-    }
-  }
-
-  if(!Event_SendAndWaitForAll(obj->evHandler, eInitializeDone))
-  {
-    for(;;)
-    {
-    }
-  }
   // TODO change timeout in mem_read and move this to the init phase.
   Com_ParamLoad(obj);
   if( QSP_StatusAck != QSP_GetControl(obj->QspRespPacket))
