@@ -1,14 +1,18 @@
+QuadFC/out
 QuadGS/out/
 QuadGS/build/
 QuadGS/make/
 LogFile.txt
 Mapfile.txt
-*.d
-*.log
-# Eclipse project
+/*.d
+/*.o
+/*.elf
+/*.bin
 *.cproject
 *.project
 *.settings
+desktop.ini
+*.gdb_history
 *~
 
 # Compiled Object files
