@@ -1,0 +1,9 @@
+case messageTypes_t::{type}_e:
+	{{
+		{type}::ptr ptr = std::make_unique<{type}>(msgBase);
+		ptr->setSkipStreamHeader();
+		is >> *ptr;
+		returnPtr = std::move(ptr);
+		break;
+	}}
+	

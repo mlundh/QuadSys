@@ -1,0 +1,42 @@
+QuadGS/out/
+QuadGS/build/
+QuadGS/make/
+LogFile.txt
+Mapfile.txt
+*.d
+*.log
+# Eclipse project
+*.cproject
+*.project
+*.settings
+*~
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+

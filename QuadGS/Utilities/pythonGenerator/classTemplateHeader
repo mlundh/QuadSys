@@ -1,0 +1,38 @@
+#ifndef QUADGS_MESSAGE_{classNameUpper}_H_
+#define QUADGS_MESSAGE_{classNameUpper}_H_
+#include "QGS_ModuleMsg.h"
+{includes}
+namespace QuadGS {{
+
+class {className}: public QGS_ModuleMsg<{className}>
+{{
+public:
+
+	{className}(QGS_ModuleMsgBase& msg);
+
+	{className}(const msgAddr_t destination{ctorArgs});
+
+	{className}(const {className}& msg);
+
+	virtual ~{className}();
+
+	virtual void dispatch(QGS_MessageHandlerBase* handler) 
+	{{ 
+		this->dynamicDispatch(handler,this); 
+	}}
+	
+	typedef std::unique_ptr<{className}> ptr;
+
+	virtual BinaryOStream& stream(BinaryOStream& os) const;
+	
+	virtual BinaryIStream& stream(BinaryIStream& is);
+	
+{memberFcnHeader}
+	
+private:
+	{members}
+}};
+}}
+
+#endif /* QUADGS_MESSAGE_{classNameUpper}_H_ */
+

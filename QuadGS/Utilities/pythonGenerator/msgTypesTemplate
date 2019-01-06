@@ -1,0 +1,24 @@
+#ifndef QUADGS_MESSAGE_TYPES_H_
+#define QUADGS_MESSAGE_TYPES_H_
+#include <vector>
+#include <string>
+namespace QuadGS {{
+
+enum {enumName}
+{{
+	Msg_NoType_e,
+{enum}
+	Msg_LastType_e,
+}};
+typedef enum {enumName} {enumName}_t;
+
+static const std::vector<std::string> {enumName}Str =
+{{
+	"Msg_NoType",
+{enumStr}
+	"Msg_LastType",
+}};
+
+}}
+#endif /* QUADGS_MESSAGE_TYPES_H_ */
+

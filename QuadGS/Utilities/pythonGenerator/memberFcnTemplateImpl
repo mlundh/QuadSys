@@ -1,0 +1,9 @@
+{type} {className}::get{nameFcn}() {const}
+{{
+	return {move}{name}{moveEnd};
+}}
+	
+void {className}::set{nameFcn}({type} {nameinput})
+{{
+	{name} = {move}{nameinput}{moveEnd};
+}}

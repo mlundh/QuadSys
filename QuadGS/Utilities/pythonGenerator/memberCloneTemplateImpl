@@ -1,0 +1,5 @@
+{type} {className}::getClone{nameFcn}() const
+{{
+	return std::make_unique<{coreType}>(*{name});
+}}
+

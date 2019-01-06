@@ -1,0 +1,6 @@
+add_subdirectory(GS_System)
+add_subdirectory(Param)
+add_subdirectory(Log)
+add_subdirectory(Ui_Command)
+add_subdirectory(IO)
+add_subdirectory(Parser)

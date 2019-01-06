@@ -1,0 +1,51 @@
+#!/usr/bin/expect -f
+#exp_internal 1
+set timeout 5
+variable id
+
+proc handleArguments {argc argv} {
+        if {[llength $argv] == 1 } {
+           variable program
+           set program [lindex $argv 0]
+        } else {
+        	puts "The path to QuadGS should be given as the sigle argument." 
+        	abort
+        }  
+}
+proc abort {} {
+    puts "Aborting."
+    exit 1
+}
+proc expectPrompt {} {
+    variable id
+    expect {
+	-i $id -re {\[error\].*}   {puts "Got an error."; abort}
+	-i $id -re {\[warning\].*} {puts "Got a warning."; abort}
+	-i $id -re {QuadGS-\[N\/A\]: } {return}
+	timeout {puts "timed out."; abort}
+	}
+}
+
+proc startQuadGS {} {
+    variable id
+    variable program
+    puts {Starting QuadGS}
+    spawn $program
+    set id $spawn_id
+    expectPrompt
+}
+
+proc exitQuadGS {} {
+    variable id
+    send -i $id "qu\t\r"
+    expect {
+	-i $id -re {\[error\].*} {puts "Got an error."; abort}
+	-i $id -re {\[warning\].*} {puts "Got a warning."; abort}
+	-i $id eof 
+    }
+}
+handleArguments $argc $argv
+startQuadGS 
+exitQuadGS
+puts "Test OK!\r"
+exit 0

@@ -1,0 +1,43 @@
+#include "{className}.h"
+namespace QuadGS {{
+
+
+{className}::{className}(QGS_ModuleMsgBase& msg)
+:QGS_ModuleMsg<{className}>(msg)
+{{
+
+}}
+
+{className}::{className}(const msgAddr_t destination{ctorArgs})
+:QGS_ModuleMsg<{className}>(messageTypes_t::{className}_e, destination){ctorInit}
+{{
+
+}}
+
+{className}::{className}(const {className}& msg)
+:QGS_ModuleMsg<{className}>(msg){ctorCpyInit}
+{{
+
+}}
+
+{className}::~{className}()
+{{
+
+}}
+
+BinaryOStream& {className}::stream(BinaryOStream& os) const
+{{
+	QGS_ModuleMsgBase::stream(os);
+	{ostream}
+	return os;
+}}
+	
+BinaryIStream& {className}::stream(BinaryIStream& is)
+{{
+	QGS_ModuleMsgBase::stream(is);
+	{istream}
+	return is;
+}}
+
+{memberFcnImpl}
+}}
