@@ -1,6 +1,6 @@
 #!/bin/bash
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-pythonDIR="$DIR/../../Utilities/pythonGenerator"
+pythonDIR="$DIR/../../../Utilities/pythonGenerator"
 filename="$DIR/messages.txt"
 
 echo "Generating messages."
