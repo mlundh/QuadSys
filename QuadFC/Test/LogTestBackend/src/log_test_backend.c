@@ -47,6 +47,14 @@ LogBackEnd_t* LogBackend_CreateObj()
   return obj;
 }
 
+void LogBackend_DeleteObj(LogBackEnd_t* obj)
+{
+    if(!obj)
+    {
+        return;
+    }
+    vPortFree(obj);
+}
 
 uint8_t LogBackend_Report(LogBackEnd_t* obj, logEntry_t* entry)
 {

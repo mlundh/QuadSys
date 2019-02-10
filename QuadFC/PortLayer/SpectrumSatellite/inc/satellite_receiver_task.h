@@ -20,13 +20,14 @@
 
 
 
-#include "../../../Modules/FlightModeHandler/inc/flight_mode_handler.h"
 #include "FreeRTOS.h"
 #include "task.h"
-#include "Utilities/inc/common_types.h"
+#include "Modules/MsgBase/inc/common_types.h"
 #include "Parameters/inc/parameters.h"
-#include "FlightController/inc/control_mode_handler.h"
-
+#include "Modules/Messages/inc/Msg_FlightModeReq.h"
+#include "Modules/Messages/inc/Msg_CtrlModeReq.h"
+#include "Modules/Messages/inc/Msg_NewSetpoint.h"
+#include "Modules/EventHandler/inc/event_handler.h"
 
 /// Defines used by the module.
 #define SATELLITE_DATA_MASK 0x7ff            /*Data contained in the 11 least significant bits*/
@@ -142,14 +143,11 @@ typedef struct Satellite
   spectrum_config_t* configuration;
   state_data_t* setpoint;
   uint8_t *satellite_receive_buffer;
-  FlightModeHandler_t* stateHandler;
-  CtrlModeHandler_t* CtrlModeHandler;
-  SpHandler_t* setpointHandler;
   int32_t multiplier;
   int32_t divisor;
   int32_t throMult;
   SemaphoreHandle_t xMutexParam;
-  FMode_t current_state;
+  FlightMode_t current_flight_mode_state;
   CtrlMode_t current_control_mode;
   eventHandler_t* evHandler;
 }Satellite_t;
@@ -160,7 +158,7 @@ typedef struct Satellite
  * @param setpointHandler
  * @return Null if fail, pointer to a struct instance otherwise.
  */
-Satellite_t* Satellite_Init(QueueHandle_t eventMaster, FlightModeHandler_t* stateHandler, SpHandler_t* setpointHandler, CtrlModeHandler_t * CtrlModeHandler);
+Satellite_t* Satellite_Init(QueueHandle_t eventMaster);
 
 /**
  * @brief The receiver task. Reads serial data and decodes it. Then transmits the decoded setpoint to

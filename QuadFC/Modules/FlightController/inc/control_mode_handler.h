@@ -28,13 +28,17 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "semphr.h"
-#include "Utilities/inc/common_types.h"
+#include "Modules/MsgBase/inc/common_types.h"
+#include "EventHandler/inc/event_handler.h"
+
+
+typedef struct CtrlModeHandler CtrlModeHandler_t;
 
 /**
  * Create the mode handler object.
  * @return Handle to the created object.
  */
-CtrlModeHandler_t* Ctrl_CreateModeHandler();
+CtrlModeHandler_t* Ctrl_CreateModeHandler(eventHandler_t* eHandler);
 
 /**
  * Initialize the state handler. This will create queues used
@@ -43,7 +47,7 @@ CtrlModeHandler_t* Ctrl_CreateModeHandler();
  * @param evHandler   Event handler handle. Use if the call should send events, set to NULL otherwise.
  *
  */
-void Ctrl_InitModeHandler(CtrlModeHandler_t* obj, eventHandler_t* evHandler);
+void Ctrl_InitModeHandler(CtrlModeHandler_t* obj);
 
 /**
  * Get the current state. Returns Ctrl_not_availible if it is not
@@ -52,19 +56,6 @@ void Ctrl_InitModeHandler(CtrlModeHandler_t* obj, eventHandler_t* evHandler);
  * @return Current state. Ctrl_not_availible if fail.
  */
 CtrlMode_t Ctrl_GetCurrentMode(CtrlModeHandler_t* obj);
-
-/**
- * Set state to fault. Use this in case of a serious problem
- * requiring the flight controller to immediately stop the motors
- * and all control.
- *
- * If the vehicle is airborne at the time of call to Ctrl_Fault,
- * the vehicle will crash.
- * @param   obj Handle to the current mode handler object.
- * @param evHandler   Event handler handle. Use if the call should send events, set to NULL otherwise.
- * @return
- */
-uint8_t Ctrl_FaultMode(CtrlModeHandler_t* obj, eventHandler_t* evHandler);
 
 /**
  * @brief Request a state change.
@@ -77,14 +68,7 @@ uint8_t Ctrl_FaultMode(CtrlModeHandler_t* obj, eventHandler_t* evHandler);
  * @param Ctrl_req   New state beeing requested.
  * @return            1 if ok, 0 otherwise.
  */
-uint8_t Ctrl_ChangeMode(CtrlModeHandler_t* obj, eventHandler_t* evHandler, CtrlMode_t mode_req);
-
-/**
- * Get event data from a control mode event.
- * @param data    Control mode event data.
- * @return        Current control mode.
- */
-FMode_t Ctrl_GetEventData(eventData_t* data);
+uint8_t Ctrl_ChangeMode(CtrlModeHandler_t* obj, CtrlMode_t mode_req);
 
 
 #endif /* MODULES_FLIGHTCONTROLLER_INC_CONTROL_MODE_HANDLER_H_ */

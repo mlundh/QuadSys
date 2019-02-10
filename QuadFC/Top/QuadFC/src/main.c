@@ -64,7 +64,6 @@ int main( void )
 
   /*Create cross-task communication utilities.*/
   SpHandler_t* SetpointHandler = SpHandl_Create();
-  FlightModeHandler_t* stateHandler = FMode_CreateStateHandler();
   CtrlModeHandler_t * CtrlModeHandler = Ctrl_CreateModeHandler();
 
   /* Create all tasks used in the application.*/
@@ -73,7 +72,7 @@ int main( void )
   {
     for(;;); //Error!
   }
-  create_main_control_task(evHandler, stateHandler, SetpointHandler, CtrlModeHandler);
+  create_main_control_task(evHandler, SetpointHandler, CtrlModeHandler);
 
   Satellite_CreateReceiverTask(evHandler->eventQueue, stateHandler, SetpointHandler, CtrlModeHandler);
   Led_CreateLedControlTask(evHandler->eventQueue);

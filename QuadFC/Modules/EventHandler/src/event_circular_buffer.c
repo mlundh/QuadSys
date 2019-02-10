@@ -30,7 +30,7 @@
 
 struct eventCircBuffer
 {
-  eventData_t     Buffer[BUFFER_SIZE];
+  moduleMsg_t*    Buffer[BUFFER_SIZE];
   size_t          capacity;  // maximum number of items in the buffer
   size_t          count;     // number of items in the buffer
   uint8_t         head;       // pointer to head
@@ -50,6 +50,10 @@ eventCircBuffer_t* Event_CreateCBuff()
   obj->tail = 0;
   return obj;
 }
+void Event_DeleteCBuff(eventCircBuffer_t* obj)
+{
+    vPortFree(obj);
+}
 
 uint8_t Event_CBuffNrElemets(eventCircBuffer_t* obj)
 {
@@ -60,14 +64,14 @@ uint8_t Event_CBuffNrElemets(eventCircBuffer_t* obj)
   return obj->count;
 }
 
-uint8_t Event_CBuffPushBack(eventCircBuffer_t* obj, eventData_t *event)
+uint8_t Event_CBuffPushBack(eventCircBuffer_t* obj, moduleMsg_t *event)
 {
   if(obj->count == obj->capacity)
   {
     return 0;
     //error
   }
-  obj->Buffer[obj->head] = *event;
+  obj->Buffer[obj->head] = event;
   obj->head++;
   obj->head%=BUFFER_SIZE;
 
@@ -75,7 +79,7 @@ uint8_t Event_CBuffPushBack(eventCircBuffer_t* obj, eventData_t *event)
   return 1;
 }
 
-uint8_t Event_CBuffPopFront(eventCircBuffer_t* obj, eventData_t *event)
+uint8_t Event_CBuffPopFront(eventCircBuffer_t* obj, moduleMsg_t **event)
 {
   if(obj->count == 0)
   {

@@ -1,0 +1,60 @@
+#All interfaces must start with:'*{NameOfInterface}' and end with a single '*'
+#TODO update script to create enums needed for the message types, this includes members and possible addresses.
+
+
+# ---------- GS only ---------------
+*GS_System GS_Dbg GS_GUI
+Msg_Stop
+Msg_RegisterName --member uint32_t name
+Msg_Display --member std::string message
+Msg_Test 
+*
+
+*Ui_Command GS_GUI GS_Param
+Msg_FindParam --member std::string toFind --member std::string found
+Msg_GetUiCommands
+Msg_FireUiCommand --member std::string command --member std::string args
+Msg_RegUiCommand --member std::string command --member std::string doc
+Msg_UiCommandResult --member std::string result
+*
+# ---------- GS and FC ---------------
+*Param GS_Param FC_Param
+Msg_Param --member uint8_t control --member uint8_t sequenceNr --member uint8_t lastInSequence --member std::string payload
+*
+*Log GS_Log FC_Log
+Msg_Log --member uint8_t control --member std::string payload
+*
+*Fc_Debug FC_Dbg GS_Dbg
+Msg_Debug --member std::string payload
+*
+
+*IO FC_SerialIO GS_SerialIO
+Msg_Transmission --member uint8_t status
+*
+
+*FC_Status FC_Ctrl FC_Led  GS_GUI
+Msg_FlightMode --member uint8_t mode
+Msg_CtrlMode --member uint8_t mode
+Msg_FcFault
+Msg_Error --member std::string error
+*
+
+*FC_Control FC_Ctrl GS_SetpointGen RC_SetpointGen
+Msg_FlightModeReq --member uint8_t mode
+Msg_CtrlModeReq --member uint8_t mode
+Msg_NewSetpoint --member state_data_t setpoint --member uint8_t priority --member uint8_t validFor
+*
+
+# ---------- FC only ---------------
+
+*FC_System FC_eventSys
+Msg_RegisterHandler --member QueueHandle_t data --include FreeRTOS.h --include queue.h  --include task.h --internal
+Msg_Subscriptions --internal --member uint32_t subscriptions
+e_Initialize --internal
+e_InitializeDone --internal
+Msg_FcLog --member QueueHandle_t data --include FreeRTOS.h --include queue.h  --include task.h --internal
+Msg_LogNameReq --member QueueHandle_t data --include FreeRTOS.h --include queue.h --include task.h --internal
+LogStop --internal
+Msg_CtrlSig --member control_signal_t signal --internal
+Msg_NewState --member state_data_t state --internal
+#*

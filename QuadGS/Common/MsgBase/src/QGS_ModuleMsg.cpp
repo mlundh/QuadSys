@@ -118,6 +118,7 @@ BinaryIStream& QGS_ModuleMsgBase::stream(BinaryIStream& is)
 		is >> SetBits(32)  >> mType;
 		is >> mDestination;
 		is >> mSource;
+		is >> mMsgNr;
 		mSkipStreamHeader = false;
 	}
 	return is;
@@ -128,7 +129,7 @@ BinaryOStream& QGS_ModuleMsgBase::stream(BinaryOStream& os) const
 	os << SetBits(32)  << mType;
 	os << mDestination;
 	os << mSource;
-
+	os << mMsgNr;
 	return os;
 }
 

@@ -26,34 +26,38 @@
 #include "FreeRTOS.h"
 
 #include "StateEstimator/inc/state_estimator.h"
-#include "FlightController/inc/control_mode_handler.h"
 
 #include "../inc/signal_processing.h"
 #include "QuadFC/QuadFC_IMU.h"
+#include "Messages/inc/Msg_CtrlMode.h"
 
 struct StateEst
 {
   Imu_t * imu;
   state_data_t * gyroState;
-  CtrlModeHandler_t* CtrlModeHandler;
+  CtrlMode_t CurrentMode;
 };
 
-StateEst_t *StateEst_Create(CtrlModeHandler_t* CtrlModeHandler)
+uint8_t StateEst_ControlModeCB(eventHandler_t* obj, void* data, moduleMsg_t* eData);
+
+StateEst_t *StateEst_Create(eventHandler_t* eHandler)
 {
   StateEst_t * stateEstObj = pvPortMalloc(sizeof(StateEst_t));
   if(!stateEstObj)
   {
     return NULL;
   }
-  stateEstObj->CtrlModeHandler = CtrlModeHandler;
   stateEstObj->imu = Imu_Create();
   stateEstObj->gyroState = pvPortMalloc(sizeof(state_data_t));
+  stateEstObj->CurrentMode = Control_mode_rate;
   if(!stateEstObj->imu || !stateEstObj->gyroState)
   {
     return NULL;
   }
   state_data_t stateTmp = {{0}};
   *stateEstObj->gyroState = stateTmp;
+  Event_RegisterCallback(eHandler, Msg_CtrlMode_e, StateEst_ControlModeCB, stateEstObj);
+
   return stateEstObj;
 }
 
@@ -71,7 +75,7 @@ uint8_t StateEst_getState(StateEst_t *obj, state_data_t *state_vector)
     return 0;
   }
   state_vector->state_valid_bf = 0;
-  switch (Ctrl_GetCurrentMode(obj->CtrlModeHandler))
+  switch (obj->CurrentMode)
   {
   case Control_mode_rate:
     Signal_getRateGyro( state_vector, &obj->imu->ImuData );
@@ -107,3 +111,14 @@ uint8_t StateEst_getState(StateEst_t *obj, state_data_t *state_vector)
   return 1;
 }
 
+uint8_t StateEst_ControlModeCB(eventHandler_t* obj, void* data, moduleMsg_t* msg)
+{
+    if(!data || !msg || !obj || (msg->type != Msg_CtrlMode_e))
+    {
+        return 0;
+    }
+    StateEst_t * stateObj = (StateEst_t*)data; // Data should always be a state est pointer.
+    CtrlMode_t newMode = Msg_CtrlModeGetMode(msg);
+    stateObj->CurrentMode = newMode;
+    return 1;
+}

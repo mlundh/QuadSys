@@ -78,9 +78,9 @@ void Led_ControlTask( void *pvParameters );
 
 void Led_update( ledState_t* ledState, GpioName_t pin);
 
-uint8_t Led_HandleFlightMode(eventHandler_t* obj, void* taskParam, eventData_t* data);
-uint8_t Led_HandleCtrltMode(eventHandler_t* obj, void* taskParam, eventData_t* data);
-uint8_t Led_HandlePeripheralError(eventHandler_t* obj, void* taskParam, eventData_t* data);
+uint8_t Led_HandleFlightMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
+uint8_t Led_HandleCtrltMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
+uint8_t Led_HandlePeripheralError(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
 
 void Led_toggleLed(ledState_t* ledState, GpioName_t pin);
 
@@ -247,10 +247,10 @@ void Led_toggleLed(ledState_t* ledState, GpioName_t pin )
   }
 }
 
-uint8_t Led_HandleFlightMode(eventHandler_t* obj, void* taskParam, eventData_t* data)
+uint8_t Led_HandleFlightMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* data)
 {
   ledTaskParams * param = (ledTaskParams*)(taskParam);
-  FMode_t flightMode = FMode_GetEventData(data);
+  FlightMode_t flightMode = Msg_FlightModeGetMode(data);
 
   switch(flightMode)
   {
@@ -287,7 +287,7 @@ uint8_t Led_HandleFlightMode(eventHandler_t* obj, void* taskParam, eventData_t* 
   }
   return 1;
 }
-uint8_t Led_HandleCtrltMode(eventHandler_t* obj, void* taskParam, eventData_t* data)
+uint8_t Led_HandleCtrltMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* data)
 {
   ledTaskParams * param = (ledTaskParams*)(taskParam);
   CtrlMode_t flightState = Ctrl_GetEventData(data);
@@ -308,7 +308,7 @@ uint8_t Led_HandleCtrltMode(eventHandler_t* obj, void* taskParam, eventData_t* d
   return 0;
 }
 
-uint8_t Led_HandlePeripheralError(eventHandler_t* obj, void* taskParam, eventData_t* data)
+uint8_t Led_HandlePeripheralError(eventHandler_t* obj, void* taskParam, moduleMsg_t* data)
 {
   ledTaskParams * param = (ledTaskParams*)(taskParam);
   param->ledState[ledRed2].mode    = led_const_on;

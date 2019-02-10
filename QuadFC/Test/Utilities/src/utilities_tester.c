@@ -61,3 +61,21 @@ uint8_t Utilities_Testserialization(TestFw_t* obj)
   }
   return 0;
 }
+
+#define UTILITIES_TESTSTRUCT_BUFF_SIZE 120
+uint8_t Utilities_TestStructSerialization(TestFw_t* obj)
+{
+  uint8_t buffer[UTILITIES_TEST_BUFF_SIZE] = {0};
+  control_signal_t entry = {{1,2,3,4}};
+  uint32_t buffer_size_left = UTILITIES_TESTSTRUCT_BUFF_SIZE;
+  uint8_t* bufferPtr = &buffer[0];
+  bufferPtr = serialize_control_signal_t(bufferPtr, buffer_size_left, entry);
+
+
+
+  if(0)
+  {
+    return 1;
+  }
+  return 0;
+}

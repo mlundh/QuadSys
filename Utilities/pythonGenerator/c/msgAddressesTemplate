@@ -1,0 +1,22 @@
+#ifndef QUADFC_MESSAGE_ADDRESSES_H_
+#define QUADFC_MESSAGE_ADDRESSES_H_
+
+enum {enumName}
+{{
+	Unassigned,
+	Router,
+	Broadcast,
+{addresses}
+	Last_Address
+}};
+typedef enum {enumName} {enumName}_t;
+
+static const char* const {enumName}Str[] =
+{{
+	"Unassigned",
+	"Router",
+	"Broadcast",
+{strings}
+	"Last_Address",
+}};
+#endif /* QUADFC_MESSAGE_ADDRESSES_H_ */

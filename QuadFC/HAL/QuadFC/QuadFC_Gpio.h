@@ -23,12 +23,11 @@
  */
 #ifndef HAL_QUADFC_QUADFC_GPIO_H_
 #define HAL_QUADFC_QUADFC_GPIO_H_
-#include "Utilities/inc/common_types.h"
+#include "Modules/MsgBase/inc/common_types.h"
 
 void Gpio_SetPinLow(GpioName_t pin);
 void Gpio_SetPinHigh(GpioName_t pin);
 void Gpio_TogglePin(GpioName_t pin);
-void Gpio_SetPinLow(GpioName_t pin);
 
 
 #endif /* HAL_QUADFC_QUADFC_GPIO_H_ */

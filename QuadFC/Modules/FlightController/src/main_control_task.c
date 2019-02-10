@@ -40,7 +40,7 @@
 
 #include "Modules/StateEstimator/inc/signal_processing.h"
 
-/* Task includes. */
+/* Task includes. TODO remove...*/
 #include "Communication/inc/communication_tasks.h"
 
 /* Modules */
@@ -50,6 +50,8 @@
 #include "QuadFC/QuadFC_MotorControl.h"
 #include "Parameters/inc/parameters.h"
 #include "SetpointHandler/inc/setpoint_handler.h"
+#include "FlightController/inc/control_mode_handler.h"
+#include "FlightModeHandler/inc/flight_mode_handler.h"
 #include "Log/inc/logHandler.h"
 #include "Log/inc/log.h"
 
@@ -88,25 +90,24 @@ void main_fault(MaintaskParams_t *param);
 
 void main_TimerCallback( TimerHandle_t pxTimer );
 
-
 /*
  * void create_main_control_task(void)
  */
 
-void create_main_control_task(eventHandler_t* evHandler,  FlightModeHandler_t* flightModeHandler, SpHandler_t* setpointHandler, CtrlModeHandler_t * CtrlModeHandler)
+void create_main_control_task(eventHandler_t* evHandler)
 {
   /*Create the task*/
 
   MaintaskParams_t * taskParam = pvPortMalloc(sizeof(MaintaskParams_t));
-  taskParam->ctrl = Ctrl_Create(CtrlModeHandler);
+  taskParam->ctrl = Ctrl_Create();
   taskParam->setpoint = pvPortMalloc( sizeof(state_data_t) );
   taskParam->state = pvPortMalloc( sizeof(state_data_t) );
   taskParam->control_signal = pvPortMalloc( sizeof(control_signal_t) );
   taskParam->motorControl = MotorCtrl_CreateAndInit(4);
-  taskParam->flightModeHandler = flightModeHandler;
-  taskParam->stateEst = StateEst_Create(CtrlModeHandler);
-  taskParam->setPointHandler = setpointHandler;
-  taskParam->CtrlModeHandler = CtrlModeHandler;
+  taskParam->flightModeHandler = FMode_CreateFmodeHandler(evHandler); // registers event handler for flight mode requests.
+  taskParam->stateEst = StateEst_Create(evHandler);
+  taskParam->setPointHandler = SpHandl_Create(evHandler);
+  taskParam->CtrlModeHandler = Ctrl_CreateModeHandler(evHandler);
   taskParam->evHandler = evHandler;
   taskParam->xTimer = xTimerCreate("Tmain", SpTimeoutTimeMs / portTICK_PERIOD_MS, pdFALSE, ( void * ) taskParam, main_TimerCallback);
   taskParam->logHandler = LogHandler_CreateObj(20,taskParam->evHandler,"LogSctr",0);
@@ -123,13 +124,8 @@ void create_main_control_task(eventHandler_t* evHandler,  FlightModeHandler_t* f
      }
    }
 
-   // Main_ctrl_task does not need events for new flight mode, it sets flight mode itself,
-   // and therefore has a flight mode handler itself.
 
    // Event_RegisterCallback(taskParam->evHandler, ePeripheralError  ,Led_HandlePeripheralError);
-
-  //taskParam->evHandler->subscriptions |= 0;
-
 
   portBASE_TYPE create_result;
   create_result = xTaskCreate( main_control_task,   /* The function that implements the task.  */
@@ -164,9 +160,10 @@ void main_control_task( void *pvParameters )
   // Do initializations here.
 
   /*Initialize modules*/
-  FMode_InitFModeHandler(param->flightModeHandler, param->evHandler);
-  Ctrl_init(param->ctrl, param->evHandler);
+  FMode_InitFModeHandler(param->flightModeHandler);
+  Ctrl_init(param->ctrl);
 
+  //This takes some time due to calibration.
   if(!StateEst_init(param->stateEst))
   {
     main_fault(param);
@@ -204,13 +201,13 @@ void main_control_task( void *pvParameters )
     {
     case fmode_init:
       /*---------------------------------------Initialize mode------------------------
-       * Initialize all modules then set the fc to dissarmed state.
+       * Initialize all modules then set the fc to disarmed state.
        */
 
       // StateEst_init Might take time, reset the last wake time to avoid errors.
       xLastWakeTime = xTaskGetTickCount();
 
-      if(pdTRUE != FMode_Change(param->flightModeHandler, param->evHandler, fmode_disarming))
+      if(pdTRUE != FMode_ChangeFMode(param->flightModeHandler, fmode_disarming))
       {
         main_fault(param);
       }
@@ -243,7 +240,7 @@ void main_control_task( void *pvParameters )
       if ( arming_counter >= ( 1000 / CTRL_TIME ) ) // Be in arming state for 1s.
       {
         arming_counter = 0;
-        if( !FMode_Change(param->flightModeHandler, param->evHandler, fmode_armed) )
+        if( !FMode_ChangeFMode(param->flightModeHandler, fmode_armed) )
         {
           main_fault(param);
         }
@@ -293,7 +290,7 @@ void main_control_task( void *pvParameters )
       }
       //Execute the control, allocate the control signals to the different
       // motors, and then update the motor setpoint.
-      Ctrl_Execute(param->ctrl, param->state, param->setpoint, param->control_signal);
+      Ctrl_Execute(param->ctrl, param->state, param->setpoint, param->control_signal, Ctrl_GetCurrentMode(param->CtrlModeHandler));
       Ctrl_Allocate(param->control_signal, param->motorControl->motorSetpoint);
       MotorCtrl_UpdateSetpoint( param->motorControl);
 
@@ -319,7 +316,7 @@ void main_control_task( void *pvParameters )
       MotorCtrl_Disable(param->motorControl);
       xTimerStop( param->xTimer, 0 ); // if this fails we end up in fault mode, acceptable.
       Ctrl_Off(param->ctrl);
-      if( !FMode_Change(param->flightModeHandler, param->evHandler, fmode_disarmed) )
+      if( !FMode_ChangeFMode(param->flightModeHandler, fmode_disarmed) )
       {
         main_fault(param);
       }
@@ -367,7 +364,7 @@ void main_control_task( void *pvParameters )
 
 void main_fault(MaintaskParams_t *param)
 {
-  FMode_Fault(param->flightModeHandler, param->evHandler);
+  FMode_Fault(param->flightModeHandler);
   MotorCtrl_Disable(param->motorControl);
   Ctrl_Off(param->ctrl);
 }
@@ -378,4 +375,3 @@ void main_TimerCallback( TimerHandle_t pxTimer )
   main_fault(obj);
   //TODO write error message!
 }
-

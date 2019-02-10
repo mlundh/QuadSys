@@ -1,0 +1,1 @@
+            buffer = serialize_{serializationType}(buffer, &buffer_size, &data->{name});

@@ -44,134 +44,150 @@
 #define REPORT_ENTRY_MAX (64)
 typedef struct TestCase
 {
-  TestFW_TestFunction_t testFcn;
-  char tc_names[TC_Name_LENGTH];
-  uint8_t testOK;
+    TestFW_TestFunction_t testFcn;
+    char tc_names[TC_Name_LENGTH];
+    uint8_t testOK;
 
 } TC_t;
 
 struct TestFwInternal
 {
-  uint32_t nrRegisteredFunctions;
-  TC_t testFcns[MAX_NR_TEST_FUNCTIONS];
-  char name[TC_Name_LENGTH];
-  char report[REPORT_SIZE];
-  void* testSuiteInternal[MAX_NR_INTERNALS];
+    uint32_t nrRegisteredFunctions;
+    TC_t testFcns[MAX_NR_TEST_FUNCTIONS];
+    char name[TC_Name_LENGTH];
+    char report[REPORT_SIZE];
+    void* testSuiteInternal[MAX_NR_INTERNALS];
 };
 
 void TestFW_CreateMainTestTask(TestFW_mainTestFunction_t mainFcn)
 {
-  /*Create the task*/
+    /*Create the task*/
 
-  portBASE_TYPE create_result;
-  create_result = xTaskCreate( mainFcn,             /* The function that implements the task.  */
-      (const char *const) "TestTask" ,              /* The name of the task. This is not used by the kernel, only aids in debugging*/
-      700,                                          /* The stack size for the task*/
-      NULL,                                         /* pass params to task.*/
-      configMAX_PRIORITIES-1,                       /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
-      NULL );                                       /* Handle to the task. Not used here and therefore NULL*/
+    portBASE_TYPE create_result;
+    create_result = xTaskCreate( mainFcn,             /* The function that implements the task.  */
+            (const char *const) "TestTask" ,              /* The name of the task. This is not used by the kernel, only aids in debugging*/
+            700,                                          /* The stack size for the task*/
+            NULL,                                         /* pass params to task.*/
+            configMAX_PRIORITIES-1,                       /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
+            NULL );                                       /* Handle to the task. Not used here and therefore NULL*/
 
-  if ( create_result != pdTRUE )
-  {
-    /*Error - Could not create task.*/
-    for ( ;; )
+    if ( create_result != pdTRUE )
     {
+        /*Error - Could not create task.*/
+        for ( ;; )
+        {
 
+        }
     }
-  }
 }
 
 
 TestFw_t* TestFW_Create(char* name)
 {
-  Test_SerialInit();
-  TestFw_t* ptr = malloc(sizeof(TestFw_t));
-  ptr->nrRegisteredFunctions = 0;
-  ptr->report[0] = '\0';
-  strncpy( ptr->name, name, TC_Name_LENGTH);
-  ptr->name[TC_Name_LENGTH-1] = '\0';
-  void* tmp[MAX_NR_INTERNALS] = {NULL};
-  ptr->testSuiteInternal[0] = tmp;
-  return ptr;
+    Test_SerialInit();
+    TestFw_t* ptr = malloc(sizeof(TestFw_t));
+    ptr->nrRegisteredFunctions = 0;
+    ptr->report[0] = '\0';
+    strncpy( ptr->name, name, TC_Name_LENGTH);
+    ptr->name[TC_Name_LENGTH-1] = '\0';
+    void* tmp[MAX_NR_INTERNALS] = {NULL};
+    ptr->testSuiteInternal[0] = tmp;
+    return ptr;
 }
 
 uint8_t TestFW_RegisterTest(TestFw_t* obj, const char* nameTC, TestFW_TestFunction_t testfcn)
 {
-  if(!(obj->nrRegisteredFunctions < MAX_NR_TEST_FUNCTIONS))
-  {
-    return 0; // Too many registered functions!
-  }
-  obj->testFcns[obj->nrRegisteredFunctions].testFcn = testfcn;
-  strncpy( obj->testFcns[obj->nrRegisteredFunctions].tc_names , nameTC, (unsigned short) TC_Name_LENGTH);
-  obj->testFcns[obj->nrRegisteredFunctions].tc_names[TC_Name_LENGTH-1] = '\0'; // Always make sure the last char is null
-  obj->nrRegisteredFunctions++;
-  return 1;
+    if(!(obj->nrRegisteredFunctions < MAX_NR_TEST_FUNCTIONS))
+    {
+        return 0; // Too many registered functions!
+    }
+    obj->testFcns[obj->nrRegisteredFunctions].testFcn = testfcn;
+    strncpy( obj->testFcns[obj->nrRegisteredFunctions].tc_names , nameTC, (unsigned short) TC_Name_LENGTH);
+    obj->testFcns[obj->nrRegisteredFunctions].tc_names[TC_Name_LENGTH-1] = '\0'; // Always make sure the last char is null
+    obj->nrRegisteredFunctions++;
+    return 1;
 }
 
 void* TestFW_SetTestSuiteInternal(TestFw_t* obj, void* ptr, uint8_t idx)
 {
-  if(idx >= MAX_NR_INTERNALS)
-  {
-    return NULL;
-  }
-  obj->testSuiteInternal[idx] = ptr;
-  return ptr;
+    if(idx >= MAX_NR_INTERNALS)
+    {
+        return NULL;
+    }
+    obj->testSuiteInternal[idx] = ptr;
+    return ptr;
 }
 
 void* TestFW_GetTestSuiteInternal(TestFw_t* obj, uint8_t idx)
 {
-  if(idx >= MAX_NR_INTERNALS)
-  {
-    return NULL;
-  }
-  return obj->testSuiteInternal[idx];
+    if(idx >= MAX_NR_INTERNALS)
+    {
+        return NULL;
+    }
+    return obj->testSuiteInternal[idx];
 }
 
 uint8_t TestFW_Report(TestFw_t* obj, const char* string)
 {
-  uint32_t currentReport = (uint32_t)strlen(obj->report);
-  if(currentReport >= REPORT_SIZE)
-  {
-    return 0;
-  }
-  uint32_t reportLeftInBuffer = REPORT_SIZE - currentReport;
-  uint32_t StringLength = (uint32_t)strlen(string) + 1; // Keep the null termination.
-  uint32_t length = ((StringLength < reportLeftInBuffer) ? StringLength : reportLeftInBuffer);
-  strncpy( obj->report + currentReport , string, length);
-  return 1;
+    uint32_t currentReport = (uint32_t)strlen(obj->report);
+    if(currentReport >= REPORT_SIZE)
+    {
+        return 0;
+    }
+    uint32_t reportLeftInBuffer = REPORT_SIZE - currentReport;
+    uint32_t StringLength = (uint32_t)strlen(string) + 1; // Keep the null termination.
+    uint32_t length = ((StringLength < reportLeftInBuffer) ? StringLength : reportLeftInBuffer);
+    strncpy( obj->report + currentReport , string, length);
+    return 1;
 }
 
 #define REPORTLEN (110)
 uint8_t TestFW_ExecuteTests(TestFw_t* obj)
 {
-  uint8_t SuiteResult = 1;
-  char tmpstr[REPORTLEN] = {0};
-  snprintf(tmpstr, REPORTLEN, "\n*********************** Starting Testsuite: %s *********************** \n", obj->name);
-  TestFW_Report(obj, tmpstr);
-  for(int i = 0; i < obj->nrRegisteredFunctions; i++)
-  {
-    snprintf(tmpstr, REPORTLEN, "\n**** Starting Test: %s ****\n", obj->testFcns[i].tc_names);
+    uint8_t SuiteResult = 1;
+    char tmpstr[REPORTLEN] = {0};
+    snprintf(tmpstr, REPORTLEN, "\n*********************** Starting Testsuite: %s *********************** \n", obj->name);
     TestFW_Report(obj, tmpstr);
-    obj->testFcns[i].testOK = obj->testFcns[i].testFcn(obj);
-    char* result = (obj->testFcns[i].testOK) ? "PASS" : "FAIL";
-    snprintf(tmpstr, REPORTLEN, "\n**** RESULT %s: %s **** \n" , obj->testFcns[i].tc_names, result);
-    TestFW_Report(obj, tmpstr);
+    for(int i = 0; i < obj->nrRegisteredFunctions; i++)
+    {
+        snprintf(tmpstr, REPORTLEN, "\n**** Starting Test: %s ****\n", obj->testFcns[i].tc_names);
+        TestFW_Report(obj, tmpstr);
 
-    SuiteResult &= obj->testFcns[i].testOK;
-  }
-  char* result = (SuiteResult) ? "PASS" : "FAIL";
-  snprintf(tmpstr, REPORTLEN, "\n********************** Testsuite %s RESULT: %s ********************** \n", obj->name, result);
-  TestFW_Report(obj, tmpstr);
-  return SuiteResult;
+        // Fail if the testcase does not clean up after itself. Start measurement here.
+        size_t heapSize= xPortGetFreeHeapSize();
+
+        // Run testcase.
+        obj->testFcns[i].testOK = obj->testFcns[i].testFcn(obj);
+
+        // Evaluate the remaining heap usage.
+        size_t heapSizeAfterM= xPortGetFreeHeapSize();
+        size_t usedHeapM = heapSize - heapSizeAfterM;
+        if(usedHeapM > 0)
+        {
+
+            char memLeakStr[REPORTLEN] = {0};
+            snprintf (memLeakStr, REPORTLEN,"\e[31mMemory leak in test case %s! Lost %d bytes.\e[0m\n",obj->testFcns[i].tc_names, usedHeapM);
+            TestFW_Report(obj, memLeakStr);
+        }
+        char* result = (obj->testFcns[i].testOK) ? "\e[32mPASS\e[0m" : "\e[31mFAIL\e[0m";
+        snprintf(tmpstr, REPORTLEN, "\n**** RESULT %s: %s **** \n" , obj->testFcns[i].tc_names, result);
+        TestFW_Report(obj, tmpstr);
+
+        SuiteResult &= obj->testFcns[i].testOK;
+    }
+    char* result = (SuiteResult) ? "\e[32mPASS\e[0m" : "\e[31mFAIL\e[0m";
+    snprintf(tmpstr, REPORTLEN, "\n********************** Testsuite %s RESULT: %s ********************** \n", obj->name, result);
+    TestFW_Report(obj, tmpstr);
+    return SuiteResult;
 }
 
 uint8_t* TestFW_GetReport(TestFw_t* obj)
 {
-  QuadFC_Serial_t data;
-  data.buffer = (uint8_t*)obj->report;
-  data.bufferLength = strlen((char*)obj->report);
-  Test_SerialWrite(&data);
-  return 0;
+    QuadFC_Serial_t data;
+    data.buffer = (uint8_t*)obj->report;
+    data.bufferLength = strlen((char*)obj->report);
+    Test_SerialWrite(&data);
+    return 0;
 }
 
 

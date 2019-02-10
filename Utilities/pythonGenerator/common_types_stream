@@ -1,0 +1,140 @@
+/**
+ * Stream operator ImuData_t struct.
+ */
+inline BinaryIStream&
+operator>>(BinaryIStream& stream, state_data_t& state)
+{
+	for(int i = 0; i < nr_states_bf; i++)
+	{
+		stream >> state.state_bf[i];
+	}
+	stream >> state.state_valid_bf;
+	for(int i = 0; i < nr_states_if; i++)
+	{
+		stream >> state.state_if[i];
+	}
+	stream >> state.state_valid_if;
+	return stream;
+}
+/**
+ * Stream operator ImuData_t struct.
+ */
+inline BinaryOStream&
+operator<<(BinaryOStream& stream, const state_data_t& state)
+{
+	for(int i = 0; i < nr_states_bf; i++)
+	{
+		stream << state.state_bf[i];
+	}
+	stream << state.state_valid_bf;
+	for(int i = 0; i < nr_states_if; i++)
+	{
+		stream << state.state_if[i];
+	}
+	stream << state.state_valid_if;
+	return stream;
+}
+
+/**
+ * Stream operator ImuData_t struct.
+ */
+inline BinaryIStream&
+operator>>(BinaryIStream& stream, control_signal_t& ctrl)
+{
+	for(int i = 0; i < nr_imu_values; i++)
+	{
+		stream >> ctrl.control_signal[i];
+	}
+	return stream;
+}
+
+
+/**
+ * Stream operator ImuData_t struct.
+ */
+inline BinaryOStream&
+operator<<(BinaryOStream& stream, const control_signal_t& ctrl)
+{
+	for(int i = 0; i < nr_imu_values; i++)
+	{
+		stream << ctrl.control_signal[i];
+	}
+	return stream;
+}
+/**
+ * Stream operator ImuData_t struct.
+ */
+inline BinaryIStream&
+operator>>(BinaryIStream& stream, ImuData_t& imu)
+{
+	for(int i = 0; i < nr_imu_values; i++)
+	{
+		stream >> imu.imu_data[i];
+	}
+	for(int i = 0; i < nr_imu_values; i++)
+	{
+		stream >> imu.confidence[i];
+	}
+	return stream;
+}
+
+
+/**
+ * Stream operator ImuData_t struct.
+ */
+inline BinaryOStream&
+operator<<(BinaryOStream& stream, const ImuData_t& imu)
+{
+	for(int i = 0; i < nr_imu_values; i++)
+	{
+		stream << imu.imu_data[i];
+	}
+	for(int i = 0; i < nr_imu_values; i++)
+	{
+		stream << imu.confidence[i];
+	}
+	return stream;
+}
+
+/**
+ * Stream operator ImuOrientation struct.
+ */
+inline BinaryIStream&
+operator>>(BinaryIStream& stream, ImuOrientation_t& imu)
+{
+	stream >> imu.r_0_0;
+	stream >> imu.r_0_1;
+	stream >> imu.r_0_2;
+	stream >> imu.r_1_0;
+	stream >> imu.r_1_1;
+	stream >> imu.r_1_2;
+	stream >> imu.r_2_0;
+	stream >> imu.r_2_1;
+	stream >> imu.r_2_2;
+	stream >> imu.acc_sign;
+	stream >> imu.gyro_sign;
+
+	return stream;
+}
+
+/**
+ * Stream operator ImuOrientation struct.
+ */
+inline BinaryOStream&
+operator<<(BinaryOStream& stream, const ImuOrientation_t& imu)
+{
+	stream << imu.r_0_0;
+	stream << imu.r_0_1;
+	stream << imu.r_0_2;
+	stream << imu.r_1_0;
+	stream << imu.r_1_1;
+	stream << imu.r_1_2;
+	stream << imu.r_2_0;
+	stream << imu.r_2_1;
+	stream << imu.r_2_2;
+	stream << imu.acc_sign;
+	stream << imu.gyro_sign;
+
+	return stream;
+}
+

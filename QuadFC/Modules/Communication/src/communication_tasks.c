@@ -86,7 +86,7 @@ TxCom_t* Com_InitTx(QueueHandle_t eventMaster);
  * Initialize the communication module.
  * @return    1 if OK, 0 otherwise.
  */
-RxCom_t* Com_InitRx(QueueHandle_t eventMaster, FlightModeHandler_t* stateHandler);
+RxCom_t* Com_InitRx(QueueHandle_t eventHandler);
 
 
 /**
@@ -175,7 +175,7 @@ TxCom_t* Com_InitTx(QueueHandle_t eventMaster)
 }
 
 
-RxCom_t* Com_InitRx(QueueHandle_t eventMaster, FlightModeHandler_t* stateHandler)
+RxCom_t* Com_InitRx(QueueHandle_t eventHandler)
 {
   /* Create the queue used to pass things to the display task*/
   RxCom_t* taskParam = pvPortMalloc(sizeof(RxCom_t));
@@ -190,8 +190,7 @@ RxCom_t* Com_InitRx(QueueHandle_t eventMaster, FlightModeHandler_t* stateHandler
   taskParam->QspTransRespPacket =  QSP_Create(8); // Only header is used!
   taskParam->SLIP =  Slip_Create(COM_PACKET_LENGTH_MAX);
   taskParam->receive_buffer = pvPortMalloc(sizeof(uint8_t) * COM_RECEIVE_BUFFER_LENGTH );
-  taskParam->stateHandler = stateHandler;
-  taskParam->evHandler = Event_CreateHandler(eventMaster, 0);
+  taskParam->evHandler = eventHandler;
   taskParam->logHandler = LogHandler_CreateObj(0,taskParam->evHandler,"LogM",1);
   if( !taskParam->helper || !taskParam->saveHelper || !taskParam->QspPacket
       || !taskParam->QspRespPacket || !taskParam->SLIP || !taskParam->receive_buffer
@@ -213,18 +212,17 @@ RxCom_t* Com_InitRx(QueueHandle_t eventMaster, FlightModeHandler_t* stateHandler
   // Subscribe to the events that the task is interested in. None right now.
 
   //Event_RegisterCallback(taskParam->evHandler, eFcFault          ,Led_HandleFcFault);
-  //taskParam->evHandler->subscriptions |= 0;
 
   return taskParam;
 }
 
-void Com_CreateTasks(QueueHandle_t eventMaster, FlightModeHandler_t* stateHandler )
+void Com_CreateTasks(eventHandler_t* eventHandlerRx, eventHandler_t* eventHandlerTx )
 {
   uint8_t* receive_buffer_driver = pvPortMalloc(
       sizeof(uint8_t) * COM_PACKET_LENGTH_MAX );
 
-  RxCom_t *paramRx = Com_InitRx(eventMaster, stateHandler);
-  TxCom_t *paramTx = Com_InitTx(eventMaster);
+  RxCom_t *paramRx = Com_InitRx(eventHandlerRx);
+  TxCom_t *paramTx = Com_InitTx(eventHandlerTx);
   crcTable =  pvPortMalloc( sizeof(crc_data_t) * CRC_ARRAY_SIZE );
 
 

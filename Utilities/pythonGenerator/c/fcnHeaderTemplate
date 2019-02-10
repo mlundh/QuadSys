@@ -1,0 +1,4 @@
+{type} {msgName}Get{nameFcn}(moduleMsg_t* msg);
+
+void {msgName}Set{nameFcn}(moduleMsg_t* msg, {type} {nameinput});
+

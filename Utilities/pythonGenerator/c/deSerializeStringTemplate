@@ -1,0 +1,1 @@
+            buffer = deserialize_{serializationType}(buffer, &buffer_size, data->{name}, &data->{name}length, data->{name}bufferlength);

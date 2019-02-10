@@ -1,10 +1,13 @@
 list(APPEND src "Parser.cpp" )
 
 list(APPEND dep GS_System
+				Ui_Command
 				Param
 				Log
-				Ui_Command
+				Fc_Debug
 				IO
+				FC_Status
+				FC_Control
 				)
 
 qgs_make_shared_lib( Parser src dep)

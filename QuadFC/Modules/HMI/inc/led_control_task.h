@@ -27,7 +27,7 @@
 
 #include "FreeRTOS.h"
 #include "queue.h"
-#include "Utilities/inc/common_types.h"
+#include "Modules/MsgBase/inc/common_types.h"
 
 
 /**

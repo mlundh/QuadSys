@@ -38,7 +38,8 @@
  */
 
 #include "stdint.h"
-#include "Utilities/inc/common_types.h"
+#include "Modules/MsgBase/inc/common_types.h"
+#include "Modules/EventHandler/inc/event_handler.h"
 
 typedef struct StateEst StateEst_t;
 
@@ -52,7 +53,7 @@ typedef enum etstimation_types
   type_not_availible = 4
 } estimation_types_t;
 
-StateEst_t *StateEst_Create(CtrlModeHandler_t* CtrlModeHandler);
+StateEst_t *StateEst_Create(eventHandler_t* eHandler);
 
 /**
  * Initialize the state estimator. This causes all connected and configured

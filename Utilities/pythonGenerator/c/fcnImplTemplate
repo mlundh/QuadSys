@@ -1,0 +1,25 @@
+{type} {msgName}Get{nameFcn}(moduleMsg_t* msg)
+{{
+    {type} value;
+    if(msg && (msg->type == {msgName}_e))
+    {{
+        {msgName}_t* internal_data = ({msgName}_t*)(msg + 1);
+        if(internal_data)
+        {{
+            value = internal_data->{name};
+        }}
+    }}
+    return value;
+}}
+
+void {msgName}Set{nameFcn}(moduleMsg_t* msg, {type} {nameinput})
+{{
+    if(msg && (msg->type == {msgName}_e))
+    {{
+        {msgName}_t* internal_data = ({msgName}_t*)(msg + 1);
+        if(internal_data)
+        {{
+            internal_data->{name}  = {nameinput};
+        }}
+    }}
+}}

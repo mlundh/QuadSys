@@ -29,14 +29,22 @@
 #include "Msg_RegisterName.h"
 #include "Msg_Display.h"
 #include "Msg_Test.h"
-#include "Msg_Param.h"
-#include "Msg_Log.h"
 #include "Msg_FindParam.h"
 #include "Msg_GetUiCommands.h"
 #include "Msg_FireUiCommand.h"
 #include "Msg_RegUiCommand.h"
 #include "Msg_UiCommandResult.h"
+#include "Msg_Param.h"
+#include "Msg_Log.h"
+#include "Msg_Debug.h"
 #include "Msg_Transmission.h"
+#include "Msg_FlightMode.h"
+#include "Msg_CtrlMode.h"
+#include "Msg_FcFault.h"
+#include "Msg_Error.h"
+#include "Msg_FlightModeReq.h"
+#include "Msg_CtrlModeReq.h"
+#include "Msg_NewSetpoint.h"
 
 
 
@@ -99,22 +107,6 @@ QGS_ModuleMsgBase::ptr Parser::parse( std::vector<unsigned char>  data)
 		returnPtr = std::move(ptr);
 		break;
 	}
-	case messageTypes_t::Msg_Param_e:
-	{
-		Msg_Param::ptr ptr = std::make_unique<Msg_Param>(msgBase);
-		ptr->setSkipStreamHeader();
-		is >> *ptr;
-		returnPtr = std::move(ptr);
-		break;
-	}
-	case messageTypes_t::Msg_Log_e:
-	{
-		Msg_Log::ptr ptr = std::make_unique<Msg_Log>(msgBase);
-		ptr->setSkipStreamHeader();
-		is >> *ptr;
-		returnPtr = std::move(ptr);
-		break;
-	}
 	case messageTypes_t::Msg_FindParam_e:
 	{
 		Msg_FindParam::ptr ptr = std::make_unique<Msg_FindParam>(msgBase);
@@ -155,9 +147,89 @@ QGS_ModuleMsgBase::ptr Parser::parse( std::vector<unsigned char>  data)
 		returnPtr = std::move(ptr);
 		break;
 	}
+	case messageTypes_t::Msg_Param_e:
+	{
+		Msg_Param::ptr ptr = std::make_unique<Msg_Param>(msgBase);
+		ptr->setSkipStreamHeader();
+		is >> *ptr;
+		returnPtr = std::move(ptr);
+		break;
+	}
+	case messageTypes_t::Msg_Log_e:
+	{
+		Msg_Log::ptr ptr = std::make_unique<Msg_Log>(msgBase);
+		ptr->setSkipStreamHeader();
+		is >> *ptr;
+		returnPtr = std::move(ptr);
+		break;
+	}
+	case messageTypes_t::Msg_Debug_e:
+	{
+		Msg_Debug::ptr ptr = std::make_unique<Msg_Debug>(msgBase);
+		ptr->setSkipStreamHeader();
+		is >> *ptr;
+		returnPtr = std::move(ptr);
+		break;
+	}
 	case messageTypes_t::Msg_Transmission_e:
 	{
 		Msg_Transmission::ptr ptr = std::make_unique<Msg_Transmission>(msgBase);
+		ptr->setSkipStreamHeader();
+		is >> *ptr;
+		returnPtr = std::move(ptr);
+		break;
+	}
+	case messageTypes_t::Msg_FlightMode_e:
+	{
+		Msg_FlightMode::ptr ptr = std::make_unique<Msg_FlightMode>(msgBase);
+		ptr->setSkipStreamHeader();
+		is >> *ptr;
+		returnPtr = std::move(ptr);
+		break;
+	}
+	case messageTypes_t::Msg_CtrlMode_e:
+	{
+		Msg_CtrlMode::ptr ptr = std::make_unique<Msg_CtrlMode>(msgBase);
+		ptr->setSkipStreamHeader();
+		is >> *ptr;
+		returnPtr = std::move(ptr);
+		break;
+	}
+	case messageTypes_t::Msg_FcFault_e:
+	{
+		Msg_FcFault::ptr ptr = std::make_unique<Msg_FcFault>(msgBase);
+		ptr->setSkipStreamHeader();
+		is >> *ptr;
+		returnPtr = std::move(ptr);
+		break;
+	}
+	case messageTypes_t::Msg_Error_e:
+	{
+		Msg_Error::ptr ptr = std::make_unique<Msg_Error>(msgBase);
+		ptr->setSkipStreamHeader();
+		is >> *ptr;
+		returnPtr = std::move(ptr);
+		break;
+	}
+	case messageTypes_t::Msg_FlightModeReq_e:
+	{
+		Msg_FlightModeReq::ptr ptr = std::make_unique<Msg_FlightModeReq>(msgBase);
+		ptr->setSkipStreamHeader();
+		is >> *ptr;
+		returnPtr = std::move(ptr);
+		break;
+	}
+	case messageTypes_t::Msg_CtrlModeReq_e:
+	{
+		Msg_CtrlModeReq::ptr ptr = std::make_unique<Msg_CtrlModeReq>(msgBase);
+		ptr->setSkipStreamHeader();
+		is >> *ptr;
+		returnPtr = std::move(ptr);
+		break;
+	}
+	case messageTypes_t::Msg_NewSetpoint_e:
+	{
+		Msg_NewSetpoint::ptr ptr = std::make_unique<Msg_NewSetpoint>(msgBase);
 		ptr->setSkipStreamHeader();
 		is >> *ptr;
 		returnPtr = std::move(ptr);

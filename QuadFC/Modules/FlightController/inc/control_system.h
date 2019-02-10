@@ -23,15 +23,15 @@
  */
 #ifndef MODULES_FLIGHTCONTROLLER_INC_CONTROL_SYSTEM_H_
 #define MODULES_FLIGHTCONTROLLER_INC_CONTROL_SYSTEM_H_
-#include "Utilities/inc/common_types.h"
-#include "../inc/control_mode_handler.h"
+#include "Modules/MsgBase/inc/common_types.h"
+#include "Modules/MsgBase/inc/msg_enums.h"
 typedef struct CtrlObj CtrlObj_t;
 
 /**
  * Create a Control system object.
  * @return    Control system object containing everything needed by the controller.
  */
-CtrlObj_t *Ctrl_Create(CtrlModeHandler_t* CtrlModeHandler);
+CtrlObj_t *Ctrl_Create();
 
 /**
  * The constants (Kp, Ki and Kd) does not have a unit, but are expressed as 16.16 fixed point.
@@ -41,7 +41,7 @@ CtrlObj_t *Ctrl_Create(CtrlModeHandler_t* CtrlModeHandler);
  * @param evHandler event handler. Will only be used to initialize the internal mode handler.
  * @return    0 if fail, 1 otherwise.
  */
-uint8_t Ctrl_init(CtrlObj_t *obj, eventHandler_t* evHandler);
+uint8_t Ctrl_init(CtrlObj_t *obj);
 
 /**
  * Execute the control system.
@@ -49,9 +49,10 @@ uint8_t Ctrl_init(CtrlObj_t *obj, eventHandler_t* evHandler);
  * @param state     Current state data.
  * @param setpoint  Current setpoint.
  * @param u_signal  Output, control signal.
+ * @param current_mode Current mode of the system.
  */
-void Ctrl_Execute(CtrlObj_t *internals, state_data_t *state, state_data_t *setpoint, control_signal_t *u_signal);
-
+void Ctrl_Execute(CtrlObj_t *obj, state_data_t *state, state_data_t *setpoint
+        , control_signal_t *u_signal, CtrlMode_t current_mode);
 /**
  * Switch between the control schemes.
  *
@@ -60,19 +61,19 @@ void Ctrl_Execute(CtrlObj_t *internals, state_data_t *state, state_data_t *setpo
  * @param state     Measurement.
  * @param u_signal  Control signal.
  */
-void Ctrl_Switch(CtrlObj_t * param, CtrlMode_t newMode, state_data_t *state, control_signal_t *u_signal);
-
+void Ctrl_Switch(CtrlObj_t * param, CtrlMode_t newMode, state_data_t *state
+        , control_signal_t *u_signal);
 /**
  * Turn control on.
  * @param param Current control object.
  */
-void Ctrl_On(CtrlObj_t * param);
+void Ctrl_On(CtrlObj_t * obj);
 
 /**
  * Turn control off.
  * @param param Current control object.
  */
-void Ctrl_Off(CtrlObj_t * param);
+void Ctrl_Off(CtrlObj_t * obj);
 
 
 //TODO move to motor control block and use number of motors.

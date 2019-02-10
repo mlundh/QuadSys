@@ -24,7 +24,8 @@
 #ifndef MODULES_EVENTHANDLER_INC_EVENT_CIRCULAR_BUFFER_H_
 #define MODULES_EVENTHANDLER_INC_EVENT_CIRCULAR_BUFFER_H_
 
-#include "Utilities/inc/common_types.h"
+#include "MsgBase/inc/common_types.h"
+#include "MsgBase/inc/message_base.h"
 #include <stdint.h>
 
 typedef struct eventCircBuffer eventCircBuffer_t;
@@ -37,6 +38,12 @@ typedef struct eventCircBuffer eventCircBuffer_t;
 eventCircBuffer_t* Event_CreateCBuff();
 
 /**
+ * Delete the event buffer.
+ * @param obj
+ */
+void Event_DeleteCBuff(eventCircBuffer_t* obj);
+
+/**
  * Get the number of buffered events.
  * @param obj     Current buffer.
  * @return        Number of events in the buffer.
@@ -45,20 +52,20 @@ uint8_t Event_CBuffNrElemets(eventCircBuffer_t* obj);
 
 /**
  * Push back onto the buffer. Will return false if there is no space
- * left in the buffer. Data is copied.
+ * left in the buffer. Data is NOT copied.
  * @param obj     Current buffer.
- * @param event   Event to push back.
+ * @param msg     msg to push back.
  * @return        1 if ok, 0 if no space left in buffer.
  */
-uint8_t Event_CBuffPushBack(eventCircBuffer_t* obj, eventData_t *event);
+uint8_t Event_CBuffPushBack(eventCircBuffer_t* obj, moduleMsg_t *msg);
 
 /**
  * Pop the front element of the buffer. Returns false if there is no
  * elements in the buffer.
  * @param obj     Current buffer.
- * @param event   Event to copy the data into.
- * @return        1 if ok, 0 if no data was availible in the buffer.
+ * @param msg     Pointer to the point to the message.
+ * @return        1 if ok, 0 if no data was available in the buffer.
  */
-uint8_t Event_CBuffPopFront(eventCircBuffer_t* obj, eventData_t *event);
+uint8_t Event_CBuffPopFront(eventCircBuffer_t* obj, moduleMsg_t **msg);
 
 #endif /* MODULES_EVENTHANDLER_INC_EVENT_CIRCULAR_BUFFER_H_ */

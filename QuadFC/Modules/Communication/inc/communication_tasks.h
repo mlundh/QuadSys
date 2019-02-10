@@ -29,13 +29,13 @@
 
 #include <stdint.h>
 #include "Communication/inc/quad_serial_packet.h"
-#include "Utilities/inc/common_types.h"
+#include "Modules/MsgBase/inc/common_types.h"
 /**
  * Create the communication tasks. These tasks are responsible for
  * communication with external components such as QuadGS. They are
  * also responsible for setting parameters.
  */
-void Com_CreateTasks(QueueHandle_t eventMaster, FlightModeHandler_t* stateHandler );
+void Com_CreateTasks(eventHandler_t* eventHandler);
 
 /**
  * Interface function for sending a QSP to the external component (QuadGS).

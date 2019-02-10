@@ -22,16 +22,14 @@
  * THE SOFTWARE.
  */
 #include "../inc/control_mode_handler.h"
-
-
-#include "EventHandler/inc/event_handler.h"
-
+#include "Messages/inc/Msg_CtrlMode.h"
+#include "Messages/inc/Msg_CtrlModeReq.h"
 
 
 struct CtrlModeHandler
 {
-  SemaphoreHandle_t xMutex;
-  QueueHandle_t Mode_current_queue;
+    CtrlMode_t currentMode;
+    eventHandler_t* eHandler;
 };
 
 
@@ -44,38 +42,31 @@ struct CtrlModeHandler
 
 
 static uint8_t Ctrl_ModeChangeAllowed(CtrlModeHandler_t* obj, CtrlMode_t mode_req);
-void Ctrl_SendEvent(CtrlModeHandler_t*  obj, eventHandler_t* evHandler);
 
-CtrlModeHandler_t* Ctrl_CreateModeHandler()
+uint8_t Ctrl_ModeCB(eventHandler_t* obj, void* data, moduleMsg_t* eData);
+
+void Ctrl_SendEvent(CtrlModeHandler_t*  obj);
+
+CtrlModeHandler_t* Ctrl_CreateModeHandler(eventHandler_t* eHandler)
 {
-  CtrlModeHandler_t* obj = pvPortMalloc(sizeof(CtrlModeHandler_t));
-  if(!obj)
-  {
-    return NULL;
-  }
-
-  obj->Mode_current_queue = xQueueCreate( MODE_CURRENT_QUEUE_LENGTH,
-        MODE_CURRENT_QUEUE_ITEM_SIZE );
-  obj->xMutex = xSemaphoreCreateMutex();
-
-
-    if(!obj->Mode_current_queue || !obj->xMutex)
+    CtrlModeHandler_t* obj = pvPortMalloc(sizeof(CtrlModeHandler_t));
+    if(!obj)
     {
-      return NULL;
+        return NULL;
     }
+    obj->currentMode = Control_mode_not_available;
+    obj->eHandler = eHandler;
+    Event_RegisterCallback(obj->eHandler, Msg_CtrlModeReq_e, Ctrl_ModeCB, obj);
+
     return obj;
 }
 
 
-void Ctrl_InitModeHandler(CtrlModeHandler_t* obj, eventHandler_t* evHandler)
+void Ctrl_InitModeHandler(CtrlModeHandler_t* obj)
 {
 
-  CtrlMode_t current_mode = Control_mode_rate;
-  if(xQueueSendToBack(obj->Mode_current_queue, &current_mode, 2) != pdPASS)
-  {
-    //TODO send error!
-  }
-  Ctrl_SendEvent(obj, evHandler);
+    obj->currentMode = Control_mode_rate;
+    Ctrl_SendEvent(obj);
 
 }
 
@@ -84,87 +75,75 @@ void Ctrl_InitModeHandler(CtrlModeHandler_t* obj, eventHandler_t* evHandler)
  */
 CtrlMode_t Ctrl_GetCurrentMode(CtrlModeHandler_t* obj)
 {
-  CtrlMode_t mode = Control_mode_not_available;
-  if( !xQueuePeek(obj->Mode_current_queue, &mode, 0) )
-  {
-    //no mode, error!
-  }
-  return mode;
+    return obj->currentMode;
 }
 
-// TODO add fault text readable from remote.
-uint8_t Ctrl_FaultMode(CtrlModeHandler_t* obj, eventHandler_t* evHandler)
-{
-  if( xSemaphoreTake( obj->xMutex, ( TickType_t )(10UL / portTICK_PERIOD_MS) ) == pdTRUE )
-  {
-    CtrlMode_t mode_req = Control_mode_not_available;
-    xQueueOverwrite(obj->Mode_current_queue, &mode_req);
-    Ctrl_SendEvent(obj, evHandler);
-    xSemaphoreGive(obj->xMutex);
-  }
-  return 1;
 
-}
 
-uint8_t Ctrl_ChangeMode(CtrlModeHandler_t* obj, eventHandler_t* evHandler, CtrlMode_t mode_req)
+uint8_t Ctrl_ChangeMode(CtrlModeHandler_t* obj, CtrlMode_t mode_req)
 {
-  uint8_t result = 0;
-  if( xSemaphoreTake( obj->xMutex, ( TickType_t )(2UL / portTICK_PERIOD_MS) ) == pdTRUE )
-  {
+    uint8_t result = 0;
     if(Ctrl_ModeChangeAllowed(obj, mode_req) == pdTRUE)
     {
-      result = xQueueOverwrite(obj->Mode_current_queue, &mode_req);
-      Ctrl_SendEvent(obj, evHandler);
+        obj->currentMode = mode_req;
+        Ctrl_SendEvent(obj);
+        result = 1;
     }
-    xSemaphoreGive(obj->xMutex);
-  }
-  /*Could not obtain mutex or change not allowed.*/
-  return result;
+    else
+    {
+        result = 0;
+    }
+    return result;
 }
 
 static uint8_t Ctrl_ModeChangeAllowed(CtrlModeHandler_t* obj, CtrlMode_t mode_req)
 {
-  switch ( Ctrl_GetCurrentMode(obj) )
-  {
-  case Control_mode_rate:
-    if(    (mode_req == Control_mode_attitude) )
+    switch ( Ctrl_GetCurrentMode(obj) )
     {
-      return 1;
+    case Control_mode_rate:
+        if(    (mode_req == Control_mode_attitude) )
+        {
+            return 1;
+        }
+        break;
+    case Control_mode_attitude:
+        if(    (mode_req == Control_mode_rate))
+        {
+            return 1;
+        }
+        break;
+    default:
+        return 1;
+        break;
     }
-    break;
-  case Control_mode_attitude:
-    if(    (mode_req == Control_mode_rate))
+
+    return 0;
+}
+
+uint8_t Ctrl_ModeCB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
+{
+    if(!obj || !data || !eData)
     {
-      return 1;
+        return 0;
     }
-    break;
-  default:
+    CtrlModeHandler_t* Mobj = (CtrlModeHandler_t*)data; // data should always be the current handler.
+    uint8_t result = Ctrl_ChangeMode(Mobj, Msg_CtrlModeGetMode(eData));
+    if(!result)
+    {
+        moduleMsg_t* msg = Msg_CtrlModeCreate(eData->mSource, 0, Mobj->currentMode);
+        Event_Send(Mobj->eHandler, msg);
+    }
     return 1;
-    break;
-  }
-
-  return 0;
 }
 
-void Ctrl_SendEvent(CtrlModeHandler_t*  obj, eventHandler_t* evHandler)
+
+void Ctrl_SendEvent(CtrlModeHandler_t*  obj)
 {
-  if(evHandler && obj)
-  {
-    eventData_t event;
-    event.eventNumber = eNewCtrlMode;
-    event.data = obj;
-    Event_Send(evHandler, event);
-  }
+    if(obj->eHandler && obj)
+    {
+        moduleMsg_t* msg = Msg_CtrlModeCreate(FC_Led_e, 0,obj->currentMode);
+        Event_Send(obj->eHandler, msg);
+    }
 }
 
-FMode_t Ctrl_GetEventData(eventData_t* data)
-{
-  if(data && data->data)
-  {
-    CtrlModeHandler_t* ControlModeHanler = (CtrlModeHandler_t*)data->data;
-    CtrlMode_t ctrlMode = Ctrl_GetCurrentMode(ControlModeHanler);
-    return ctrlMode;
-  }
-  return Control_mode_not_available;
-}
 

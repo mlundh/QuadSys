@@ -31,7 +31,16 @@
  */
 
 #include <stdint.h>
-#include "Utilities/inc/common_types.h"
+#include "Modules/MsgBase/inc/common_types.h"
+
+typedef struct Imu
+{
+  ImuData_t ImuOffset;
+  ImuData_t ImuData;  // Copter coordinate system.
+  ImuData_t tempData; // IMU coordinate system
+  ImuOrientation_t Orient;
+  void *internals;
+}Imu_t;
 
 /**
  * Create the IMU unit. This function should be called before the

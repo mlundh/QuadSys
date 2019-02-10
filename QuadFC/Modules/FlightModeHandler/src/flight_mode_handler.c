@@ -22,184 +22,156 @@
  * THE SOFTWARE.
  */
 #include "FlightModeHandler/inc/flight_mode_handler.h"
+#include "MsgBase/inc/msgAddr.h"
 
 #include "EventHandler/inc/event_handler.h"
 
 struct FlightModeHandler
 {
-  SemaphoreHandle_t xMutex;
-  QueueHandle_t current_mode_queue;
+    FlightMode_t current_mode;
+    eventHandler_t* eHandler;
 };
 
-/**
- * Queue holding current state. Implemented
- * as a queue to ensure thread safety.
- */
-#define STATE_CURRENT_QUEUE_LENGTH      (1)
-#define STATE_CURRENT_QUEUE_ITEM_SIZE        (sizeof(mode_t))
+
+static BaseType_t FMode_ChangeAllowed(FlightModeHandler_t* obj, FlightMode_t state_req);
+
+void FMode_SendEvent(FlightModeHandler_t*  obj);
+
+uint8_t FMode_CB(eventHandler_t* obj, void* data, moduleMsg_t* eData);
 
 
-/**
- * State lock queue. Use this to prevent state changes.
- * Implemented as a queue to ensure thread safety.
- */
-#define STATE_LOCK_QUEUE_LENGTH      (1)
-#define STATE_LOCK_QUEUE_ITEM_SIZE        (sizeof(uint8_t))
-
-static BaseType_t FMode_ChangeAllowed(FlightModeHandler_t* obj, FMode_t state_req);
-void FMode_SendEvent(FlightModeHandler_t*  obj, eventHandler_t* evHandler);
-
-FlightModeHandler_t* FMode_CreateStateHandler()
+FlightModeHandler_t* FMode_CreateFmodeHandler(eventHandler_t* eHandler)
 {
-  FlightModeHandler_t* obj = pvPortMalloc(sizeof(FlightModeHandler_t));
+    FlightModeHandler_t* obj = pvPortMalloc(sizeof(FlightModeHandler_t));
 
-  obj->current_mode_queue = xQueueCreate( STATE_CURRENT_QUEUE_LENGTH,
-      STATE_CURRENT_QUEUE_ITEM_SIZE );
-  obj->xMutex = xSemaphoreCreateMutex();
-
-
-  if( !obj->current_mode_queue
-      || !obj->xMutex)
-  {
-    return NULL;
-  }
-  return obj;
+    obj->current_mode = fmode_not_available;
+    obj->eHandler = eHandler;
+    Event_RegisterCallback(obj->eHandler, Msg_FlightModeReq_e, FMode_CB, obj);
+    return obj;
 }
 
 
 /*Initialize queues and mutex used internally
  * by the state handler*/
-void FMode_InitFModeHandler(FlightModeHandler_t*  obj, eventHandler_t* evHandler)
+void FMode_InitFModeHandler(FlightModeHandler_t*  obj)
 {
-  FMode_t state = fmode_init;
-  if(xQueueSendToBack(obj->current_mode_queue, &state, 2) != pdPASS)
-  {
-    //TODO send error!
-  }
-  FMode_SendEvent(obj, evHandler);
+    obj->current_mode = fmode_init;
+    FMode_SendEvent(obj);
 }
 
-/**
- * Get the current state.
- */
-FMode_t FMode_GetCurrent(FlightModeHandler_t*  obj)
+FlightMode_t FMode_GetCurrent(FlightModeHandler_t* obj)
 {
-  FMode_t state = fmode_not_available;
-  if( !xQueuePeek(obj->current_mode_queue, &state, 0) )
-  {
-    //no state, error!
-  }
-  return state;
+    return obj->current_mode;
 }
 
-// TODO add fault text readable from remote.
-BaseType_t FMode_Fault(FlightModeHandler_t*  obj, eventHandler_t* evHandler)
-{
-  FMode_t state_req = fmode_fault;
-  //State_Lock();
-  xQueueOverwrite(obj->current_mode_queue, &state_req);
-  FMode_SendEvent(obj, evHandler);
-  return pdTRUE;
 
-}
 
-BaseType_t FMode_Change(FlightModeHandler_t*  obj, eventHandler_t* evHandler, FMode_t state_req)
+BaseType_t FMode_ChangeFMode(FlightModeHandler_t*  obj, FlightMode_t state_req)
 {
-  BaseType_t result = pdFALSE;
-  if( xSemaphoreTake( obj->xMutex, ( TickType_t )(2UL / portTICK_PERIOD_MS) ) == pdTRUE )
-  {
+    BaseType_t result = pdFALSE;
     if(FMode_ChangeAllowed(obj, state_req) == pdTRUE)
     {
-      result = xQueueOverwrite(obj->current_mode_queue, &state_req);
-      FMode_SendEvent(obj, evHandler);
+        obj->current_mode = state_req;
+        FMode_SendEvent(obj);
+        result = pdTRUE;
     }
-    xSemaphoreGive(obj->xMutex);
-  }
-  /*Could not obtain mutex or change not allowed.*/
-  return result;
+    return result;
+}
+
+BaseType_t FMode_Fault(FlightModeHandler_t* obj)
+{
+    obj->current_mode = fmode_fault;
+    FMode_SendEvent(obj);
+    return pdTRUE;
 }
 
 
-static BaseType_t FMode_ChangeAllowed(FlightModeHandler_t* obj, FMode_t state_req)
+static BaseType_t FMode_ChangeAllowed(FlightModeHandler_t* obj, FlightMode_t state_req)
 {
-  switch ( FMode_GetCurrent(obj) )
-  {
-  case fmode_init:
-    if(    (state_req == fmode_disarming) )
+    switch ( FMode_GetCurrent(obj) )
     {
-      return pdTRUE;
+    case fmode_init:
+        if(    (state_req == fmode_disarming) )
+        {
+            return pdTRUE;
+        }
+        break;
+    case fmode_disarmed:
+        if(    (state_req == fmode_config)
+                || (state_req == fmode_init )
+                || (state_req == fmode_armed )
+                || (state_req == fmode_arming )
+                || (state_req == fmode_fault ) )
+        {
+            return pdTRUE;
+        }
+        break;
+    case fmode_config:
+        if(    (state_req == fmode_disarming)
+                || (state_req == fmode_fault ) )
+        {
+            return pdTRUE;
+        }
+        break;
+    case fmode_arming:
+        if(    (state_req == fmode_armed)
+                || (state_req == fmode_disarming )
+                || (state_req == fmode_fault ) )
+        {
+            return pdTRUE;
+        }
+        break;
+    case fmode_armed:
+        if(    (state_req == fmode_disarming)
+                || (state_req == fmode_fault ) )
+        {
+            return pdTRUE;
+        }
+        break;
+    case   fmode_disarming:
+        if(    (state_req == fmode_disarmed)
+                || (state_req == fmode_fault ) )
+        {
+            return pdTRUE;
+        }
+        break;
+    case fmode_fault:
+        if(    (state_req == fmode_disarming) )
+        {
+            return pdTRUE;
+        }
+        break;
+    default:
+        return pdFALSE;
+        break;
     }
-    break;
-  case fmode_disarmed:
-    if(    (state_req == fmode_config)
-        || (state_req == fmode_init )
-        || (state_req == fmode_armed )
-        || (state_req == fmode_arming )
-        || (state_req == fmode_fault ) )
-    {
-      return pdTRUE;
-    }
-    break;
-  case fmode_config:
-    if(    (state_req == fmode_disarming)
-        || (state_req == fmode_fault ) )
-    {
-      return pdTRUE;
-    }
-    break;
-  case fmode_arming:
-    if(    (state_req == fmode_armed)
-        || (state_req == fmode_disarming )
-        || (state_req == fmode_fault ) )
-    {
-      return pdTRUE;
-    }
-    break;
-  case fmode_armed:
-    if(    (state_req == fmode_disarming)
-        || (state_req == fmode_fault ) )
-    {
-      return pdTRUE;
-    }
-    break;
-  case   fmode_disarming:
-    if(    (state_req == fmode_disarmed)
-        || (state_req == fmode_fault ) )
-    {
-      return pdTRUE;
-    }
-    break;
-  case fmode_fault:
-    if(    (state_req == fmode_disarming) )
-    {
-      return pdTRUE;
-    }
-    break;
-  default:
+
     return pdFALSE;
-    break;
-  }
-
-  return pdFALSE;
-}
-void FMode_SendEvent(FlightModeHandler_t*  obj, eventHandler_t* evHandler)
-{
-  if(evHandler && obj)
-  {
-    eventData_t event;
-    event.eventNumber = eNewFlightMode;
-    event.data = obj;
-    Event_Send(evHandler, event);
-  }
 }
 
-FMode_t FMode_GetEventData(eventData_t* data)
+uint8_t FMode_CB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
 {
-  if(data && data->data)
-  {
-    FlightModeHandler_t* flightModeHanler = (FlightModeHandler_t*)data->data;
-    FMode_t flightMode = FMode_GetCurrent(flightModeHanler);
-    return flightMode;
-  }
-  return fmode_not_available;
+    if(!obj || !data || !eData)
+    {
+        return 0;
+    }
+    FlightModeHandler_t* FMobj = (FlightModeHandler_t*)data; // data should always be the current handler.
+    uint8_t result = FMode_ChangeFMode(FMobj, Msg_FlightModeGetMode(eData));
+    if(!result)
+    {
+        moduleMsg_t* msg = Msg_FlightModeCreate(eData->mSource, 0, FMobj->current_mode);
+        Event_Send(FMobj->eHandler, msg);
+    }
+    return 1;
 }
+
+void FMode_SendEvent(FlightModeHandler_t*  obj)
+{
+    if(obj && obj->eHandler)
+    {
+        moduleMsg_t* msg = Msg_FlightModeCreate(FC_Led_e, 0,obj->current_mode);
+        Event_Send(obj->eHandler, msg);
+    }
+}
+
+

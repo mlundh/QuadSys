@@ -39,7 +39,7 @@ int main(int ac, char* av[])
 
 	//Instantiate modules.
 	Parameters mParameters(msgAddr_t::GS_Param_e);
-	CLI mCli(msgAddr_t::GUI_e);
+	CLI mCli(msgAddr_t::GS_GUI_e);
 	LogHandler mLogHandler(msgAddr_t::GS_Log_e);
 	Serial_Manager serialIo(msgAddr_t::GS_SerialIO_e);
 	dbgModule dbgModule(msgAddr_t::GS_Dbg_e);

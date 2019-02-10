@@ -26,25 +26,26 @@
 #define STATE_HANDLER_H_
 
 #include "stdint.h"
-#include "FreeRTOS.h"
-#include "queue.h"
-#include "semphr.h"
-#include "Utilities/inc/common_types.h"
+#include "MsgBase/inc/common_types.h"
+#include "EventHandler/inc/event_handler.h"
+
+#include "Messages/inc/Msg_FlightMode.h"
+#include "Messages/inc/Msg_FlightModeReq.h"
 
 
+typedef struct FlightModeHandler FlightModeHandler_t;
 
-//typedef struct StateHandler StateHandler_t;
 /**
- * Create the state handler object.
+ * Create the state handler object. Call this before the scheduler is
  * @return Handle to the created object.
  */
-FlightModeHandler_t* FMode_CreateStateHandler();
+FlightModeHandler_t* FMode_CreateFmodeHandler(eventHandler_t* eHandler);
 
 /**
  * Initialize the state handler. This will set the state to a fixed initial state.
  * @param evHandler   Event handler handle. Use if the call should send events, set to NULL otherwise.
  */
-void FMode_InitFModeHandler(FlightModeHandler_t* obj, eventHandler_t* evHandler);
+void FMode_InitFModeHandler(FlightModeHandler_t*  obj);
 
 /**
  * Get the current state. Returns state_not_availible if it is not
@@ -52,7 +53,16 @@ void FMode_InitFModeHandler(FlightModeHandler_t* obj, eventHandler_t* evHandler)
  *
  * @return Current state. State_not_availible if fail.
  */
-FMode_t FMode_GetCurrent(FlightModeHandler_t* obj);
+FlightMode_t FMode_GetCurrent(FlightModeHandler_t* obj);
+
+/**
+ * Get the current flight mode. This should only be called by the owner thread.
+ * @param obj           Current flight mode handler.
+ * @param state_req     The required state.
+ * @return              1 if sucess, 0 if not allowed.
+ */
+BaseType_t FMode_ChangeFMode(FlightModeHandler_t*  obj, FlightMode_t state_req);
+
 
 /**
  * Set state to fault. Use this in case of a serious problem
@@ -64,25 +74,7 @@ FMode_t FMode_GetCurrent(FlightModeHandler_t* obj);
  * @param evHandler   Event handler handle. Use if the call should send events, set to NULL otherwise.
  * @return
  */
-BaseType_t FMode_Fault(FlightModeHandler_t* obj, eventHandler_t* evHandler);
+BaseType_t FMode_Fault(FlightModeHandler_t* obj);
 
-/**
- * @brief Request a state change.
- *
- * Request that the flight controller changes state. Will fail if
- * state transition is not allowed.
- *
- * @param state_req   New state beeing requested.
- * @param evHandler   Event handler handle. Use if the call should send events, set to NULL otherwise.
- * @return            pdTrue if ok, pdFalse otherwise.
- */
-BaseType_t FMode_Change(FlightModeHandler_t* obj, eventHandler_t* evHandler, FMode_t state_req);
-
-/**
- * Get event data from a flight mode event.
- * @param data    Flight mode event data.
- * @return        Current flight mode.
- */
-FMode_t FMode_GetEventData(eventData_t* data);
 
 #endif /* STATE_HANDLER_H_ */

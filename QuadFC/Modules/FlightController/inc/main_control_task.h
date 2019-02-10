@@ -24,8 +24,9 @@
 
 #ifndef MAIN_CONTROL_TASK_H_
 #define MAIN_CONTROL_TASK_H_
-#include "Utilities/inc/common_types.h"
+#include "Modules/MsgBase/inc/common_types.h"
+#include "Modules/EventHandler/inc/event_handler.h"
 
-void create_main_control_task(eventHandler_t* evHandler, FlightModeHandler_t* flightModeHandler, SpHandler_t* setpointHandler, CtrlModeHandler_t * CtrlModeHandler);
+void create_main_control_task(eventHandler_t* evHandler);
 
 #endif /* MAIN_CONTROL_TASK_H_ */

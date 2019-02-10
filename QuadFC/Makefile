@@ -42,7 +42,7 @@ VPATH:=
 # Add include path for header files. Third party is special, the files expects all
 # dirs to be in include path.
 INCLUDE_ThirdParty := $(sort $(dir $(call rwildcard,ThirdParty/,*.h)))
-CFLAGS+= -I Modules -I HAL -I Top -I $(ROOT_DIR) $(addprefix -I, $(INCLUDE_ThirdParty))
+CFLAGS+= -I Modules -I HAL -I Top -I Components -I $(ROOT_DIR) $(addprefix -I, $(INCLUDE_ThirdParty))
 
 include $(ROOT_DIR)/executables.mk
 
@@ -56,7 +56,7 @@ include $(INCLUDE_MAKEFILES)
 .SECONDEXPANSION:
 
 # Add categories here if needed.
-CATEGORIES := Modules PortLayer Top Test HAL
+CATEGORIES := Modules PortLayer Top Test HAL Components
 CATEGORIES_R := ThirdParty
 ALL_CATEGORIES := $(CATEGORIES) $(CATEGORIES_R)
 

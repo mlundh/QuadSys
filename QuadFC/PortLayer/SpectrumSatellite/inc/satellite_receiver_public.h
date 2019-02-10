@@ -24,11 +24,11 @@
 #ifndef PORTLAYER_COMMUNICATION_INC_SATELLITE_RECEIVER_PUBLIC_H_
 #define PORTLAYER_COMMUNICATION_INC_SATELLITE_RECEIVER_PUBLIC_H_
 #include "SetpointHandler/inc/setpoint_handler.h"
-#include "Utilities/inc/common_types.h"
+#include "Modules/MsgBase/inc/common_types.h"
 
 /**
  * Public interface for the satellite receiver task.
  */
-void Satellite_CreateReceiverTask( QueueHandle_t eventMaster,  FlightModeHandler_t* stateHandler, SpHandler_t* setPointHandler, CtrlModeHandler_t * CtrlModeHandler);
+void Satellite_CreateReceiverTask( QueueHandle_t eventHandler);
 
 #endif /* PORTLAYER_COMMUNICATION_INC_SATELLITE_RECEIVER_PUBLIC_H_ */

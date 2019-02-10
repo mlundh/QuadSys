@@ -67,7 +67,7 @@ void SigProsses_GetTCs(TestFw_t* obj)
     TestFW_Report(obj, tmpstr);
     return;
   }
-  SigProcessTester->CtrlModeHandler = Ctrl_CreateModeHandler();
+  SigProcessTester->CtrlModeHandler = Ctrl_CreateModeHandler(NULL);
   if(!SigProcessTester->CtrlModeHandler)
   {
     snprintf (tmpstr, REPORT_STR_LEN,"Failed to create state CtrlModeHandler.\n");
@@ -81,7 +81,7 @@ void SigProsses_GetTCs(TestFw_t* obj)
     TestFW_Report(obj, tmpstr);
     return;
   }
-  Ctrl_InitModeHandler(SigProcessTester->CtrlModeHandler, NULL);
+  Ctrl_InitModeHandler(SigProcessTester->CtrlModeHandler);
 
   TestFW_SetTestSuiteInternal(obj, (void*)SigProcessTester, SIG_PROCESS_INTENRNAL_IDX);
   if(!SigProsses_InitMpu6050(obj))
@@ -96,8 +96,8 @@ void SigProsses_GetTCs(TestFw_t* obj)
 
 QuadFC_I2C_t* SigProcess_GetI2cPtr(uint8_t internalAddr, uint8_t bufferSize, uint8_t slaveAddr)
 {
-  QuadFC_I2C_t* i2c_data = malloc(sizeof(QuadFC_I2C_t));
-  uint8_t* dataptr = malloc(bufferSize);
+  QuadFC_I2C_t* i2c_data = pvPortMalloc(sizeof(QuadFC_I2C_t));
+  uint8_t* dataptr = pvPortMalloc(bufferSize);
   memset(dataptr, 0, bufferSize);
   i2c_data->internalAddr[0] = internalAddr;
   i2c_data->internalAddrLength = 1;
@@ -105,6 +105,11 @@ QuadFC_I2C_t* SigProcess_GetI2cPtr(uint8_t internalAddr, uint8_t bufferSize, uin
   i2c_data->bufferLength = bufferSize;
   i2c_data->slaveAddress = slaveAddr;
   return i2c_data;
+}
+void SigProcess_DeleteI2cPtr(QuadFC_I2C_t* ptr)
+{
+    vPortFree(ptr->buffer);
+    vPortFree(ptr);
 }
 
 uint8_t SigProsses_InitMpu6050(TestFw_t* obj)
@@ -222,7 +227,7 @@ uint8_t SigProsses_TestImuToRate(TestFw_t* obj)
   {
     return 0;
   }
-
+  uint8_t result = 0;
 
   // We have successfully initialized the fake IMU. Now do testing to
   // make sure that the data path from IMU to state vector works
@@ -268,9 +273,11 @@ uint8_t SigProsses_TestImuToRate(TestFw_t* obj)
       state->state_bf[yaw_rate_bf]   >= ((1<<16)-5) &&
       state->state_bf[yaw_rate_bf]   <= ((1<<16)+5))
   {
-    return 1; // We are within limits.
+      result = 1; // We are within limits.
   }
-  return 0;
+  vPortFree(state);
+  SigProcess_DeleteI2cPtr(i2c_data);
+  return result;
 }
 
 
@@ -522,7 +529,7 @@ uint8_t SigProsses_TestImuToAngle(TestFw_t* obj)
   {
     return 0;
   }
-  Ctrl_ChangeMode(SigProcessTester->CtrlModeHandler, NULL, Control_mode_attitude);
+  Ctrl_ChangeMode(SigProcessTester->CtrlModeHandler, Control_mode_attitude);
 
 
   // We have successfully initialized the fake IMU. Now do testing to
@@ -581,6 +588,8 @@ uint8_t SigProsses_TestImuToAngle(TestFw_t* obj)
   {
     return 1; // We are within limits.
   }
+  vPortFree(i2c_data);
+  vPortFree(dataptr);
   return 0;
 }
 
@@ -593,7 +602,7 @@ uint8_t SigProsses_TestImuToAngle2(TestFw_t* obj)
   {
     return 0;
   }
-  Ctrl_ChangeMode(SigProcessTester->CtrlModeHandler, NULL, Control_mode_attitude);
+  Ctrl_ChangeMode(SigProcessTester->CtrlModeHandler, Control_mode_attitude);
 
 
   // We have successfully initialized the fake IMU. Now do testing to
@@ -602,8 +611,8 @@ uint8_t SigProsses_TestImuToAngle2(TestFw_t* obj)
 
   state_data_t* state = pvPortMalloc( sizeof(state_data_t) );
   // Add data describing the IMU response to a read.
-  QuadFC_I2C_t* i2c_data = malloc(sizeof(QuadFC_I2C_t));
-  uint8_t* dataptr = malloc(14);
+  QuadFC_I2C_t* i2c_data = pvPortMalloc(sizeof(QuadFC_I2C_t));
+  uint8_t* dataptr = pvPortMalloc(14);
   i2c_data->internalAddr[0] = 0x3B;//MPU6050_RA_ACCEL_XOUT_H;
   i2c_data->internalAddrLength = 1;
   i2c_data->buffer = dataptr;
@@ -644,15 +653,19 @@ uint8_t SigProsses_TestImuToAngle2(TestFw_t* obj)
   // Compare with expected state, roll 0 rad, pitch pi rad. Add headroom for rounding
   // errors and since real values was used. 300 in state scale is
   // approximately 0.014 rad ~ 0.8 deg
-
+  uint8_t result = 0;
   if(state->state_bf[pitch_bf] >= ((1<<16)/4-300) && // pi rad
       state->state_bf[pitch_bf] <= ((1<<16)/4-300) &&
       state->state_bf[roll_bf]  >= (0-300) && // 0 rad
       state->state_bf[roll_bf]  <= (0+300));
   {
-    return 1; // We are within limits.
+    result = 1; // We are within limits.
   }
-  return 0;
+  vPortFree(i2c_data);
+  vPortFree(state);
+  vPortFree(dataptr);
+
+  return result;
 }
 
 
@@ -678,7 +691,7 @@ uint8_t SigProcess_TestSpectrumToState(TestFw_t* obj)
 
 
   Satellite_MapToSetpoint(&satelite_obj, &receiver_data, &state_data);
-
+  uint8_t result = 0;
   //Compare with expected state. Expected state is 1<<16. Add some
   // head room for rounding errors.
   if(state_data.state_bf[pitch_rate_bf] >=  ((1<<16)-1) &&
@@ -690,8 +703,9 @@ uint8_t SigProcess_TestSpectrumToState(TestFw_t* obj)
       state_data.state_bf[thrust_sp]     >= -((1<<30)-200) &&
       state_data.state_bf[thrust_sp]     <=  ((1<<30)+200))
   {
-    return 1; // We are within limits.
+    result = 1; // We are within limits.
   }
-  return 0;
+  vSemaphoreDelete(satelite_obj.xMutexParam);
+  return result;
 }
 

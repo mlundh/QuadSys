@@ -16,7 +16,7 @@ using namespace QuadGS;
 TEST(QGSModuleMsgTest, StreamInOut)
 {
 
-	QGS_ModuleMsgBase::ptr msg = std::make_unique< Msg_Stop>(msgAddr_t::FC_Dbg_e);
+	QGS_ModuleMsgBase::ptr msg = std::make_unique< Msg_Stop>(msgAddr_t::GS_Dbg_e);
 	msg->setSource(msgAddr_t::FC_Param_e);
 
 	BinaryOStream os;
@@ -24,7 +24,7 @@ TEST(QGSModuleMsgTest, StreamInOut)
 
 	BinaryIStream is(os.get_internal_vec());
 
-	Msg_Stop::ptr msgVerify = std::make_unique<Msg_Stop>(msgAddr_t::FC_Dbg_e);
+	Msg_Stop::ptr msgVerify = std::make_unique<Msg_Stop>(msgAddr_t::GS_Dbg_e);
 
 	is >> *msgVerify;
 

@@ -4,7 +4,7 @@ import os
 
 
 
-def genMessage( lineIn, outputDir ):
+def genCppMessage( lineIn, outputDirCpp):
 	parser = argparse.ArgumentParser(description='Script to generate message types used in QuadGS. Messages have data carriers (members), signals do not. To create a signal, simply do not specify any members. ')
 	parser.add_argument('className', help='Name of the class')
 	parser.add_argument('--member', nargs=2, action='append', help='Member of the class. (type) (name)')
@@ -13,11 +13,11 @@ def genMessage( lineIn, outputDir ):
 	
 	args = parser.parse_args(lineIn.split())
 	
-	baseDirectory = outputDir
+	baseDirectory = outputDirCpp
 	if not os.path.exists(baseDirectory):
 		os.makedirs(baseDirectory)
 	
-	srcDirectory = outputDir+'/src'
+	srcDirectory = outputDirCpp+'/src'
 	if not os.path.exists(srcDirectory):
 	    os.makedirs(srcDirectory)
 	
@@ -68,20 +68,20 @@ def genMessage( lineIn, outputDir ):
 				coreType = coreType[:-1] 
 				mSubst['coreType'] = coreType
 				mSubst['const'] = const
-				with open(dir+'memberCloneTemplateHeader', 'r') as ftemp:
+				with open(dir+'/c++/memberCloneTemplateHeader', 'r') as ftemp:
 					templateString = ftemp.read()
 					mFcnHeader += templateString.format(**mSubst)
-				with open(dir+'memberCloneTemplateImpl', 'r') as ftemp:
+				with open(dir+'/c++/memberCloneTemplateImpl', 'r') as ftemp:
 					templateString = ftemp.read()
 					mFcnImpl += templateString.format(**mSubst)
 	
 			mSubst['nameinput'] = nameinput
 			mSubst['move'] = move
 			mSubst['moveEnd'] = moveEnd
-			with open(dir+'memberFcnTemplateHeader', 'r') as ftemp:
+			with open(dir+'/c++/memberFcnTemplateHeader', 'r') as ftemp:
 				templateString = ftemp.read()
 				mFcnHeader += templateString.format(**mSubst)
-			with open(dir+'memberFcnTemplateImpl', 'r') as ftemp:
+			with open(dir+'/c++/memberFcnTemplateImpl', 'r') as ftemp:
 				templateString = ftemp.read()
 				mFcnImpl += templateString.format(**mSubst)
 				
@@ -108,10 +108,10 @@ def genMessage( lineIn, outputDir ):
 	subst['istream'] = istream
 	subst['ostream'] =  ostream
 	
-	with open(dir+'classTemplateHeader', 'r') as ftemp:
+	with open(dir+'/c++/classTemplateHeader', 'r') as ftemp:
 		templateStringHeader = ftemp.read()
 		
-	with open(dir+'classTemplateImpl', 'r') as ftemp:
+	with open(dir+'/c++/classTemplateImpl', 'r') as ftemp:
 		templateStringImpl = ftemp.read()
 	
 	with open(baseDirectory + '/' + args.className + '.h', 'w') as f:
@@ -120,17 +120,133 @@ def genMessage( lineIn, outputDir ):
 		f.write(templateStringImpl.format(**subst))
 	return
 
-def genCmake( files, interface, outputDir ):
+
+
+def genCMessage( lineIn, outputDirC):
+	parser = argparse.ArgumentParser(description='Script to generate message types used in QuadGS. Messages have data carriers (members), signals do not. To create a signal, simply do not specify any members. ')
+	parser.add_argument('className', help='Name of the class')
+	parser.add_argument('--member', nargs=2, action='append', help='Member of the class. (type) (name)')
+	parser.add_argument('--include', nargs=1, action='append', help='Includes needed by the class.')
+	parser.add_argument('--internal', action = 'store_true')
+	
+	args = parser.parse_args(lineIn.split())
+	
+	baseDirectory = outputDirC
+	if not os.path.exists(baseDirectory):
+		os.makedirs(baseDirectory)
+	
+	srcDirectory = outputDirC+'/src'
+	if not os.path.exists(srcDirectory):
+	    os.makedirs(srcDirectory)
+	
+	incDirectory = outputDirC+'/inc'
+	if not os.path.exists(srcDirectory):
+	    os.makedirs(srcDirectory)
+	includes = ''
+	if args.include:
+		for value in args.include:
+			includes += '#include "' + value[0] + '"\n'
+	
+
+	dir = sys.path[0] + '/'
+	mFcnHeader = ''
+	mFcnImpl = ''
+	mDecl = ''
+	createArgs = ''
+	createCpyInit  = ''
+	createArgsInit = ''
+	serialize = ''
+	deserialize = ''
+	skip = -1
+	skipInternal = -1
+	index = 0;
+	if args.member:
+		for value in args.member:
+			type = value[0]
+			name = 'm' + value[1].title()
+			nameinput = value[1]
+			nameFcn = value[1].title()
+			cpyname = name
+			string = False
+			serializationType = type
+			if (type.find('std::string') != -1): # handle the string case.
+				type = 'uint8_t*'#translate to c string.
+				serializationType = 'string'
+				args.member.append(['uint32_t',nameFcn+'length']) #add the bufferLength parameter.
+				args.member.append(['uint32_t',nameFcn+'bufferlength']) #add the bufferLength parameter.
+				string = True
+				skip = len(args.member) -2
+				skipInternal = len(args.member) -1
+			mSubst = {}
+			mSubst['msgName'] = args.className
+			mSubst['nameFcn'] = nameFcn
+			mSubst['type'] = type
+			mSubst['serializationType'] = serializationType
+			mSubst['name'] = name
+			mSubst['nameinput'] = nameinput
+			if(skipInternal != index):
+				with open(dir+'/c/fcnHeaderTemplate', 'r') as ftemp:
+					templateString = ftemp.read()
+					mFcnHeader += templateString.format(**mSubst)
+				with open(dir+'/c/fcnImplTemplate', 'r') as ftemp:
+					templateString = ftemp.read()
+					mFcnImpl += templateString.format(**mSubst)
+			#TODO remove all serialization from internal messages.
+			if(not args.internal): # Slip serialization of internal messages not meant for sending to other nodes. 
+				if(string):
+					with open(dir+'/c/serializeStringTemplate', 'r') as ftemp:
+						templateString = ftemp.read()
+						serialize += templateString.format(**mSubst)
+					with open(dir+'/c/deSerializeStringTemplate', 'r') as ftemp:
+						templateString = ftemp.read()
+						deserialize += templateString.format(**mSubst)
+				elif(skip != index and skipInternal != index):
+					with open(dir+'/c/serializeTypeTemplate', 'r') as ftemp:
+						templateString = ftemp.read()
+						serialize += templateString.format(**mSubst)
+					with open(dir+'/c/deSerializeTypeTemplate', 'r') as ftemp:
+						templateString = ftemp.read()
+						deserialize += templateString.format(**mSubst)
+					
+			mDecl += type + ' ' + name + ';\n	'
+			createArgs += ', ' + type + ' ' + value[1]
+			createArgsInit +=  '        ' + 'internal_data->'+name + ' = ' + nameinput + ';\n'
+			index+=1
+
+
+		subst = {}
+		subst['includes'] = includes
+		subst['msgName'] = args.className
+		subst['msgNameUpper'] = args.className.upper()
+		subst['createArgs'] = createArgs
+		subst['createArgsInit'] = createArgsInit
+		subst['members'] = mDecl
+		subst['memberFcnHeader'] = mFcnHeader
+		subst['memberFcnImpl'] = mFcnImpl
+		subst['serialize'] = serialize
+		subst['deserialize'] = deserialize
+		with open(dir+'/c/msgTemplateHeader', 'r') as ftemp:
+			templateStringHeader = ftemp.read()
+			
+		with open(dir+'/c/msgTemplateImpl', 'r') as ftemp:
+			templateStringImpl = ftemp.read()
+		
+		with open(incDirectory + '/' + args.className + '.h', 'w') as f:
+			f.write(templateStringHeader.format(**subst))
+		with open(srcDirectory + '/' +args.className + '.c', 'w') as f:
+			f.write(templateStringImpl.format(**subst))
+	return
+def genCmake( files, interface, outputDirCpp ):
 	dir = sys.path[0] + '/'
 	substCmake={}
 	substCmake['interface'] = interface
 	substCmake['files'] = files
-	with open(dir+'cmakeTemplate', 'r') as ftemp:
+	with open(dir+'/c++/cmakeTemplate', 'r') as ftemp:
 		templateStringCmake = ftemp.read()
-	with open(outputDir+'/CMakeLists.txt', 'w') as f:
+	with open(outputDirCpp+'/CMakeLists.txt', 'w') as f:
 		f.write(templateStringCmake.format(**substCmake))
 
-def genTypes( types, enumName, outputDir ):
+def genTypes( types, enumName, outputDirCpp, outputDirC):
 	dir = sys.path[0] + '/'
 	enum = ''
 	enumStr = ''
@@ -138,16 +254,24 @@ def genTypes( types, enumName, outputDir ):
 	for type in types:
 		enum += '	' + type + '_e,\n'
 		enumStr += '	"' + type + '",\n'
+		#print('types: ' + type)
+
 	substTypes['enumName'] = enumName
 	substTypes['enum'] = enum
 	substTypes['enumStr'] = enumStr
-	with open(dir+'msgTypesTemplate', 'r') as ftemp:
+	with open(dir+'/c++/msgTypesTemplate', 'r') as ftemp:
 		templateStringEnum = ftemp.read()
 		
-	with open(outputDir+'/messageTypes.h', 'w') as f:
+	with open(outputDirCpp+'/messageTypes.h', 'w') as f:
+		f.write(templateStringEnum.format(**substTypes))
+		
+	with open(dir+'/c/msgTypesTemplate', 'r') as ftemp:
+		templateStringEnum = ftemp.read()
+		
+	with open(outputDirC+'/inc/messageTypes.h', 'w') as f:
 		f.write(templateStringEnum.format(**substTypes))
 
-def genParser( types, interfaces, outputDir ):
+def genParser( types, interfaces, outputDirCpp ):
 	dir = sys.path[0] + '/'
 	typeParser = ""
 	headers = ""
@@ -155,16 +279,16 @@ def genParser( types, interfaces, outputDir ):
 		headers += '#include "' + type + '.h"\n'
 		substTypes={}
 		substTypes['type'] = type
-		with open(dir+'messageTypeParserTemplate', 'r') as ftemp:
+		with open(dir+'/c++/messageTypeParserTemplate', 'r') as ftemp:
 			templateString = ftemp.read()
 			typeParser += templateString.format(**substTypes)
 	substTypes = {}
 	substTypes['headers'] = headers
 	substTypes['typeParser']=typeParser
-	with open(dir+'parserTemplate', 'r') as ftemp:
+	with open(dir+'/c++/parserTemplate', 'r') as ftemp:
 		templateStringParser = ftemp.read()
 		
-	with open(outputDir+'/Parser.cpp', 'w') as f:
+	with open(outputDirCpp+'/Parser.cpp', 'w') as f:
 		f.write(templateStringParser.format(**substTypes))
 		
 	deps=''
@@ -172,14 +296,14 @@ def genParser( types, interfaces, outputDir ):
 		deps += interface + '\n				'
 	subst = {}
 	subst['dep'] = deps
-	with open(dir+'parserCmakeTemplate', 'r') as ftemp:
+	with open(dir+'/c++/parserCmakeTemplate', 'r') as ftemp:
 		templateStringCmake = ftemp.read()
 		
 
-	with open(outputDir+'/../CMakeLists.txt', 'w') as f:
+	with open(outputDirCpp+'/../CMakeLists.txt', 'w') as f:
 		f.write(templateStringCmake.format(**subst))
 
-def genAdresses(addresses, enumName, outputDir):
+def genAdresses(addresses, enumName, outputDirCpp, outputDirC):
 	uniqueAddress = set(addresses)
 	enumString = ''
 	addressString = ''
@@ -190,54 +314,121 @@ def genAdresses(addresses, enumName, outputDir):
 	substTypes['enumName'] = enumName
 	substTypes['addresses'] = enumString
 	substTypes['strings'] = addressString
-	with open(dir+'msgAddressesTemplate', 'r') as ftemp:
+	with open(dir+'/c++/msgAddressesTemplate', 'r') as ftemp:
 		templateStringEnum = ftemp.read()
 		
-	with open(outputDir+'/msgAddr.h', 'w') as f:
+	with open(outputDirCpp+'/msgAddr.h', 'w') as f:
 		f.write(templateStringEnum.format(**substTypes))
+
+	with open(dir+'/c/msgAddressesTemplate', 'r') as ftemp:
+		templateStringEnum = ftemp.read()
+		
+	with open(outputDirC+'/inc/msgAddr.h', 'w') as f:
+		f.write(templateStringEnum.format(**substTypes))
+		
+		
+def genMsgEnums(outputDirCpp, outputDirC):
+
+	with open(dir+'msg_enums', 'r') as ftemp:
+		msg_enums = ftemp.read()
+		
+	substTypes = {}
+	substTypes['msg_enums'] = msg_enums
+	
+	with open(dir+'/c++/msgEnumsTemplate', 'r') as ftemp:
+		templateStringEnumTypes = ftemp.read()
+	with open(outputDirCpp+'/msg_enums.h', 'w') as f:
+		f.write(templateStringEnumTypes.format(**substTypes))
+		
+	with open(dir+'/c/msgEnumsTemplate', 'r') as ftemp:
+		templateStringEnumTypes = ftemp.read()
+	with open(outputDirC+'/inc/msg_enums.h', 'w') as f:
+		f.write(templateStringEnumTypes.format(**substTypes))
+
+def genCommonTypes(outputDirCpp, outputDirC):
+
+	with open(dir+'common_types', 'r') as ftemp:
+		common_types = ftemp.read()
+		
+	stream = ''
+	with open(dir+'/common_types_stream', 'r') as ftemp:
+		stream = ftemp.read()
+	substTypes = {}
+	substTypes['common_types'] = common_types
+	substTypes['stream'] = stream
+	
+	with open(dir+'/c++/common_types', 'r') as ftemp:
+		commonTypesTemplate = ftemp.read()
+	with open(outputDirCpp+'/common_types.h', 'w') as f:
+		f.write(commonTypesTemplate.format(**substTypes))
+		
+	with open(dir+'/c/common_types', 'r') as ftemp:
+		commonTypesTemplate = ftemp.read()
+	with open(outputDirC+'/inc/common_types.h', 'w') as f:
+		f.write(commonTypesTemplate.format(**substTypes))
 
 # Generate enums and messages.
 parser = argparse.ArgumentParser(description='Script to generate a cmake file to build the message class.')
 
 parser.add_argument('file', help='Name of the file containing all types.')
-parser.add_argument('outputDir', help='output dir')
+parser.add_argument('outputDirCpp', help='output dir cpp code')
+parser.add_argument('outputDirC', help='output dir c code')
 
 args = parser.parse_args()
 
 interfaces = []
 interface = ''
 addresses = []
+usedByGS = False
+usedByFC = False
+interfaceUsedByGS = []
 dir = sys.path[0] + '/'
+cTypes = []
 cppTypes = []
+messageCmake = ''
+
 #Go through all interfaces and generate messages, enums and addresses based on that. 
 with open(args.file, "r") as file:
 	files=''
 	for line in file:
 		if (line[0] == '*'): # Interface divider.
+			usedByGS = False
+			usedByFC = False
 			interfaceTest = line.split()[0][1:]
 			if (len(interfaceTest) > 1):
 				interface = interfaceTest
 				interfaces.append(interface)
 				addressesInLine = line.split()[1:]
 				for item in addressesInLine:
-					addresses.append(item)				
+					addresses.append(item)
+					if(item.find('GS') != -1):
+						usedByGS = True
+					if(item.find('FC') != -1):
+						usedByFC = True
+				if(usedByGS):
+					messageCmake += 'add_subdirectory(' + interface + ')\n' 
+					interfaceUsedByGS.append(interface)
 			else:
-				genCmake(files, interface, args.outputDir+'/'+interface)
+				genCmake(files, interface, args.outputDirCpp+'/'+interface)
 				files = ''
 			continue
 		if (line == '\n' or line == '' or line[0] == '#'): #Skipp newline, empty line and comments.
 			continue
 		print('Generating: ' + line)
-		genMessage(line, args.outputDir+'/'+interface)
-		cppTypes.append(line.split()[0])
+		if(usedByGS): # TODO Improve the tag so this is scalable...
+			genCppMessage(line, args.outputDirCpp+'/'+interface)
+			cppTypes.append(line.split()[0])
+		if(usedByFC):
+			genCMessage(line, args.outputDirC+'/')
+		cTypes.append(line.split()[0])
 		files += '"' + (line.split()[0]) + '.cpp"\n				'
-genTypes(cppTypes, 'messageTypes', args.outputDir + '/../MsgBase')
-genAdresses(addresses, 'msgAddr', args.outputDir + '/../MsgBase')
-genParser(cppTypes, interfaces, args.outputDir + '/Parser/src')
+
+genTypes(cTypes, 'messageTypes', args.outputDirCpp + '/../MsgBase', args.outputDirC + '/../MsgBase')
+genAdresses(addresses, 'msgAddr', args.outputDirCpp + '/../MsgBase', args.outputDirC + '/../MsgBase')
+genMsgEnums(args.outputDirCpp + '/../MsgBase', args.outputDirC + '/../MsgBase')
+genCommonTypes(args.outputDirCpp + '/../MsgBase', args.outputDirC + '/../MsgBase')
+genParser(cppTypes, interfaceUsedByGS, args.outputDirCpp + '/Parser/src')
 # Generate the top level Message cmakelist.
-messageCmake = ''
-for member in interfaces:
-	messageCmake += 'add_subdirectory(' + member + ')\n' 
 messageCmake += "add_subdirectory(Parser)\n" # Parser is a special case.
-with open(args.outputDir+'/CMakeLists.txt', 'w') as f:
+with open(args.outputDirCpp+'/CMakeLists.txt', 'w') as f:
 	f.write(messageCmake)

@@ -1,0 +1,20 @@
+#ifndef QUADFC_MESSAGE_TYPES_H_
+#define QUADFC_MESSAGE_TYPES_H_
+
+enum {enumName}
+{{
+	Msg_NoType_e,
+{enum}
+	Msg_LastType_e,
+}};
+typedef enum {enumName} {enumName}_t;
+
+static const char* const {enumName}Str[] =
+{{
+	"Msg_NoType",
+{enumStr}
+	"Msg_LastType",
+}};
+
+#endif /* QUADFC_MESSAGE_TYPES_H_ */
+

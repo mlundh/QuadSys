@@ -4,6 +4,6 @@ if [[ -n "$port" ]]; then
 	stty -F $port 57600 cs8 -cstopb -parenb
 	cat $port
 else
-    echo "argument error"
+    echo "Argument missing: serial port."
 fi
 

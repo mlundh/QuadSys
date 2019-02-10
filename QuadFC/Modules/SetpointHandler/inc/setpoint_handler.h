@@ -25,8 +25,10 @@
 #define MODULES_SETPOINTGENERATOR_INC_SETPOINT_GENERATOR_H_
 
 #include <stdint.h>
-#include "Utilities/inc/common_types.h"
-//#typedef struct SpObj SpObj_t;
+#include "Modules/MsgBase/inc/common_types.h"
+#include "Modules/EventHandler/inc/event_handler.h"
+
+typedef struct SpObj SpHandler_t;
 
 
 
@@ -35,28 +37,10 @@
  * Create a setpointGenerator object.
  * @return    Control system object containing everything needed by the controller.
  */
-SpHandler_t *SpHandl_Create();
+SpHandler_t *SpHandl_Create(eventHandler_t* eHandler);
 
 /**
- * Initialize the setpointGenerator object.
- * @param obj Control object.
- * @return    0 if fail, 1 otherwise.
- */
-uint8_t SpHandl_init(SpHandler_t *obj);
-
-/**
- * Interface function for sending setpoints.If a still valid, higher setpoint
- * is already registered then the new setpoint will be ignored.
- * @param obj           Current setpoint object.
- * @param setpoint      Setpoint to send.
- * @param valid_for_ms  Time until when the setpoint should be considered too old.
- * @param prio          Priority of setpoint.
- * @return          1 if successful, 0 otherwise.
- */
-uint8_t SpHandl_SetSetpoint(SpHandler_t *obj, state_data_t* setpoint, uint8_t valid_for_ms, uint8_t prio );
-
-/**
- * Interface function for getting new setpoints.
+ * Interface function for getting new setpoints. Only to be used by the owner of the module.
  * @param obj       Current setpoint object.
  * @param setpoint  Setpoint struct that will get populated.
  * @return          1 if successful, 0 otherwise.
