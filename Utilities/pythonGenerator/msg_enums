@@ -1,16 +1,21 @@
 typedef enum CtrlModeState{
-  Control_mode_rate,
-  Control_mode_attitude,
-  Control_mode_not_available,
+    Control_mode_rate,
+    Control_mode_attitude,
+    Control_mode_not_available,
 }CtrlMode_t;
 
 typedef enum mode{
-  fmode_init,          // FC is initializing.
-  fmode_disarmed,      // Disarmed mode, no action except changing to another state.
-  fmode_config,        // Configuration. FC can be configured.
-  fmode_arming,        // Motors are arming. No action other than change to error, disarmed or armed state.
-  fmode_armed,         // Armed state, FC is flight ready.
-  fmode_disarming,     // Disarming.
-  fmode_fault,         // FC has encountered a serious problem and has halted.
-  fmode_not_available, // state information not available.
+    fmode_init,          // FC is initializing.
+    fmode_disarmed,      // Disarmed mode, no action except changing to another state.
+    fmode_config,        // Configuration. FC can be configured.
+    fmode_arming,        // Motors are arming. No action other than change to error, disarmed or armed state.
+    fmode_armed,         // Armed state, FC is flight ready.
+    fmode_disarming,     // Disarming.
+    fmode_fault,         // FC has encountered a serious problem and has halted.
+    fmode_not_available, // state information not available.
 }FlightMode_t;
+
+typedef enum {
+    param_set,
+    param_get,
+}ParamCtrl;

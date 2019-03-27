@@ -1,5 +1,5 @@
 /*
- * Msg_Debug.c
+ * paramHandler.h
  *
  * Copyright (C) 2019 Martin Lundh
  *
@@ -22,35 +22,26 @@
  * THE SOFTWARE.
  */
 
-#ifndef MODULES_MESSAGES_INC_MSG_DEBUG_H_
-#define MODULES_MESSAGES_INC_MSG_DEBUG_H_
 
-#include "MsgBase/inc/message_base.h"
-#include "MsgBase/inc/common_types.h"
-#include "MsgBase/inc/msg_enums.h"
-#include "MsgBase/inc/msgAddr.h"
+#ifndef COMPONENTS_PARAMETERS_SRC_PARAMHANDLER_H_
+#define COMPONENTS_PARAMETERS_SRC_PARAMHANDLER_H_
 
+typedef struct paramHander paramHander_t;
 
+#include "Modules/EventHandler/inc/event_handler.h"
+#include "Components/Parameters/inc/parameters_internal.h"
 
-moduleMsg_t* Msg_DebugCreate(uint32_t destination, uint8_t msgNr
-    , uint8_t* payload, uint32_t Payloadlength, uint32_t Payloadbufferlength);
+paramHander_t* ParamHander_CreateObj(uint8_t num_children, eventHandler_t* evHandler,const char *obj_name, uint8_t master);
 
-uint8_t* Msg_DebugGetPayload(moduleMsg_t* msg);
+/**
+ * Free all memory created by the ParamHander_CreateObj function.
+ * No de-regestring is happening, so use with care.
+ * @param obj
+ */
+void ParamHander_deleteHandler(paramHander_t *obj);
 
-void Msg_DebugSetPayload(moduleMsg_t* msg, uint8_t* payload);
+uint8_t ParamHander_Dump(paramHander_t *obj, uint8_t *buffer, uint32_t buffer_length, param_helper_t *helper);
 
-uint32_t Msg_DebugGetPayloadlength(moduleMsg_t* msg);
+param_obj_t* ParamHandler_GetParam(paramHander_t* obj);
 
-void Msg_DebugSetPayloadlength(moduleMsg_t* msg, uint32_t Payloadlength);
-
-uint32_t Msg_DebugGetPayloadbufferlength(moduleMsg_t* msg);
-
-void Msg_DebugSetPayloadbufferlength(moduleMsg_t* msg, uint32_t Payloadbufferlength);
-
-
-uint8_t* Msg_DebugSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
-
-uint8_t* Msg_DebugDeserialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
-
-#endif /* MODULES_MESSAGES_INC_MSG_DEBUG_H_ */
-
+#endif /* COMPONENTS_PARAMETERS_SRC_PARAMHANDLER_H_ */

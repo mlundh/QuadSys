@@ -55,6 +55,10 @@ uint32_t Msg_ParamGetPayloadlength(moduleMsg_t* msg);
 
 void Msg_ParamSetPayloadlength(moduleMsg_t* msg, uint32_t Payloadlength);
 
+uint32_t Msg_ParamGetPayloadbufferlength(moduleMsg_t* msg);
+
+void Msg_ParamSetPayloadbufferlength(moduleMsg_t* msg, uint32_t Payloadbufferlength);
+
 
 uint8_t* Msg_ParamSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 

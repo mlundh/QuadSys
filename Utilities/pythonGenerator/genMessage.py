@@ -158,6 +158,7 @@ def genCMessage( lineIn, outputDirC):
 	serialize = ''
 	deserialize = ''
 	skip = -1
+	skip2 = -1
 	skipInternal = -1
 	index = 0;
 	if args.member:
@@ -172,11 +173,13 @@ def genCMessage( lineIn, outputDirC):
 			if (type.find('std::string') != -1): # handle the string case.
 				type = 'uint8_t*'#translate to c string.
 				serializationType = 'string'
-				args.member.append(['uint32_t',nameFcn+'length']) #add the bufferLength parameter.
+				args.member.append(['uint32_t',nameFcn+'length']) #add the Length parameter.
 				args.member.append(['uint32_t',nameFcn+'bufferlength']) #add the bufferLength parameter.
 				string = True
-				skip = len(args.member) -2
-				skipInternal = len(args.member) -1
+				skip = len(args.member) - 2
+				skip2 = len(args.member) - 1
+				
+				#skipInternal = len(args.member) -1
 			mSubst = {}
 			mSubst['msgName'] = args.className
 			mSubst['nameFcn'] = nameFcn
@@ -191,7 +194,6 @@ def genCMessage( lineIn, outputDirC):
 				with open(dir+'/c/fcnImplTemplate', 'r') as ftemp:
 					templateString = ftemp.read()
 					mFcnImpl += templateString.format(**mSubst)
-			#TODO remove all serialization from internal messages.
 			if(not args.internal): # Slip serialization of internal messages not meant for sending to other nodes. 
 				if(string):
 					with open(dir+'/c/serializeStringTemplate', 'r') as ftemp:
@@ -200,7 +202,7 @@ def genCMessage( lineIn, outputDirC):
 					with open(dir+'/c/deSerializeStringTemplate', 'r') as ftemp:
 						templateString = ftemp.read()
 						deserialize += templateString.format(**mSubst)
-				elif(skip != index and skipInternal != index):
+				elif(skip != index and skip2 != index and skipInternal != index):
 					with open(dir+'/c/serializeTypeTemplate', 'r') as ftemp:
 						templateString = ftemp.read()
 						serialize += templateString.format(**mSubst)

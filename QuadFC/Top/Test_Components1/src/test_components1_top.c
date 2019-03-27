@@ -33,12 +33,7 @@
 #include "timers.h"
 //Include testers
 #include "Test/TestFW/test_framework.h"
-#include "Test/SignalProcessing/signal_processing_tester.h"
-#include "Test/EventHandler/event_handler_tester.h"
-#include "Test/Log/log_tester.h"
-#include "Test/Log/logEventTester.h"
-#include "HMI/inc/led_control_task.h"
-#include "HAL/QuadFC/QuadFC_Memory.h"
+#include "Test/Parameters/parameter_tester.h"
 /**
  * @file Top used for regression testing. This top uses freeRTOS and
  * all of its features.
@@ -85,13 +80,10 @@ int main( void )
 
 void mainTester(void *pvParameters)
 {
-  TestFw_t* testFW = TestFW_Create("Sig & event");
+  TestFw_t* testFW = TestFW_Create("Components1");
 
   /**************Add test module instantiation here***************/
-  SigProsses_GetTCs(testFW);
-  EventHandler_GetTCs(testFW);
-  Log_GetTCs(testFW);
-  LogEv_GetTCs(testFW);
+  ParamT_GetTCs(testFW);
   /***************************************************************/
 
   uint8_t result = TestFW_ExecuteTests(testFW);

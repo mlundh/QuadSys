@@ -74,7 +74,7 @@ void SigProsses_GetTCs(TestFw_t* obj)
     TestFW_Report(obj, tmpstr);
     return;
   }
-  SigProcessTester->stateEst = StateEst_Create(SigProcessTester->CtrlModeHandler);
+  SigProcessTester->stateEst = StateEst_Create(NULL);
   if(!SigProcessTester->stateEst)
   {
     snprintf (tmpstr, REPORT_STR_LEN,"Failed to create stateEst.\n");

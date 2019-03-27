@@ -47,6 +47,10 @@ uint32_t Msg_LogGetPayloadlength(moduleMsg_t* msg);
 
 void Msg_LogSetPayloadlength(moduleMsg_t* msg, uint32_t Payloadlength);
 
+uint32_t Msg_LogGetPayloadbufferlength(moduleMsg_t* msg);
+
+void Msg_LogSetPayloadbufferlength(moduleMsg_t* msg, uint32_t Payloadbufferlength);
+
 
 uint8_t* Msg_LogSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 

@@ -109,6 +109,31 @@ void Msg_ErrorSetErrorlength(moduleMsg_t* msg, uint32_t Errorlength)
         }
     }
 }
+uint32_t Msg_ErrorGetErrorbufferlength(moduleMsg_t* msg)
+{
+    uint32_t value;
+    if(msg && (msg->type == Msg_Error_e))
+    {
+        Msg_Error_t* internal_data = (Msg_Error_t*)(msg + 1);
+        if(internal_data)
+        {
+            value = internal_data->mErrorbufferlength;
+        }
+    }
+    return value;
+}
+
+void Msg_ErrorSetErrorbufferlength(moduleMsg_t* msg, uint32_t Errorbufferlength)
+{
+    if(msg && (msg->type == Msg_Error_e))
+    {
+        Msg_Error_t* internal_data = (Msg_Error_t*)(msg + 1);
+        if(internal_data)
+        {
+            internal_data->mErrorbufferlength  = Errorbufferlength;
+        }
+    }
+}
 
 uint8_t* Msg_ErrorSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size)
 {

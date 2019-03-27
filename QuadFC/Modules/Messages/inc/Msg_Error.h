@@ -43,6 +43,10 @@ uint32_t Msg_ErrorGetErrorlength(moduleMsg_t* msg);
 
 void Msg_ErrorSetErrorlength(moduleMsg_t* msg, uint32_t Errorlength);
 
+uint32_t Msg_ErrorGetErrorbufferlength(moduleMsg_t* msg);
+
+void Msg_ErrorSetErrorbufferlength(moduleMsg_t* msg, uint32_t Errorbufferlength);
+
 
 uint8_t* Msg_ErrorSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 

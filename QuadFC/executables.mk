@@ -32,7 +32,7 @@
 # <nameOfExec>_DEPS. Add all dependencies to this variable.
 #
 
-EXECUTABLES := QuadFC Test_SigEventLog Test_Board Test_Utilities
+EXECUTABLES := QuadFC Test_SigEventLog Test_Board Test_Utilities Test_Components1
 
 QuadFC_DEPS:= Top/QuadFC HAL/QuadFC
 QuadFC_DEPS+= $(addprefix Modules/, Communication FlightController HMI  EventHandler)
@@ -49,7 +49,7 @@ Test_Utilities_DEPS+= $(addprefix Modules/, Utilities )
 Test_SigEventLog_DEPS:= Top/Test_SigEventLog HAL/QuadFC 
 Test_SigEventLog_DEPS+= $(addprefix Test/,TestFW DummyI2C SignalProcessing EventHandler Log LogTestBackend)
 Test_SigEventLog_DEPS+= $(addprefix Components/, Log Parameters)
-Test_SigEventLog_DEPS+= $(addprefix Modules/, Utilities  EventHandler SetpointHandler FlightModeHandler StateEstimator)
+Test_SigEventLog_DEPS+= $(addprefix Modules/, Utilities  EventHandler StateEstimator)
 Test_SigEventLog_DEPS+= $(addprefix Modules/, FlightController Messages MsgBase)
 Test_SigEventLog_DEPS+= $(addprefix PortLayer/, HMI TestArduinoDue SpectrumSatellite Sensors)
 Test_SigEventLog_DEPS+= $(addprefix ThirdParty/, asf freertos)
@@ -60,3 +60,10 @@ Test_Board_DEPS+= $(addprefix Modules/, Utilities )
 Test_Board_DEPS+= $(addprefix Components/, Log LogMemBackend)
 Test_Board_DEPS+= $(addprefix PortLayer/, TestArduinoDue ArduinoDueBoard CY15B104Q_SX_spi_fram MB85RC_i2c_fram)
 Test_Board_DEPS+= $(addprefix ThirdParty/, asf freertos asf_freertos)
+
+Test_Components1_DEPS:= Top/Test_Components1 HAL/QuadFC
+Test_Components1_DEPS+= $(addprefix ThirdParty/, asf freertos asf_freertos)
+Test_Components1_DEPS+= $(addprefix PortLayer/, TestArduinoDue )
+Test_Components1_DEPS+= $(addprefix Components/, Parameters)
+Test_Components1_DEPS+= $(addprefix Test/,TestFW Parameters)
+Test_Components1_DEPS+= $(addprefix Modules/, Messages MsgBase EventHandler Utilities)

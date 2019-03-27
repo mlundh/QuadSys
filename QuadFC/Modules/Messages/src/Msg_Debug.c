@@ -109,6 +109,31 @@ void Msg_DebugSetPayloadlength(moduleMsg_t* msg, uint32_t Payloadlength)
         }
     }
 }
+uint32_t Msg_DebugGetPayloadbufferlength(moduleMsg_t* msg)
+{
+    uint32_t value;
+    if(msg && (msg->type == Msg_Debug_e))
+    {
+        Msg_Debug_t* internal_data = (Msg_Debug_t*)(msg + 1);
+        if(internal_data)
+        {
+            value = internal_data->mPayloadbufferlength;
+        }
+    }
+    return value;
+}
+
+void Msg_DebugSetPayloadbufferlength(moduleMsg_t* msg, uint32_t Payloadbufferlength)
+{
+    if(msg && (msg->type == Msg_Debug_e))
+    {
+        Msg_Debug_t* internal_data = (Msg_Debug_t*)(msg + 1);
+        if(internal_data)
+        {
+            internal_data->mPayloadbufferlength  = Payloadbufferlength;
+        }
+    }
+}
 
 uint8_t* Msg_DebugSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size)
 {
