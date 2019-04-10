@@ -30,7 +30,7 @@
 #include "Messages/inc/Msg_FcLog.h"
 #include "Messages/inc/Msg_LogNameReq.h"
 
-LogHandler_t* LogHandler_CreateObj(uint8_t num_children, eventHandler_t* evHandler, const char *obj_name, uint8_t isMaster)
+LogHandler_t* LogHandler_CreateObj(uint8_t num_children, eventHandler_t* evHandler, param_obj_t* param, const char *obj_name, uint8_t isMaster)
 {
 
     LogHandler_t *obj = pvPortMalloc( sizeof(LogHandler_t) );
@@ -82,8 +82,8 @@ LogHandler_t* LogHandler_CreateObj(uint8_t num_children, eventHandler_t* evHandl
         }
     }
 
-
-    param_obj_t * paramObj = Param_CreateObj(num_children, variable_type_NoType, readOnly, NULL, obj_name, Param_GetRoot(), NULL);
+    //OK to not have a parent even if it is not encouraged, this tree of Loggers will be orphaned.
+    param_obj_t * paramObj = Param_CreateObj(num_children, variable_type_NoType, readOnly, NULL, obj_name, param);
     if(!paramObj)
     {
         return NULL;
@@ -547,10 +547,24 @@ uint8_t LogHandler_StopAllLogs(LogHandler_t* obj)
     }
     if(obj->backend && obj->evHandler)
     {
-        moduleMsg_t* event = Msg_Create(LogStop_e, 0, 0, 0);
+        moduleMsg_t* event = Msg_Create(LogStop_e, Broadcast);
         result &= Event_Send(obj->evHandler, event);
     }
     return result;
 }
 
+uint8_t LogHandler_StartAllLogs(LogHandler_t* obj)
+{
+    if(!obj)
+    {
+        return 0; // only master is allowed to stop all!
+    }
+
+    uint8_t result = 1;
+    for(int i = 0; (i < obj->registeredChildren); i++)
+    {
+        result &= Log_StartAllLogs(obj->children[i], 1);
+    }
+    return result;
+}
 

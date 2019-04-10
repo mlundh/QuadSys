@@ -579,7 +579,7 @@ uint8_t Com_HandleParameters(RxCom_t* obj)
 
     break;
   case QSP_ParamSetTree:
-    result = Param_SetFromRoot(Param_GetRoot(), QSP_GetParamPayloadPtr(obj->QspPacket),
+    result = Param_SetFromHere(Param_GetRoot(), QSP_GetParamPayloadPtr(obj->QspPacket),
         QSP_GetParamPayloadSize(obj->QspPacket));
     QSP_SetAddress(obj->QspRespPacket, QSP_Status);
     if(result) // Set was ok, respond with Ack.
@@ -732,7 +732,7 @@ void Com_ParamLoad(RxCom_t* obj)
     }
     if(result)
     {
-      result = Param_SetFromRoot(Param_GetRoot(),
+      result = Param_SetFromHere(Param_GetRoot(),
           QSP_GetParamPayloadPtr(obj->QspPacket),
           QSP_GetParamPayloadSize(obj->QspPacket));
     }

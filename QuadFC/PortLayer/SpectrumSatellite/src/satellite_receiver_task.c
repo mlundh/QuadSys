@@ -51,11 +51,10 @@
 /*Include utilities*/
 #include "Utilities/inc/my_math.h"
 
-
 uint8_t Satellite_FModeCB(eventHandler_t* obj, void* data, moduleMsg_t* eData);
 uint8_t Satellite_CtrlModeCB(eventHandler_t* obj, void* data, moduleMsg_t* eData);
 
-Satellite_t* Satellite_Init(QueueHandle_t eventHandler)
+Satellite_t* Satellite_Init(eventHandler_t* eventHandler)
 {
     /* Create the queue used to pass things to the display task*/
     Satellite_t* taskParam = pvPortMalloc(sizeof(Satellite_t));
@@ -65,24 +64,25 @@ Satellite_t* Satellite_Init(QueueHandle_t eventHandler)
     taskParam->satellite_receive_buffer = pvPortMalloc(SATELLITE_MESSAGE_LENGTH * 2);
     taskParam->multiplier = INT_TO_FIXED(1, FP_16_16_SHIFT);
     taskParam->throMult = INT_TO_FIXED(1, FP_16_16_SHIFT);
-    taskParam->xMutexParam = xSemaphoreCreateMutex();
     taskParam->current_flight_mode_state = fmode_not_available;
     taskParam->current_control_mode = Control_mode_not_available;
     taskParam->evHandler = eventHandler;
+    taskParam->paramHandler = ParamHandler_CreateObj(1,eventHandler, "RC_Setpoint", 0); // Master handles all communication, we do not want to be master!
+
 
     Event_RegisterCallback(taskParam->evHandler, Msg_FlightMode_e, Satellite_FModeCB, taskParam);
     Event_RegisterCallback(taskParam->evHandler, Msg_CtrlMode_e, Satellite_CtrlModeCB, taskParam);
 
 
-    param_obj_t * ReceiverRoot = Param_CreateObj(3, variable_type_NoType, readOnly, NULL, "Rcver", Param_GetRoot(), NULL);
+    param_obj_t * ReceiverRoot = Param_CreateObj(3, variable_type_NoType, readOnly, NULL, "Rcver", ParamHandler_GetParam(taskParam->paramHandler));
 
     // Enable receiver sensitivity adjustment.
-    Param_CreateObj(0, variable_type_fp_16_16, readWrite, &taskParam->multiplier, "mult", ReceiverRoot, taskParam->xMutexParam);
+    Param_CreateObj(0, variable_type_fp_16_16, readWrite, &taskParam->multiplier, "mult", ReceiverRoot);
 
-    Param_CreateObj(0, variable_type_fp_16_16, readWrite, &taskParam->throMult, "TMult", ReceiverRoot, taskParam->xMutexParam);
+    Param_CreateObj(0, variable_type_fp_16_16, readWrite, &taskParam->throMult, "TMult", ReceiverRoot);
 
     if( !taskParam || !taskParam->decoded_data || !taskParam->configuration || !taskParam->setpoint
-            || !taskParam->satellite_receive_buffer || !taskParam->xMutexParam || !taskParam->evHandler)
+            || !taskParam->satellite_receive_buffer || !taskParam->evHandler)
     {
         return NULL;
     }
@@ -171,10 +171,6 @@ void Satellite_ReceiverTask(void *pvParameters)
 
     Satellite_t* param = (Satellite_t*)pvParameters;
 
-    // Initialize event handler.
-    Event_StartInitialize(param->evHandler);
-
-    Event_EndInitialize(param->evHandler);
 
     spektrum_data_t* decoded_data = param->decoded_data;
     spectrum_config_t* configuration = param->configuration;
@@ -403,20 +399,16 @@ uint8_t Satellite_LockFrameType(spectrum_config_t* configuration, uint16_t chann
 
 void Satellite_MapToSetpoint(Satellite_t* obj, spektrum_data_t *reciever_data, state_data_t *setpoint)
 {
-    if( xSemaphoreTake( obj->xMutexParam, ( TickType_t )(1UL / portTICK_PERIOD_MS) ) == pdTRUE )
-    {
-        //subtract center point and convert to State scale.
+    //subtract center point and convert to State scale.
 
-        setpoint->state_bf[thrust_sp]              = (my_mult(my_mult((reciever_data->ch[0].value), SPECTRUM_TO_CTRL_THROTTLE, 0), obj->throMult, FP_16_16_SHIFT)); // THRO
-        setpoint->state_bf[yaw_rate_bf]            = (my_mult(my_mult((reciever_data->ch[3].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_RATE, FP_16_16_SHIFT), obj->multiplier, FP_16_16_SHIFT)); // YAW
-        setpoint->state_bf[pitch_rate_bf]          = (my_mult(my_mult((reciever_data->ch[2].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_RATE, FP_16_16_SHIFT), obj->multiplier, FP_16_16_SHIFT)); // PITCH
-        setpoint->state_bf[roll_rate_bf]           = (my_mult(my_mult((reciever_data->ch[1].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_RATE, FP_16_16_SHIFT), obj->multiplier, FP_16_16_SHIFT)); // ROLL
+    setpoint->state_bf[thrust_sp]              = (my_mult(my_mult((reciever_data->ch[0].value), SPECTRUM_TO_CTRL_THROTTLE, 0), obj->throMult, FP_16_16_SHIFT)); // THRO
+    setpoint->state_bf[yaw_rate_bf]            = (my_mult(my_mult((reciever_data->ch[3].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_RATE, FP_16_16_SHIFT), obj->multiplier, FP_16_16_SHIFT)); // YAW
+    setpoint->state_bf[pitch_rate_bf]          = (my_mult(my_mult((reciever_data->ch[2].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_RATE, FP_16_16_SHIFT), obj->multiplier, FP_16_16_SHIFT)); // PITCH
+    setpoint->state_bf[roll_rate_bf]           = (my_mult(my_mult((reciever_data->ch[1].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_RATE, FP_16_16_SHIFT), obj->multiplier, FP_16_16_SHIFT)); // ROLL
 
-        setpoint->state_bf[pitch_bf]          = (my_mult(my_mult((reciever_data->ch[2].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_ANGLE, FP_16_16_SHIFT), obj->multiplier, FP_16_16_SHIFT)); // PITCH
-        setpoint->state_bf[roll_bf]           = (my_mult(my_mult((reciever_data->ch[1].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_ANGLE, FP_16_16_SHIFT), obj->multiplier, FP_16_16_SHIFT)); // ROLL
+    setpoint->state_bf[pitch_bf]          = (my_mult(my_mult((reciever_data->ch[2].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_ANGLE, FP_16_16_SHIFT), obj->multiplier, FP_16_16_SHIFT)); // PITCH
+    setpoint->state_bf[roll_bf]           = (my_mult(my_mult((reciever_data->ch[1].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_ANGLE, FP_16_16_SHIFT), obj->multiplier, FP_16_16_SHIFT)); // ROLL
 
-        xSemaphoreGive(obj->xMutexParam);
-    }
     return;
 }
 

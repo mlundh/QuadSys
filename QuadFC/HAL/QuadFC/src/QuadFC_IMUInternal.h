@@ -34,12 +34,13 @@
 
 #include <stdint.h>
 #include "Modules/MsgBase/inc/common_types.h"
-
+#include "Components/Parameters/inc/parameters.h"
 /**
  * Create the IMU unit. This function should be called before the
  * scheduler is started.
+ * @param param a root parameter to use if the internal data should be configurable.
  * @return            A newly created IMU object. */
-Imu_t * Imu_CreateInternal();
+Imu_t * Imu_CreateInternal(param_obj_t * param);
 
 /**
  * Initialize the imu object. This function should be called after the

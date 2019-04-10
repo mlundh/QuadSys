@@ -52,11 +52,11 @@ Msg_NewSetpoint --member state_data_t setpoint --member uint8_t priority --membe
 *FC_System FC_eventSys
 Msg_RegisterHandler --member QueueHandle_t data --include FreeRTOS.h --include queue.h  --include task.h --internal
 Msg_Subscriptions --internal --member uint32_t subscriptions
-e_Initialize --internal
-e_InitializeDone --internal
 Msg_FcLog --member QueueHandle_t data --include FreeRTOS.h --include queue.h  --include task.h --internal
 Msg_LogNameReq --member QueueHandle_t data --include FreeRTOS.h --include queue.h --include task.h --internal
 LogStop --internal
 Msg_CtrlSig --member control_signal_t signal --internal
 Msg_NewState --member state_data_t state --internal
+Msg_HasParam --internal
+Msg_ParamFc --member uint8_t control --member int8_t sequenceNr --member uint8_t lastInSequence --member std::string payload --internal
 #*

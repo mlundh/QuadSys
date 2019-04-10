@@ -91,7 +91,7 @@ struct eventHandler
 	uint32_t          subscriptions;
 	eventHandler_t*   handlers[NR_QUEUES_MAX];                    //Registered handlers. Only use queue after the scheduler has been started.
     msgAddr_t         handlerIds[NR_QUEUES_MAX];
-	uint32_t          handlerSubscriptions[NR_QUEUES_MAX];        // Bit access for each handler.
+	uint64_t          handlerSubscriptions[NR_QUEUES_MAX];        // Bit access for each handler.
 	eventHandlerFcn   eventFcns[Msg_LastType_e];                 // Registered event handlers.
 	void*             eventDataBinding[Msg_LastType_e];          // Registered data to be used for specific events.
 	uint8_t           registeredHandlers;
@@ -127,27 +127,6 @@ uint8_t Event_InitHandler(eventHandler_t* master, eventHandler_t* obj);
  * @return
  */
 msgAddr_t Event_GetId(eventHandler_t* obj);
-/**
- * Initialize the event handler and the task it belongs to.
- * This might take some time since there will be multiple messages sent on the queues
- * spanning the event mesh.
- *
- * This function has to be called after the scheduler is started.
- *
- * If not followed by Event_EndInitialize the thread will hang. The reason
- * for this behavior is to let the task initialize any resources before any
- * part of the system is started.
- * @param obj     Current handler.
- * @return
- */
-void Event_StartInitialize(eventHandler_t* obj);
-
-/**
- * End the initialization of the task.
- * @param obj
- */
-void Event_EndInitialize(eventHandler_t* obj);
-
 
 /**
  * Subscribe to an event type. Events of this type will be put into

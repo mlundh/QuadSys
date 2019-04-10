@@ -82,4 +82,13 @@ uint8_t Log_GetName(Log_t* obj, logNames_t* array, const uint32_t arrayLength, u
  */
 uint8_t Log_StopAllLogs(Log_t* obj);
 
+/**
+ * Start all loggers. LogLevel of this and all children will be set to logLevl.
+ * @param obj   current log object.
+ * @param logLevel  logLevel to set.
+ * @return      1 if success, 0 otherwise.
+ */
+uint8_t Log_StartAllLogs(Log_t* obj, uint32_t logLevel);
+
+
 #endif /* MODULES_LOG_SRC_LOG_PRIVATE_H_ */

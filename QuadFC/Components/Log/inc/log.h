@@ -25,7 +25,7 @@
 #define MODULES_LOG_INC_LOG_H_
 
 #include <stdint.h>
-#include "Parameters/inc/parameters.h"
+#include "Parameters/inc/paramHandler.h"
 #include "Log/inc/logHandler.h"
 typedef enum LogLevel
 {

@@ -32,6 +32,7 @@
 
 #include <stdint.h>
 #include "Modules/MsgBase/inc/common_types.h"
+#include "Parameters/inc/parameters.h"
 
 typedef struct Imu
 {
@@ -45,8 +46,9 @@ typedef struct Imu
 /**
  * Create the IMU unit. This function should be called before the
  * scheduler is started.
+ * @param param a root parameter for all Imu related parameters.
  * @return            A newly created IMU object. */
-Imu_t * Imu_Create();
+Imu_t * Imu_Create(param_obj_t * param);
 
 /**
  * Initialize the imu object. This function should be called after the

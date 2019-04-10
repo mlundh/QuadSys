@@ -50,15 +50,6 @@ uint8_t Event_SendSubscription(eventHandler_t* obj, uint32_t subscription);
 uint8_t Event_FireOrBufferEvent(eventHandler_t* obj, messageTypes_t event, uint8_t* found, moduleMsg_t* event_data, uint8_t bufferEvents);
 
 /**
- * Send the specified event to all handlers, and wait for the same event from all other handlers.
- * Observe that ALL handlers need to subscribe to the event for this function to ever return.
- * @param obj         Current handler
- * @param event       The event to send and wait for. Do NOT use a complex message type with payload.
- * @return
- */
-uint8_t Event_SendAndWaitForAll(eventHandler_t* obj, messageTypes_t event);
-
-/**
  * Fire the callback registered to the event in event_data. The event_data will be
  * deleted after the callback has been fired. This means that all data that needs
  * to be used outside of the callback has to be copied.
@@ -77,24 +68,6 @@ uint8_t Event_FireCB(eventHandler_t* obj, moduleMsg_t* event_data);
  * @return            1 if ok, 0 otherwise.
  */
 uint8_t Event_SubscriptionReq(eventHandler_t* obj, void* data, moduleMsg_t* eData);
-
-/**
- * Default implementation of initialize that does nothing.
- * @param obj         Current event handler object.
- * @param data        Optional data to be used by the handler when firing the event.
- * @param eData        Event data.
- * @return            1.
- */
-uint8_t Event_Initialize(eventHandler_t* obj, void* data, moduleMsg_t* eData);
-
-/**
- * Default implementation of initialize done cb that does nothing.
- * @param obj         Current event handler object.
- * @param data        Optional data to be used by the handler when firing the event.
- * @param eData        Event data.
- * @return            1.
- */
-uint8_t Event_InitializeDone(eventHandler_t* obj, void* data, moduleMsg_t* eData);
 
 
 eventHandler_t* Event_CreateHandler(msgAddr_t id, uint8_t master)
@@ -116,8 +89,6 @@ eventHandler_t* Event_CreateHandler(msgAddr_t id, uint8_t master)
     }
 
     Event_RegisterCallback(obj, Msg_Subscriptions_e, Event_SubscriptionReq, NULL);
-    Event_RegisterCallback(obj, e_Initialize_e, Event_Initialize, NULL);
-    Event_RegisterCallback(obj, e_InitializeDone_e, Event_InitializeDone, NULL);
 
     obj->handlerId = id;
 
@@ -138,28 +109,6 @@ void Event_DeleteHandler(eventHandler_t* obj)
     Event_DeleteCBuff(obj->cBuffer);
     vPortFree(obj);
 }
-
-void Event_StartInitialize(eventHandler_t* obj)
-{
-    if(!Event_SendAndWaitForAll(obj, e_Initialize_e))
-    {
-        for(;;)
-        {
-            // ERROR!
-        }
-    }
-}
-
-void Event_EndInitialize(eventHandler_t* obj)
-{
-    if(!Event_SendAndWaitForAll(obj, e_InitializeDone_e))
-    {
-        for(;;)
-        {
-        }
-    }
-}
-
 
 uint8_t Event_InitHandler(eventHandler_t* master, eventHandler_t* obj)
 {
@@ -264,6 +213,7 @@ uint8_t Event_Send(eventHandler_t* obj, moduleMsg_t* msg)
             || (msg->type == Msg_NoType_e)
             || (msg->type == Msg_LastType_e))
     {
+        Msg_Delete(msg);
         return 0;
     }
     uint8_t result = 1;
@@ -443,26 +393,6 @@ uint8_t Event_FireOrBufferEvent(eventHandler_t* obj, messageTypes_t event, uint8
 }
 
 
-uint8_t Event_SendAndWaitForAll(eventHandler_t* obj, messageTypes_t event)
-{
-    moduleMsg_t* ev = Msg_Create(event, 0, 0, 0);
-    // Note that Event_Send might get a context switch between the transmissions to all
-    // handlers. This means that only sync up until this point is valid, and it is not
-    // guaranteed that all handlers receive events in the same order.
-    //TODO broadcast...
-
-    if(!Event_Send(obj, ev))
-    {
-        return 0;
-    }
-    if(!Event_WaitForEvent(obj, event, obj->registeredHandlers - 1, 1))
-    {
-        return 0;
-    }
-    return 1;
-}
-
-
 uint8_t Event_HandleBufferedEvents(eventHandler_t* obj)
 {
     moduleMsg_t* event_data;
@@ -514,15 +444,5 @@ uint8_t Event_SubscriptionReq(eventHandler_t* obj, void* data, moduleMsg_t* eDat
     }
 
     obj->handlerSubscriptions[Msg_GetSource(eData)] = Msg_SubscriptionsGetSubscriptions(eData);
-    return 1;
-}
-
-uint8_t Event_Initialize(eventHandler_t* obj, void* data, moduleMsg_t* eData)
-{
-    return 1;
-}
-
-uint8_t Event_InitializeDone(eventHandler_t* obj, void* data, moduleMsg_t* eData)
-{
     return 1;
 }

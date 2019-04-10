@@ -25,13 +25,10 @@
 #define MODULES_FLIGHTCONTROLLER_INC_CONTROL_SYSTEM_H_
 #include "Modules/MsgBase/inc/common_types.h"
 #include "Modules/MsgBase/inc/msg_enums.h"
+#include "Parameters/inc/parameters.h"
+
 typedef struct CtrlObj CtrlObj_t;
 
-/**
- * Create a Control system object.
- * @return    Control system object containing everything needed by the controller.
- */
-CtrlObj_t *Ctrl_Create();
 
 /**
  * The constants (Kp, Ki and Kd) does not have a unit, but are expressed as 16.16 fixed point.
@@ -39,9 +36,10 @@ CtrlObj_t *Ctrl_Create();
  *
  * @param obj Control object.
  * @param evHandler event handler. Will only be used to initialize the internal mode handler.
+ * @param param root parameter.
  * @return    0 if fail, 1 otherwise.
  */
-uint8_t Ctrl_init(CtrlObj_t *obj);
+CtrlObj_t* Ctrl_Create(param_obj_t* param);
 
 /**
  * Execute the control system.

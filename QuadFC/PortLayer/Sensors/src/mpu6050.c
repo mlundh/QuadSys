@@ -111,7 +111,7 @@ ImuInternals_t *Imu_getInternals(Imu_t *obj)
   return (ImuInternals_t *)(obj->internals);
 }
 
-Imu_t * Imu_CreateInternal()
+Imu_t * Imu_CreateInternal(param_obj_t * param)
 {
   Imu_t *ImuObj = pvPortMalloc(sizeof(Imu_t));
 
@@ -120,20 +120,20 @@ Imu_t * Imu_CreateInternal()
 
   internals->xMutexParam = xSemaphoreCreateMutex();
 
-  param_obj_t * ImuRoot = Param_CreateObj(6, variable_type_NoType, readOnly, NULL, "IMU_Off", Param_GetRoot(), NULL);
+  param_obj_t * ImuRoot = Param_CreateObj(6, variable_type_NoType, readOnly, NULL, "IMU_Off", param);
 
   Param_CreateObj(0, variable_type_int16, readOnly,
-      &ImuObj->ImuOffset.imu_data[accl_x], "accl_x", ImuRoot, internals->xMutexParam);
+      &ImuObj->ImuOffset.imu_data[accl_x], "accl_x", ImuRoot);
   Param_CreateObj(0, variable_type_int16, readOnly,
-      &ImuObj->ImuOffset.imu_data[accl_y], "accl_y", ImuRoot, internals->xMutexParam);
+      &ImuObj->ImuOffset.imu_data[accl_y], "accl_y", ImuRoot);
   Param_CreateObj(0, variable_type_int16, readOnly,
-      &ImuObj->ImuOffset.imu_data[accl_z], "accl_z", ImuRoot, internals->xMutexParam);
+      &ImuObj->ImuOffset.imu_data[accl_z], "accl_z", ImuRoot);
   Param_CreateObj(0, variable_type_int16, readOnly,
-      &ImuObj->ImuOffset.imu_data[gyro_x], "gyro_x", ImuRoot, internals->xMutexParam);
+      &ImuObj->ImuOffset.imu_data[gyro_x], "gyro_x", ImuRoot);
   Param_CreateObj(0, variable_type_int16, readOnly,
-      &ImuObj->ImuOffset.imu_data[gyro_y], "gyro_y", ImuRoot, internals->xMutexParam);
+      &ImuObj->ImuOffset.imu_data[gyro_y], "gyro_y", ImuRoot);
   Param_CreateObj(0, variable_type_int16, readOnly,
-      &ImuObj->ImuOffset.imu_data[gyro_z], "gyro_z", ImuRoot, internals->xMutexParam);
+      &ImuObj->ImuOffset.imu_data[gyro_z], "gyro_z", ImuRoot);
 
   return ImuObj;
 }

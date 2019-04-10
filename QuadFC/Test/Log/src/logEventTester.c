@@ -34,6 +34,7 @@
 #include "Log/src/log_private.h"
 #include "Log/src/logHandler_private.h"
 #include "Utilities/inc/string_utils.h"
+#include "Components/Parameters/inc/paramHandler.h"
 
 #include "Test/Log/logEventTester.h"
 
@@ -49,6 +50,7 @@ typedef struct logEvTestTaskParams
 {
     eventHandler_t* evHandler;
     LogHandler_t*   logHObj;
+    paramHander_t*  paramHandler;
     SemaphoreHandle_t   xSemaphore;
     int32_t         logValue0;
     int32_t         logValue1;
@@ -74,9 +76,9 @@ uint8_t LogEv_createTestTasks(TestFw_t* obj, SemaphoreHandle_t semaphore, logEvT
         for(;;);
     }
     masterParam->xSemaphore = semaphore;
-
     masterParam->evHandler = Event_CreateHandler(FC_Ctrl_e, 1);
-    masterParam->logHObj = LogHandler_CreateObj(2, masterParam->evHandler,"logEvTM",1);
+    masterParam->paramHandler = ParamHandler_CreateObj(1, masterParam->evHandler,"paramM", 1);
+    masterParam->logHObj = LogHandler_CreateObj(2, masterParam->evHandler, ParamHandler_GetParam(masterParam->paramHandler), "logEvTM",1);
     masterParam->logValue0 = 0;
     masterParam->logValue1 = 0;
 
@@ -88,14 +90,6 @@ uint8_t LogEv_createTestTasks(TestFw_t* obj, SemaphoreHandle_t semaphore, logEvT
         TestFW_Report(obj, tmpstr);
         result = 0;
     }
-    portBASE_TYPE resultMasterTaskCreate = xTaskCreate( LogEv_masterTask,   /* The function that implements the task.  */
-            (const char *const) "master",                  /* The name of the task. This is not used by the kernel, only aids in debugging*/
-            500,                                           /* The stack size for the task*/
-            masterParam,                                   /* pass params to task.*/
-            configMAX_PRIORITIES-2,                        /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
-            NULL );                                        /* Handle to the task. Not used here and therefore NULL*/
-
-
 
 
     if(!slaveParam)
@@ -104,7 +98,8 @@ uint8_t LogEv_createTestTasks(TestFw_t* obj, SemaphoreHandle_t semaphore, logEvT
     }
     slaveParam->xSemaphore = NULL;
     slaveParam->evHandler = Event_CreateHandler(FC_SerialIO_e,0);
-    slaveParam->logHObj = LogHandler_CreateObj(2,slaveParam->evHandler,"logEvTS",0);
+    slaveParam->paramHandler = ParamHandler_CreateObj(2, slaveParam->evHandler,"paramH", 0);
+    slaveParam->logHObj = LogHandler_CreateObj(2,slaveParam->evHandler, ParamHandler_GetParam(slaveParam->paramHandler), "logEvTS",0);
     slaveParam->logValue0 = 0;
     slaveParam->logValue1 = 0;
 
@@ -116,6 +111,21 @@ uint8_t LogEv_createTestTasks(TestFw_t* obj, SemaphoreHandle_t semaphore, logEvT
         TestFW_Report(obj, tmpstr);
         result = 0;
     }
+
+    Event_InitHandler(masterParam->evHandler, slaveParam->evHandler);
+    ParamHandler_InitMaster(masterParam->paramHandler);
+    Event_Receive(slaveParam->evHandler,2);
+    Event_Receive(masterParam->evHandler,2);
+
+
+    portBASE_TYPE resultMasterTaskCreate = xTaskCreate( LogEv_masterTask,   /* The function that implements the task.  */
+            (const char *const) "master",                  /* The name of the task. This is not used by the kernel, only aids in debugging*/
+            500,                                           /* The stack size for the task*/
+            masterParam,                                   /* pass params to task.*/
+            configMAX_PRIORITIES-2,                        /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
+            NULL );                                        /* Handle to the task. Not used here and therefore NULL*/
+
+
     portBASE_TYPE resultSlaveTaskCreate = xTaskCreate( LogEv_slaveTask,   /* The function that implements the task.  */
             (const char *const) "slave",                  /* The name of the task. This is not used by the kernel, only aids in debugging*/
             500,                                           /* The stack size for the task*/
@@ -126,7 +136,8 @@ uint8_t LogEv_createTestTasks(TestFw_t* obj, SemaphoreHandle_t semaphore, logEvT
     {
         result = 0;
     }
-    Event_InitHandler(masterParam->evHandler, slaveParam->evHandler);
+
+
 
     return result;
 }
@@ -163,10 +174,12 @@ uint8_t LogEv_TestMultipleThreads(TestFw_t* obj)
 
     Event_DeleteHandler(slaveParam->evHandler);
     LogHandler_deleteHandler(slaveParam->logHObj);
+    ParamHandler_DeleteHandler(slaveParam->paramHandler);
     vPortFree(slaveParam);
 
     Event_DeleteHandler(masterParam->evHandler);
     LogHandler_deleteHandler(masterParam->logHObj);
+    ParamHandler_DeleteHandler(masterParam->paramHandler);
     vPortFree(masterParam);
 
     vTaskDelay(10); // Give the idle task time to clean up after the test tasks.
@@ -273,8 +286,8 @@ void LogEv_slaveTask( void *pvParameters )
 
 
     // Enable the logs.
-    uint8_t string[] = "/QuadFC/logEvTS/logS0[1]/../logS1[1]/0";
-    Param_SetFromRoot(Param_GetRoot(),string ,strlen((const char*)string));
+    uint8_t string[] = "/paramH/logEvTS/logS0[1]/../logS1[1]/0";
+    ParamHandler_SetFromRoot(param->paramHandler,string ,strlen((const char*)string));
 
     //Log twice before reading and responding to events.
     param->logValue0 = 11;

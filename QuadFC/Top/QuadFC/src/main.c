@@ -36,7 +36,7 @@
 #include "PortLayer/SpectrumSatellite/inc/satellite_receiver_public.h"
 
 /*include utilities*/
-#include "Utilities/inc/common_types.h"
+#include "Modules/MsgBase/inc/common_types.h"
 
 /*Include task communication modules*/
 #include "FlightController/inc/control_mode_handler.h"
@@ -62,19 +62,25 @@ int main( void )
   /* Prepare the hardware to run QuadFC. */
   prvSetupHardware();
 
-  /*Create cross-task communication utilities.*/
-  SpHandler_t* SetpointHandler = SpHandl_Create();
-  CtrlModeHandler_t * CtrlModeHandler = Ctrl_CreateModeHandler();
 
   /* Create all tasks used in the application.*/
-  eventHandler_t* evHandler = Event_CreateHandler(NULL, 5);
-  if(!evHandler)
+  eventHandler_t* evHandlerM = Event_CreateHandler(FC_Ctrl_e,1);
+  eventHandler_t* evHandlerSatellite = Event_CreateHandler(RC_SetpointGen_e,0);
+  eventHandler_t* evHandlerCom = Event_CreateHandler(Router,0);
+  eventHandler_t* evHandlerLed = Event_CreateHandler(FC_Led_e,0);
+
+  if(!evHandlerM || !evHandlerCom || !evHandlerLed || !evHandlerSatellite)
   {
     for(;;); //Error!
   }
-  create_main_control_task(evHandler, SetpointHandler, CtrlModeHandler);
 
-  Satellite_CreateReceiverTask(evHandler->eventQueue, stateHandler, SetpointHandler, CtrlModeHandler);
+  Event_InitHandler(evHandlerM, evHandlerCom);
+  Event_InitHandler(evHandlerM, evHandlerLed);
+  Event_InitHandler(evHandlerM, evHandlerSatellite);
+
+  create_main_control_task(evHandlerM);
+
+  Satellite_CreateReceiverTask(evHandlerCom);
   Led_CreateLedControlTask(evHandler->eventQueue);
   /*Should always be created last as it loads the parameters - TODO Init state! */
   Com_CreateTasks(evHandler->eventQueue, stateHandler); // Creates two tasks, RX and TX.

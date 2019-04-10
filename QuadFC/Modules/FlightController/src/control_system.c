@@ -26,7 +26,6 @@
 #include <stddef.h>
 #include "../inc/control_system.h"
 #include "Components/PidController/inc/pid.h"
-#include "Parameters/inc/parameters.h"
 
 struct CtrlObj
 {
@@ -36,31 +35,27 @@ struct CtrlObj
     pidConfig_t* AttitudePitch;
     pidConfig_t* AttitudeRoll;
     pidConfig_t* AttitudeYaw;
-    SemaphoreHandle_t xMutexParam;
     CtrlMode_t current_mode;
 };
 
-uint8_t Ctrl_InitializeRate(CtrlObj_t *obj);
-uint8_t Ctrl_InitializeAttitude(CtrlObj_t *obj);
+uint8_t Ctrl_InitializeRate(CtrlObj_t *obj, param_obj_t* param);
+uint8_t Ctrl_InitializeAttitude(CtrlObj_t *obj, param_obj_t* param);
 
 
-CtrlObj_t *Ctrl_Create()
+
+CtrlObj_t* Ctrl_Create(param_obj_t* param)
 {
-    CtrlObj_t *internals = pvPortMalloc(sizeof(struct CtrlObj));
+    CtrlObj_t *obj = pvPortMalloc(sizeof(struct CtrlObj));
 
-    return internals;
-}
-
-uint8_t Ctrl_init(CtrlObj_t *obj)
-{
-    obj->xMutexParam = xSemaphoreCreateMutex();
     obj->current_mode = Control_mode_not_available;
-    Ctrl_InitializeRate(obj);
-    Ctrl_InitializeAttitude(obj);
-    return 1;
+    if(!obj || !Ctrl_InitializeRate(obj, param) || !Ctrl_InitializeAttitude(obj, param))
+    {
+        return NULL;
+    }
+    return obj;
 }
 
-uint8_t Ctrl_InitializeRate(CtrlObj_t *obj)
+uint8_t Ctrl_InitializeRate(CtrlObj_t *obj, param_obj_t* param)
 {
     /**
      * The constants (Kp, Ki and Kd) does not have a unit, but are expressed as 16.16 fixed point.
@@ -80,38 +75,38 @@ uint8_t Ctrl_InitializeRate(CtrlObj_t *obj)
     {
         return 0;
     }
-    param_obj_t * RateRoot = Param_CreateObj(3, variable_type_NoType, readOnly, NULL, "PID_R", Param_GetRoot(), NULL);
+    param_obj_t * RateRoot = Param_CreateObj(3, variable_type_NoType, readOnly, NULL, "PID_R", param);
 
     // Enable tuning of the pid parameters.
-    param_obj_t * pitchRateObj = Param_CreateObj(5, variable_type_NoType, readOnly, NULL, "Pitch", RateRoot, NULL);
-    param_obj_t * rollRateObj  = Param_CreateObj(5, variable_type_NoType, readOnly, NULL, "Roll", RateRoot, NULL);
-    param_obj_t * yawRateObj   = Param_CreateObj(5, variable_type_NoType, readOnly, NULL, "Yaw", RateRoot, NULL);
+    param_obj_t * pitchRateObj = Param_CreateObj(5, variable_type_NoType, readOnly, NULL, "Pitch", RateRoot);
+    param_obj_t * rollRateObj  = Param_CreateObj(5, variable_type_NoType, readOnly, NULL, "Roll", RateRoot);
+    param_obj_t * yawRateObj   = Param_CreateObj(5, variable_type_NoType, readOnly, NULL, "Yaw", RateRoot);
 
     Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-            &obj->RatePitch->kp, "Kp", pitchRateObj, obj->xMutexParam);
+            &obj->RatePitch->kp, "Kp", pitchRateObj);
     Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-            &obj->RatePitch->ki, "Ki", pitchRateObj, obj->xMutexParam);
+            &obj->RatePitch->ki, "Ki", pitchRateObj);
     Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-            &obj->RatePitch->kd, "Kd", pitchRateObj, obj->xMutexParam);
+            &obj->RatePitch->kd, "Kd", pitchRateObj);
 
     Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-            &obj->RateRoll->kp, "Kp", rollRateObj, obj->xMutexParam);
+            &obj->RateRoll->kp, "Kp", rollRateObj);
     Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-            &obj->RateRoll->ki, "Ki", rollRateObj, obj->xMutexParam);
+            &obj->RateRoll->ki, "Ki", rollRateObj);
     Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-            &obj->RateRoll->kd, "Kd", rollRateObj, obj->xMutexParam);
+            &obj->RateRoll->kd, "Kd", rollRateObj);
 
     Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-            &obj->RateYaw->kp, "Kp", yawRateObj, obj->xMutexParam);
+            &obj->RateYaw->kp, "Kp", yawRateObj);
     Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-            &obj->RateYaw->ki, "Ki", yawRateObj, obj->xMutexParam);
+            &obj->RateYaw->ki, "Ki", yawRateObj);
     Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-            &obj->RateYaw->kd, "Kd", yawRateObj, obj->xMutexParam);
+            &obj->RateYaw->kd, "Kd", yawRateObj);
 
     return 1;
 }
 
-uint8_t Ctrl_InitializeAttitude(CtrlObj_t *obj)
+uint8_t Ctrl_InitializeAttitude(CtrlObj_t *obj, param_obj_t* param)
 {
     /**
      * The constants (Kp, Ki and Kd) does not have a unit, but are expressed as 16.16 fixed point.
@@ -132,33 +127,33 @@ uint8_t Ctrl_InitializeAttitude(CtrlObj_t *obj)
         return 0;
     }
 
-    param_obj_t * AttitudeRoot = Param_CreateObj(3, variable_type_NoType, readOnly, NULL, "PID_A", Param_GetRoot(), NULL);
+    param_obj_t * AttitudeRoot = Param_CreateObj(3, variable_type_NoType, readOnly, NULL, "PID_A", param);
 
     // Enable tuning of the pid parameters.
-    param_obj_t * pitchObj = Param_CreateObj(5, variable_type_NoType, readOnly, NULL, "Pitch", AttitudeRoot, NULL);
-    param_obj_t * rollObj  = Param_CreateObj(5, variable_type_NoType, readOnly, NULL, "Roll", AttitudeRoot, NULL);
-    param_obj_t * yawObj   = Param_CreateObj(5, variable_type_NoType, readOnly, NULL, "Yaw", AttitudeRoot, NULL);
+    param_obj_t * pitchObj = Param_CreateObj(5, variable_type_NoType, readOnly, NULL, "Pitch", AttitudeRoot);
+    param_obj_t * rollObj  = Param_CreateObj(5, variable_type_NoType, readOnly, NULL, "Roll", AttitudeRoot);
+    param_obj_t * yawObj   = Param_CreateObj(5, variable_type_NoType, readOnly, NULL, "Yaw", AttitudeRoot);
 
     Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-            &obj->AttitudePitch->kp, "Kp", pitchObj, obj->xMutexParam);
+            &obj->AttitudePitch->kp, "Kp", pitchObj);
     Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-            &obj->AttitudePitch->ki, "Ki", pitchObj, obj->xMutexParam);
+            &obj->AttitudePitch->ki, "Ki", pitchObj);
     Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-            &obj->AttitudePitch->kd, "Kd", pitchObj, obj->xMutexParam);
+            &obj->AttitudePitch->kd, "Kd", pitchObj);
 
     Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-            &obj->AttitudeRoll->kp, "Kp", rollObj, obj->xMutexParam);
+            &obj->AttitudeRoll->kp, "Kp", rollObj);
     Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-            &obj->AttitudeRoll->ki, "Ki", rollObj, obj->xMutexParam);
+            &obj->AttitudeRoll->ki, "Ki", rollObj);
     Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-            &obj->AttitudeRoll->kd, "Kd", rollObj, obj->xMutexParam);
+            &obj->AttitudeRoll->kd, "Kd", rollObj);
 
     Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-            &obj->AttitudeYaw->kp, "Kp", yawObj, obj->xMutexParam);
+            &obj->AttitudeYaw->kp, "Kp", yawObj);
     Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-            &obj->AttitudeYaw->ki, "Ki", yawObj, obj->xMutexParam);
+            &obj->AttitudeYaw->ki, "Ki", yawObj);
     Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-            &obj->AttitudeYaw->kd, "Kd", yawObj, obj->xMutexParam);
+            &obj->AttitudeYaw->kd, "Kd", yawObj);
 
     return 1;
 }
@@ -170,63 +165,55 @@ void Ctrl_Execute(CtrlObj_t *obj, state_data_t *state, state_data_t *setpoint
     {
         Ctrl_Switch(obj, current_mode, state, u_signal);
     }
-    // Make sure that we are not trying to update the pid parameters while using them.
-    if( xSemaphoreTake( obj->xMutexParam, ( TickType_t )(1UL / portTICK_PERIOD_MS) ) == pdTRUE )
+
+    switch (current_mode)
     {
-        switch (current_mode)
-        {
-        case Control_mode_rate:
-            /*-----------------------------Rate mode-----------------------
-             *
-             */
-            Pid_Compute(obj->RatePitch, state->state_bf[pitch_rate_bf],
-                    setpoint->state_bf[pitch_rate_bf],
-                    &(u_signal->control_signal[u_pitch]));
+    case Control_mode_rate:
+        /*-----------------------------Rate mode-----------------------
+         *
+         */
+        Pid_Compute(obj->RatePitch, state->state_bf[pitch_rate_bf],
+                setpoint->state_bf[pitch_rate_bf],
+                &(u_signal->control_signal[u_pitch]));
 
-            Pid_Compute(obj->RateRoll, state->state_bf[roll_rate_bf],
-                    setpoint->state_bf[roll_rate_bf],
-                    &(u_signal->control_signal[u_roll]));
+        Pid_Compute(obj->RateRoll, state->state_bf[roll_rate_bf],
+                setpoint->state_bf[roll_rate_bf],
+                &(u_signal->control_signal[u_roll]));
 
-            Pid_Compute(obj->RateYaw, state->state_bf[yaw_rate_bf],
-                    setpoint->state_bf[yaw_rate_bf],
-                    &(u_signal->control_signal[u_yaw]));
+        Pid_Compute(obj->RateYaw, state->state_bf[yaw_rate_bf],
+                setpoint->state_bf[yaw_rate_bf],
+                &(u_signal->control_signal[u_yaw]));
 
-            u_signal->control_signal[u_thrust] = setpoint->state_bf[thrust_sp];
-            break;
-        case Control_mode_attitude:
-            /*-----------------------------Attitude mode-------------------
-             *
-             */
-            Pid_Compute(obj->AttitudePitch, state->state_bf[pitch_bf],
-                    setpoint->state_bf[pitch_bf],
-                    &(u_signal->control_signal[u_pitch]));
+        u_signal->control_signal[u_thrust] = setpoint->state_bf[thrust_sp];
+        break;
+    case Control_mode_attitude:
+        /*-----------------------------Attitude mode-------------------
+         *
+         */
+        Pid_Compute(obj->AttitudePitch, state->state_bf[pitch_bf],
+                setpoint->state_bf[pitch_bf],
+                &(u_signal->control_signal[u_pitch]));
 
-            Pid_Compute(obj->AttitudeRoll, state->state_bf[roll_bf],
-                    setpoint->state_bf[roll_bf],
-                    &(u_signal->control_signal[u_roll]));
-            // We do not yet have an angle estimate for the yaw angle, so we
-            // use rate of yaw.
-            Pid_Compute(obj->AttitudeYaw, state->state_bf[yaw_rate_bf],
-                    setpoint->state_bf[yaw_rate_bf],
-                    &(u_signal->control_signal[u_yaw]));
+        Pid_Compute(obj->AttitudeRoll, state->state_bf[roll_bf],
+                setpoint->state_bf[roll_bf],
+                &(u_signal->control_signal[u_roll]));
+        // We do not yet have an angle estimate for the yaw angle, so we
+        // use rate of yaw.
+        Pid_Compute(obj->AttitudeYaw, state->state_bf[yaw_rate_bf],
+                setpoint->state_bf[yaw_rate_bf],
+                &(u_signal->control_signal[u_yaw]));
 
-            u_signal->control_signal[u_thrust] = setpoint->state_bf[thrust_sp];
-            break;
-        case Control_mode_not_available:
-            /*----------------------------Mode not available------------
-             * Something is very wrong, we have an unknown state.
-             */
-            break;
-        default:
-            break;
-        }
-        xSemaphoreGive(obj->xMutexParam);
+        u_signal->control_signal[u_thrust] = setpoint->state_bf[thrust_sp];
+        break;
+    case Control_mode_not_available:
+        /*----------------------------Mode not available------------
+         * Something is very wrong, we have an unknown state.
+         */
+        break;
+    default:
+        break;
     }
-    else
-    {
-        // TODO Led_Set(led_main_blocked);
 
-    }
 }
 
 void Ctrl_On(CtrlObj_t * obj)

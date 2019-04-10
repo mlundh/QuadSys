@@ -17,22 +17,7 @@
 
 #include <gpio.h>
 #include <pio.h>
-static param_obj_t * mRoot = NULL;
 
-
-void Param_Init()
-{
-    mRoot = Param_CreateObj(18, variable_type_NoType, readOnly, NULL, "QuadFC", NULL, NULL );
-}
-
-param_obj_t *Param_GetRoot()
-{
-    if(!mRoot)
-    {
-        Param_Init();
-    }
-    return mRoot;
-}
 
 void Param_SetChild(param_obj_t *current, param_obj_t *child)
 {
@@ -45,7 +30,7 @@ void Param_SetChild(param_obj_t *current, param_obj_t *child)
 
 param_obj_t *Param_CreateObj(uint8_t num_children, Log_variable_type_t type,
         Log_variable_access_t access, void *value, const char *obj_name,
-        param_obj_t *parent, SemaphoreHandle_t xMutex)
+        param_obj_t *parent)
 {
 
     if((variable_type_NoType != type) && !value)
@@ -64,7 +49,6 @@ param_obj_t *Param_CreateObj(uint8_t num_children, Log_variable_type_t type,
     log_obj->group_name = pvPortMalloc( sizeof( unsigned char ) * MAX_PARAM_NAME_LENGTH );
     log_obj->parent = parent;
     log_obj->registered_children = 0;
-    log_obj->xMutex = xMutex;
     if(num_children)
     {
         log_obj->children = pvPortMalloc(sizeof( param_obj_t *) * num_children);
@@ -84,7 +68,7 @@ param_obj_t *Param_CreateObj(uint8_t num_children, Log_variable_type_t type,
 
     //Set name.
     strncpy( (char *) log_obj->group_name , obj_name, (unsigned short) MAX_PARAM_NAME_LENGTH - 1);
-    log_obj->group_name[MAX_PARAM_NAME_LENGTH] = '\0';
+    log_obj->group_name[MAX_PARAM_NAME_LENGTH - 1] = '\0';
 
     if(parent)
     {
@@ -173,15 +157,6 @@ uint8_t Param_GetNodeValue(param_obj_t *current, uint8_t *buffer, uint32_t buffe
         return 0;
     }
 
-    // Aquire the mutex if there is one connected to current.
-    if(current->xMutex)
-    {
-        if( !(xSemaphoreTake( current->xMutex, ( TickType_t )(2UL / portTICK_PERIOD_MS) ) == pdTRUE) )
-        {
-            return 0; // Was not able to aquire mutex, return with error.
-        }
-    }
-
     uint8_t result = 0;
 
     uint8_t pTemp[11];
@@ -229,10 +204,6 @@ uint8_t Param_GetNodeValue(param_obj_t *current, uint8_t *buffer, uint32_t buffe
     default:
         break;
     }
-    if(current->xMutex)
-    {
-        xSemaphoreGive(current->xMutex);
-    }
     return result;
 }
 
@@ -249,14 +220,6 @@ uint8_t Param_SettNodeValue(param_obj_t *current, uint8_t *buffer)
         return 1; // OK to not update value if there is nothing to update with.
     }
 
-    // Aquire the mutex to ensure thread saftey.
-    if(current->xMutex)
-    {
-        if( !(xSemaphoreTake( current->xMutex, ( TickType_t )(2UL / portTICK_PERIOD_MS) ) == pdTRUE) )
-        {
-            return 0; // Was not able to aquire mutex, return with error.
-        }
-    }
     uint8_t result = 0;
     char *end;
     long int value = strtol((char *) buffer, &end, 10);
@@ -319,10 +282,7 @@ uint8_t Param_SettNodeValue(param_obj_t *current, uint8_t *buffer)
     default:
         break;
     }
-    if(current->xMutex)
-    {
-        xSemaphoreGive(current->xMutex);
-    }
+
     return result;
 }
 uint8_t Param_AppendNodeString(param_obj_t *current, uint8_t *buffer, uint32_t buffer_length)
@@ -415,16 +375,6 @@ uint8_t Param_AppendPathToHere(param_obj_t *current, uint8_t *buffer, uint32_t b
     return 1;
 }
 
-uint8_t Param_DumpFromRoot(uint8_t *buffer, uint32_t buffer_length, param_helper_t *helper)
-{
-    buffer[0] = '\0';
-    if(!Param_AppendDivider( buffer, buffer_length))
-    {
-        return 0;
-    }
-    helper->depth = 0;
-    return Param_AppendDumpFromHere(Param_GetRoot(), buffer, buffer_length, helper);
-}
 
 uint8_t Param_AppendDumpFromHere(param_obj_t *current, uint8_t *buffer, uint32_t buffer_length, param_helper_t *helper)
 {
@@ -574,18 +524,14 @@ param_obj_t * Param_FindNext(param_obj_t *current, uint8_t *moduleBuffer, uint32
     return NULL;
 }
 
-uint8_t Param_SetFromRoot(param_obj_t *current, uint8_t *Buffer, uint32_t BufferLength)
+uint8_t Param_SetFromHere(param_obj_t *current, uint8_t *Buffer, uint32_t BufferLength)
 {
     if(!current || !BufferLength || !Buffer)
     {
         return 0;
     }
-    // First char of the buffer has to indicate that the path is relative root.
-    if(Buffer[0] != '/')
-    {
-        return 0;
-    }
-    uint8_t * buffPtr = (Buffer + 1);
+
+    uint8_t * buffPtr = (Buffer);
     uint32_t buffPtrLength = (uint32_t)(BufferLength - (buffPtr - Buffer));
     uint8_t bufferModule[MAX_PARAM_NODE_LENGTH];
 

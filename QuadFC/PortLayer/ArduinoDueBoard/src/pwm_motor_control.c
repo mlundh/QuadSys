@@ -29,7 +29,6 @@
 #include <board.h>
 #include <sysclk.h>
 #include "FreeRTOS.h"
-#include "semphr.h"
 #include <string.h>
 #include "Parameters/inc/parameters.h"
 
@@ -204,12 +203,12 @@ MotorControlObj * MotorCtrl_CreateAndInit(uint32_t nr_motors )
 
   pwm_internals_t *internals = pwm_getInternals(obj);
   internals->xMutex = xSemaphoreCreateMutex();
-  param_obj_t * PwmRoot = Param_CreateObj(10, variable_type_NoType, readOnly, NULL, "PWM", Param_GetRoot(), NULL);
+  param_obj_t * PwmRoot = Param_CreateObj(10, variable_type_NoType, readOnly, NULL, "PWM", Param_GetRoot());
 
   Param_CreateObj(0, variable_type_int32, readWrite,
-      &internals->armed_duty_value, "dtyOn", PwmRoot, internals->xMutex);
+      &internals->armed_duty_value, "dtyOn", PwmRoot);
   Param_CreateObj(0, variable_type_int32, readWrite,
-      &internals->arming_duty_value, "dtyArm", PwmRoot, internals->xMutex);
+      &internals->arming_duty_value, "dtyArm", PwmRoot);
 
 
   //Init
@@ -316,12 +315,6 @@ uint8_t MotorCtrl_UpdateSetpoint(MotorControlObj *obj)
 
   pwm_internals_t *internals = pwm_getInternals(obj);
 
-  // Make sure we are thread safe.
-  if(!pwm_takeMutex(internals))
-  {
-    return 0;
-  }
-
   int32_t l_setpoint[obj->nr_init_motors];
 
   for (int i = 0; i < obj->nr_init_motors; i++ )
@@ -351,32 +344,10 @@ uint8_t MotorCtrl_UpdateSetpoint(MotorControlObj *obj)
 	 }
 	 pwm_sync_unlock_update(PWM);
 
-	 // Make sure we are thread safe.
-	 pwm_giveMutex(internals);
 	 return 1;
 }
 
 pwm_internals_t *pwm_getInternals(MotorControlObj *obj)
 {
   return (pwm_internals_t *)obj->controlInternals;
-}
-
-uint8_t pwm_takeMutex(pwm_internals_t *obj)
-{
-  if(obj->xMutex)
-  {
-    if( !(xSemaphoreTake( obj->xMutex, ( TickType_t )(2UL / portTICK_PERIOD_MS) ) == pdTRUE) )
-    {
-      return 0; // Was not able to aquire mutex, return with error.
-    }
-  }
-  return 1;
-}
-uint8_t pwm_giveMutex(pwm_internals_t *obj)
-{
-  if(obj->xMutex)
-  {
-    xSemaphoreGive(obj->xMutex);
-  }
-  return 1;
 }

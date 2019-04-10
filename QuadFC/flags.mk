@@ -54,7 +54,7 @@ ENTRY_QuadFC:=Reset_Handler
 #
 #******************************************************************************
 ifdef DEBUG
-CFLAGS += -g -O2
+CFLAGS += -g -O0
 else
 # optimization breaks the application. Investigate why! 
 CFLAGS += -O2

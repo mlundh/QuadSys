@@ -37,15 +37,6 @@
 
 #define EV_HANDLER_INTENRNAL_IDX (0)
 
-typedef struct eventTester
-{
-    QueueHandle_t responseQueue;
-    eventHandler_t* evHandler1; // Used as id.
-    eventHandler_t* evHandler2;
-    eventHandler_t* evHandler3;
-    eventHandler_t* evHandler4;
-} eventTester_t;
-
 
 /**
  * Struct only used here to pass parameters to the tasks.
@@ -56,7 +47,20 @@ typedef struct testEventTaskParams
 {
     eventHandler_t* evHandler;
     QueueHandle_t   responseQueue;
+    TaskHandle_t xHandle;
 }testEventTaskParams;
+
+typedef struct eventTester
+{
+    QueueHandle_t responseQueue;
+    testEventTaskParams* taskParam1;
+    testEventTaskParams* taskParam2;
+    testEventTaskParams* taskParam3;
+    testEventTaskParams* stimuliTask;
+} eventTester_t;
+
+
+
 
 /**
  * Response type for the testcases.
@@ -70,22 +74,24 @@ typedef struct testResponse
 /**
  * Create the tasks used to span the event mesh.
  */
-//uint8_t EventHandler_createTestTasks(eventTester_t* obj);
-//void event_test_task( void *pvParameters );
-//void stimuli_test_task( void *pvParameters );
+uint8_t EventHandler_createTestTasks(eventTester_t* obj);
+void EventHandler_deleteTestTasks(eventTester_t* obj);
+
+void event_test_task( void *pvParameters );
+void stimuli_test_task( void *pvParameters );
 
 /**
  * Callback functions for the event handlers in this test case. The
  * functions will send a message to the response queue of the main test
  * task (where testFW is running).
  */
-//uint8_t testMsg_GetUiCommands_eCb(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
-//uint8_t testTestEvent2Cb(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
-//uint8_t testMsg_FcFault_eCb(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
-//uint8_t stimuliPeripheralErrorCb(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
-//uint8_t stateCb(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
-//uint8_t ctrlCb(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
-//uint8_t setpointCb(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
+uint8_t testMsg_GetUiCommands_eCb(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
+uint8_t testTestEvent2Cb(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
+uint8_t testMsg_FcFault_eCb(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
+uint8_t stimuliPeripheralErrorCb(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
+uint8_t stateCb(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
+uint8_t ctrlCb(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
+uint8_t setpointCb(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
 
 
 
@@ -93,11 +99,7 @@ void EventHandler_GetTCs(TestFw_t* obj)
 {
     TestFW_RegisterTest(obj, "CBR/W", EventHandler_TestCBReadWrite);
     TestFW_RegisterTest(obj, "BCFullEmpty", EventHandler_TestCBFullEmpty);
-    //  TestFW_RegisterTest(obj, "Event", EventHandler_TestEvents);
-
-    //  eventTester_t* eventTester = pvPortMalloc(sizeof(eventTester_t));
-    //  eventTester->responseQueue = xQueueCreate( 6,(sizeof(testResponse_t)));
-    //  TestFW_SetTestSuiteInternal(obj, (void*)eventTester, EV_HANDLER_INTENRNAL_IDX);
+    TestFW_RegisterTest(obj, "Event", EventHandler_TestEvents);
 }
 
 
@@ -113,10 +115,10 @@ uint8_t EventHandler_TestCBReadWrite(TestFw_t* obj)
     // Populate the first two positions. Data is copied, scoped here in test case
     // to ensure nothing strange is going on.
     {
-        moduleMsg_t* event1Stimuli = Msg_Create(Msg_CtrlMode_e, 0, 0, 0);
+        moduleMsg_t* event1Stimuli = Msg_Create(Msg_CtrlMode_e, 0);
         Event_CBuffPushBack(eventBuffer, event1Stimuli);
 
-        moduleMsg_t* event2Stimuli = Msg_Create(Msg_CtrlSig_e, 0, 0, 0);
+        moduleMsg_t* event2Stimuli = Msg_Create(Msg_CtrlSig_e, 0);
         Event_CBuffPushBack(eventBuffer, event2Stimuli);
     }
 
@@ -153,7 +155,7 @@ uint8_t EventHandler_TestCBFullEmpty(TestFw_t* obj)
     // Now try to write to all locations in the buffer.
     for(int i = 0; i < BUFFER_SIZE; i++)
     {
-        moduleMsg_t* event = Msg_Create(Msg_CtrlSig_e, 0, 0, 0);
+        moduleMsg_t* event = Msg_Create(Msg_CtrlSig_e, 0);
 
         if(1 != Event_CBuffPushBack(eventBuffer, event))
         {
@@ -163,7 +165,7 @@ uint8_t EventHandler_TestCBFullEmpty(TestFw_t* obj)
     }
 
     // Try to write another entry, this should fail.
-    moduleMsg_t* event = Msg_Create(Msg_CtrlModeReq_e, 0, 0, 0);
+    moduleMsg_t* event = Msg_Create(Msg_CtrlModeReq_e, 0);
 
     if(0 != Event_CBuffPushBack(eventBuffer, event))
     {
@@ -200,10 +202,10 @@ uint8_t EventHandler_TestCBFullEmpty(TestFw_t* obj)
 
     // Populate the first two positions again, we have wrapped around.
 
-    moduleMsg_t* event1Stimuli = Msg_Create(Msg_CtrlModeReq_e, 0, 0, 0);
+    moduleMsg_t* event1Stimuli = Msg_Create(Msg_CtrlModeReq_e, 0);
     Event_CBuffPushBack(eventBuffer, event1Stimuli);
 
-    moduleMsg_t* event2Stimuli = Msg_Create(Msg_CtrlSig_e, 0, 0, 0);
+    moduleMsg_t* event2Stimuli = Msg_Create(Msg_CtrlSig_e, 0);
     Event_CBuffPushBack(eventBuffer, event2Stimuli);
 
     // Read back the events.
@@ -225,12 +227,14 @@ uint8_t EventHandler_TestCBFullEmpty(TestFw_t* obj)
 
     return result;
 }
-#undef TEMP
-#ifdef TEMP
+
 #define REPORTLEN (100)
 uint8_t EventHandler_TestEvents(TestFw_t* obj)
 {
-    eventTester_t* eventTester =  (eventTester_t*)TestFW_GetTestSuiteInternal(obj, EV_HANDLER_INTENRNAL_IDX);
+
+    eventTester_t* eventTester = pvPortMalloc(sizeof(eventTester_t));
+    eventTester->responseQueue = xQueueCreate( 6,(sizeof(testResponse_t)));
+
     TestFW_Report(obj, "- Creating test tasks.\n");
     // Creation of tasks will start the testcase.
     EventHandler_createTestTasks(eventTester);
@@ -239,15 +243,15 @@ uint8_t EventHandler_TestEvents(TestFw_t* obj)
     uint8_t nr_exp_rsp = 4;
     testResponse_t expectedRsp[nr_exp_rsp];
     // From handler 1
-    expectedRsp[0].evHandler = eventTester->evHandler1;
+    expectedRsp[0].evHandler = eventTester->taskParam1->evHandler;
     expectedRsp[0].event = Msg_NewSetpoint_e;
-    expectedRsp[1].evHandler = eventTester->evHandler1;
+    expectedRsp[1].evHandler = eventTester->taskParam1->evHandler;
     expectedRsp[1].event = Msg_CtrlSig_e;
     // From handler 2
-    expectedRsp[2].evHandler = eventTester->evHandler2;
+    expectedRsp[2].evHandler = eventTester->taskParam2->evHandler;
     expectedRsp[2].event = Msg_NewSetpoint_e;
     // From handler 3
-    expectedRsp[3].evHandler = eventTester->evHandler3;
+    expectedRsp[3].evHandler = eventTester->taskParam3->evHandler;
     expectedRsp[3].event = Msg_NewSetpoint_e;
 
     TestFW_Report(obj, "- Reading test results of first part of test.\n");
@@ -292,7 +296,7 @@ uint8_t EventHandler_TestEvents(TestFw_t* obj)
 
     // Second part of the test case, buffering.
     testResponse_t testRsp;
-    event_t expected[] = {Msg_FireUiCommand_e,Msg_FcFault_e};
+    messageTypes_t expected[] = {Msg_FireUiCommand_e,Msg_FcFault_e};
     for(int i = 0; i < 2; i++)
     {
         if(xQueueReceive(eventTester->responseQueue, &testRsp, 10000/portTICK_PERIOD_MS) == pdTRUE)
@@ -300,6 +304,9 @@ uint8_t EventHandler_TestEvents(TestFw_t* obj)
             if(testRsp.event != expected[i])
             {
                 TestFW_Report(obj, "---Expected events was not found.\n");
+                char tmpstr[REPORTLEN] = {0};
+                snprintf(tmpstr, REPORTLEN, "Expected: %d\nGot: %d\n", expected[i], testRsp.event);
+                TestFW_Report(obj, tmpstr);
                 result = 0;
             }
         }
@@ -310,6 +317,9 @@ uint8_t EventHandler_TestEvents(TestFw_t* obj)
         }
     }
 
+    EventHandler_deleteTestTasks(eventTester);
+
+    vTaskDelay(5);//Give the idle task time to clean up..
     return result;
 }
 
@@ -320,89 +330,130 @@ uint8_t EventHandler_createTestTasks(eventTester_t* obj)
 
 
     testEventTaskParams * taskParam1 = pvPortMalloc(sizeof(testEventTaskParams));
-    taskParam1->evHandler = Event_CreateHandler(NULL, 4);
+    taskParam1->evHandler = Event_CreateHandler(FC_Dbg_e, 1);
     // Task 1 is interested in new state and new control signal.
     taskParam1->responseQueue = obj->responseQueue;
-    obj->evHandler1 = taskParam1->evHandler;
+    obj->taskParam1 = taskParam1;
     Event_RegisterCallback(taskParam1->evHandler, Msg_CtrlSig_e ,ctrlCb, taskParam1);
     Event_RegisterCallback(taskParam1->evHandler, Msg_NewSetpoint_e ,stateCb, taskParam1);
-    portBASE_TYPE create_result1 = xTaskCreate( event_test_task,   /* The function that implements the task.  */
-            (const char *const) "Test1",                  /* The name of the task. This is not used by the kernel, only aids in debugging*/
-            100,                                          /* The stack size for the task*/
-            taskParam1,                                   /* pass params to task.*/
-            configMAX_PRIORITIES-1,                       /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
-            NULL );                                       /* Handle to the task. Not used here and therefore NULL*/
+
+
 
     testEventTaskParams * taskParam2 = pvPortMalloc(sizeof(testEventTaskParams));
-    taskParam2->evHandler = Event_CreateHandler(taskParam1->evHandler->eventQueue, 0);
+    taskParam2->evHandler = Event_CreateHandler(FC_Log_e, 0);
     // Task 2 is interested in new state.
     taskParam2->responseQueue = obj->responseQueue;
-    obj->evHandler2 = taskParam2->evHandler;
+    obj->taskParam2 = taskParam2;
 
     Event_RegisterCallback(taskParam2->evHandler, Msg_NewSetpoint_e ,stateCb, taskParam2);
-    portBASE_TYPE create_result2 = xTaskCreate( event_test_task,   /* The function that implements the task.  */
-            (const char *const) "Test2",                  /* The name of the task. This is not used by the kernel, only aids in debugging*/
-            100,                                          /* The stack size for the task*/
-            taskParam2,                                   /* pass params to task.*/
-            configMAX_PRIORITIES-1,                       /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
-            NULL );                                       /* Handle to the task. Not used here and therefore NULL*/
+
+
 
     testEventTaskParams * taskParam3 = pvPortMalloc(sizeof(testEventTaskParams));
-    taskParam3->evHandler = Event_CreateHandler(taskParam1->evHandler->eventQueue, 0);
+    taskParam3->evHandler = Event_CreateHandler(GS_SetpointGen_e, 0);
     // Task 3 is interested in new setpoint.
     taskParam3->responseQueue = obj->responseQueue;
-    obj->evHandler3 = taskParam3->evHandler;
+    obj->taskParam3 = taskParam3;
+
     Event_RegisterCallback(taskParam3->evHandler, Msg_NewSetpoint_e ,setpointCb, taskParam3);
 
     Event_RegisterCallback(taskParam3->evHandler, Msg_GetUiCommands_e ,testMsg_GetUiCommands_eCb, taskParam3);
     Event_RegisterCallback(taskParam3->evHandler, Msg_FireUiCommand_e ,testTestEvent2Cb, taskParam3);
     Event_RegisterCallback(taskParam3->evHandler, Msg_FcFault_e ,testMsg_FcFault_eCb, taskParam3);
 
+    testEventTaskParams * stimuliTask = pvPortMalloc(sizeof(testEventTaskParams));
+    stimuliTask->evHandler = Event_CreateHandler(FC_Param_e, 0);
+    // stimuliTask is not interested in any event.
+    stimuliTask->responseQueue = obj->responseQueue;
+    obj->stimuliTask = stimuliTask;
+
+    Event_RegisterCallback(stimuliTask->evHandler, Msg_Error_e ,stimuliPeripheralErrorCb, stimuliTask);
+
+
+    Event_InitHandler(taskParam1->evHandler, taskParam2->evHandler);
+    Event_InitHandler(taskParam1->evHandler, taskParam3->evHandler);
+    Event_InitHandler(taskParam1->evHandler, stimuliTask->evHandler);
+
+    portBASE_TYPE create_result1 = xTaskCreate( event_test_task,   /* The function that implements the task.  */
+            (const char *const) "Test1",                  /* The name of the task. This is not used by the kernel, only aids in debugging*/
+            100,                                          /* The stack size for the task*/
+            taskParam1,                                   /* pass params to task.*/
+            configMAX_PRIORITIES-1,                       /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
+            &taskParam1->xHandle );                                       /* Handle to the task. Not used here and therefore NULL*/
+
+
+    portBASE_TYPE create_result2 = xTaskCreate( event_test_task,   /* The function that implements the task.  */
+            (const char *const) "Test2",                  /* The name of the task. This is not used by the kernel, only aids in debugging*/
+            100,                                          /* The stack size for the task*/
+            taskParam2,                                   /* pass params to task.*/
+            configMAX_PRIORITIES-1,                       /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
+            &taskParam2->xHandle );                                       /* Handle to the task. Not used here and therefore NULL*/
+
+
+
     portBASE_TYPE create_result3 = xTaskCreate( event_test_task,   /* The function that implements the task.  */
             (const char *const) "Test3",                  /* The name of the task. This is not used by the kernel, only aids in debugging*/
             100,                                          /* The stack size for the task*/
             taskParam3,                                   /* pass params to task.*/
             configMAX_PRIORITIES-1,                       /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
-            NULL );                                       /* Handle to the task. Not used here and therefore NULL*/
+            &taskParam3->xHandle );                                       /* Handle to the task. Not used here and therefore NULL*/
 
-    testEventTaskParams * stimuliTask = pvPortMalloc(sizeof(testEventTaskParams));
-    stimuliTask->evHandler = Event_CreateHandler(taskParam1->evHandler->eventQueue, 0);
-    // stimuliTask is not interested in any event.
-    stimuliTask->responseQueue = obj->responseQueue;
-    obj->evHandler4 = stimuliTask->evHandler;
-    Event_RegisterCallback(stimuliTask->evHandler, Msg_Error_e ,stimuliPeripheralErrorCb, stimuliTask);
+
     portBASE_TYPE create_result4 = xTaskCreate( stimuli_test_task,   /* The function that implements the task.  */
             (const char *const) "Stimuli",                  /* The name of the task. This is not used by the kernel, only aids in debugging*/
             100,                                          /* The stack size for the task*/
             stimuliTask,                                   /* pass params to task.*/
             configMAX_PRIORITIES-1,                       /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
-            NULL );                                       /* Handle to the task. Not used here and therefore NULL*/
+            &stimuliTask->xHandle );                                       /* Handle to the task. Not used here and therefore NULL*/
 
     if ( create_result1 != pdTRUE || create_result2 != pdTRUE || create_result3 != pdTRUE || create_result4 != pdTRUE)
     {
         return 0;
     }
 
+
+
     return 1;
 }
+
+void EventHandler_deleteTestTasks(eventTester_t* obj)
+{
+    Event_DeleteHandler(obj->taskParam1->evHandler);
+    vPortFree(obj->taskParam1);
+    Event_DeleteHandler(obj->taskParam2->evHandler);
+    vPortFree(obj->taskParam2);
+    Event_DeleteHandler(obj->taskParam3->evHandler);
+    vPortFree(obj->taskParam3);
+    Event_DeleteHandler(obj->stimuliTask->evHandler);
+    vPortFree(obj->stimuliTask);
+    vQueueDelete(obj->responseQueue);
+    vTaskDelete(obj->taskParam1->xHandle);
+    vTaskDelete(obj->taskParam2->xHandle);
+    vTaskDelete(obj->taskParam3->xHandle);
+    vTaskDelete(obj->stimuliTask->xHandle);
+    vPortFree(obj);
+
+}
+
 
 void stimuli_test_task( void *pvParameters )
 {
     testEventTaskParams * param = (testEventTaskParams*)(pvParameters);
-    Event_StartInitialize(param->evHandler);
-    Event_EndInitialize(param->evHandler);
 
 
-    moduleMsg_t msg = {0};
-    msg.type = Msg_NewSetpoint_e;
-    Event_Send(param->evHandler, msg);
-
-    msg.type = Msg_CtrlSig_e;
-    Event_Send(param->evHandler, msg);
-
-    msg.type = Msg_NewSetpoint_e;
-    Event_Send(param->evHandler, msg);
-
+    // WARNING! This is not the proper way of creating messages, use the appropriate create functions instead. This is just for testing.
+    {
+        moduleMsg_t* msg = Msg_Create(Msg_NewSetpoint_e, Broadcast);
+        Event_Send(param->evHandler, msg);
+    }
+    {
+        moduleMsg_t* msg = Msg_Create(Msg_CtrlSig_e, Broadcast);
+        Event_Send(param->evHandler, msg);
+    }
+    {
+     //   moduleMsg_t* msg = Msg_Create(Msg_NewSetpoint_e, Broadcast);
+     //   Event_Send(param->evHandler, msg);
+    }
     // All tasks will send Msg_Error_e event to the stimuli task
     // when the first part of the test is finished. If they did not then
     // there would be no guarantee that the events would be sent to the
@@ -413,17 +464,19 @@ void stimuli_test_task( void *pvParameters )
         Event_Receive(param->evHandler, portMAX_DELAY);
     }
 
-    // Second part of test, testing the buffering of events.
-    msg.type = Msg_GetUiCommands_e;
-    Event_Send(param->evHandler, msg);
 
-    // This is not the event the task is waiting for.
-    msg.type = Msg_FcFault_e;
-    Event_Send(param->evHandler, msg);
-
-    // Now send the event the task is waiting for.
-    msg.type = Msg_FireUiCommand_e;
-    Event_Send(param->evHandler, msg);
+    {
+        moduleMsg_t* msg = Msg_Create(Msg_GetUiCommands_e, Broadcast);
+        Event_Send(param->evHandler, msg);
+    }
+    {
+        moduleMsg_t* msg = Msg_Create(Msg_FcFault_e, Broadcast);
+        Event_Send(param->evHandler, msg);
+    }
+    {
+        moduleMsg_t* msg = Msg_Create(Msg_FireUiCommand_e, Broadcast);
+        Event_Send(param->evHandler, msg);
+    }
 
     for ( ;; )
     {
@@ -435,8 +488,6 @@ void stimuli_test_task( void *pvParameters )
 void event_test_task( void *pvParameters )
 {
     testEventTaskParams * param = (testEventTaskParams*)(pvParameters);
-    Event_StartInitialize(param->evHandler);
-    Event_EndInitialize(param->evHandler);
 
 
     for ( ;; )
@@ -485,8 +536,7 @@ uint8_t stateCb(eventHandler_t* obj, void* taskParam, moduleMsg_t* data)
     eventRsp.event = Msg_NewSetpoint_e;
     xQueueSend(param->responseQueue, &eventRsp, EVENT_BLOCK_TIME);
     // Sync with stimuli thread
-    moduleMsg_t msg = {0};
-    msg.type = Msg_Error_e;
+    moduleMsg_t* msg = Msg_Create(Msg_Error_e, Broadcast);
     Event_Send(param->evHandler, msg);
     return 1;
 }
@@ -498,8 +548,7 @@ uint8_t ctrlCb(eventHandler_t* obj, void* taskParam, moduleMsg_t* data)
     eventRsp.event = Msg_CtrlSig_e;
     xQueueSend(param->responseQueue, &eventRsp, EVENT_BLOCK_TIME);
     // Sync with stimuli thread
-    moduleMsg_t msg = {0};
-    msg.type = Msg_Error_e;
+    moduleMsg_t* msg = Msg_Create(Msg_Error_e, Broadcast);
     Event_Send(param->evHandler, msg);
     return 1;
 }
@@ -511,9 +560,7 @@ uint8_t setpointCb(eventHandler_t* obj, void* taskParam, moduleMsg_t* data)
     eventRsp.event = Msg_NewSetpoint_e;
     xQueueSend(param->responseQueue, &eventRsp, EVENT_BLOCK_TIME);
     // Sync with stimuli thread
-    moduleMsg_t msg = {0};
-    msg.type = Msg_Error_e;
+    moduleMsg_t* msg = Msg_Create(Msg_Error_e, Broadcast);
     Event_Send(param->evHandler, msg);
     return 1;
 }
-#endif

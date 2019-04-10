@@ -48,7 +48,7 @@ typedef struct
     uint32_t            mAllocatedSize;
 }moduleMsg_t;
 
-moduleMsg_t* Msg_Create(uint32_t type, uint32_t source, uint32_t destination, uint8_t msgNr);
+moduleMsg_t* Msg_Create(uint32_t type, uint32_t destination);
 
 uint8_t Msg_Delete(moduleMsg_t* msg);
 

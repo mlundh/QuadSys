@@ -74,7 +74,7 @@ void SigProsses_GetTCs(TestFw_t* obj)
     TestFW_Report(obj, tmpstr);
     return;
   }
-  SigProcessTester->stateEst = StateEst_Create(NULL);
+  SigProcessTester->stateEst = StateEst_Create(NULL, NULL);
   if(!SigProcessTester->stateEst)
   {
     snprintf (tmpstr, REPORT_STR_LEN,"Failed to create stateEst.\n");
@@ -680,7 +680,6 @@ uint8_t SigProcess_TestSpectrumToState(TestFw_t* obj)
   Satellite_t satelite_obj = {0};
   satelite_obj.multiplier = INT_TO_FIXED(1, FP_16_16_SHIFT);
   satelite_obj.throMult = 1;
-  satelite_obj.xMutexParam = xSemaphoreCreateMutex();
   //Populate the receiver_data with known data.
   // 1 pi rad/s in receiver resolution (11 bit) = 512
   // but receiver has center at 1022, so add this.
@@ -705,7 +704,6 @@ uint8_t SigProcess_TestSpectrumToState(TestFw_t* obj)
   {
     result = 1; // We are within limits.
   }
-  vSemaphoreDelete(satelite_obj.xMutexParam);
   return result;
 }
 

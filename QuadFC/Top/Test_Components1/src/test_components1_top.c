@@ -57,7 +57,7 @@ void prvGetRegistersFromStack( uint32_t *pulFaultStackAddress );
  */
 void vApplicationMallocFailedHook( void );
 void vApplicationStackOverflowHook( TaskHandle_t pxTask,
-    signed char *pcTaskName );
+        signed char *pcTaskName );
 
 /*
  * Set up the hardware to run QuadFC.
@@ -67,77 +67,72 @@ static void prvSetupHardware( void );
 int main( void )
 {
 
-  /* Prepare the hardware to run QuadFC. */
-  prvSetupHardware();
-  TestFW_CreateMainTestTask(mainTester);
-  /* Start the RTOS scheduler. */
-  vTaskStartScheduler();
-  for ( ;; )
-  {
-  }
-  return 0;
+    /* Prepare the hardware to run QuadFC. */
+    prvSetupHardware();
+    TestFW_CreateMainTestTask(mainTester);
+    /* Start the RTOS scheduler. */
+    vTaskStartScheduler();
+    for ( ;; )
+    {
+    }
+    return 0;
 }
 
 void mainTester(void *pvParameters)
 {
-  TestFw_t* testFW = TestFW_Create("Components1");
+    TestFw_t* testFW = TestFW_Create("Components1");
 
-  /**************Add test module instantiation here***************/
-  ParamT_GetTCs(testFW);
-  /***************************************************************/
+    /**************Add test module instantiation here***************/
+    ParamT_GetTCs(testFW);
+    /***************************************************************/
 
-  uint8_t result = TestFW_ExecuteTests(testFW);
-  uint32_t heartbeat_counter = 0;
+    uint8_t result = TestFW_ExecuteTests(testFW);
 
-  uint32_t pin = (result ? PIN_31_GPIO : PIN_41_GPIO);
-  taskENTER_CRITICAL();
-  TestFW_GetReport(testFW);
+    uint32_t pin = (result ? PIN_31_GPIO : PIN_41_GPIO);
+    taskENTER_CRITICAL();
+    TestFW_GetReport(testFW);
+    taskEXIT_CRITICAL();
 
-  while ( 1 )
-  {
-    heartbeat_counter++;
-    if ( heartbeat_counter >= 1000000 )
+    while ( 1 )
     {
-      gpio_toggle_pin( pin );
-      heartbeat_counter = 0;
+        vTaskDelay(1000 / portTICK_PERIOD_MS );
+        gpio_toggle_pin( pin );
     }
-  }
-  taskEXIT_CRITICAL();
 
 }
 
 static void prvSetupHardware( void )
 {
-  /* ASF function to setup clocking. */
-  sysclk_init();
+    /* ASF function to setup clocking. */
+    sysclk_init();
 
-  /* Ensure all priority bits are assigned as preemption priority bits. */
-  NVIC_SetPriorityGrouping( 0 );
+    /* Ensure all priority bits are assigned as preemption priority bits. */
+    NVIC_SetPriorityGrouping( 0 );
 
-  /* Atmel library function to setup for the evaluation kit being used. */
-  board_init();
+    /* Atmel library function to setup for the evaluation kit being used. */
+    board_init();
 
 }
 
 
 void vApplicationMallocFailedHook( void )
 {
-  taskDISABLE_INTERRUPTS();
-  for ( ;; )
-  {
-  }
+    taskDISABLE_INTERRUPTS();
+    for ( ;; )
+    {
+    }
 }
 
 void vApplicationStackOverflowHook( TaskHandle_t pxTask,
-    signed char *pcTaskName )
+        signed char *pcTaskName )
 {
-  (void) pcTaskName;
-  (void) pxTask;
+    (void) pcTaskName;
+    (void) pxTask;
 
-  taskDISABLE_INTERRUPTS();
-  for ( ;; )
-  {
-  }
+    taskDISABLE_INTERRUPTS();
+    for ( ;; )
+    {
+    }
 }
 
 
@@ -150,31 +145,31 @@ void HardFault_Handler(void)
 {
     __asm volatile
     (
-        " tst lr, #4                                                \n"
-        " ite eq                                                    \n"
-        " mrseq r0, msp                                             \n"
-        " mrsne r0, psp                                             \n"
-        " ldr r1, [r0, #24]                                         \n"
-        " ldr r2, handler2_address_const                            \n"
-        " bx r2                                                     \n"
-        " handler2_address_const: .word prvGetRegistersFromStack    \n"
+            " tst lr, #4                                                \n"
+            " ite eq                                                    \n"
+            " mrseq r0, msp                                             \n"
+            " mrsne r0, psp                                             \n"
+            " ldr r1, [r0, #24]                                         \n"
+            " ldr r2, handler2_address_const                            \n"
+            " bx r2                                                     \n"
+            " handler2_address_const: .word prvGetRegistersFromStack    \n"
     );
 }
 
 void prvGetRegistersFromStack( uint32_t *pulFaultStackAddress )
 {
-/* These are volatile to try and prevent the compiler/linker optimising them
+    /* These are volatile to try and prevent the compiler/linker optimising them
 away as the variables never actually get used.  If the debugger won't show the
 values of the variables, make them global my moving their declaration outside
 of this function. */
-volatile uint32_t r0 = 0;
-volatile uint32_t r1 = 0;
-volatile uint32_t r2 = 0;
-volatile uint32_t r3 = 0;
-volatile uint32_t r12 = 0;
-volatile uint32_t lr = 0; /* Link register. */
-volatile uint32_t pc = 0; /* Program counter. */
-volatile uint32_t psr = 0;/* Program status register. */
+    volatile uint32_t r0 = 0;
+    volatile uint32_t r1 = 0;
+    volatile uint32_t r2 = 0;
+    volatile uint32_t r3 = 0;
+    volatile uint32_t r12 = 0;
+    volatile uint32_t lr = 0; /* Link register. */
+    volatile uint32_t pc = 0; /* Program counter. */
+    volatile uint32_t psr = 0;/* Program status register. */
 
     (void)r0;
     (void)r1;
@@ -204,24 +199,24 @@ volatile uint32_t psr = 0;/* Program status register. */
 
 void assert_triggered( const char *file, uint32_t line )
 {
-  volatile uint32_t block_var = 0, line_in;
-  const char *file_in;
+    volatile uint32_t block_var = 0, line_in;
+    const char *file_in;
 
-  /* These assignments are made to prevent the compiler optimizing the
+    /* These assignments are made to prevent the compiler optimizing the
    values away. */
-  file_in = file;
-  line_in = line;
-  (void) file_in;
-  (void) line_in;
+    file_in = file;
+    line_in = line;
+    (void) file_in;
+    (void) line_in;
 
-  taskENTER_CRITICAL();
-  {
-    while ( block_var == 0 )
+    taskENTER_CRITICAL();
     {
-      /* Set block_var to a non-zero value in the debugger to
+        while ( block_var == 0 )
+        {
+            /* Set block_var to a non-zero value in the debugger to
        step out of this function. */
+        }
     }
-  }
-  taskEXIT_CRITICAL();
+    taskEXIT_CRITICAL();
 }
 

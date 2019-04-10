@@ -40,14 +40,14 @@ struct StateEst
 
 uint8_t StateEst_ControlModeCB(eventHandler_t* obj, void* data, moduleMsg_t* eData);
 
-StateEst_t *StateEst_Create(eventHandler_t* eHandler)
+StateEst_t *StateEst_Create(eventHandler_t* eHandler, param_obj_t* param)
 {
   StateEst_t * stateEstObj = pvPortMalloc(sizeof(StateEst_t));
   if(!stateEstObj)
   {
     return NULL;
   }
-  stateEstObj->imu = Imu_Create();
+  stateEstObj->imu = Imu_Create(param);
   stateEstObj->gyroState = pvPortMalloc(sizeof(state_data_t));
   stateEstObj->CurrentMode = Control_mode_rate;
   if(!stateEstObj->imu || !stateEstObj->gyroState)

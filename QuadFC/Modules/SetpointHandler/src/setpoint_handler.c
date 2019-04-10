@@ -55,7 +55,6 @@ struct SpObj
 {
     QueueHandle_t xQueue_Sp_Handl;
     TimerHandle_t xTimer;
-    eventHandler_t* eHandler;
 
 };
 
@@ -73,12 +72,11 @@ SpHandler_t *SpHandl_Create(eventHandler_t* eHandler)
     SpHandler_t* obj = pvPortMalloc(sizeof(SpHandler_t));
     obj->xQueue_Sp_Handl = xQueueCreate( SP_HANDL_QUEUE_LENGTH, SP_HANDL_QUEUE_ITEM_SIZE );
     obj->xTimer = xTimerCreate("Timer", 1, pdFALSE, ( void * ) obj, SPHandl_TimerCallback);
-    obj->eHandler = eHandler;
-    if(!obj || ! obj->xQueue_Sp_Handl || !obj->eHandler)
+    if(!obj || ! obj->xQueue_Sp_Handl)
     {
         return NULL;
     }
-
+    Event_RegisterCallback(eHandler, Msg_NewSetpoint_e, SpHandl_SpCB, obj);
 
     return obj;
 }

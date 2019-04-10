@@ -46,6 +46,7 @@ typedef enum mode{
 typedef enum {
     param_set,
     param_get,
+	param_error,
 }ParamCtrl;
 
 #endif /* QUADFC_MESSAGE_ENUMS_H_ */

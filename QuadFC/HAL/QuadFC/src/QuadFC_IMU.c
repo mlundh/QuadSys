@@ -40,7 +40,6 @@
 #include "FreeRTOS.h"
 #include "semphr.h"
 #include "Modules/MsgBase/inc/common_types.h"
-#include "Parameters/inc/parameters.h"
 #include "QuadFC/QuadFC_IMU.h"
 #include "QuadFC/src/QuadFC_IMUInternal.h"
 #include "Utilities/inc/my_math.h"
@@ -48,10 +47,9 @@
 
 #define SIGN(x) ((x > 0) - (x < 0))
 
-Imu_t * Imu_Create()
+Imu_t * Imu_Create(param_obj_t * param)
 {
-  Imu_t *obj = Imu_CreateInternal();
-  SemaphoreHandle_t xMutex = xSemaphoreCreateMutex();
+  Imu_t *obj = Imu_CreateInternal(param);
 
   ImuOrientation_t tmp = {0};
   obj->Orient = tmp;
@@ -62,46 +60,46 @@ Imu_t * Imu_Create()
   obj->Orient.gyro_sign = 1;
 
 
-  param_obj_t * ImuOriRoot = Param_CreateObj(12, variable_type_NoType, readOnly, NULL, "IMU_Rot", Param_GetRoot(), NULL);
+  param_obj_t * ImuOriRoot = Param_CreateObj(12, variable_type_NoType, readOnly, NULL, "IMU_Rot", param );
   Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-      &obj->Orient.r_0_0, "r_0_0", ImuOriRoot, xMutex);
+      &obj->Orient.r_0_0, "r_0_0", ImuOriRoot);
   Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-      &obj->Orient.r_0_1, "r_0_1", ImuOriRoot, xMutex);
+      &obj->Orient.r_0_1, "r_0_1", ImuOriRoot);
   Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-      &obj->Orient.r_0_2, "r_0_2", ImuOriRoot, xMutex);
+      &obj->Orient.r_0_2, "r_0_2", ImuOriRoot);
   Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-      &obj->Orient.r_1_0, "r_1_0", ImuOriRoot, xMutex);
+      &obj->Orient.r_1_0, "r_1_0", ImuOriRoot);
   Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-      &obj->Orient.r_1_1, "r_1_1", ImuOriRoot, xMutex);
+      &obj->Orient.r_1_1, "r_1_1", ImuOriRoot);
   Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-      &obj->Orient.r_1_2, "r_1_2", ImuOriRoot, xMutex);
+      &obj->Orient.r_1_2, "r_1_2", ImuOriRoot);
   Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-      &obj->Orient.r_2_0, "r_2_0", ImuOriRoot, xMutex);
+      &obj->Orient.r_2_0, "r_2_0", ImuOriRoot);
   Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-      &obj->Orient.r_2_1, "r_2_1", ImuOriRoot, xMutex);
+      &obj->Orient.r_2_1, "r_2_1", ImuOriRoot);
   Param_CreateObj(0, variable_type_fp_16_16, readWrite,
-      &obj->Orient.r_2_2, "r_2_2", ImuOriRoot, xMutex);
+      &obj->Orient.r_2_2, "r_2_2", ImuOriRoot);
 
   Param_CreateObj(0, variable_type_int8, readWrite,
-      &obj->Orient.acc_sign, "accSign", ImuOriRoot, xMutex);
+      &obj->Orient.acc_sign, "accSign", ImuOriRoot);
   Param_CreateObj(0, variable_type_int8, readWrite,
-      &obj->Orient.gyro_sign, "gyroSign", ImuOriRoot, xMutex);
+      &obj->Orient.gyro_sign, "gyroSign", ImuOriRoot);
 
-  param_obj_t * ImuCurrent = Param_CreateObj(10, variable_type_NoType, readOnly, NULL, "IMU_Current", Param_GetRoot(), NULL);
-
-  Param_CreateObj(0, variable_type_fp_16_16, readOnly,
-      &obj->ImuData.imu_data[accl_x], "accl_x", ImuCurrent, xMutex);
-  Param_CreateObj(0, variable_type_fp_16_16, readOnly,
-      &obj->ImuData.imu_data[accl_y], "accl_y", ImuCurrent, xMutex);
-  Param_CreateObj(0, variable_type_fp_16_16, readOnly,
-      &obj->ImuData.imu_data[accl_z], "accl_z", ImuCurrent, xMutex);
+  param_obj_t * ImuCurrent = Param_CreateObj(10, variable_type_NoType, readOnly, NULL, "IMU_Current", param);
 
   Param_CreateObj(0, variable_type_fp_16_16, readOnly,
-      &obj->ImuData.imu_data[gyro_x], "gyro_x", ImuCurrent, xMutex);
+      &obj->ImuData.imu_data[accl_x], "accl_x", ImuCurrent);
   Param_CreateObj(0, variable_type_fp_16_16, readOnly,
-      &obj->ImuData.imu_data[gyro_y], "gyro_y", ImuCurrent, xMutex);
+      &obj->ImuData.imu_data[accl_y], "accl_y", ImuCurrent);
   Param_CreateObj(0, variable_type_fp_16_16, readOnly,
-      &obj->ImuData.imu_data[gyro_z], "gyro_z", ImuCurrent, xMutex);
+      &obj->ImuData.imu_data[accl_z], "accl_z", ImuCurrent);
+
+  Param_CreateObj(0, variable_type_fp_16_16, readOnly,
+      &obj->ImuData.imu_data[gyro_x], "gyro_x", ImuCurrent);
+  Param_CreateObj(0, variable_type_fp_16_16, readOnly,
+      &obj->ImuData.imu_data[gyro_y], "gyro_y", ImuCurrent);
+  Param_CreateObj(0, variable_type_fp_16_16, readOnly,
+      &obj->ImuData.imu_data[gyro_z], "gyro_z", ImuCurrent);
 
   return obj;
 }

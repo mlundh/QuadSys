@@ -28,13 +28,13 @@ enum messageTypes
 	Msg_NewSetpoint_e,
 	Msg_RegisterHandler_e,
 	Msg_Subscriptions_e,
-	e_Initialize_e,
-	e_InitializeDone_e,
 	Msg_FcLog_e,
 	Msg_LogNameReq_e,
 	LogStop_e,
 	Msg_CtrlSig_e,
 	Msg_NewState_e,
+	Msg_HasParam_e,
+	Msg_ParamFc_e,
 
 	Msg_LastType_e,
 };
@@ -67,13 +67,13 @@ static const char* const messageTypesStr[] =
 	"Msg_NewSetpoint",
 	"Msg_RegisterHandler",
 	"Msg_Subscriptions",
-	"e_Initialize",
-	"e_InitializeDone",
 	"Msg_FcLog",
 	"Msg_LogNameReq",
 	"LogStop",
 	"Msg_CtrlSig",
 	"Msg_NewState",
+	"Msg_HasParam",
+	"Msg_ParamFc",
 
 	"Msg_LastType",
 };

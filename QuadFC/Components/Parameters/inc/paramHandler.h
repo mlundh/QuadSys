@@ -31,17 +31,24 @@ typedef struct paramHander paramHander_t;
 #include "Modules/EventHandler/inc/event_handler.h"
 #include "Components/Parameters/inc/parameters_internal.h"
 
-paramHander_t* ParamHander_CreateObj(uint8_t num_children, eventHandler_t* evHandler,const char *obj_name, uint8_t master);
+
+paramHander_t* ParamHandler_CreateObj(uint8_t num_children, eventHandler_t* evHandler,const char *obj_name, uint8_t master);
 
 /**
  * Free all memory created by the ParamHander_CreateObj function.
  * No de-regestring is happening, so use with care.
  * @param obj
  */
-void ParamHander_deleteHandler(paramHander_t *obj);
+void ParamHandler_DeleteHandler(paramHander_t *obj);
 
-uint8_t ParamHander_Dump(paramHander_t *obj, uint8_t *buffer, uint32_t buffer_length, param_helper_t *helper);
+uint8_t ParamHandler_InitMaster(paramHander_t *obj);
+
+uint8_t ParamHandler_Dump(paramHander_t *obj, uint8_t *buffer, uint32_t buffer_length, param_helper_t *helper);
 
 param_obj_t* ParamHandler_GetParam(paramHander_t* obj);
+
+uint8_t ParamHandler_SetFromRoot(paramHander_t *obj, uint8_t *buffer, uint32_t buffer_length);
+
+uint8_t * ParamHandler_FindRoot(paramHander_t *obj, uint8_t *Buffer, uint32_t BufferLength);
 
 #endif /* COMPONENTS_PARAMETERS_SRC_PARAMHANDLER_H_ */

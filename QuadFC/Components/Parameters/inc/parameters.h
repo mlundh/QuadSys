@@ -113,7 +113,6 @@ struct param_obj_t
     struct param_obj_t *parent;
     struct param_obj_t **children;
     uint8_t registered_children;
-    SemaphoreHandle_t xMutex;
 } ;
 typedef struct param_obj_t param_obj_t;
 
@@ -129,14 +128,6 @@ struct param_helper
 };
 typedef struct param_helper param_helper_t;
 
-/**
- * Get the root parameter. Call this function to get a handle to the root node.
- * To be used when creating new modules that need parameters. These modules
- * might have sub modules, which can choose to register to the module or the
- * root.
- * @return
- */
-param_obj_t *Param_GetRoot();
 
 /**
  * @brief Creates a parameter object.
@@ -162,21 +153,13 @@ param_obj_t *Param_GetRoot();
  */
 param_obj_t *Param_CreateObj(uint8_t num_children, Log_variable_type_t type,
         Log_variable_access_t access, void *value, const char *obj_name,
-        param_obj_t *parent, SemaphoreHandle_t xMutex);
+        param_obj_t *parent);
 
 /**
  * Delete a param object. Use this with care as it does not de-register with parent or children.
  * @param obj
  */
 void Param_DeleteObj(param_obj_t* obj);
-
-/**
- *
- * @param buffer
- * @param buffer_length
- * @return
- */
-uint8_t Param_DumpFromRoot(uint8_t *buffer, uint32_t buffer_length, param_helper_t *helper);
 
 /**
  * @brief Append dump of current to buffer.
@@ -205,7 +188,7 @@ uint8_t Param_AppendDumpFromHere(param_obj_t *current, uint8_t *buffer, uint32_t
  * @param BufferLength
  * @return
  */
-uint8_t Param_SetFromRoot(param_obj_t *current, uint8_t *Buffer, uint32_t BufferLength);
+uint8_t Param_SetFromHere(param_obj_t *current, uint8_t *Buffer, uint32_t BufferLength);
 
 
 

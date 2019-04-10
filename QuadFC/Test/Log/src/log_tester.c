@@ -47,8 +47,9 @@ void Log_GetTCs(TestFw_t* obj)
 uint8_t LogHandler_TestCreate(TestFw_t* obj)
 {
     size_t heapSize = xPortGetFreeHeapSize();
+    paramHander_t* paramHandler = ParamHandler_CreateObj(1, NULL,"paramM", 1);
+    LogHandler_t* logHObjM = LogHandler_CreateObj(2,NULL,ParamHandler_GetParam(paramHandler),"TestRoot",1); // Not using eventHandler at the moment.
 
-    LogHandler_t* logHObjM = LogHandler_CreateObj(2,NULL,"TestRoot",1); // Not using eventHandler at the moment.
     uint8_t result = 1;
     if(!logHObjM)
     {
@@ -76,7 +77,7 @@ uint8_t LogHandler_TestCreate(TestFw_t* obj)
         snprintf (tmpstr, SHORT_MSG,"LogHandler master uses %d bytes of heap.\n", usedHeapM);
         TestFW_Report(obj, tmpstr);
     }
-    LogHandler_t* logHObjS = LogHandler_CreateObj(2,NULL,"TestRoot",0); // Not using eventHandler at the moment.
+    LogHandler_t* logHObjS = LogHandler_CreateObj(2,NULL,NULL,"TestRoot",0); // Not using eventHandler at the moment.
     if(!logHObjS)
     {
         char tmpstr[SHORT_MSG] = {0};
@@ -103,6 +104,8 @@ uint8_t LogHandler_TestCreate(TestFw_t* obj)
         snprintf (tmpstr, SHORT_MSG,"LogHandler slave uses %d bytes of heap.\n", usedHeapS);
         TestFW_Report(obj, tmpstr);
     }
+
+    ParamHandler_DeleteHandler(paramHandler);
     LogHandler_deleteHandler(logHObjM);
     LogHandler_deleteHandler(logHObjS);
 
@@ -113,7 +116,9 @@ uint8_t LogHandler_TestCreate(TestFw_t* obj)
 
 uint8_t Log_TestCreate(TestFw_t* obj)
 {
-    LogHandler_t* logHObj = LogHandler_CreateObj(2,NULL,"TestH",1); // Not using event handler, but we are master.
+    paramHander_t* paramHandler = ParamHandler_CreateObj(1, NULL,"paramM", 1);
+
+    LogHandler_t* logHObj = LogHandler_CreateObj(2,NULL,ParamHandler_GetParam(paramHandler), "TestH",1); // Not using event handler, but we are master.
 
     size_t heapSize = xPortGetFreeHeapSize();
     Log_t* logObj = Log_CreateObj(2,variable_type_NoType, NULL,NULL,logHObj,"TestO");
@@ -151,16 +156,19 @@ uint8_t Log_TestCreate(TestFw_t* obj)
         snprintf (tmpstr, SHORT_MSG,"Log object not correctly initiated.\n");
         TestFW_Report(obj, tmpstr);
     }
+    ParamHandler_DeleteHandler(paramHandler);
     LogHandler_deleteHandler(logHObj);
     Log_DeleteObj(logObj);
+
     return result;
 }
 
 uint8_t Log_TestSetChild(TestFw_t* obj)
 {
     uint8_t result = 1;
+    paramHander_t* paramHandler = ParamHandler_CreateObj(1, NULL,"paramM", 1);
 
-    LogHandler_t* logHObj = LogHandler_CreateObj(2,NULL,"TestH",1); // Not using event handler, but we are master.
+    LogHandler_t* logHObj = LogHandler_CreateObj(2,NULL,ParamHandler_GetParam(paramHandler),"TestH",1); // Not using event handler, but we are master.
     Log_t* logObj = Log_CreateObj(2,variable_type_NoType, NULL,NULL,logHObj,"root");
     Log_t* child = Log_CreateObj(0,variable_type_NoType, NULL,logObj,NULL,"root");
 
@@ -176,6 +184,7 @@ uint8_t Log_TestSetChild(TestFw_t* obj)
     {
         result = 0;
     }
+    ParamHandler_DeleteHandler(paramHandler);
     LogHandler_deleteHandler(logHObj);
     Log_DeleteObj(logObj);
     Log_DeleteObj(child);
@@ -186,7 +195,9 @@ uint8_t Log_TestSetChild(TestFw_t* obj)
 uint8_t Log_TestReport(TestFw_t* obj)
 {
     uint8_t result = 1;
-    LogHandler_t* logHObj = LogHandler_CreateObj(2,NULL,"Report",1); // Not using event handler, but we are master.
+    paramHander_t* paramHandler = ParamHandler_CreateObj(1, NULL,"paramM", 1);
+
+    LogHandler_t* logHObj = LogHandler_CreateObj(2,NULL,ParamHandler_GetParam(paramHandler),"Report",1); // Not using event handler, but we are master.
     int32_t data = 9;
     Log_t* logObj = Log_CreateObj(2,variable_type_int32, &data,NULL,logHObj,"root1");
     if(!logObj)
@@ -197,8 +208,8 @@ uint8_t Log_TestReport(TestFw_t* obj)
         return 0;
     }
     // set the log level
-    uint8_t string[] = "/QuadFC/Report/root1[1]/\0";
-    Param_SetFromRoot(Param_GetRoot(),string ,strlen((const char*)string));
+    uint8_t string[] = "/paramM/Report/root1[1]/\0";
+    ParamHandler_SetFromRoot(paramHandler,string ,strlen((const char*)string));
 
     // enter critical to ensure same tick...
     taskENTER_CRITICAL();
@@ -267,6 +278,7 @@ uint8_t Log_TestReport(TestFw_t* obj)
             result = 0;
         }
     }
+    ParamHandler_DeleteHandler(paramHandler);
     LogHandler_deleteHandler(logHObj);
     Log_DeleteObj(logObj);
     return result;
@@ -275,7 +287,7 @@ uint8_t Log_TestReport(TestFw_t* obj)
 uint8_t Log_TestMultipleLoggers(TestFw_t* obj)
 {
     uint8_t result = 1;
-    LogHandler_t* logHObj = LogHandler_CreateObj(2,NULL,"Report1",1); // Not using event handler, but we are master.
+    LogHandler_t* logHObj = LogHandler_CreateObj(2,NULL,NULL,"Report1",1); // Not using event handler, but we are master.
     int32_t data = 9;
     Log_t* logObj = Log_CreateObj(2,variable_type_int32, &data,NULL,logHObj,"root1");
     int32_t data2 = 800;
@@ -288,10 +300,10 @@ uint8_t Log_TestMultipleLoggers(TestFw_t* obj)
         return 0;
     }
     // set the log level
-    uint8_t string[] = "/QuadFC/Report1/root1[1]/\0";
-    Param_SetFromRoot(Param_GetRoot(),string ,strlen((const char*)string));
-    uint8_t string2[] = "/QuadFC/Report1/root1/child1[1]/\0";
-    Param_SetFromRoot(Param_GetRoot(),string2 ,strlen((const char*)string2));
+    uint8_t string[] = "Report1/root1[1]/\0";
+    Param_SetFromHere(LogHandler_GetParameter(logHObj),string ,strlen((const char*)string));
+    uint8_t string2[] = "Report1/root1/child1[1]/\0";
+    Param_SetFromHere(LogHandler_GetParameter(logHObj),string2 ,strlen((const char*)string2));
     // enter critical to ensure same tick...
     taskENTER_CRITICAL();
     uint32_t time = (uint32_t)xTaskGetTickCount();
@@ -344,11 +356,11 @@ uint8_t Log_TestMultipleLoggers(TestFw_t* obj)
 uint8_t Log_TestMultipleHandlers(TestFw_t* obj)
 {
     uint8_t result = 1;
-    LogHandler_t* logHObjT1 = LogHandler_CreateObj(2,NULL,"TH1",1); // Not using event handler, we are master.
+    LogHandler_t* logHObjT1 = LogHandler_CreateObj(2,NULL,NULL,"TH1",1); // Not using event handler, we are master.
     int32_t data = 9;
     Log_t* logObjT1 = Log_CreateObj(2,variable_type_int32, &data,NULL,logHObjT1,"LogT1");
 
-    LogHandler_t* logHObjT2 = LogHandler_CreateObj(2,NULL,"TH2",0); // Not using event handler, we are not master.
+    LogHandler_t* logHObjT2 = LogHandler_CreateObj(2,NULL,NULL,"TH2",0); // Not using event handler, we are not master.
     int32_t data2 = 800;
     Log_t* logObjT2 = Log_CreateObj(2,variable_type_int32, &data2,NULL,logHObjT2,"LogT2");
     if(!logObjT1 || !logObjT2 || !logHObjT1 ||! logHObjT2)
@@ -359,10 +371,10 @@ uint8_t Log_TestMultipleHandlers(TestFw_t* obj)
         return 0;
     }
     // set the log level
-    uint8_t string[] = "/QuadFC/TH1/LogT1[1]/\0";
-    Param_SetFromRoot(Param_GetRoot(),string ,strlen((const char*)string));
-    uint8_t string2[] = "/QuadFC/TH2/LogT2[1]/\0";
-    Param_SetFromRoot(Param_GetRoot(),string2 ,strlen((const char*)string2));
+    uint8_t string[] = "TH1/LogT1[1]/\0";
+    Param_SetFromHere(LogHandler_GetParameter(logHObjT1),string ,strlen((const char*)string));
+    uint8_t string2[] = "TH2/LogT2[1]/\0";
+    Param_SetFromHere(LogHandler_GetParameter(logHObjT2),string2 ,strlen((const char*)string2));
     // enter critical to ensure same tick...
     taskENTER_CRITICAL();
     uint32_t time = (uint32_t)xTaskGetTickCount();
@@ -448,7 +460,7 @@ uint8_t Log_TestMultipleHandlers(TestFw_t* obj)
 uint8_t Log_TestGetName(TestFw_t* obj)
 {
     uint8_t result = 1;
-    LogHandler_t* logHObj = LogHandler_CreateObj(2,NULL,"GetNameH",1); // Not using event handler, but we are master.
+    LogHandler_t* logHObj = LogHandler_CreateObj(2,NULL,NULL,"GetNameH",1); // Not using event handler, but we are master.
     int32_t data = 9;
     //Create a bunch of loggers...
     Log_t* logObj10 = Log_CreateObj(2,variable_type_int32, &data,NULL,logHObj,"1.0");
@@ -540,7 +552,7 @@ uint8_t Log_TestGetName(TestFw_t* obj)
 uint8_t Log_TestGetNameSerialized(TestFw_t* obj)
 {
     uint8_t result = 1;
-    LogHandler_t* logHObj = LogHandler_CreateObj(2,NULL,"GetNameH",1); // Not using event handler, but we are master.
+    LogHandler_t* logHObj = LogHandler_CreateObj(2,NULL,NULL,"GetNameH",1); // Not using event handler, but we are master.
     int32_t data = 9;
     //Create a bunch of loggers...
     Log_t* logObj10 = Log_CreateObj(2,variable_type_int32, &data,NULL,logHObj,"1.0");

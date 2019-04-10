@@ -40,6 +40,7 @@ struct logHander
   QueueHandle_t         logNameQueue;
   logNameQueueItems_t   logNameQueueItems;
   eventHandler_t*       evHandler;
+  param_obj_t*          param;
   uint32_t              topId;
   uint32_t              lastTime;
   param_obj_t *         paramObject;

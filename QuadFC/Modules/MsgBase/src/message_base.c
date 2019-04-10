@@ -24,12 +24,13 @@
 
 #include "../inc/message_base.h"
 #include "../inc/messageTypes.h"
+#include "../inc/msgAddr.h"
 #include <stddef.h>
 #include "FreeRTOS.h"
 #include <string.h>
 
 
-moduleMsg_t* Msg_Create(uint32_t type, uint32_t source, uint32_t destination, uint8_t msgNr)
+moduleMsg_t* Msg_Create(uint32_t type, uint32_t destination)
 {
     size_t size = sizeof(moduleMsg_t);
     moduleMsg_t* msg = pvPortMalloc(size);
@@ -37,8 +38,8 @@ moduleMsg_t* Msg_Create(uint32_t type, uint32_t source, uint32_t destination, ui
     if(msg)
     {
         msg->mDestination = destination;
-        msg->mSource = source;
-        msg->mMsgNr = msgNr;
+        msg->mSource = Unassigned;
+        msg->mMsgNr = 0;
         msg->type = type;
         msg->mAllocatedSize = sizeof(moduleMsg_t);
     }

@@ -50,7 +50,7 @@ Log_t* Log_CreateObj(uint8_t num_children, Log_variable_type_t type, void* value
     {
         parentParamObj = LogHandler_GetParameter(handler);
     }
-    param_obj_t * paramObj = Param_CreateObj(num_children, variable_type_uint8, readWrite, &log_obj->logLevel, obj_name, parentParamObj, NULL);
+    param_obj_t * paramObj = Param_CreateObj(num_children, variable_type_uint8, readWrite, &log_obj->logLevel, obj_name, parentParamObj);
     if(!paramObj)
     {
         return NULL;
@@ -207,6 +207,17 @@ uint8_t Log_StopAllLogs(Log_t* obj)
     for(int i = 0; (i < obj->registeredChildren); i++)
     {
         result &= Log_StopAllLogs(obj->children[i]);
+    }
+    return result;
+}
+
+uint8_t Log_StartAllLogs(Log_t* obj, uint32_t logLevel)
+{
+    uint8_t result = 1;
+    obj->logLevel = logLevel;
+    for(int i = 0; (i < obj->registeredChildren); i++)
+    {
+        result &= Log_StartAllLogs(obj->children[i], logLevel);
     }
     return result;
 }

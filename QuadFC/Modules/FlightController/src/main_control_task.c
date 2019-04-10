@@ -77,6 +77,7 @@ typedef struct mainTaskParams
   eventHandler_t* evHandler;
   TimerHandle_t xTimer;
   LogHandler_t* logHandler;
+  paramHander_t* paramHandler;
 }MaintaskParams_t;
 
 void main_control_task( void *pvParameters );
@@ -99,24 +100,25 @@ void create_main_control_task(eventHandler_t* evHandler)
   /*Create the task*/
 
   MaintaskParams_t * taskParam = pvPortMalloc(sizeof(MaintaskParams_t));
-  taskParam->ctrl = Ctrl_Create();
+  taskParam->paramHandler = ParamHandler_CreateObj(1,evHandler, "QuadGS", 0); // Master handles all communication, we do not want to be master!
+  taskParam->ctrl = Ctrl_Create(ParamHandler_GetParam(taskParam->paramHandler));
   taskParam->setpoint = pvPortMalloc( sizeof(state_data_t) );
   taskParam->state = pvPortMalloc( sizeof(state_data_t) );
   taskParam->control_signal = pvPortMalloc( sizeof(control_signal_t) );
   taskParam->motorControl = MotorCtrl_CreateAndInit(4);
   taskParam->flightModeHandler = FMode_CreateFmodeHandler(evHandler); // registers event handler for flight mode requests.
-  taskParam->stateEst = StateEst_Create(evHandler);
+  taskParam->stateEst = StateEst_Create(evHandler, ParamHandler_GetParam(taskParam->paramHandler));
   taskParam->setPointHandler = SpHandl_Create(evHandler);
   taskParam->CtrlModeHandler = Ctrl_CreateModeHandler(evHandler);
   taskParam->evHandler = evHandler;
   taskParam->xTimer = xTimerCreate("Tmain", SpTimeoutTimeMs / portTICK_PERIOD_MS, pdFALSE, ( void * ) taskParam, main_TimerCallback);
-  taskParam->logHandler = LogHandler_CreateObj(20,taskParam->evHandler,"LogSctr",0);
+  taskParam->logHandler = LogHandler_CreateObj(20,evHandler,ParamHandler_GetParam(taskParam->paramHandler),"LogSctr",0);
 
   /*Ensure that all mallocs returned valid pointers*/
-   if (   !taskParam || !taskParam->ctrl || !taskParam->setpoint
-       || !taskParam->state || !taskParam->control_signal
-       || !taskParam->motorControl || !taskParam->flightModeHandler
-       || !taskParam->stateEst || !taskParam->setPointHandler || !taskParam->logHandler)
+   if (   !taskParam                    || !taskParam->ctrl             || !taskParam->setpoint
+       || !taskParam->state             || !taskParam->control_signal   || !taskParam->motorControl
+       || !taskParam->flightModeHandler || !taskParam->stateEst         || !taskParam->setPointHandler
+       || !taskParam->logHandler        || !taskParam->paramHandler)
    {
      for ( ;; )
      {
@@ -154,14 +156,11 @@ void main_control_task( void *pvParameters )
 
 
   MaintaskParams_t * param = (MaintaskParams_t*)(pvParameters);
-  // Initialize event handler.
-  Event_StartInitialize(param->evHandler);
 
-  // Do initializations here.
 
   /*Initialize modules*/
   FMode_InitFModeHandler(param->flightModeHandler);
-  Ctrl_init(param->ctrl);
+  Ctrl_InitModeHandler(param->CtrlModeHandler);
 
   //This takes some time due to calibration.
   if(!StateEst_init(param->stateEst))
@@ -171,7 +170,6 @@ void main_control_task( void *pvParameters )
   /*Utility variables*/
   TickType_t arming_counter = 0;
   uint32_t heartbeat_counter = 0;
-
   /* Loggers for rate mode */
   Log_t* logPitchRate = Log_CreateObj(0,variable_type_fp_16_16,  &param->state->state_bf[pitch_rate_bf],NULL, param->logHandler, "m_PR");
   Log_t* logRollRate = Log_CreateObj(0,variable_type_fp_16_16, &param->state->state_bf[roll_rate_bf],NULL, param->logHandler, "m_RR");
@@ -188,8 +186,6 @@ void main_control_task( void *pvParameters )
   Log_t* logSpThrustRate = Log_CreateObj(0,variable_type_fp_16_16, &param->setpoint->state_bf[thrust_sp],NULL, param->logHandler, "sp_T");
 
   /*The main control loop*/
-
-  Event_EndInitialize(param->evHandler);
 
   unsigned portBASE_TYPE xLastWakeTime = xTaskGetTickCount();
   for ( ;; )

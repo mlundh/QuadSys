@@ -29,17 +29,19 @@
  *
  * StateEstimator is a core module responsible of gathering data
  * and analyzing the data to get a estimate of the current
- * stat (physical state) of the vehicle.
+ * state (physical state) of the vehicle.
  *
  * Depending on the requested estimation type, different
  * states might be available for the control system to use,
  * examine the confidence field of the data to gain information
- * on what states are availible.
+ * on what states are available.
  */
 
 #include "stdint.h"
 #include "Modules/MsgBase/inc/common_types.h"
 #include "Modules/EventHandler/inc/event_handler.h"
+#include "Parameters/inc/parameters.h"
+
 
 typedef struct StateEst StateEst_t;
 
@@ -53,7 +55,7 @@ typedef enum etstimation_types
   type_not_availible = 4
 } estimation_types_t;
 
-StateEst_t *StateEst_Create(eventHandler_t* eHandler);
+StateEst_t *StateEst_Create(eventHandler_t* eHandler, param_obj_t* param);
 
 /**
  * Initialize the state estimator. This causes all connected and configured

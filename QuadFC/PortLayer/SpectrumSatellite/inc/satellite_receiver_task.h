@@ -23,11 +23,11 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "Modules/MsgBase/inc/common_types.h"
-#include "Parameters/inc/parameters.h"
 #include "Modules/Messages/inc/Msg_FlightModeReq.h"
 #include "Modules/Messages/inc/Msg_CtrlModeReq.h"
 #include "Modules/Messages/inc/Msg_NewSetpoint.h"
 #include "Modules/EventHandler/inc/event_handler.h"
+#include "Components/Parameters/inc/paramHandler.h"
 
 /// Defines used by the module.
 #define SATELLITE_DATA_MASK 0x7ff            /*Data contained in the 11 least significant bits*/
@@ -146,10 +146,10 @@ typedef struct Satellite
   int32_t multiplier;
   int32_t divisor;
   int32_t throMult;
-  SemaphoreHandle_t xMutexParam;
   FlightMode_t current_flight_mode_state;
   CtrlMode_t current_control_mode;
   eventHandler_t* evHandler;
+  paramHander_t* paramHandler;
 }Satellite_t;
 
 /**
@@ -158,7 +158,7 @@ typedef struct Satellite
  * @param setpointHandler
  * @return Null if fail, pointer to a struct instance otherwise.
  */
-Satellite_t* Satellite_Init(QueueHandle_t eventMaster);
+Satellite_t* Satellite_Init(eventHandler_t* eventMaster);
 
 /**
  * @brief The receiver task. Reads serial data and decodes it. Then transmits the decoded setpoint to

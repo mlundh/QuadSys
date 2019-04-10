@@ -29,12 +29,6 @@
 #include "parameters.h"
 
 /**
- * @brief Initialize the param system by creating the root node.
- */
-void Param_Init();
-
-
-/**
  * @brief Add child to current.
  *
  * Register a child with the current node. The current node has to have

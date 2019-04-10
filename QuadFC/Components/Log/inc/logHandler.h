@@ -67,15 +67,16 @@ typedef struct logEntry
 /**
  * Create a log handler object. The object will either send log entries into the backend, or to the local
  * log entry queue depending on if it is a master or not. If the event is sent to the local log entry queue,
- * then an event is also sent, provided events are used. It is then the job of the logHandler that is a master
- *  with a backend to read from the queue and write the log entry to the backend.
+ * then an event is also sent, provided events are used. This message contains the queue from where the master
+ * logHandler can retrieve the logs and send it to the backend.
  * @param num_children    Max number of children the handler can have.
  * @param evHandler       Event handler object.
+ * @param param           Param object that is the root log object for the logHandler.
  * @param obj_name        Name of the handler.
  * @param isMaster        The master has a backend.
  * @return
  */
-LogHandler_t* LogHandler_CreateObj(uint8_t num_children, eventHandler_t* evHandler, const char *obj_name, uint8_t isMaster);
+LogHandler_t* LogHandler_CreateObj(uint8_t num_children, eventHandler_t* evHandler, param_obj_t* param, const char *obj_name, uint8_t isMaster);
 
 /**
  * Free all memory created by the LogHandler_CreateObj function. No de-regestring is happening, so use with care.
@@ -209,11 +210,18 @@ uint8_t LogHandler_AppendSerializedlogs(LogHandler_t* obj, uint8_t* buffer, uint
 uint8_t LogHandler_Getlogs(LogHandler_t* obj, logEntry_t* logs, uint32_t size, uint32_t* nrLogs);
 
 /**
- * Stop all logging. All log levels are set to 0.
+ * Stop all logging. All log levels are set to 0. Propagated throughout the system.
  * @param obj         master LogHandler object.
  * @return            1 is success, 0 otherwise.
  */
 uint8_t LogHandler_StopAllLogs(LogHandler_t* obj);
+
+/**
+ * Start all local logs.
+ * @param obj   LogHandler object.
+ * @return      1 if sucssess, 0 otherwise.
+ */
+uint8_t LogHandler_StartAllLogs(LogHandler_t* obj);
 
 
 #endif /* MODULES_LOG_INC_LOGHANDLER_H_ */
