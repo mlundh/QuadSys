@@ -41,6 +41,11 @@ paramHander_t* ParamHandler_CreateObj(uint8_t num_children, eventHandler_t* evHa
  */
 void ParamHandler_DeleteHandler(paramHander_t *obj);
 
+/**
+ * The ParamHandler master must be initialized. It will then ask all other nodes if they have parameters.
+ * @param obj
+ * @return
+ */
 uint8_t ParamHandler_InitMaster(paramHander_t *obj);
 
 uint8_t ParamHandler_Dump(paramHander_t *obj, uint8_t *buffer, uint32_t buffer_length, param_helper_t *helper);

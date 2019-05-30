@@ -32,7 +32,6 @@
 #include "QuadFC/QuadFC_Memory.h"
 #include "QuadFC/QuadFC_Peripherals.h"
 #include "Utilities/inc/run_time_stats.h"
-#include "EventHandler/inc/event_handler.h"
 #include "Log/inc/logHandler.h"
 #include "FreeRTOS.h"
 #include "task.h"
@@ -100,21 +99,6 @@ static void Com_TxTask( void *pvParameters );
  * @param pvParameters
  */
 static void Com_RxTask( void *pvParameters );
-
-
-/**
- * Save the current parameters. The two packages are cleared
- * and used internally. The QSP packet contains the result
- * of the operation, QSP_StatusAck if OK.
- */
-void Com_ParamSave(RxCom_t* obj);
-
-/**
- * Load stored parameters. The two packages are cleared
- * and used internally. The QSP packet contains the result
- * of the operation, QSP_StatusAck if OK.
- */
-void Com_ParamLoad(RxCom_t* obj);
 
 /**
  * Handle the QSP.
@@ -296,37 +280,35 @@ void Com_TxTask( void *pvParameters )
    */
   TxCom_t * obj = (TxCom_t *) pvParameters;
 
-  // Initialize event handler.
-  Event_StartInitialize(obj->evHandler);
 
-  QSP_t *txPacket;            //!< Handle for a QSP packet, used for receiving from queue.
-
-  Event_EndInitialize(obj->evHandler);
 
 
   for ( ;; )
   {
-
     //Process incoming events.
-    while(Event_Receive(obj->evHandler, 0) == 1)
+    while(Event_Receive(obj->evHandler, portMAX_DELAY))
     {}
+    // error, event receive should not fail...
 
-    /* Wait blocking for items in the queue and transmit the data
-      as soon as it arrives. Pack into a crc protected slip frame.*/
-    if (xQueueReceive(xQueue_Com, &txPacket, portMAX_DELAY) != pdPASS )
+  }
+
+}
+
+uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
+{
+    if(!obj || ! data || !msg)
     {
-      //QSP_GiveIsEmpty(txPacket); //Should this be here?
-      continue; //FrameError.
+        return 0;
     }
-    QSP_TakeIsPopulated(txPacket);
+    uint8_t result = 0;
+    TxCom_t* Obj = (TxCom_t*)data; // The data should always be the current object when a Com_TxSend is received.
+
     /* We have a packet, packetize into a SLIP. */
     if(!Slip_Packetize(QSP_GetPacketPtr(txPacket), QSP_GetPacketSize(txPacket),
-        QSP_GetAvailibleSize(txPacket), obj->txSLIP))
+        QSP_GetAvailibleSize(txMsg), obj->txSLIP))
     {
-      QSP_GiveIsEmpty(txPacket);
       continue; // skip this, packet not valid.
     }
-    QSP_GiveIsEmpty(txPacket);
     if ( obj->txSLIP->packetSize < COM_PACKET_LENGTH_MAX )
     {
       /* TX is blocking */
@@ -344,9 +326,8 @@ void Com_TxTask( void *pvParameters )
     {
       //TODO LED? error!
     }
-  }
-
 }
+
 
 void Com_RxTask( void *pvParameters )
 {
@@ -396,12 +377,10 @@ void Com_RxTask( void *pvParameters )
       if(Slip_DePacketize(QSP_GetPacketPtr(obj->QspPacket), QSP_GetAvailibleSize(obj->QspPacket),
           obj->SLIP))
       {
-        QSP_ClearPayload(obj->QspTransRespPacket);
-        QSP_SetAddress(obj->QspTransRespPacket, QSP_Transmission);
-        QSP_SetControl(obj->QspTransRespPacket, QSP_TransmissionOK);
-        Com_SendQSP(obj->QspTransRespPacket);
+        moduleMsg_t* reply = Msg_TransmissionCreate(Msg_GetDestination(msg), 0, 1); // TODO status enum! Status OK!
+        Event_Send(obj->evHandler, reply);
 
-        uint8_t rxRespComplete = Com_HandleQSP(obj);
+        uint8_t rxRespComplete = Com_HandleQSP(obj); //!!!!! send to receiver only?
         if(rxRespComplete)
         {
           Com_SendQSP(obj->QspRespPacket);
@@ -409,17 +388,13 @@ void Com_RxTask( void *pvParameters )
       }
       else
       {
-        QSP_ClearPayload(obj->QspTransRespPacket);
-        QSP_SetAddress(obj->QspTransRespPacket, QSP_Transmission);
-        QSP_SetControl(obj->QspTransRespPacket, QSP_TransmissionNOK);
-        Com_SendQSP(obj->QspTransRespPacket);
+          moduleMsg_t* reply = Msg_TransmissionCreate(Msg_GetDestination(msg), 0, 0); // TODO status enum! Status NOK!
+          Event_Send(obj->evHandler, reply);
       }
       break;
     case SLIP_StatusNok:
-      QSP_ClearPayload(obj->QspTransRespPacket);
-      QSP_SetAddress(obj->QspTransRespPacket, QSP_Transmission);
-      QSP_SetControl(obj->QspTransRespPacket, QSP_TransmissionNOK);
-      Com_SendQSP(obj->QspTransRespPacket);
+        moduleMsg_t* reply = Msg_TransmissionCreate(Msg_GetDestination(msg), 0, 0); // TODO status enum! Status NOK!
+        Event_Send(obj->evHandler, reply);
       break;
     default:
       break;
@@ -440,9 +415,6 @@ uint8_t Com_HandleQSP(RxCom_t* obj)
   case QSP_Log:
     result = Com_HandleLog(obj);
     break;
-  case QSP_Status:
-    result = Com_HandleStatus(obj);
-    break;
   case QSP_Debug:
     result = Com_HandleDebug(obj);
     break;
@@ -453,27 +425,6 @@ uint8_t Com_HandleQSP(RxCom_t* obj)
   return result;
 }
 
-uint8_t Com_HandleStatus(RxCom_t* obj)
-{
-  uint8_t result = 0;
-  switch ( QSP_GetControl(obj->QspPacket) )
-  {
-  case QSP_StatusAck:
-    break;
-  case QSP_StatusCrcError:
-    break;
-  case QSP_StatusNack:
-    break;
-  case QSP_StatusNotAllowed:
-    break;
-  case QSP_StatusNotImplemented:
-    break;
-  default:
-    break;
-  }
-
-  return result;
-}
 
 uint8_t Com_HandleDebug(RxCom_t* obj)
 {
@@ -533,222 +484,5 @@ uint8_t Com_HandleLog(RxCom_t* obj)
     break;
   }
   return result;
-}
-
-
-uint8_t Com_HandleParameters(RxCom_t* obj)
-{
-  QSP_ClearPayload(obj->QspRespPacket);
-  uint8_t result = 0;
-  uint8_t sequence = obj->helper->sequence;
-  switch ( QSP_GetControl(obj->QspPacket) )
-  {
-  case QSP_ParamGetTree:
-    result = Param_DumpFromRoot(QSP_GetParamPayloadPtr(obj->QspRespPacket),
-        QSP_GetAvailibleSize(obj->QspRespPacket) - QSP_GetParamHeaderdSize() - 2,
-        obj->helper);
-    if(result) // Dump from root is finished, reset helper.
-    {
-      memset(obj->helper->dumpStart, 0, MAX_DEPTH); // Starting point of dump.
-      obj->helper->sequence = 0;
-      QSP_SetParamLastInSeq(obj->QspRespPacket, 1); // This is the last in the sequence.
-    } // else dump is not finished, keep helper till next time.
-    else
-    {
-      QSP_SetParamLastInSeq(obj->QspRespPacket, 0);
-      obj->helper->sequence++;
-    }
-
-
-    // Always send dump.
-    uint16_t len =  strlen((char *)QSP_GetParamPayloadPtr(obj->QspRespPacket));
-    if(len <= (QSP_MAX_PACKET_SIZE - QSP_GetParamHeaderdSize()))
-    {
-      //TODO add return value checks!
-      QSP_SetParamSequenceNumber(obj->QspRespPacket, sequence);
-      QSP_SetParamPayloadSize(obj->QspRespPacket, len);
-      QSP_SetAddress(obj->QspRespPacket, QSP_Parameters);
-      QSP_SetControl(obj->QspRespPacket, QSP_ParamSetTree);
-    }
-    else
-    {
-      QSP_ClearPayload(obj->QspRespPacket);
-      QSP_SetAddress(obj->QspRespPacket, QSP_Status);
-      QSP_SetControl(obj->QspRespPacket, QSP_StatusBufferOverrun);
-    }
-
-    break;
-  case QSP_ParamSetTree:
-    result = Param_SetFromHere(Param_GetRoot(), QSP_GetParamPayloadPtr(obj->QspPacket),
-        QSP_GetParamPayloadSize(obj->QspPacket));
-    QSP_SetAddress(obj->QspRespPacket, QSP_Status);
-    if(result) // Set was ok, respond with Ack.
-    {
-      QSP_SetControl(obj->QspRespPacket, QSP_StatusAck);
-    }
-    else  // Set was not ok, respond with Nack.
-    {
-      QSP_SetControl(obj->QspRespPacket, QSP_StatusNack);
-    }
-    break;
-  case QSP_ParamSave:
-    Com_ParamSave(obj);
-    break;
-  case QSP_ParamLoad:
-    Com_ParamLoad(obj);
-    break;
-  default:
-    break;
-  }
-
-  return 1; // Param messages always require an answer.
-}
-
-
-uint8_t Com_SendQSP( QSP_t *packet )
-{
-  QSP_GiveIsPopulated(packet);
-  BaseType_t result = xQueueSendToBack( xQueue_Com, &packet, mainDONT_BLOCK );
-  QSP_TakeIsEmpty(packet);
-  if(result != pdTRUE)
-  {
-    return 0;
-  }
-  return 1;
-}
-
-void Com_ParamSave(RxCom_t* obj)
-{
-  uint8_t cont = 1;
-  uint32_t address = 0;
-  memset(obj->saveHelper->dumpStart, 0, MAX_DEPTH);
-  obj->saveHelper->depth = 0;
-  obj->saveHelper->sequence = 0;
-  while(cont)
-  {
-    uint8_t result = 0;
-    QSP_ClearPayload(obj->QspPacket);
-    uint8_t sequence = obj->saveHelper->sequence;
-    result = Param_DumpFromRoot(QSP_GetParamPayloadPtr(obj->QspPacket),
-        QSP_GetAvailibleSize(obj->QspPacket) - QSP_GetParamHeaderdSize(), obj->saveHelper);
-
-    if(result) // Dump from root is finished, reset helper.
-    {
-      memset(obj->saveHelper->dumpStart, 0, MAX_DEPTH);          // Starting point of dump.
-      obj->saveHelper->sequence = 0;                             // Next will be first in sequence!
-      QSP_SetParamLastInSeq(obj->QspPacket, 1);             // This is the last in the sequence.
-      cont = 0;                                         // Last package, nothing more to save.
-    } // dump is not finished, keep helper till next time.
-    else
-    {
-      QSP_SetParamLastInSeq(obj->QspPacket, 0);
-      obj->saveHelper->sequence++;
-    }
-    // Always save dump.
-    uint16_t len =  strlen((char *)QSP_GetParamPayloadPtr(obj->QspPacket));
-    result = (len <= (QSP_MAX_PACKET_SIZE - QSP_GetParamHeaderdSize()));
-    if(result)
-    {
-      // Save!
-      result &= QSP_SetParamSequenceNumber(obj->QspPacket, sequence);
-      result &= QSP_SetParamPayloadSize(obj->QspPacket,len);
-      result &= QSP_SetAddress(obj->QspPacket, QSP_Parameters);
-      result &= QSP_SetControl(obj->QspPacket, QSP_ParamSetTree);
-    }
-    if(result)
-    {
-
-      // Packetize into a slip package before write to mem.
-      result = Slip_Packetize(QSP_GetPacketPtr(obj->QspPacket),
-          QSP_GetPacketSize(obj->QspPacket), QSP_GetAvailibleSize(obj->QspPacket),
-          obj->SLIP);
-    }
-    if(result) // Packetization OK, write to mem.
-    {
-      result = Mem_Write(address, obj->SLIP->packetSize,
-          obj->SLIP->payload, obj->SLIP->allocatedSize);
-      address += (obj->SLIP->packetSize + 1);
-    }
-    if(result) // Mem write was OK, send ack to indicate OK save of params.
-    {
-      result &= QSP_ClearPayload(obj->QspRespPacket);
-      result &= QSP_SetAddress(obj->QspRespPacket, QSP_Status);
-      result &= QSP_SetControl(obj->QspRespPacket, QSP_StatusAck);
-    }
-    else // Packetization or mem_Write did not succeed.
-    {
-      cont = 0;
-      QSP_ClearPayload(obj->QspRespPacket);
-      QSP_SetAddress(obj->QspRespPacket, QSP_Status);
-      QSP_SetControl(obj->QspRespPacket, QSP_StatusNack);
-    }
-
-  }// while(cont)
-}
-
-void Com_ParamLoad(RxCom_t* obj)
-{
-  uint8_t lastInSequence = 0;
-  uint8_t EcpectedSequenceNo = 0;
-  uint32_t address = 0;
-
-  while(!lastInSequence)
-  {
-    QSP_ClearPayload(obj->QspPacket);
-    int k = 0;
-    uint8_t buffer[2];
-    SLIP_Status_t read_status = SLIP_StatusCont;
-    uint8_t result = 0;
-    uint32_t startAddress = address;
-    // Read from memory and add to the parser.
-    while((SLIP_StatusCont == read_status))
-    {
-      result = Mem_Read(address, 1, buffer, 2);
-      if(result && ((address - startAddress) < COM_PACKET_LENGTH_MAX))
-      {
-        read_status = SLIP_Parser(buffer, 1, obj->SLIP, &k);
-      }
-      else
-      {
-        result = 0;
-        break;
-      }
-      address++;
-    }
-    result &= (read_status == SLIP_StatusOK);
-    if(result){
-      if(!Slip_DePacketize(QSP_GetPacketPtr(obj->QspPacket), QSP_GetAvailibleSize(obj->QspPacket),
-          obj->SLIP))
-      {
-        result = 0;
-      }
-    }
-    if(result)
-    {
-      uint8_t sequenceNo = QSP_GetParamSequenceNumber(obj->QspPacket);
-      lastInSequence = QSP_GetParamLastInSeq(obj->QspPacket);
-      result = (sequenceNo == EcpectedSequenceNo);
-      EcpectedSequenceNo++;
-    }
-    if(result)
-    {
-      result = Param_SetFromHere(Param_GetRoot(),
-          QSP_GetParamPayloadPtr(obj->QspPacket),
-          QSP_GetParamPayloadSize(obj->QspPacket));
-    }
-    if(result) // Set was successful, params are loaded from mem.
-    {
-      QSP_ClearPayload(obj->QspRespPacket);
-      QSP_SetAddress(obj->QspRespPacket, QSP_Status);
-      QSP_SetControl(obj->QspRespPacket, QSP_StatusAck);
-    }
-    else // Read or set was not successful, send Nack.
-    {
-      QSP_ClearPayload(obj->QspRespPacket);
-      QSP_SetAddress(obj->QspRespPacket, QSP_Status);
-      QSP_SetControl(obj->QspRespPacket, QSP_StatusNack);
-      lastInSequence = 1;
-    }
-  }
 }
 

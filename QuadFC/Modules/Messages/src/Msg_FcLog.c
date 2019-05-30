@@ -36,7 +36,7 @@
 moduleMsg_t* Msg_FcLogCreate(uint32_t destination, uint8_t msgNr
     , QueueHandle_t data)
 {
-    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_FcLog_t);
+    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_FcLog_t) ;
     moduleMsg_t* msg = pvPortMalloc(size);
 
     if(msg)
@@ -57,7 +57,7 @@ moduleMsg_t* Msg_FcLogCreate(uint32_t destination, uint8_t msgNr
 
 QueueHandle_t Msg_FcLogGetData(moduleMsg_t* msg)
 {
-    QueueHandle_t value;
+    QueueHandle_t value = {0};
     if(msg && (msg->type == Msg_FcLog_e))
     {
         Msg_FcLog_t* internal_data = (Msg_FcLog_t*)(msg + 1);

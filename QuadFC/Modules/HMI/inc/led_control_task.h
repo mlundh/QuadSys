@@ -33,6 +33,6 @@
 /**
  * Create the led control task. This is used in the "main" function only.
  */
-void Led_CreateLedControlTask(QueueHandle_t eventMaster);
+void Led_CreateLedControlTask(eventHandler_t* evHandler);
 
 #endif /* LED_CONTROL_TASK_H_ */

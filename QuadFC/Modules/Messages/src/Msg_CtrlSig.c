@@ -36,7 +36,7 @@
 moduleMsg_t* Msg_CtrlSigCreate(uint32_t destination, uint8_t msgNr
     , control_signal_t signal)
 {
-    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_CtrlSig_t);
+    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_CtrlSig_t) ;
     moduleMsg_t* msg = pvPortMalloc(size);
 
     if(msg)
@@ -57,7 +57,7 @@ moduleMsg_t* Msg_CtrlSigCreate(uint32_t destination, uint8_t msgNr
 
 control_signal_t Msg_CtrlSigGetSignal(moduleMsg_t* msg)
 {
-    control_signal_t value;
+    control_signal_t value = {0};
     if(msg && (msg->type == Msg_CtrlSig_e))
     {
         Msg_CtrlSig_t* internal_data = (Msg_CtrlSig_t*)(msg + 1);

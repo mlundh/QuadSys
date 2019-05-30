@@ -33,7 +33,7 @@
 
 
 moduleMsg_t* Msg_DebugCreate(uint32_t destination, uint8_t msgNr
-    , uint8_t* payload, uint32_t Payloadlength, uint32_t Payloadbufferlength);
+    , uint32_t Payloadbufferlength);
 
 uint8_t* Msg_DebugGetPayload(moduleMsg_t* msg);
 

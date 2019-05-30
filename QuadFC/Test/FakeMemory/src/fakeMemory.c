@@ -1,5 +1,5 @@
 /*
- * Msg_Log.c
+ * fakeMemory.c
  *
  * Copyright (C) 2019 Martin Lundh
  *
@@ -22,39 +22,43 @@
  * THE SOFTWARE.
  */
 
-#ifndef MODULES_MESSAGES_INC_MSG_LOG_H_
-#define MODULES_MESSAGES_INC_MSG_LOG_H_
-
-#include "MsgBase/inc/message_base.h"
-#include "MsgBase/inc/common_types.h"
-#include "MsgBase/inc/msg_enums.h"
-#include "MsgBase/inc/msgAddr.h"
 
 
 
-moduleMsg_t* Msg_LogCreate(uint32_t destination, uint8_t msgNr
-    , uint8_t control, uint32_t Payloadbufferlength);
+#include "HAL/QuadFC/QuadFC_Memory.h"
+#include <string.h>
 
-uint8_t Msg_LogGetControl(moduleMsg_t* msg);
+#define FAKE_MEM_SIZE (5000)
 
-void Msg_LogSetControl(moduleMsg_t* msg, uint8_t control);
+uint8_t memory[FAKE_MEM_SIZE];
 
-uint8_t* Msg_LogGetPayload(moduleMsg_t* msg);
+uint8_t Mem_Init()
+{
+    return 1;
+}
 
-void Msg_LogSetPayload(moduleMsg_t* msg, uint8_t* payload);
+uint8_t Mem_Read(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size)
+{
+    if(addr + size < FAKE_MEM_SIZE)
+    {
+        if(size < buffer_size)
+        {
+            memcpy(buffer, memory + addr, size);
+            return 1;
+        }
+    }
+    return 0;
+}
 
-uint32_t Msg_LogGetPayloadlength(moduleMsg_t* msg);
-
-void Msg_LogSetPayloadlength(moduleMsg_t* msg, uint32_t Payloadlength);
-
-uint32_t Msg_LogGetPayloadbufferlength(moduleMsg_t* msg);
-
-void Msg_LogSetPayloadbufferlength(moduleMsg_t* msg, uint32_t Payloadbufferlength);
-
-
-uint8_t* Msg_LogSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
-
-uint8_t* Msg_LogDeserialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
-
-#endif /* MODULES_MESSAGES_INC_MSG_LOG_H_ */
-
+uint8_t Mem_Write(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size)
+{
+    if(addr + size < FAKE_MEM_SIZE)
+    {
+        if(size < buffer_size)
+        {
+            memcpy(memory + addr, buffer, size);
+            return 1;
+        }
+    }
+    return 0;
+}

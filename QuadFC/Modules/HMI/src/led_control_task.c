@@ -86,7 +86,7 @@ void Led_toggleLed(ledState_t* ledState, GpioName_t pin);
 
 void Led_resetLeds(ledTaskParams * param);
 
-void Led_CreateLedControlTask( QueueHandle_t eventMaster )
+void Led_CreateLedControlTask(eventHandler_t* evHandler )
 {
 
   /*Create the task*/
@@ -95,7 +95,7 @@ void Led_CreateLedControlTask( QueueHandle_t eventMaster )
   {
     for(;;); //Error!
   }
-  ledParams->evHandler = Event_CreateHandler(eventMaster, 0);
+  ledParams->evHandler = evHandler;
   if(!ledParams->evHandler)
   {
     for(;;); //Error!
@@ -107,9 +107,9 @@ void Led_CreateLedControlTask( QueueHandle_t eventMaster )
     ledParams->ledState[i] = tmp;
   }
 
-  Event_RegisterCallback(ledParams->evHandler, eNewFlightMode    ,Led_HandleFlightMode, ledParams);
-  Event_RegisterCallback(ledParams->evHandler, eNewCtrlMode      ,Led_HandleCtrltMode, ledParams);
-  Event_RegisterCallback(ledParams->evHandler, ePeripheralError  ,Led_HandlePeripheralError, ledParams);
+  Event_RegisterCallback(ledParams->evHandler, Msg_FlightMode_e,    Led_HandleFlightMode,      ledParams);
+  Event_RegisterCallback(ledParams->evHandler, Msg_CtrlMode_e,      Led_HandleCtrltMode,       ledParams);
+  Event_RegisterCallback(ledParams->evHandler, Msg_Error_e,         Led_HandlePeripheralError, ledParams);
 
 
   portBASE_TYPE create_result;
@@ -134,10 +134,6 @@ void Led_CreateLedControlTask( QueueHandle_t eventMaster )
 void Led_ControlTask( void *pvParameters )
 {
   ledTaskParams * param = (ledTaskParams*)(pvParameters);
-
-  Event_StartInitialize(param->evHandler);
-  Event_EndInitialize(param->evHandler);
-
 
 
   unsigned portBASE_TYPE xLastWakeTime = xTaskGetTickCount();

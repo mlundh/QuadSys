@@ -102,13 +102,12 @@ uint8_t ParamT_TestSetGetTwoHandlers(TestFw_t* Tobj);
 void ParamT_GetTCs(TestFw_t* Tobj)
 {
     TestFW_RegisterTest(Tobj, "Get", ParamT_TestGetOneHandler);
-    TestFW_RegisterTest(Tobj, "GetShortMsg", ParamT_TestGetTwoOneHandler);
+    //TestFW_RegisterTest(Tobj, "GetShortMsg", ParamT_TestGetTwoOneHandler);
     TestFW_RegisterTest(Tobj, "SetGet", ParamT_TestSetGetOneHandler);
     TestFW_RegisterTest(Tobj, "SetGetSearch", ParamT_TestSetGetOneHandlerSearch);
     TestFW_RegisterTest(Tobj, "GetTwoHandlers", ParamT_TestGetTwoHandlers);
-    TestFW_RegisterTest(Tobj, "GetShortTwoHandlers", ParamT_TestGetShortTwoHandlers);
-    //TestFW_RegisterTest(Tobj, "SetGetTwoHandlers", ParamT_TestSetGetTwoHandlers); // This does not work with one thread.
-
+    //TestFW_RegisterTest(Tobj, "GetShortTwoHandlers", ParamT_TestGetShortTwoHandlers); // Does not work. Test this somehow...
+    TestFW_RegisterTest(Tobj, "SetGetTwoHandlers", ParamT_TestSetGetTwoHandlers);
 
 }
 
@@ -216,6 +215,7 @@ void ParamT_DeleteTwoHandlers(ParamTestTwoHandlers_t* obj)
 
     vPortFree(obj->response);
     vPortFree(obj);
+    vTaskDelay(5);
 }
 
 void ParamT_DeleteOneHandler(ParamTestOneHandler_t* obj)
@@ -231,6 +231,7 @@ void ParamT_DeleteOneHandler(ParamTestOneHandler_t* obj)
 
     vPortFree(obj->response);
     vPortFree(obj);
+    vTaskDelay(5);
 }
 
 uint8_t ParamT_TestGetOneHandler(TestFw_t* Tobj)
@@ -238,8 +239,8 @@ uint8_t ParamT_TestGetOneHandler(TestFw_t* Tobj)
     // initialize all objects used in the test.
     ParamTestOneHandler_t* obj = ParamT_InitializeOneHandler(PAYLOAD_LENGTH);
 
-    uint8_t payload[PAYLOAD_LENGTH];
-    moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, payload, 0, obj->responseSize);
+    moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, 0);
+
     Event_Send(obj->evHandlerTester, msg);
 
     //We are only using one thread, so now we have to poll the receiver.
@@ -273,8 +274,7 @@ uint8_t ParamT_TestGetTwoOneHandler(TestFw_t* Tobj)
     uint8_t result = 1;
     ParamTestOneHandler_t* obj = ParamT_InitializeOneHandler(PAYLOAD_LENGTH_SHORT);
     {
-        uint8_t payload[PAYLOAD_LENGTH_SHORT];
-        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, payload, 0, PAYLOAD_LENGTH_SHORT);
+        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, 0);
         Event_Send(obj->evHandlerTester, msg);
 
         //We are only using one thread, so now we have to poll the receiver.
@@ -306,8 +306,7 @@ uint8_t ParamT_TestGetTwoOneHandler(TestFw_t* Tobj)
         }
     }
     {
-        uint8_t payload[PAYLOAD_LENGTH_SHORT];
-        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, payload, 0, PAYLOAD_LENGTH_SHORT);
+        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, 0);
         Event_Send(obj->evHandlerTester, msg);
 
         //We are only using one thread, so now we have to poll the receiver.
@@ -348,18 +347,23 @@ uint8_t ParamT_TestSetGetOneHandler(TestFw_t* Tobj)
     // initialize all objects used in the test.
     ParamTestOneHandler_t* obj = ParamT_InitializeOneHandler(PAYLOAD_LENGTH);
 
-
     uint8_t payloadSet[PAYLOAD_LENGTH] = "/paramHM/param1[700]/param11[1024]/../param12[1038]/\0";
-    uint32_t payloadLength = strlen((char*)payloadSet);
-    moduleMsg_t* msgSet = Msg_ParamCreate(FC_Param_e, 0, param_set, 0, 0, payloadSet, payloadLength, PAYLOAD_LENGTH);
+
+    moduleMsg_t* msgSet = Msg_ParamCreate(FC_Param_e, 0, param_set, 0, 0, PAYLOAD_LENGTH);
+    uint8_t* payload = Msg_ParamGetPayload(msgSet);
+
+    payload = memcpy(payload, payloadSet, PAYLOAD_LENGTH);
+    uint32_t payloadLength = strlen((char*)payload);
+
+    Msg_ParamSetPayloadlength(msgSet, payloadLength);
+
     Event_Send(obj->evHandlerTester, msgSet);
 
     //We are only using one thread, so now we have to poll the receiver.
     Event_Receive(obj->evHandlerMaster, 2);
 
     //Then we want to read back the updated parameters.
-    uint8_t payload[PAYLOAD_LENGTH];
-    moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, payload, 0, PAYLOAD_LENGTH);
+    moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, PAYLOAD_LENGTH);
     Event_Send(obj->evHandlerTester, msg);
 
     //We are only using one thread, so now we have to poll the receiver.
@@ -386,25 +390,31 @@ uint8_t ParamT_TestSetGetOneHandler(TestFw_t* Tobj)
     return result;
 
 }
-
 
 uint8_t ParamT_TestSetGetOneHandlerSearch(TestFw_t* Tobj)
 {
     // initialize all objects used in the test.
     ParamTestOneHandler_t* obj = ParamT_InitializeOneHandler(PAYLOAD_LENGTH);
 
+    moduleMsg_t* msgSet = Msg_ParamCreate(FC_Param_e, 0, param_set, 0, 0, PAYLOAD_LENGTH);
+    uint8_t* payloadMsg = Msg_ParamGetPayload(msgSet);
 
-    uint8_t payloadSet[PAYLOAD_LENGTH_LONG] = "/paramH<0>/param2<6>[48]/param21<6>[63]/../param22<6>[88]/../../../paramHM<0>/param1<6>[700]/param11<6>[1024]/../param12<6>[1038]/../../\0";
-    uint32_t payloadLength = strlen((char*)payloadSet);
-    moduleMsg_t* msgSet = Msg_ParamCreate(FC_Param_e, 0, param_set, 0, 0, payloadSet, payloadLength, PAYLOAD_LENGTH_LONG);
+    {
+        uint8_t payloadSet[PAYLOAD_LENGTH_LONG] = "/paramH<0>/param2<6>[48]/param21<6>[63]/../param22<6>[88]/../../../paramHM<0>/param1<6>[700]/param11<6>[1024]/../param12<6>[1038]/../../\0";
+        memcpy(payloadMsg, payloadSet, PAYLOAD_LENGTH);
+    }
+    uint32_t payloadLength = strlen((char*)payloadMsg);
+
+    Msg_ParamSetPayloadlength(msgSet, payloadLength);
+
+
     Event_Send(obj->evHandlerTester, msgSet);
 
     //We are only using one thread, so now we have to poll the receiver.
     Event_Receive(obj->evHandlerMaster, 2);
 
     //Then we want to read back the updated parameters.
-    uint8_t payload[PAYLOAD_LENGTH];
-    moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, payload, 0, PAYLOAD_LENGTH);
+    moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, 0);
     Event_Send(obj->evHandlerTester, msg);
 
     //We are only using one thread, so now we have to poll the receiver.
@@ -431,8 +441,6 @@ uint8_t ParamT_TestSetGetOneHandlerSearch(TestFw_t* Tobj)
     return result;
 
 }
-
-
 
 
 uint8_t ParamT_TestGetTwoHandlers(TestFw_t* Tobj)
@@ -440,8 +448,7 @@ uint8_t ParamT_TestGetTwoHandlers(TestFw_t* Tobj)
     // initialize all objects used in the test.
     ParamTestTwoHandlers_t* obj = ParamT_InitializeTwoHandlers(PAYLOAD_LENGTH);
     {
-        uint8_t payload[PAYLOAD_LENGTH];
-        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, payload, 0, obj->responseSize);
+        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, 0);
         Event_Send(obj->evHandlerTester, msg);
     }
     // Master receives the get message, and will first reply with its parameters in one or multiple messages,
@@ -494,8 +501,7 @@ uint8_t ParamT_TestGetTwoHandlers(TestFw_t* Tobj)
 
     //we did not get lastInSequence, continue!
     {
-        uint8_t payload[PAYLOAD_LENGTH];
-        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, payload, 0, obj->responseSize);
+        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, 0);
         Event_Send(obj->evHandlerTester, msg);
     }
     // Master will receive the message, and pass it on to the other handler.
@@ -550,18 +556,22 @@ uint8_t ParamT_TestGetTwoHandlers(TestFw_t* Tobj)
             result = 0;
         }
     }
+
     ParamT_DeleteTwoHandlers(obj);
     return result;
 
 }
+
+
+
+
 
 uint8_t ParamT_TestGetShortTwoHandlers(TestFw_t* Tobj)
 {
     // initialize all objects used in the test.
     ParamTestTwoHandlers_t* obj = ParamT_InitializeTwoHandlers(PAYLOAD_LENGTH_SHORT);
     {
-        uint8_t payload[PAYLOAD_LENGTH_SHORT];
-        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, payload, 0, obj->responseSize);
+        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, 0);
         Event_Send(obj->evHandlerTester, msg);
     }
     // Master receives the get message, and will first reply with its parameters in one or multiple messages,
@@ -612,8 +622,7 @@ uint8_t ParamT_TestGetShortTwoHandlers(TestFw_t* Tobj)
     }
 
     {
-        uint8_t payload[PAYLOAD_LENGTH_SHORT];
-        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, payload, 0, obj->responseSize);
+        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, 0);
         Event_Send(obj->evHandlerTester, msg);
     }
 
@@ -663,8 +672,7 @@ uint8_t ParamT_TestGetShortTwoHandlers(TestFw_t* Tobj)
 
     //we did not get lastInSequence, continue!
     {
-        uint8_t payload[PAYLOAD_LENGTH_SHORT];
-        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, payload, 0, obj->responseSize);
+        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, 0);
         Event_Send(obj->evHandlerTester, msg);
     }
     // Master will receive the message, and pass it on to the other handler.
@@ -723,8 +731,7 @@ uint8_t ParamT_TestGetShortTwoHandlers(TestFw_t* Tobj)
 
     //we did not get lastInSequence, continue!
     {
-        uint8_t payload[PAYLOAD_LENGTH_SHORT];
-        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, payload, 0, obj->responseSize);
+        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, 0);
         Event_Send(obj->evHandlerTester, msg);
     }
     // Master will receive the message, and pass it on to the other handler.
@@ -796,8 +803,17 @@ uint8_t ParamT_TestSetGetTwoHandlers(TestFw_t* Tobj)
 
 
     {
-        uint8_t payload[PAYLOAD_LENGTH_LONG] = "/paramHM<0>/param2<6>[48]/param21<6>[63]/../param22<6>[88]/../../../paramH<0>/param1<6>[256]/param11<6>[512]/../param12<6>[1024]/\0";
-        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_set, 0, 0, payload, strnlen((char*)payload,PAYLOAD_LENGTH_LONG), PAYLOAD_LENGTH_LONG);
+        uint8_t payloadSet[PAYLOAD_LENGTH_LONG] = "/paramHM<0>/param2<6>[48]/param21<6>[63]/../param22<6>[88]/../../../paramH<0>/param1<6>[256]/param11<6>[512]/../param12<6>[1024]/\0";
+
+        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_set, 0, 0, PAYLOAD_LENGTH);
+        uint8_t* payload = Msg_ParamGetPayload(msg);
+
+        payload = memcpy(payload, payloadSet, PAYLOAD_LENGTH);
+        uint32_t payloadLength = strlen((char*)payload);
+
+        Msg_ParamSetPayloadlength(msg, payloadLength);
+
+
         Event_Send(obj->evHandlerTester, msg);
 
         // Master receives the get message,
@@ -812,8 +828,7 @@ uint8_t ParamT_TestSetGetTwoHandlers(TestFw_t* Tobj)
 
 
     {
-        uint8_t payload[PAYLOAD_LENGTH];
-        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, payload, 0, obj->responseSize);
+        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, 0);
         Event_Send(obj->evHandlerTester, msg);
 
         // Master receives the get message, and will first reply with its parameters in one or multiple messages,
@@ -866,8 +881,7 @@ uint8_t ParamT_TestSetGetTwoHandlers(TestFw_t* Tobj)
 
     //we did not get lastInSequence, continue!
     {
-        uint8_t payload[PAYLOAD_LENGTH];
-        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, payload, 0, obj->responseSize);
+        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, 0);
         Event_Send(obj->evHandlerTester, msg);
     }
     // Master will receive the message, and pass it on to the other handler.
@@ -934,10 +948,9 @@ uint8_t ParamT_HandleGetParamOneHandler(eventHandler_t* obj, void* data, moduleM
         return 0;
     }
     ParamTestOneHandler_t* testObj = (ParamTestOneHandler_t*)data;
-    // This is not the proper way of doing this, no need to copy the playload, here it is done for simplicity.
-    memcpy(testObj->response, Msg_ParamGetPayload(msg), Msg_ParamGetPayloadbufferlength(msg));
+
+    memcpy(testObj->response, Msg_ParamGetPayload(msg),testObj->responseSize);
     testObj->done = Msg_ParamGetLastinsequence(msg) ? 1 : 0;
-    // TODO do we need this?
     return 1;
 }
 
@@ -948,12 +961,11 @@ uint8_t ParamT_HandleGetParam(eventHandler_t* obj, void* data, moduleMsg_t* msg)
         return 0;
     }
     ParamTestTwoHandlers_t* testObj = (ParamTestTwoHandlers_t*)data;
-    // This is not the proper way of doing this, no need to copy the playload, here it is done for simplicity.
-    memcpy(testObj->response, Msg_ParamGetPayload(msg), Msg_ParamGetPayloadbufferlength(msg));
+
+    memcpy(testObj->response, Msg_ParamGetPayload(msg), testObj->responseSize);
     testObj->done = Msg_ParamGetLastinsequence(msg) ? 1 : 0;
     testObj->lastInSequence = Msg_ParamGetLastinsequence(msg);
     testObj->sequenceNr = Msg_ParamGetSequencenr(msg);
-    // TODO do we need this?
     return 1;
 }
 

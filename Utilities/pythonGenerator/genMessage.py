@@ -1,7 +1,7 @@
 import argparse
 import sys
 import os
-
+from enum import Enum
 
 
 def genCppMessage( lineIn, outputDirCpp):
@@ -157,10 +157,18 @@ def genCMessage( lineIn, outputDirC):
 	createArgsInit = ''
 	serialize = ''
 	deserialize = ''
-	skip = -1
-	skip2 = -1
-	skipInternal = -1
+	stringInit = ''
 	index = 0;
+
+	class StringStatus(Enum):
+		notString = 1
+		String = 2
+		PayloadLength = 3
+		BufferLength = 4
+	if args.member:
+		for value in args.member:
+			value.append(StringStatus.notString) # add an "is string" to the list 
+
 	if args.member:
 		for value in args.member:
 			type = value[0]
@@ -168,18 +176,14 @@ def genCMessage( lineIn, outputDirC):
 			nameinput = value[1]
 			nameFcn = value[1].title()
 			cpyname = name
-			string = False
 			serializationType = type
 			if (type.find('std::string') != -1): # handle the string case.
 				type = 'uint8_t*'#translate to c string.
+				value[2] = StringStatus.String # this is a string
 				serializationType = 'string'
-				args.member.append(['uint32_t',nameFcn+'length']) #add the Length parameter.
-				args.member.append(['uint32_t',nameFcn+'bufferlength']) #add the bufferLength parameter.
-				string = True
-				skip = len(args.member) - 2
-				skip2 = len(args.member) - 1
-				
-				#skipInternal = len(args.member) -1
+				args.member.append(['uint32_t',nameFcn+'length', StringStatus.PayloadLength]) #add the Length parameter.
+				args.member.append(['uint32_t',nameFcn+'bufferlength', StringStatus.BufferLength]) #add the bufferLength parameter. This should be considered not a string sinde it will be a part of the interface.
+				stringInit += ' + (' + nameFcn+'bufferlength)'
 			mSubst = {}
 			mSubst['msgName'] = args.className
 			mSubst['nameFcn'] = nameFcn
@@ -187,22 +191,21 @@ def genCMessage( lineIn, outputDirC):
 			mSubst['serializationType'] = serializationType
 			mSubst['name'] = name
 			mSubst['nameinput'] = nameinput
-			if(skipInternal != index):
-				with open(dir+'/c/fcnHeaderTemplate', 'r') as ftemp:
-					templateString = ftemp.read()
-					mFcnHeader += templateString.format(**mSubst)
-				with open(dir+'/c/fcnImplTemplate', 'r') as ftemp:
-					templateString = ftemp.read()
-					mFcnImpl += templateString.format(**mSubst)
+			with open(dir+'/c/fcnHeaderTemplate', 'r') as ftemp:
+				templateString = ftemp.read()
+				mFcnHeader += templateString.format(**mSubst)
+			with open(dir+'/c/fcnImplTemplate', 'r') as ftemp:
+				templateString = ftemp.read()
+				mFcnImpl += templateString.format(**mSubst)
 			if(not args.internal): # Slip serialization of internal messages not meant for sending to other nodes. 
-				if(string):
+				if(value[2] == StringStatus.String): #this is a string.
 					with open(dir+'/c/serializeStringTemplate', 'r') as ftemp:
 						templateString = ftemp.read()
 						serialize += templateString.format(**mSubst)
 					with open(dir+'/c/deSerializeStringTemplate', 'r') as ftemp:
 						templateString = ftemp.read()
 						deserialize += templateString.format(**mSubst)
-				elif(skip != index and skip2 != index and skipInternal != index):
+				elif(value[2] == StringStatus.notString):
 					with open(dir+'/c/serializeTypeTemplate', 'r') as ftemp:
 						templateString = ftemp.read()
 						serialize += templateString.format(**mSubst)
@@ -211,12 +214,18 @@ def genCMessage( lineIn, outputDirC):
 						deserialize += templateString.format(**mSubst)
 					
 			mDecl += type + ' ' + name + ';\n	'
-			createArgs += ', ' + type + ' ' + value[1]
-			createArgsInit +=  '        ' + 'internal_data->'+name + ' = ' + nameinput + ';\n'
+			if(value[2] == StringStatus.notString or value[2] == StringStatus.BufferLength): #this is not a string
+				createArgs += ', ' + type + ' ' + value[1]
+				createArgsInit +=  '        ' + 'internal_data->'+name + ' = ' + nameinput + ';\n'
+			elif(value[2] == StringStatus.PayloadLength):
+				createArgsInit +=  '        ' + 'internal_data->'+name + ' = ' + '0;\n'
+			elif(value[2] == StringStatus.String):
+				createArgsInit +=  '        ' + 'internal_data->'+name + ' = ' + '(uint8_t*)(internal_data+1);\n'
+
 			index+=1
 
-
 		subst = {}
+		subst['stringInit'] = stringInit
 		subst['includes'] = includes
 		subst['msgName'] = args.className
 		subst['msgNameUpper'] = args.className.upper()

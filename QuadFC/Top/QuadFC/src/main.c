@@ -66,24 +66,26 @@ int main( void )
   /* Create all tasks used in the application.*/
   eventHandler_t* evHandlerM = Event_CreateHandler(FC_Ctrl_e,1);
   eventHandler_t* evHandlerSatellite = Event_CreateHandler(RC_SetpointGen_e,0);
-  eventHandler_t* evHandlerCom = Event_CreateHandler(Router,0);
+  eventHandler_t* evHandlerComRx = Event_CreateHandler(Router,0);
+  eventHandler_t* evHandlerComTx = Event_CreateHandler(Router,0);
+
   eventHandler_t* evHandlerLed = Event_CreateHandler(FC_Led_e,0);
 
-  if(!evHandlerM || !evHandlerCom || !evHandlerLed || !evHandlerSatellite)
+  if(!evHandlerM || !evHandlerComRx || !evHandlerLed || !evHandlerSatellite)
   {
     for(;;); //Error!
   }
 
-  Event_InitHandler(evHandlerM, evHandlerCom);
+  Event_InitHandler(evHandlerM, evHandlerComRx);
+  Event_InitHandler(evHandlerM, evHandlerComTx);
   Event_InitHandler(evHandlerM, evHandlerLed);
   Event_InitHandler(evHandlerM, evHandlerSatellite);
 
   create_main_control_task(evHandlerM);
 
-  Satellite_CreateReceiverTask(evHandlerCom);
-  Led_CreateLedControlTask(evHandler->eventQueue);
-  /*Should always be created last as it loads the parameters - TODO Init state! */
-  Com_CreateTasks(evHandler->eventQueue, stateHandler); // Creates two tasks, RX and TX.
+  Satellite_CreateReceiverTask(evHandlerSatellite);
+  Led_CreateLedControlTask(evHandlerLed);
+  Com_CreateTasks(evHandlerComRx, evHandlerComTx); // Creates two tasks, RX and TX.
 
   /* Start the RTOS scheduler. */
   vTaskStartScheduler();

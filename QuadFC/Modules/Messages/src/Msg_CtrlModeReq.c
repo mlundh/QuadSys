@@ -36,7 +36,7 @@
 moduleMsg_t* Msg_CtrlModeReqCreate(uint32_t destination, uint8_t msgNr
     , uint8_t mode)
 {
-    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_CtrlModeReq_t);
+    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_CtrlModeReq_t) ;
     moduleMsg_t* msg = pvPortMalloc(size);
 
     if(msg)
@@ -57,7 +57,7 @@ moduleMsg_t* Msg_CtrlModeReqCreate(uint32_t destination, uint8_t msgNr
 
 uint8_t Msg_CtrlModeReqGetMode(moduleMsg_t* msg)
 {
-    uint8_t value;
+    uint8_t value = {0};
     if(msg && (msg->type == Msg_CtrlModeReq_e))
     {
         Msg_CtrlModeReq_t* internal_data = (Msg_CtrlModeReq_t*)(msg + 1);

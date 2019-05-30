@@ -36,7 +36,7 @@
 moduleMsg_t* Msg_TransmissionCreate(uint32_t destination, uint8_t msgNr
     , uint8_t status)
 {
-    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_Transmission_t);
+    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_Transmission_t) ;
     moduleMsg_t* msg = pvPortMalloc(size);
 
     if(msg)
@@ -57,7 +57,7 @@ moduleMsg_t* Msg_TransmissionCreate(uint32_t destination, uint8_t msgNr
 
 uint8_t Msg_TransmissionGetStatus(moduleMsg_t* msg)
 {
-    uint8_t value;
+    uint8_t value = {0};
     if(msg && (msg->type == Msg_Transmission_e))
     {
         Msg_Transmission_t* internal_data = (Msg_Transmission_t*)(msg + 1);

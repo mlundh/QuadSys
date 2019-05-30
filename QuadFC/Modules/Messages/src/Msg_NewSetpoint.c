@@ -38,7 +38,7 @@
 moduleMsg_t* Msg_NewSetpointCreate(uint32_t destination, uint8_t msgNr
     , state_data_t setpoint, uint8_t priority, uint8_t validFor)
 {
-    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_NewSetpoint_t);
+    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_NewSetpoint_t) ;
     moduleMsg_t* msg = pvPortMalloc(size);
 
     if(msg)
@@ -61,7 +61,7 @@ moduleMsg_t* Msg_NewSetpointCreate(uint32_t destination, uint8_t msgNr
 
 state_data_t Msg_NewSetpointGetSetpoint(moduleMsg_t* msg)
 {
-    state_data_t value;
+    state_data_t value = {0};
     if(msg && (msg->type == Msg_NewSetpoint_e))
     {
         Msg_NewSetpoint_t* internal_data = (Msg_NewSetpoint_t*)(msg + 1);
@@ -86,7 +86,7 @@ void Msg_NewSetpointSetSetpoint(moduleMsg_t* msg, state_data_t setpoint)
 }
 uint8_t Msg_NewSetpointGetPriority(moduleMsg_t* msg)
 {
-    uint8_t value;
+    uint8_t value = {0};
     if(msg && (msg->type == Msg_NewSetpoint_e))
     {
         Msg_NewSetpoint_t* internal_data = (Msg_NewSetpoint_t*)(msg + 1);
@@ -111,7 +111,7 @@ void Msg_NewSetpointSetPriority(moduleMsg_t* msg, uint8_t priority)
 }
 uint8_t Msg_NewSetpointGetValidfor(moduleMsg_t* msg)
 {
-    uint8_t value;
+    uint8_t value = {0};
     if(msg && (msg->type == Msg_NewSetpoint_e))
     {
         Msg_NewSetpoint_t* internal_data = (Msg_NewSetpoint_t*)(msg + 1);

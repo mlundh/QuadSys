@@ -36,9 +36,9 @@
 
 
 moduleMsg_t* Msg_DebugCreate(uint32_t destination, uint8_t msgNr
-    , uint8_t* payload, uint32_t Payloadlength, uint32_t Payloadbufferlength)
+    , uint32_t Payloadbufferlength)
 {
-    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_Debug_t);
+    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_Debug_t)  + (Payloadbufferlength);
     moduleMsg_t* msg = pvPortMalloc(size);
 
     if(msg)
@@ -51,8 +51,8 @@ moduleMsg_t* Msg_DebugCreate(uint32_t destination, uint8_t msgNr
 
         Msg_Debug_t* internal_data = (Msg_Debug_t*)(msg + 1);
         
-        internal_data->mPayload = payload;
-        internal_data->mPayloadlength = Payloadlength;
+        internal_data->mPayload = (uint8_t*)(internal_data+1);
+        internal_data->mPayloadlength = 0;
         internal_data->mPayloadbufferlength = Payloadbufferlength;
 
     }
@@ -61,7 +61,7 @@ moduleMsg_t* Msg_DebugCreate(uint32_t destination, uint8_t msgNr
 
 uint8_t* Msg_DebugGetPayload(moduleMsg_t* msg)
 {
-    uint8_t* value;
+    uint8_t* value = {0};
     if(msg && (msg->type == Msg_Debug_e))
     {
         Msg_Debug_t* internal_data = (Msg_Debug_t*)(msg + 1);
@@ -86,7 +86,7 @@ void Msg_DebugSetPayload(moduleMsg_t* msg, uint8_t* payload)
 }
 uint32_t Msg_DebugGetPayloadlength(moduleMsg_t* msg)
 {
-    uint32_t value;
+    uint32_t value = {0};
     if(msg && (msg->type == Msg_Debug_e))
     {
         Msg_Debug_t* internal_data = (Msg_Debug_t*)(msg + 1);
@@ -111,7 +111,7 @@ void Msg_DebugSetPayloadlength(moduleMsg_t* msg, uint32_t Payloadlength)
 }
 uint32_t Msg_DebugGetPayloadbufferlength(moduleMsg_t* msg)
 {
-    uint32_t value;
+    uint32_t value = {0};
     if(msg && (msg->type == Msg_Debug_e))
     {
         Msg_Debug_t* internal_data = (Msg_Debug_t*)(msg + 1);

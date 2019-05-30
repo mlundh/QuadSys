@@ -23,8 +23,8 @@
  */
 
 #include <stddef.h>
-#include "Communication/inc/slip_packet.h"
-#include "Communication/inc/crc.h"
+#include "Components/SLIP/inc/slip_packet.h"
+#include "Components/SLIP/inc/crc.h"
 #include "FreeRTOS.h"
 
 /**
@@ -64,6 +64,15 @@ SLIP_t* Slip_Create(uint16_t size)
   return package;
 }
 
+void Slip_Delete(SLIP_t* obj)
+{
+  if(!obj)
+  {
+    return;
+  }
+  vPortFree(obj->payload);
+  vPortFree(obj);
+}
 uint16_t Slip_Packetize(uint8_t* buffer, uint16_t dataLength, uint16_t BufferLength, SLIP_t *packet)
 {
   if((dataLength + 4) > packet->allocatedSize) // packet must be at least as long as buffer + start and stop bytes and crc.

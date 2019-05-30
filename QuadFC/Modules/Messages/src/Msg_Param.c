@@ -39,9 +39,9 @@
 
 
 moduleMsg_t* Msg_ParamCreate(uint32_t destination, uint8_t msgNr
-    , uint8_t control, uint8_t sequenceNr, uint8_t lastInSequence, uint8_t* payload, uint32_t Payloadlength, uint32_t Payloadbufferlength)
+    , uint8_t control, uint8_t sequenceNr, uint8_t lastInSequence, uint32_t Payloadbufferlength)
 {
-    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_Param_t);
+    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_Param_t)  + (Payloadbufferlength);
     moduleMsg_t* msg = pvPortMalloc(size);
 
     if(msg)
@@ -57,8 +57,8 @@ moduleMsg_t* Msg_ParamCreate(uint32_t destination, uint8_t msgNr
         internal_data->mControl = control;
         internal_data->mSequencenr = sequenceNr;
         internal_data->mLastinsequence = lastInSequence;
-        internal_data->mPayload = payload;
-        internal_data->mPayloadlength = Payloadlength;
+        internal_data->mPayload = (uint8_t*)(internal_data+1);
+        internal_data->mPayloadlength = 0;
         internal_data->mPayloadbufferlength = Payloadbufferlength;
 
     }
@@ -67,7 +67,7 @@ moduleMsg_t* Msg_ParamCreate(uint32_t destination, uint8_t msgNr
 
 uint8_t Msg_ParamGetControl(moduleMsg_t* msg)
 {
-    uint8_t value;
+    uint8_t value = {0};
     if(msg && (msg->type == Msg_Param_e))
     {
         Msg_Param_t* internal_data = (Msg_Param_t*)(msg + 1);
@@ -92,7 +92,7 @@ void Msg_ParamSetControl(moduleMsg_t* msg, uint8_t control)
 }
 uint8_t Msg_ParamGetSequencenr(moduleMsg_t* msg)
 {
-    uint8_t value;
+    uint8_t value = {0};
     if(msg && (msg->type == Msg_Param_e))
     {
         Msg_Param_t* internal_data = (Msg_Param_t*)(msg + 1);
@@ -117,7 +117,7 @@ void Msg_ParamSetSequencenr(moduleMsg_t* msg, uint8_t sequenceNr)
 }
 uint8_t Msg_ParamGetLastinsequence(moduleMsg_t* msg)
 {
-    uint8_t value;
+    uint8_t value = {0};
     if(msg && (msg->type == Msg_Param_e))
     {
         Msg_Param_t* internal_data = (Msg_Param_t*)(msg + 1);
@@ -142,7 +142,7 @@ void Msg_ParamSetLastinsequence(moduleMsg_t* msg, uint8_t lastInSequence)
 }
 uint8_t* Msg_ParamGetPayload(moduleMsg_t* msg)
 {
-    uint8_t* value;
+    uint8_t* value = {0};
     if(msg && (msg->type == Msg_Param_e))
     {
         Msg_Param_t* internal_data = (Msg_Param_t*)(msg + 1);
@@ -167,7 +167,7 @@ void Msg_ParamSetPayload(moduleMsg_t* msg, uint8_t* payload)
 }
 uint32_t Msg_ParamGetPayloadlength(moduleMsg_t* msg)
 {
-    uint32_t value;
+    uint32_t value = {0};
     if(msg && (msg->type == Msg_Param_e))
     {
         Msg_Param_t* internal_data = (Msg_Param_t*)(msg + 1);
@@ -192,7 +192,7 @@ void Msg_ParamSetPayloadlength(moduleMsg_t* msg, uint32_t Payloadlength)
 }
 uint32_t Msg_ParamGetPayloadbufferlength(moduleMsg_t* msg)
 {
-    uint32_t value;
+    uint32_t value = {0};
     if(msg && (msg->type == Msg_Param_e))
     {
         Msg_Param_t* internal_data = (Msg_Param_t*)(msg + 1);

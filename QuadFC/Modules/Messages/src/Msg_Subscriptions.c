@@ -36,7 +36,7 @@
 moduleMsg_t* Msg_SubscriptionsCreate(uint32_t destination, uint8_t msgNr
     , uint32_t subscriptions)
 {
-    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_Subscriptions_t);
+    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_Subscriptions_t) ;
     moduleMsg_t* msg = pvPortMalloc(size);
 
     if(msg)
@@ -57,7 +57,7 @@ moduleMsg_t* Msg_SubscriptionsCreate(uint32_t destination, uint8_t msgNr
 
 uint32_t Msg_SubscriptionsGetSubscriptions(moduleMsg_t* msg)
 {
-    uint32_t value;
+    uint32_t value = {0};
     if(msg && (msg->type == Msg_Subscriptions_e))
     {
         Msg_Subscriptions_t* internal_data = (Msg_Subscriptions_t*)(msg + 1);

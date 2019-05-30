@@ -36,9 +36,9 @@
 
 
 moduleMsg_t* Msg_ErrorCreate(uint32_t destination, uint8_t msgNr
-    , uint8_t* error, uint32_t Errorlength, uint32_t Errorbufferlength)
+    , uint32_t Errorbufferlength)
 {
-    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_Error_t);
+    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_Error_t)  + (Errorbufferlength);
     moduleMsg_t* msg = pvPortMalloc(size);
 
     if(msg)
@@ -51,8 +51,8 @@ moduleMsg_t* Msg_ErrorCreate(uint32_t destination, uint8_t msgNr
 
         Msg_Error_t* internal_data = (Msg_Error_t*)(msg + 1);
         
-        internal_data->mError = error;
-        internal_data->mErrorlength = Errorlength;
+        internal_data->mError = (uint8_t*)(internal_data+1);
+        internal_data->mErrorlength = 0;
         internal_data->mErrorbufferlength = Errorbufferlength;
 
     }
@@ -61,7 +61,7 @@ moduleMsg_t* Msg_ErrorCreate(uint32_t destination, uint8_t msgNr
 
 uint8_t* Msg_ErrorGetError(moduleMsg_t* msg)
 {
-    uint8_t* value;
+    uint8_t* value = {0};
     if(msg && (msg->type == Msg_Error_e))
     {
         Msg_Error_t* internal_data = (Msg_Error_t*)(msg + 1);
@@ -86,7 +86,7 @@ void Msg_ErrorSetError(moduleMsg_t* msg, uint8_t* error)
 }
 uint32_t Msg_ErrorGetErrorlength(moduleMsg_t* msg)
 {
-    uint32_t value;
+    uint32_t value = {0};
     if(msg && (msg->type == Msg_Error_e))
     {
         Msg_Error_t* internal_data = (Msg_Error_t*)(msg + 1);
@@ -111,7 +111,7 @@ void Msg_ErrorSetErrorlength(moduleMsg_t* msg, uint32_t Errorlength)
 }
 uint32_t Msg_ErrorGetErrorbufferlength(moduleMsg_t* msg)
 {
-    uint32_t value;
+    uint32_t value = {0};
     if(msg && (msg->type == Msg_Error_e))
     {
         Msg_Error_t* internal_data = (Msg_Error_t*)(msg + 1);

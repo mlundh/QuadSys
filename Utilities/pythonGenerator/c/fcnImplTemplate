@@ -1,6 +1,6 @@
 {type} {msgName}Get{nameFcn}(moduleMsg_t* msg)
 {{
-    {type} value;
+    {type} value = {{0}};
     if(msg && (msg->type == {msgName}_e))
     {{
         {msgName}_t* internal_data = ({msgName}_t*)(msg + 1);

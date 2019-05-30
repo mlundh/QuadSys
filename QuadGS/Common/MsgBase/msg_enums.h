@@ -47,6 +47,8 @@ typedef enum mode{
 typedef enum {
     param_set,
     param_get,
+	param_save,
+	param_load,
 	param_error,
 }ParamCtrl;
 

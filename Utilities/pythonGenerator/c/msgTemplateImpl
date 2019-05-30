@@ -35,7 +35,7 @@
 moduleMsg_t* {msgName}Create(uint32_t destination, uint8_t msgNr
     {createArgs})
 {{
-    size_t size = sizeof(moduleMsg_t) + sizeof({msgName}_t);
+    size_t size = sizeof(moduleMsg_t) + sizeof({msgName}_t) {stringInit};
     moduleMsg_t* msg = pvPortMalloc(size);
 
     if(msg)

@@ -33,7 +33,7 @@
 
 
 moduleMsg_t* Msg_ErrorCreate(uint32_t destination, uint8_t msgNr
-    , uint8_t* error, uint32_t Errorlength, uint32_t Errorbufferlength);
+    , uint32_t Errorbufferlength);
 
 uint8_t* Msg_ErrorGetError(moduleMsg_t* msg);
 

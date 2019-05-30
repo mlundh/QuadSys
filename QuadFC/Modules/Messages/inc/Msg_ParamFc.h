@@ -33,7 +33,7 @@
 
 
 moduleMsg_t* Msg_ParamFcCreate(uint32_t destination, uint8_t msgNr
-    , uint8_t control, int8_t sequenceNr, uint8_t lastInSequence, uint8_t* payload, uint32_t Payloadlength, uint32_t Payloadbufferlength);
+    , uint8_t control, int8_t sequenceNr, uint8_t lastInSequence, uint32_t Payloadbufferlength);
 
 uint8_t Msg_ParamFcGetControl(moduleMsg_t* msg);
 

@@ -36,7 +36,7 @@
 moduleMsg_t* Msg_LogNameReqCreate(uint32_t destination, uint8_t msgNr
     , QueueHandle_t data)
 {
-    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_LogNameReq_t);
+    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_LogNameReq_t) ;
     moduleMsg_t* msg = pvPortMalloc(size);
 
     if(msg)
@@ -57,7 +57,7 @@ moduleMsg_t* Msg_LogNameReqCreate(uint32_t destination, uint8_t msgNr
 
 QueueHandle_t Msg_LogNameReqGetData(moduleMsg_t* msg)
 {
-    QueueHandle_t value;
+    QueueHandle_t value = {0};
     if(msg && (msg->type == Msg_LogNameReq_e))
     {
         Msg_LogNameReq_t* internal_data = (Msg_LogNameReq_t*)(msg + 1);

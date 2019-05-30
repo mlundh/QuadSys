@@ -30,19 +30,13 @@
 #include <stdint.h>
 #include "Communication/inc/quad_serial_packet.h"
 #include "Modules/MsgBase/inc/common_types.h"
+#include "EventHandler/inc/event_handler.h"
+
 /**
  * Create the communication tasks. These tasks are responsible for
  * communication with external components such as QuadGS. They are
  * also responsible for setting parameters.
  */
-void Com_CreateTasks(eventHandler_t* eventHandler);
-
-/**
- * Interface function for sending a QSP to the external component (QuadGS).
- * @param packet  QSP to send.
- * @return        1 if sucessful, 0 otherwise.
- */
-uint8_t Com_SendQSP( QSP_t *packet );
-
+void Com_CreateTasks(eventHandler_t* eventHandlerRx, eventHandler_t* eventHandlerTx );
 
 #endif /* COMMUNICATION-TASKS-H- */

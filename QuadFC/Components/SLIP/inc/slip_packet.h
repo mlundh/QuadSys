@@ -57,6 +57,12 @@ typedef struct SLIP
  */
 SLIP_t* Slip_Create(uint16_t size);
 
+/**
+ * Delete the SLIP package.
+ * @param obj
+ */
+void Slip_Delete(SLIP_t* obj);
+
 
 /**
  * Packetize buffer into a SLIP format, copy content of buffer to

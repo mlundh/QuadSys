@@ -36,7 +36,7 @@
 moduleMsg_t* Msg_FlightModeReqCreate(uint32_t destination, uint8_t msgNr
     , uint8_t mode)
 {
-    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_FlightModeReq_t);
+    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_FlightModeReq_t) ;
     moduleMsg_t* msg = pvPortMalloc(size);
 
     if(msg)
@@ -57,7 +57,7 @@ moduleMsg_t* Msg_FlightModeReqCreate(uint32_t destination, uint8_t msgNr
 
 uint8_t Msg_FlightModeReqGetMode(moduleMsg_t* msg)
 {
-    uint8_t value;
+    uint8_t value = {0};
     if(msg && (msg->type == Msg_FlightModeReq_e))
     {
         Msg_FlightModeReq_t* internal_data = (Msg_FlightModeReq_t*)(msg + 1);
