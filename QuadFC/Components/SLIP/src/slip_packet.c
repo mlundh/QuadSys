@@ -55,7 +55,7 @@ SLIP_t* Slip_Create(uint16_t size)
   }
   SLIP_t *package = pvPortMalloc( sizeof(SLIP_t) );
   package->payload = pvPortMalloc(sizeof(uint8_t) * size);
-  if(!package || !package->payload)
+  if(!package || !package->payload) // TODO one malloc...
   {
     return NULL;
   }

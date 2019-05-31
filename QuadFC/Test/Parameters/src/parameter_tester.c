@@ -93,6 +93,7 @@ uint8_t ParamT_TestGetOneHandler(TestFw_t* Tobj);
 uint8_t ParamT_TestGetTwoOneHandler(TestFw_t* Tobj);
 uint8_t ParamT_TestSetGetOneHandler(TestFw_t* Tobj);
 uint8_t ParamT_TestSetGetOneHandlerSearch(TestFw_t* Tobj);
+uint8_t ParamT_TestSaveLoadOneHandler(TestFw_t* Tobj);
 uint8_t ParamT_TestGetTwoHandlers(TestFw_t* Tobj);
 uint8_t ParamT_TestGetShortTwoHandlers(TestFw_t* Tobj);
 uint8_t ParamT_TestSetGetTwoHandlers(TestFw_t* Tobj);
@@ -102,11 +103,12 @@ uint8_t ParamT_TestSetGetTwoHandlers(TestFw_t* Tobj);
 void ParamT_GetTCs(TestFw_t* Tobj)
 {
     TestFW_RegisterTest(Tobj, "Get", ParamT_TestGetOneHandler);
-    //TestFW_RegisterTest(Tobj, "GetShortMsg", ParamT_TestGetTwoOneHandler);
+    //TestFW_RegisterTest(Tobj, "GetShortMsg", ParamT_TestGetTwoOneHandler);// Does not work. Set internal length of messages in param handler to 60 to verify function.
     TestFW_RegisterTest(Tobj, "SetGet", ParamT_TestSetGetOneHandler);
     TestFW_RegisterTest(Tobj, "SetGetSearch", ParamT_TestSetGetOneHandlerSearch);
+    TestFW_RegisterTest(Tobj, "SaveLoad", ParamT_TestSaveLoadOneHandler);
     TestFW_RegisterTest(Tobj, "GetTwoHandlers", ParamT_TestGetTwoHandlers);
-    //TestFW_RegisterTest(Tobj, "GetShortTwoHandlers", ParamT_TestGetShortTwoHandlers); // Does not work. Test this somehow...
+    //TestFW_RegisterTest(Tobj, "GetShortTwoHandlers", ParamT_TestGetShortTwoHandlers); // Does not work. Set internal length of messages in param handler to 60 to verify function.
     TestFW_RegisterTest(Tobj, "SetGetTwoHandlers", ParamT_TestSetGetTwoHandlers);
 
 }
@@ -441,6 +443,117 @@ uint8_t ParamT_TestSetGetOneHandlerSearch(TestFw_t* Tobj)
     return result;
 
 }
+
+
+uint8_t ParamT_TestSaveLoadOneHandler(TestFw_t* Tobj)
+{
+    // initialize all objects used in the test.
+    ParamTestOneHandler_t* obj = ParamT_InitializeOneHandler(PAYLOAD_LENGTH);
+
+    {
+        // Write non-default values.
+        moduleMsg_t* msgSet = Msg_ParamCreate(FC_Param_e, 0, param_set, 0, 0, PAYLOAD_LENGTH);
+        uint8_t* payloadMsg = Msg_ParamGetPayload(msgSet);
+
+        uint8_t payloadSet[PAYLOAD_LENGTH_LONG] = "/paramHM<0>/param1<6>[700]/param11<6>[1024]/../param12<6>[1038]/../../\0";
+        memcpy(payloadMsg, payloadSet, PAYLOAD_LENGTH);
+        uint32_t payloadLength = strlen((char*)payloadMsg);
+        Msg_ParamSetPayloadlength(msgSet, payloadLength);
+        Event_Send(obj->evHandlerTester, msgSet);
+        //We are only using one thread, so now we have to poll the receiver.
+        Event_Receive(obj->evHandlerMaster, 2);
+
+    }
+    {
+        //Then save the parameters.
+        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_save, 0, 0, 0);
+        Event_Send(obj->evHandlerTester, msg);
+        Event_Receive(obj->evHandlerMaster, 2);
+
+    }
+    // Then write new parameters.
+    {
+        // Write non-default values.
+        moduleMsg_t* msgSet = Msg_ParamCreate(FC_Param_e, 0, param_set, 0, 0, PAYLOAD_LENGTH);
+        uint8_t* payloadMsg = Msg_ParamGetPayload(msgSet);
+
+        uint8_t payloadSet[PAYLOAD_LENGTH_LONG] = "/paramHM<0>/param1<6>[9]/param11<6>[9]/../param12<6>[9]/../../\0";
+        memcpy(payloadMsg, payloadSet, PAYLOAD_LENGTH);
+        uint32_t payloadLength = strlen((char*)payloadMsg);
+        Msg_ParamSetPayloadlength(msgSet, payloadLength);
+        Event_Send(obj->evHandlerTester, msgSet);
+        Event_Receive(obj->evHandlerMaster, 2);
+
+    }
+
+
+    //Then we want to read back the updated parameters.
+    {
+        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, 0);
+        Event_Send(obj->evHandlerTester, msg);
+
+        //We are only using one thread, so now we have to poll the receiver.
+        Event_Receive(obj->evHandlerMaster, 2);
+
+        //This should have generated a response, poll the sender.
+        Event_Receive(obj->evHandlerTester, 2);
+    }
+    //The response should have populated the payload, make sure it has done so in a correct way.
+    uint8_t result = 0;
+
+    {
+        char expected[PAYLOAD_LENGTH] = "/paramHM<0>/param1<6>[9]/param11<6>[9]/../param12<6>[9]/../../";
+        if(strncmp((char*)obj->response, expected,PAYLOAD_LENGTH) == 0)
+        {
+            result = 1;
+        }
+        else
+        {
+            char tmpstr[REPORT_LONG] = {0};
+            snprintf (tmpstr, REPORT_LONG,"Expected:\n%s \nGot:\n%s\n", expected, obj->response);
+            TestFW_Report(Tobj, tmpstr);
+        }
+    }
+    // Now load the saved parameters.
+    {
+        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_load, 0, 0, 0);
+        Event_Send(obj->evHandlerTester, msg);
+        Event_Receive(obj->evHandlerMaster, 2);
+        Event_Receive(obj->evHandlerMaster, 2);
+
+    }
+
+    //Then we want to read back the loaded parameters.
+    {
+        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, 0);
+        Event_Send(obj->evHandlerTester, msg);
+
+        //We are only using one thread, so now we have to poll the receiver.
+        Event_Receive(obj->evHandlerMaster, 2);
+
+        //This should have generated a response, poll the sender.
+        Event_Receive(obj->evHandlerTester, 2);
+    }
+    //The response should have populated the payload, make sure it has done so in a correct way.
+    {
+        char expected[PAYLOAD_LENGTH] = "/paramHM<0>/param1<6>[700]/param11<6>[1024]/../param12<6>[1038]/../../";
+        if(strncmp((char*)obj->response, expected,PAYLOAD_LENGTH) == 0)
+        {
+            result = 1;
+        }
+        else
+        {
+            result = 0;
+            char tmpstr[REPORT_LONG] = {0};
+            snprintf (tmpstr, REPORT_LONG,"Expected:\n%s \nGot:\n%s\n", expected, obj->response);
+            TestFW_Report(Tobj, tmpstr);
+        }
+    }
+    ParamT_DeleteOneHandler(obj);
+    return result;
+
+}
+
 
 
 uint8_t ParamT_TestGetTwoHandlers(TestFw_t* Tobj)
