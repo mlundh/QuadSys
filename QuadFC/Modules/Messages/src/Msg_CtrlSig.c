@@ -25,6 +25,7 @@
 
 #include "../inc/Msg_CtrlSig.h"
 #include "FreeRTOS.h"
+#include "task.h"
 
  typedef struct
 {
@@ -66,6 +67,10 @@ control_signal_t Msg_CtrlSigGetSignal(moduleMsg_t* msg)
             value = internal_data->mSignal;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
     return value;
 }
 
@@ -78,6 +83,10 @@ void Msg_CtrlSigSetSignal(moduleMsg_t* msg, control_signal_t signal)
         {
             internal_data->mSignal  = signal;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
 }
 

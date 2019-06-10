@@ -25,6 +25,7 @@
 
 #include "../inc/Msg_CtrlMode.h"
 #include "FreeRTOS.h"
+#include "task.h"
 
  typedef struct
 {
@@ -66,6 +67,10 @@ uint8_t Msg_CtrlModeGetMode(moduleMsg_t* msg)
             value = internal_data->mMode;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
     return value;
 }
 
@@ -78,6 +83,10 @@ void Msg_CtrlModeSetMode(moduleMsg_t* msg, uint8_t mode)
         {
             internal_data->mMode  = mode;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
 }
 

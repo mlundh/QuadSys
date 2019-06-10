@@ -102,14 +102,14 @@ uint8_t ParamT_TestSetGetTwoHandlers(TestFw_t* Tobj);
 
 void ParamT_GetTCs(TestFw_t* Tobj)
 {
-    TestFW_RegisterTest(Tobj, "Get", ParamT_TestGetOneHandler);
+    TestFW_RegisterTest(Tobj, "Param Get", ParamT_TestGetOneHandler);
     //TestFW_RegisterTest(Tobj, "GetShortMsg", ParamT_TestGetTwoOneHandler);// Does not work. Set internal length of messages in param handler to 60 to verify function.
-    TestFW_RegisterTest(Tobj, "SetGet", ParamT_TestSetGetOneHandler);
-    TestFW_RegisterTest(Tobj, "SetGetSearch", ParamT_TestSetGetOneHandlerSearch);
-    TestFW_RegisterTest(Tobj, "SaveLoad", ParamT_TestSaveLoadOneHandler);
-    TestFW_RegisterTest(Tobj, "GetTwoHandlers", ParamT_TestGetTwoHandlers);
+    TestFW_RegisterTest(Tobj, "Param SetGet", ParamT_TestSetGetOneHandler);
+    TestFW_RegisterTest(Tobj, "Param SetGetSearch", ParamT_TestSetGetOneHandlerSearch);
+    TestFW_RegisterTest(Tobj, "Param SaveLoad", ParamT_TestSaveLoadOneHandler);
+    TestFW_RegisterTest(Tobj, "Param GetTwoHandlers", ParamT_TestGetTwoHandlers);
     //TestFW_RegisterTest(Tobj, "GetShortTwoHandlers", ParamT_TestGetShortTwoHandlers); // Does not work. Set internal length of messages in param handler to 60 to verify function.
-    TestFW_RegisterTest(Tobj, "SetGetTwoHandlers", ParamT_TestSetGetTwoHandlers);
+    TestFW_RegisterTest(Tobj, "Param SetGetTwoHandlers", ParamT_TestSetGetTwoHandlers);
 
 }
 
@@ -449,6 +449,8 @@ uint8_t ParamT_TestSaveLoadOneHandler(TestFw_t* Tobj)
 {
     // initialize all objects used in the test.
     ParamTestOneHandler_t* obj = ParamT_InitializeOneHandler(PAYLOAD_LENGTH);
+    uint8_t result = 0;
+
 
     {
         // Write non-default values.
@@ -472,6 +474,7 @@ uint8_t ParamT_TestSaveLoadOneHandler(TestFw_t* Tobj)
 
     }
     // Then write new parameters.
+
     {
         // Write non-default values.
         moduleMsg_t* msgSet = Msg_ParamCreate(FC_Param_e, 0, param_set, 0, 0, PAYLOAD_LENGTH);
@@ -486,7 +489,6 @@ uint8_t ParamT_TestSaveLoadOneHandler(TestFw_t* Tobj)
 
     }
 
-
     //Then we want to read back the updated parameters.
     {
         moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, 0);
@@ -499,7 +501,6 @@ uint8_t ParamT_TestSaveLoadOneHandler(TestFw_t* Tobj)
         Event_Receive(obj->evHandlerTester, 2);
     }
     //The response should have populated the payload, make sure it has done so in a correct way.
-    uint8_t result = 0;
 
     {
         char expected[PAYLOAD_LENGTH] = "/paramHM<0>/param1<6>[9]/param11<6>[9]/../param12<6>[9]/../../";
@@ -514,6 +515,7 @@ uint8_t ParamT_TestSaveLoadOneHandler(TestFw_t* Tobj)
             TestFW_Report(Tobj, tmpstr);
         }
     }
+
     // Now load the saved parameters.
     {
         moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_load, 0, 0, 0);

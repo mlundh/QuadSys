@@ -9,6 +9,10 @@
             value = internal_data->{name};
         }}
     }}
+    else
+    {{
+       configASSERT(0);
+    }}
     return value;
 }}
 
@@ -21,5 +25,9 @@ void {msgName}Set{nameFcn}(moduleMsg_t* msg, {type} {nameinput})
         {{
             internal_data->{name}  = {nameinput};
         }}
+    }}
+    else
+    {{
+       configASSERT(0);
     }}
 }}

@@ -25,6 +25,7 @@
 
 #include "../inc/Msg_NewState.h"
 #include "FreeRTOS.h"
+#include "task.h"
 
  typedef struct
 {
@@ -66,6 +67,10 @@ state_data_t Msg_NewStateGetState(moduleMsg_t* msg)
             value = internal_data->mState;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
     return value;
 }
 
@@ -78,6 +83,10 @@ void Msg_NewStateSetState(moduleMsg_t* msg, state_data_t state)
         {
             internal_data->mState  = state;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
 }
 

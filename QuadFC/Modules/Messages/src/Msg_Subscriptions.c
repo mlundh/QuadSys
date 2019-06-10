@@ -25,6 +25,7 @@
 
 #include "../inc/Msg_Subscriptions.h"
 #include "FreeRTOS.h"
+#include "task.h"
 
  typedef struct
 {
@@ -66,6 +67,10 @@ uint32_t Msg_SubscriptionsGetSubscriptions(moduleMsg_t* msg)
             value = internal_data->mSubscriptions;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
     return value;
 }
 
@@ -78,6 +83,10 @@ void Msg_SubscriptionsSetSubscriptions(moduleMsg_t* msg, uint32_t subscriptions)
         {
             internal_data->mSubscriptions  = subscriptions;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
 }
 

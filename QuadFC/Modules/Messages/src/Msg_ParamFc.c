@@ -25,6 +25,7 @@
 
 #include "../inc/Msg_ParamFc.h"
 #include "FreeRTOS.h"
+#include "task.h"
 
  typedef struct
 {
@@ -76,6 +77,10 @@ uint8_t Msg_ParamFcGetControl(moduleMsg_t* msg)
             value = internal_data->mControl;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
     return value;
 }
 
@@ -89,6 +94,10 @@ void Msg_ParamFcSetControl(moduleMsg_t* msg, uint8_t control)
             internal_data->mControl  = control;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
 }
 int8_t Msg_ParamFcGetSequencenr(moduleMsg_t* msg)
 {
@@ -100,6 +109,10 @@ int8_t Msg_ParamFcGetSequencenr(moduleMsg_t* msg)
         {
             value = internal_data->mSequencenr;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
     return value;
 }
@@ -114,6 +127,10 @@ void Msg_ParamFcSetSequencenr(moduleMsg_t* msg, int8_t sequenceNr)
             internal_data->mSequencenr  = sequenceNr;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
 }
 uint8_t Msg_ParamFcGetLastinsequence(moduleMsg_t* msg)
 {
@@ -125,6 +142,10 @@ uint8_t Msg_ParamFcGetLastinsequence(moduleMsg_t* msg)
         {
             value = internal_data->mLastinsequence;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
     return value;
 }
@@ -139,6 +160,10 @@ void Msg_ParamFcSetLastinsequence(moduleMsg_t* msg, uint8_t lastInSequence)
             internal_data->mLastinsequence  = lastInSequence;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
 }
 uint8_t* Msg_ParamFcGetPayload(moduleMsg_t* msg)
 {
@@ -150,6 +175,10 @@ uint8_t* Msg_ParamFcGetPayload(moduleMsg_t* msg)
         {
             value = internal_data->mPayload;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
     return value;
 }
@@ -164,6 +193,10 @@ void Msg_ParamFcSetPayload(moduleMsg_t* msg, uint8_t* payload)
             internal_data->mPayload  = payload;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
 }
 uint32_t Msg_ParamFcGetPayloadlength(moduleMsg_t* msg)
 {
@@ -175,6 +208,10 @@ uint32_t Msg_ParamFcGetPayloadlength(moduleMsg_t* msg)
         {
             value = internal_data->mPayloadlength;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
     return value;
 }
@@ -189,6 +226,10 @@ void Msg_ParamFcSetPayloadlength(moduleMsg_t* msg, uint32_t Payloadlength)
             internal_data->mPayloadlength  = Payloadlength;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
 }
 uint32_t Msg_ParamFcGetPayloadbufferlength(moduleMsg_t* msg)
 {
@@ -200,6 +241,10 @@ uint32_t Msg_ParamFcGetPayloadbufferlength(moduleMsg_t* msg)
         {
             value = internal_data->mPayloadbufferlength;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
     return value;
 }
@@ -213,6 +258,10 @@ void Msg_ParamFcSetPayloadbufferlength(moduleMsg_t* msg, uint32_t Payloadbufferl
         {
             internal_data->mPayloadbufferlength  = Payloadbufferlength;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
 }
 

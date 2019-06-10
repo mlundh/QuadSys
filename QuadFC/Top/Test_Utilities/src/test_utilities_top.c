@@ -25,6 +25,11 @@
 #include <board.h>
 #include <gpio.h>
 #include <pio.h>
+/* Kernel includes. */
+#include "FreeRTOS.h"
+#include "task.h"
+#include "queue.h"
+#include "timers.h"
 //Include testers
 #include "Test/TestFW/test_framework.h"
 #include "Test/Math/math_tester.h"
@@ -52,7 +57,7 @@ int main( void )
   /* Prepare the hardware to run QuadFC. */
   prvSetupHardware();
 
-  TestFw_t* testFW = TestFW_Create("Suite1");
+  TestFw_t* testFW = TestFW_Create("Math and Util");
   /**************Add test module instantiation here***************/
   MathTest_GetTCs(testFW);
   Utilities_GetTCs(testFW);
@@ -60,7 +65,6 @@ int main( void )
 
   uint8_t result = TestFW_ExecuteTests(testFW);
   uint32_t heartbeat_counter = 0;
-  TestFW_GetReport(testFW);
   uint32_t pin = (result ? PIN_31_GPIO : PIN_41_GPIO);
   while ( 1 )
   {
@@ -85,4 +89,24 @@ static void prvSetupHardware( void )
   /* Atmel library function to setup for the evaluation kit being used. */
   board_init();
 
+}
+
+void vApplicationMallocFailedHook( void )
+{
+    taskDISABLE_INTERRUPTS();
+    for ( ;; )
+    {
+    }
+}
+
+void vApplicationStackOverflowHook( TaskHandle_t pxTask,
+        signed char *pcTaskName )
+{
+    (void) pcTaskName;
+    (void) pxTask;
+
+    taskDISABLE_INTERRUPTS();
+    for ( ;; )
+    {
+    }
 }

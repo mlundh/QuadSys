@@ -32,7 +32,7 @@
 # <nameOfExec>_DEPS. Add all dependencies to this variable.
 #
 
-EXECUTABLES := QuadFC Test_SigEventLog Test_Board Test_Utilities Test_Components1
+EXECUTABLES := QuadFC Test_Modules1 Test_Board Test_Utilities Test_Components1
 
 QuadFC_DEPS:= Top/QuadFC HAL/QuadFC
 QuadFC_DEPS+= $(addprefix Modules/, Communication FlightController HMI  EventHandler)
@@ -42,17 +42,18 @@ QuadFC_DEPS+= $(addprefix PortLayer/, ArduinoDueBoard SpectrumSatellite HMI CY15
 QuadFC_DEPS+= $(addprefix PortLayer/, MB85RC_i2c_fram Sensors)
 QuadFC_DEPS+= $(addprefix ThirdParty/, asf freertos asf_freertos)
 
-Test_Utilities_DEPS:= ThirdParty/asf Top/Test_Utilities PortLayer/TestArduinoDue
+Test_Utilities_DEPS:= Top/Test_Utilities PortLayer/TestArduinoDue
 Test_Utilities_DEPS+= $(addprefix Test/,TestFW Math Utilities)
 Test_Utilities_DEPS+= $(addprefix Modules/, Utilities )
+Test_Utilities_DEPS+= $(addprefix ThirdParty/, asf freertos)
 
-Test_SigEventLog_DEPS:= Top/Test_SigEventLog HAL/QuadFC 
-Test_SigEventLog_DEPS+= $(addprefix Test/,TestFW DummyI2C SignalProcessing EventHandler Log LogTestBackend)
-Test_SigEventLog_DEPS+= $(addprefix Components/, Log Parameters)
-Test_SigEventLog_DEPS+= $(addprefix Modules/, Utilities  EventHandler StateEstimator)
-Test_SigEventLog_DEPS+= $(addprefix Modules/, FlightController Messages MsgBase)
-Test_SigEventLog_DEPS+= $(addprefix PortLayer/, HMI TestArduinoDue SpectrumSatellite Sensors)
-Test_SigEventLog_DEPS+= $(addprefix ThirdParty/, asf freertos)
+Test_Modules1_DEPS:= Top/Test_Modules1 HAL/QuadFC 
+Test_Modules1_DEPS+= $(addprefix Test/,TestFW DummyI2C SignalProcessing EventHandler Log LogTestBackend FakeMemory)
+Test_Modules1_DEPS+= $(addprefix Components/, Log Parameters SLIP)
+Test_Modules1_DEPS+= $(addprefix Modules/, Utilities  EventHandler StateEstimator)
+Test_Modules1_DEPS+= $(addprefix Modules/, FlightController Messages MsgBase)
+Test_Modules1_DEPS+= $(addprefix PortLayer/, HMI TestArduinoDue SpectrumSatellite Sensors)
+Test_Modules1_DEPS+= $(addprefix ThirdParty/, asf freertos)
 
 Test_Board_DEPS:= Top/Test_Board HAL/QuadFC
 Test_Board_DEPS+= $(addprefix Test/, ArduinoDueBoard TestFW )

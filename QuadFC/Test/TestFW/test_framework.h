@@ -102,16 +102,5 @@ uint8_t TestFW_Report(TestFw_t* obj, const char* string);
  */
 uint8_t TestFW_ExecuteTests(TestFw_t* obj);
 
-/**
- * Get the test report. The header will contain the string "ALL PASS" if
- * all tests passed, and the word "FAIL" if any test failed.
- *
- * The report will specify which tests was run, and which passed. Each test
- * that was run will have its own result, and a field to write a short error
- * message.
- *
- * @return A pointer to the report string. The string is null-terminated.
- */
-uint8_t* TestFW_GetReport(TestFw_t* obj);
 
 #endif /* TEST_TESTFW_TEST_FRAMEWORK_H_ */

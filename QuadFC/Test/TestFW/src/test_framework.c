@@ -59,6 +59,19 @@ struct TestFwInternal
     void* testSuiteInternal[MAX_NR_INTERNALS];
 };
 
+/**
+ * Get the test report. The header will contain the string "ALL PASS" if
+ * all tests passed, and the word "FAIL" if any test failed.
+ *
+ * The report will specify which tests was run, and which passed. Each test
+ * that was run will have its own result, and a field to write a short error
+ * message.
+ *
+ * @return A pointer to the report string. The string is null-terminated.
+ */
+uint8_t* TestFW_GetReport(TestFw_t* obj);
+
+
 void TestFW_CreateMainTestTask(TestFW_mainTestFunction_t mainFcn)
 {
     /*Create the task*/
@@ -172,12 +185,13 @@ uint8_t TestFW_ExecuteTests(TestFw_t* obj)
         char* result = (obj->testFcns[i].testOK) ? "\e[32mPASS\e[0m" : "\e[31mFAIL\e[0m";
         snprintf(tmpstr, REPORTLEN, "\n**** RESULT %s: %s **** \n" , obj->testFcns[i].tc_names, result);
         TestFW_Report(obj, tmpstr);
-
+        TestFW_GetReport(obj);
         SuiteResult &= obj->testFcns[i].testOK;
     }
     char* result = (SuiteResult) ? "\e[32mPASS\e[0m" : "\e[31mFAIL\e[0m";
     snprintf(tmpstr, REPORTLEN, "\n********************** Testsuite %s RESULT: %s ********************** \n", obj->name, result);
     TestFW_Report(obj, tmpstr);
+    TestFW_GetReport(obj);
     return SuiteResult;
 }
 
@@ -187,6 +201,7 @@ uint8_t* TestFW_GetReport(TestFw_t* obj)
     data.buffer = (uint8_t*)obj->report;
     data.bufferLength = strlen((char*)obj->report);
     Test_SerialWrite(&data);
+    data.buffer[0] = '\0';
     return 0;
 }
 

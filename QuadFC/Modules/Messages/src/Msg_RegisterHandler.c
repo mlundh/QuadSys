@@ -25,6 +25,7 @@
 
 #include "../inc/Msg_RegisterHandler.h"
 #include "FreeRTOS.h"
+#include "task.h"
 
  typedef struct
 {
@@ -66,6 +67,10 @@ QueueHandle_t Msg_RegisterHandlerGetData(moduleMsg_t* msg)
             value = internal_data->mData;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
     return value;
 }
 
@@ -78,6 +83,10 @@ void Msg_RegisterHandlerSetData(moduleMsg_t* msg, QueueHandle_t data)
         {
             internal_data->mData  = data;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
 }
 

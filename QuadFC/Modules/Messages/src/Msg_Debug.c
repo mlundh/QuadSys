@@ -25,6 +25,7 @@
 
 #include "../inc/Msg_Debug.h"
 #include "FreeRTOS.h"
+#include "task.h"
 
  typedef struct
 {
@@ -70,6 +71,10 @@ uint8_t* Msg_DebugGetPayload(moduleMsg_t* msg)
             value = internal_data->mPayload;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
     return value;
 }
 
@@ -83,6 +88,10 @@ void Msg_DebugSetPayload(moduleMsg_t* msg, uint8_t* payload)
             internal_data->mPayload  = payload;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
 }
 uint32_t Msg_DebugGetPayloadlength(moduleMsg_t* msg)
 {
@@ -94,6 +103,10 @@ uint32_t Msg_DebugGetPayloadlength(moduleMsg_t* msg)
         {
             value = internal_data->mPayloadlength;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
     return value;
 }
@@ -108,6 +121,10 @@ void Msg_DebugSetPayloadlength(moduleMsg_t* msg, uint32_t Payloadlength)
             internal_data->mPayloadlength  = Payloadlength;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
 }
 uint32_t Msg_DebugGetPayloadbufferlength(moduleMsg_t* msg)
 {
@@ -119,6 +136,10 @@ uint32_t Msg_DebugGetPayloadbufferlength(moduleMsg_t* msg)
         {
             value = internal_data->mPayloadbufferlength;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
     return value;
 }
@@ -132,6 +153,10 @@ void Msg_DebugSetPayloadbufferlength(moduleMsg_t* msg, uint32_t Payloadbufferlen
         {
             internal_data->mPayloadbufferlength  = Payloadbufferlength;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
 }
 

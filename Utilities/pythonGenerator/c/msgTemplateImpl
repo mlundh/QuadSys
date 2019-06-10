@@ -25,6 +25,7 @@
 
 #include "../inc/{msgName}.h"
 #include "FreeRTOS.h"
+#include "task.h"
 
  typedef struct
 {{

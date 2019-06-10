@@ -348,13 +348,14 @@ struct paramHander
              while(SLIP_StatusCont == read_status)
              {
                  result = Mem_Read(address, 1, buffer, 2);
-                 if(result && ((address - startAddress) < SLIP_PACKET_LEN))
+                 if(result && ((address - startAddress) <= SLIP_PACKET_LEN))
                  {
                      read_status = SLIP_Parser(buffer, 1, packet, &k);
                  }
                  else
                  {
                      result = 0;
+                     Slip_Delete(packet); // Cleanup...
                      break;
                  }
                  address++;
@@ -375,7 +376,7 @@ struct paramHander
                  Msg_ParamDeserialize(loadedMsg, unpacked_buffer, PARAM_BUFFER_LEN);
 
                  uint8_t sequenceNo = Msg_ParamGetSequencenr(msg);
-                 lastInSequence = Msg_ParamFcGetLastinsequence(msg);
+                 lastInSequence = Msg_ParamGetLastinsequence(msg);
                  result = (sequenceNo == EcpectedSequenceNo);
                  EcpectedSequenceNo++;
              }

@@ -25,6 +25,7 @@
 
 #include "../inc/Msg_Log.h"
 #include "FreeRTOS.h"
+#include "task.h"
 
  typedef struct
 {
@@ -72,6 +73,10 @@ uint8_t Msg_LogGetControl(moduleMsg_t* msg)
             value = internal_data->mControl;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
     return value;
 }
 
@@ -85,6 +90,10 @@ void Msg_LogSetControl(moduleMsg_t* msg, uint8_t control)
             internal_data->mControl  = control;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
 }
 uint8_t* Msg_LogGetPayload(moduleMsg_t* msg)
 {
@@ -96,6 +105,10 @@ uint8_t* Msg_LogGetPayload(moduleMsg_t* msg)
         {
             value = internal_data->mPayload;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
     return value;
 }
@@ -110,6 +123,10 @@ void Msg_LogSetPayload(moduleMsg_t* msg, uint8_t* payload)
             internal_data->mPayload  = payload;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
 }
 uint32_t Msg_LogGetPayloadlength(moduleMsg_t* msg)
 {
@@ -121,6 +138,10 @@ uint32_t Msg_LogGetPayloadlength(moduleMsg_t* msg)
         {
             value = internal_data->mPayloadlength;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
     return value;
 }
@@ -135,6 +156,10 @@ void Msg_LogSetPayloadlength(moduleMsg_t* msg, uint32_t Payloadlength)
             internal_data->mPayloadlength  = Payloadlength;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
 }
 uint32_t Msg_LogGetPayloadbufferlength(moduleMsg_t* msg)
 {
@@ -146,6 +171,10 @@ uint32_t Msg_LogGetPayloadbufferlength(moduleMsg_t* msg)
         {
             value = internal_data->mPayloadbufferlength;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
     return value;
 }
@@ -159,6 +188,10 @@ void Msg_LogSetPayloadbufferlength(moduleMsg_t* msg, uint32_t Payloadbufferlengt
         {
             internal_data->mPayloadbufferlength  = Payloadbufferlength;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
 }
 

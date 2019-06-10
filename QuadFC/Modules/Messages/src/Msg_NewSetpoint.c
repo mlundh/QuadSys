@@ -25,6 +25,7 @@
 
 #include "../inc/Msg_NewSetpoint.h"
 #include "FreeRTOS.h"
+#include "task.h"
 
  typedef struct
 {
@@ -70,6 +71,10 @@ state_data_t Msg_NewSetpointGetSetpoint(moduleMsg_t* msg)
             value = internal_data->mSetpoint;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
     return value;
 }
 
@@ -83,6 +88,10 @@ void Msg_NewSetpointSetSetpoint(moduleMsg_t* msg, state_data_t setpoint)
             internal_data->mSetpoint  = setpoint;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
 }
 uint8_t Msg_NewSetpointGetPriority(moduleMsg_t* msg)
 {
@@ -94,6 +103,10 @@ uint8_t Msg_NewSetpointGetPriority(moduleMsg_t* msg)
         {
             value = internal_data->mPriority;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
     return value;
 }
@@ -108,6 +121,10 @@ void Msg_NewSetpointSetPriority(moduleMsg_t* msg, uint8_t priority)
             internal_data->mPriority  = priority;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
 }
 uint8_t Msg_NewSetpointGetValidfor(moduleMsg_t* msg)
 {
@@ -119,6 +136,10 @@ uint8_t Msg_NewSetpointGetValidfor(moduleMsg_t* msg)
         {
             value = internal_data->mValidfor;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
     return value;
 }
@@ -132,6 +153,10 @@ void Msg_NewSetpointSetValidfor(moduleMsg_t* msg, uint8_t validFor)
         {
             internal_data->mValidfor  = validFor;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
 }
 

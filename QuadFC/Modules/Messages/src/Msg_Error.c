@@ -25,6 +25,7 @@
 
 #include "../inc/Msg_Error.h"
 #include "FreeRTOS.h"
+#include "task.h"
 
  typedef struct
 {
@@ -70,6 +71,10 @@ uint8_t* Msg_ErrorGetError(moduleMsg_t* msg)
             value = internal_data->mError;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
     return value;
 }
 
@@ -83,6 +88,10 @@ void Msg_ErrorSetError(moduleMsg_t* msg, uint8_t* error)
             internal_data->mError  = error;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
 }
 uint32_t Msg_ErrorGetErrorlength(moduleMsg_t* msg)
 {
@@ -94,6 +103,10 @@ uint32_t Msg_ErrorGetErrorlength(moduleMsg_t* msg)
         {
             value = internal_data->mErrorlength;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
     return value;
 }
@@ -108,6 +121,10 @@ void Msg_ErrorSetErrorlength(moduleMsg_t* msg, uint32_t Errorlength)
             internal_data->mErrorlength  = Errorlength;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
 }
 uint32_t Msg_ErrorGetErrorbufferlength(moduleMsg_t* msg)
 {
@@ -119,6 +136,10 @@ uint32_t Msg_ErrorGetErrorbufferlength(moduleMsg_t* msg)
         {
             value = internal_data->mErrorbufferlength;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
     return value;
 }
@@ -132,6 +153,10 @@ void Msg_ErrorSetErrorbufferlength(moduleMsg_t* msg, uint32_t Errorbufferlength)
         {
             internal_data->mErrorbufferlength  = Errorbufferlength;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
 }
 

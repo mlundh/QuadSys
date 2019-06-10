@@ -25,6 +25,7 @@
 
 #include "../inc/Msg_Transmission.h"
 #include "FreeRTOS.h"
+#include "task.h"
 
  typedef struct
 {
@@ -66,6 +67,10 @@ uint8_t Msg_TransmissionGetStatus(moduleMsg_t* msg)
             value = internal_data->mStatus;
         }
     }
+    else
+    {
+       configASSERT(0);
+    }
     return value;
 }
 
@@ -78,6 +83,10 @@ void Msg_TransmissionSetStatus(moduleMsg_t* msg, uint8_t status)
         {
             internal_data->mStatus  = status;
         }
+    }
+    else
+    {
+       configASSERT(0);
     }
 }
 

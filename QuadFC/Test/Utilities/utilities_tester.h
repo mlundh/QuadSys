@@ -32,7 +32,5 @@
  */
 void Utilities_GetTCs(TestFw_t* obj);
 
-uint8_t Utilities_Testserialization(TestFw_t* obj);
-uint8_t Utilities_TestStructSerialization(TestFw_t* obj);
 
 #endif /* TEST_UTILITIES_TESTER_H_ */
