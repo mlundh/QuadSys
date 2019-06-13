@@ -172,7 +172,7 @@ pwm_internals_t *pwm_create()
 
 
 
-MotorControlObj * MotorCtrl_CreateAndInit(uint32_t nr_motors )
+MotorControlObj * MotorCtrl_CreateAndInit(uint32_t nr_motors, param_obj_t * param)
 {
   /*make sure that the correct number of motors are used.*/
   if ( (nr_motors < 0) || (nr_motors > MAX_MOTORS) )
@@ -203,7 +203,7 @@ MotorControlObj * MotorCtrl_CreateAndInit(uint32_t nr_motors )
 
   pwm_internals_t *internals = pwm_getInternals(obj);
   internals->xMutex = xSemaphoreCreateMutex();
-  param_obj_t * PwmRoot = Param_CreateObj(10, variable_type_NoType, readOnly, NULL, "PWM", Param_GetRoot());
+  param_obj_t * PwmRoot = Param_CreateObj(10, variable_type_NoType, readOnly, NULL, "PWM", param);
 
   Param_CreateObj(0, variable_type_int32, readWrite,
       &internals->armed_duty_value, "dtyOn", PwmRoot);

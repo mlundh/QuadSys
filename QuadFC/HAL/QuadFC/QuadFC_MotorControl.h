@@ -25,6 +25,7 @@
 #define HAL_INC_QUADFC_MOTORCONTROL_H_
 
 #include "stdint.h"
+#include "Parameters/inc/parameters.h"
 
 /**
  * Motor control struct. Setpoint for control allocated control
@@ -43,9 +44,10 @@ typedef struct MotorControl
  * Initialize the motor controller.
  * @param obj       Pointer to the current motor control object.
  * @param nrMotors  Number of motors being used.
+ * @param param     Parameter root to be used if the motor controller has parameters.
  * @return          1 of success, 0 otherwise.
  */
-MotorControlObj * MotorCtrl_CreateAndInit(uint32_t nrMotors);
+MotorControlObj * MotorCtrl_CreateAndInit(uint32_t nrMotors, param_obj_t * param);
 
 /**
  * Enable all motors. This arms the motors, waiting for a setpoint.

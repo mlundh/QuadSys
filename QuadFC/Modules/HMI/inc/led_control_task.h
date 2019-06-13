@@ -28,7 +28,8 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "Modules/MsgBase/inc/common_types.h"
-
+#include "MsgBase/inc/common_types.h"
+#include "EventHandler/inc/event_handler.h"
 
 /**
  * Create the led control task. This is used in the "main" function only.

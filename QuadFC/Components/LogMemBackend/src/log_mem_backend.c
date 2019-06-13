@@ -80,10 +80,11 @@ uint8_t LogBackend_Report(LogBackEnd_t* obj, logEntry_t* entry)
 
     // TODO optimize the transfer, allow for multiple entries to be written at the same time. This will minimize SPI overhead.
     uint8_t buffer[LOG_BACKEND_ITEM_SIZE] = {0};
+    uint32_t bufferLength = LOG_BACKEND_ITEM_SIZE;
 
-    uint32_t bufferIdx = serialize_int32(&buffer[0], LOG_BACKEND_ITEM_SIZE, entry->data);
-    bufferIdx += serialize_int32(&buffer[bufferIdx], LOG_BACKEND_ITEM_SIZE-bufferIdx, (int32_t)entry->id);
-    bufferIdx += serialize_int32(&buffer[bufferIdx], LOG_BACKEND_ITEM_SIZE-bufferIdx, (int32_t)entry->time);
+    uint8_t* bufferP = serialize_int32_t(&buffer[0], &bufferLength, &entry->data);
+    bufferP = serialize_uint32_t(bufferP, &bufferLength, &entry->id);
+    bufferP = serialize_uint32_t(bufferP, &bufferLength, &entry->time);
 
 
     if(!Mem_Write(LOG_BACKEND_BASE_ADDR + (obj->head * LOG_BACKEND_ITEM_SIZE), LOG_BACKEND_ITEM_SIZE, buffer,0))
@@ -114,10 +115,11 @@ uint8_t LogBackend_GetLog(LogBackEnd_t* obj, logEntry_t* entry, uint32_t nrEleme
         {
             return 0;
         }
+        uint32_t bufferLength = LOG_BACKEND_ITEM_SIZE;
 
-        uint32_t bufferIdx = deserialize_int32(&buffer[0], LOG_BACKEND_ITEM_SIZE, &entry->data);
-        bufferIdx += deserialize_int32(&buffer[bufferIdx], LOG_BACKEND_ITEM_SIZE-bufferIdx, (int32_t*)&entry->id);
-        bufferIdx += deserialize_int32(&buffer[bufferIdx], LOG_BACKEND_ITEM_SIZE-bufferIdx, (int32_t*)&entry->time);
+        uint8_t* bufferP = deserialize_int32_t(&buffer[0], &bufferLength, &entry->data);
+        bufferP = deserialize_uint32_t(bufferP, &bufferLength, &entry->id);
+        bufferP = deserialize_uint32_t(bufferP, &bufferLength, &entry->time);
 
         obj->tail++;
         obj->tail%=LOG_BACKEND_SIZE;
