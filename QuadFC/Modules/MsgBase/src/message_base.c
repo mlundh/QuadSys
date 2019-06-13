@@ -130,6 +130,8 @@ uint8_t* Msg_Serialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t* buffer_size)
     buffer = serialize_uint32_t(buffer, buffer_size, &msg->type);
     buffer = serialize_uint32_t(buffer, buffer_size, &msg->mDestination);
     buffer = serialize_uint32_t(buffer, buffer_size, &msg->mSource);
+    buffer = serialize_uint8_t(buffer, buffer_size, &msg->mMsgNr);
+
     return buffer;
 }
 
@@ -142,6 +144,7 @@ uint8_t* Msg_DeSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t* buffer_siz
     buffer = deserialize_uint32_t(buffer, buffer_size, &msg->type);
     buffer = deserialize_uint32_t(buffer, buffer_size, &msg->mDestination);
     buffer = deserialize_uint32_t(buffer, buffer_size, &msg->mSource);
+    buffer = deserialize_uint8_t(buffer, buffer_size, &msg->mMsgNr);
     return buffer;
 }
 moduleMsg_t* Msg_Clone(moduleMsg_t* msg)

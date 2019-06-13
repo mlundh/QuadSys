@@ -32,7 +32,7 @@
 # <nameOfExec>_DEPS. Add all dependencies to this variable.
 #
 
-EXECUTABLES := QuadFC Test_Modules1 Test_Board Test_Utilities Test_Components1
+EXECUTABLES := QuadFC Test_Modules1 Test_Modules2 Test_Board Test_Utilities Test_Components1
 
 QuadFC_DEPS:= Top/QuadFC HAL/QuadFC
 QuadFC_DEPS+= $(addprefix Modules/, Communication FlightController HMI  EventHandler)
@@ -54,6 +54,13 @@ Test_Modules1_DEPS+= $(addprefix Modules/, Utilities  EventHandler StateEstimato
 Test_Modules1_DEPS+= $(addprefix Modules/, FlightController Messages MsgBase)
 Test_Modules1_DEPS+= $(addprefix PortLayer/, HMI TestArduinoDue SpectrumSatellite Sensors)
 Test_Modules1_DEPS+= $(addprefix ThirdParty/, asf freertos)
+
+Test_Modules2_DEPS:= Top/Test_Modules2 HAL/QuadFC 
+Test_Modules2_DEPS+= $(addprefix Test/,TestFW  FakeMemory Messages)
+Test_Modules2_DEPS+= $(addprefix Components/, SLIP)
+Test_Modules2_DEPS+= $(addprefix Modules/, Utilities Messages MsgBase)
+Test_Modules2_DEPS+= $(addprefix PortLayer/, TestArduinoDue)
+Test_Modules2_DEPS+= $(addprefix ThirdParty/, asf freertos)
 
 Test_Board_DEPS:= Top/Test_Board HAL/QuadFC
 Test_Board_DEPS+= $(addprefix Test/, ArduinoDueBoard TestFW )
