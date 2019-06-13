@@ -375,8 +375,8 @@ struct paramHander
              {
                  Msg_ParamDeserialize(loadedMsg, unpacked_buffer, PARAM_BUFFER_LEN);
 
-                 uint8_t sequenceNo = Msg_ParamGetSequencenr(msg);
-                 lastInSequence = Msg_ParamGetLastinsequence(msg);
+                 uint8_t sequenceNo = Msg_ParamGetSequencenr(loadedMsg);
+                 lastInSequence = Msg_ParamGetLastinsequence(loadedMsg);
                  result = (sequenceNo == EcpectedSequenceNo);
                  EcpectedSequenceNo++;
              }
@@ -385,9 +385,10 @@ struct paramHander
              {
                  Event_Send(obj, loadedMsg);
              }
-             else // Read or set was not successful.
+             else // Readwas not successful.
              {
                  Msg_Delete(loadedMsg);
+                 Slip_Delete(packet);
                  //TODO log error.
                  break;
              }

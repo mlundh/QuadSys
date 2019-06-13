@@ -34,6 +34,8 @@
 //Include testers
 #include "Test/TestFW/test_framework.h"
 #include "Test/Parameters/parameter_tester.h"
+#include "Test/Log/log_tester.h"
+#include "Test/Log/logEventTester.h"
 /**
  * @file Top used for regression testing. This top uses freeRTOS and
  * all of its features.
@@ -84,6 +86,8 @@ void mainTester(void *pvParameters)
 
     /**************Add test module instantiation here***************/
     ParamT_GetTCs(testFW);
+    Log_GetTCs(testFW);
+    LogEv_GetTCs(testFW);
     /***************************************************************/
 
     uint8_t result = TestFW_ExecuteTests(testFW);
