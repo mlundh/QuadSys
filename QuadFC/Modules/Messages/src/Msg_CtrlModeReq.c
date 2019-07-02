@@ -94,7 +94,7 @@ uint8_t* Msg_CtrlModeReqSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t bu
 {
     if(msg && (msg->type == Msg_CtrlModeReq_e))
     {
-        buffer = Msg_Serialize(msg, buffer, &buffer_size);
+        buffer = Msg_Serialize(msg, buffer, buffer_size);
         Msg_CtrlModeReq_t* data = (Msg_CtrlModeReq_t*)(msg + 1);
         if(data)
         {
@@ -105,11 +105,13 @@ uint8_t* Msg_CtrlModeReqSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t bu
     return buffer;
 }
 
-uint8_t* Msg_CtrlModeReqDeserialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size)
+moduleMsg_t* Msg_CtrlModeReqDeserialize(uint8_t* buffer, uint32_t buffer_size)
 {
-    if(msg && (msg->type == Msg_CtrlModeReq_e))
+    moduleMsg_t* msg = pvPortMalloc(buffer_size);
+
+    if(msg)
     {
-        buffer = Msg_DeSerialize(msg, buffer, &buffer_size);
+        buffer = Msg_DeSerialize(msg, buffer, buffer_size);
         Msg_CtrlModeReq_t* data = (Msg_CtrlModeReq_t*)(msg + 1);
         if(data)
         {
@@ -117,5 +119,6 @@ uint8_t* Msg_CtrlModeReqDeserialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t 
 
         }
     }
-    return buffer;
+    return msg;
 }
+

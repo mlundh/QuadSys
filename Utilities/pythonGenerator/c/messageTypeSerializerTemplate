@@ -1,0 +1,6 @@
+    case {type}_e:
+    {{
+        result = {type}Serialize(msg, buffer, bufferLength);
+        break;
+    }}
+    

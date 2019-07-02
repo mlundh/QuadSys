@@ -50,7 +50,7 @@ void Msg_NewSetpointSetValidfor(moduleMsg_t* msg, uint8_t validFor);
 
 uint8_t* Msg_NewSetpointSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
-uint8_t* Msg_NewSetpointDeserialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
+moduleMsg_t* Msg_NewSetpointDeserialize(uint8_t* buffer, uint32_t buffer_size);
 
 #endif /* MODULES_MESSAGES_INC_MSG_NEWSETPOINT_H_ */
 

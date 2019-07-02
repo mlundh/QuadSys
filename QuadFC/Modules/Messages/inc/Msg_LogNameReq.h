@@ -45,7 +45,7 @@ void Msg_LogNameReqSetData(moduleMsg_t* msg, QueueHandle_t data);
 
 uint8_t* Msg_LogNameReqSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
-uint8_t* Msg_LogNameReqDeserialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
+moduleMsg_t* Msg_LogNameReqDeserialize(uint8_t* buffer, uint32_t buffer_size);
 
 #endif /* MODULES_MESSAGES_INC_MSG_LOGNAMEREQ_H_ */
 

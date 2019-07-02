@@ -1,5 +1,5 @@
 /*
- * Msg_NewState.c
+ * Msg_Parser.h
  *
  * Copyright (C) 2019 Martin Lundh
  *
@@ -22,27 +22,13 @@
  * THE SOFTWARE.
  */
 
-#ifndef MODULES_MESSAGES_INC_MSG_NEWSTATE_H_
-#define MODULES_MESSAGES_INC_MSG_NEWSTATE_H_
 
+#ifndef MODULES_MESSAGES_INC_MSG_PARSER_H_
+#define MODULES_MESSAGES_INC_MSG_PARSER_H_
 #include "MsgBase/inc/message_base.h"
-#include "MsgBase/inc/common_types.h"
-#include "MsgBase/inc/msg_enums.h"
-#include "MsgBase/inc/msgAddr.h"
 
+moduleMsg_t* Msg_Parse(uint8_t* buffer, uint32_t bufferLength);
 
+uint8_t* Msg_Serializer(moduleMsg_t* msg, uint8_t* buffer, uint32_t bufferLength);
 
-moduleMsg_t* Msg_NewStateCreate(uint32_t destination, uint8_t msgNr
-    , state_data_t state);
-
-state_data_t Msg_NewStateGetState(moduleMsg_t* msg);
-
-void Msg_NewStateSetState(moduleMsg_t* msg, state_data_t state);
-
-
-uint8_t* Msg_NewStateSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
-
-moduleMsg_t* Msg_NewStateDeserialize(uint8_t* buffer, uint32_t buffer_size);
-
-#endif /* MODULES_MESSAGES_INC_MSG_NEWSTATE_H_ */
-
+#endif /* MODULES_MESSAGES_INC_MSG_PARSER_H_ */

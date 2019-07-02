@@ -42,7 +42,7 @@ void Msg_CtrlSigSetSignal(moduleMsg_t* msg, control_signal_t signal);
 
 uint8_t* Msg_CtrlSigSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
-uint8_t* Msg_CtrlSigDeserialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
+moduleMsg_t* Msg_CtrlSigDeserialize(uint8_t* buffer, uint32_t buffer_size);
 
 #endif /* MODULES_MESSAGES_INC_MSG_CTRLSIG_H_ */
 

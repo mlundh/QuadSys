@@ -1,0 +1,7 @@
+
+    case {type}_e:
+    {{
+        msgResult = {type}Deserialize(buffer, bufferLength);
+        break;
+    }}
+    

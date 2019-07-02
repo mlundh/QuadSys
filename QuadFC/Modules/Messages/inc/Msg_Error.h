@@ -50,7 +50,7 @@ void Msg_ErrorSetErrorbufferlength(moduleMsg_t* msg, uint32_t Errorbufferlength)
 
 uint8_t* Msg_ErrorSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
-uint8_t* Msg_ErrorDeserialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
+moduleMsg_t* Msg_ErrorDeserialize(uint8_t* buffer, uint32_t buffer_size);
 
 #endif /* MODULES_MESSAGES_INC_MSG_ERROR_H_ */
 

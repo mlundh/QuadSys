@@ -500,7 +500,7 @@ void event_test_task( void *pvParameters )
 // Task 3 will use this callback.
 uint8_t testMsg_GetUiCommands_eCb(eventHandler_t* obj, void* taskParam, moduleMsg_t* data)
 {
-    Event_WaitForEvent(obj, Msg_FireUiCommand_e, 1, 1);
+    Event_WaitForEvent(obj, Msg_FireUiCommand_e, 1, 1, portMAX_DELAY);
     Event_HandleBufferedEvents(obj);
     return 1;
 }

@@ -62,7 +62,7 @@ void Msg_ParamSetPayloadbufferlength(moduleMsg_t* msg, uint32_t Payloadbufferlen
 
 uint8_t* Msg_ParamSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
-uint8_t* Msg_ParamDeserialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
+moduleMsg_t* Msg_ParamDeserialize(uint8_t* buffer, uint32_t buffer_size);
 
 #endif /* MODULES_MESSAGES_INC_MSG_PARAM_H_ */
 

@@ -42,7 +42,7 @@ void Msg_FlightModeSetMode(moduleMsg_t* msg, uint8_t mode);
 
 uint8_t* Msg_FlightModeSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
-uint8_t* Msg_FlightModeDeserialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
+moduleMsg_t* Msg_FlightModeDeserialize(uint8_t* buffer, uint32_t buffer_size);
 
 #endif /* MODULES_MESSAGES_INC_MSG_FLIGHTMODE_H_ */
 

@@ -1,5 +1,5 @@
 /*
- * Msg_LogNameReq.h
+ * Msg_HasParam.h
  *
  * Copyright (C) 2019 Martin Lundh
  *
@@ -23,21 +23,20 @@
  */
 
 
-#include "../inc/Msg_LogNameReq.h"
+#include "../inc/Msg_HasParam.h"
 #include "FreeRTOS.h"
 #include "task.h"
 
  typedef struct
 {
-    QueueHandle_t mData;
-	
-}Msg_LogNameReq_t;
+    
+}Msg_HasParam_t;
 
 
-moduleMsg_t* Msg_LogNameReqCreate(uint32_t destination, uint8_t msgNr
-    , QueueHandle_t data)
+moduleMsg_t* Msg_HasParamCreate(uint32_t destination, uint8_t msgNr
+    )
 {
-    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_LogNameReq_t) ;
+    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_HasParam_t) ;
     moduleMsg_t* msg = pvPortMalloc(size);
 
     if(msg)
@@ -45,57 +44,23 @@ moduleMsg_t* Msg_LogNameReqCreate(uint32_t destination, uint8_t msgNr
         msg->mDestination = destination;
         msg->mSource = Unassigned;
         msg->mMsgNr = msgNr;
-        msg->type = Msg_LogNameReq_e;
+        msg->type = Msg_HasParam_e;
         msg->mAllocatedSize = size;
 
-        Msg_LogNameReq_t* internal_data = (Msg_LogNameReq_t*)(msg + 1);
+        Msg_HasParam_t* internal_data = (Msg_HasParam_t*)(msg + 1);
         
-        internal_data->mData = data;
 
     }
     return msg;
 }
 
-QueueHandle_t Msg_LogNameReqGetData(moduleMsg_t* msg)
-{
-    QueueHandle_t value = {0};
-    if(msg && (msg->type == Msg_LogNameReq_e))
-    {
-        Msg_LogNameReq_t* internal_data = (Msg_LogNameReq_t*)(msg + 1);
-        if(internal_data)
-        {
-            value = internal_data->mData;
-        }
-    }
-    else
-    {
-       configASSERT(0);
-    }
-    return value;
-}
 
-void Msg_LogNameReqSetData(moduleMsg_t* msg, QueueHandle_t data)
+uint8_t* Msg_HasParamSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size)
 {
-    if(msg && (msg->type == Msg_LogNameReq_e))
-    {
-        Msg_LogNameReq_t* internal_data = (Msg_LogNameReq_t*)(msg + 1);
-        if(internal_data)
-        {
-            internal_data->mData  = data;
-        }
-    }
-    else
-    {
-       configASSERT(0);
-    }
-}
-
-uint8_t* Msg_LogNameReqSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size)
-{
-    if(msg && (msg->type == Msg_LogNameReq_e))
+    if(msg && (msg->type == Msg_HasParam_e))
     {
         buffer = Msg_Serialize(msg, buffer, buffer_size);
-        Msg_LogNameReq_t* data = (Msg_LogNameReq_t*)(msg + 1);
+        Msg_HasParam_t* data = (Msg_HasParam_t*)(msg + 1);
         if(data)
         {
 
@@ -104,14 +69,14 @@ uint8_t* Msg_LogNameReqSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buf
     return buffer;
 }
 
-moduleMsg_t* Msg_LogNameReqDeserialize(uint8_t* buffer, uint32_t buffer_size)
+moduleMsg_t* Msg_HasParamDeserialize(uint8_t* buffer, uint32_t buffer_size)
 {
     moduleMsg_t* msg = pvPortMalloc(buffer_size);
 
     if(msg)
     {
         buffer = Msg_DeSerialize(msg, buffer, buffer_size);
-        Msg_LogNameReq_t* data = (Msg_LogNameReq_t*)(msg + 1);
+        Msg_HasParam_t* data = (Msg_HasParam_t*)(msg + 1);
         if(data)
         {
 

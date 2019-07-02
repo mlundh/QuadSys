@@ -18,9 +18,9 @@ typedef enum mode{
 typedef enum {
     param_set,
     param_get,
-	param_save,
-	param_load,
-	param_error,
+    param_save,
+    param_load,
+    param_error,
 }ParamCtrl;
 
 typedef enum 
@@ -37,3 +37,7 @@ typedef enum
     StopAll = 2,
 }LogCtrl_t;
 
+typedef enum {
+    transmission_OK,
+    transmission_NOK,
+}TransmissionCtrl;

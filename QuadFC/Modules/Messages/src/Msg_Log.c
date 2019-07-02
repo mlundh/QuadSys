@@ -199,7 +199,7 @@ uint8_t* Msg_LogSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_siz
 {
     if(msg && (msg->type == Msg_Log_e))
     {
-        buffer = Msg_Serialize(msg, buffer, &buffer_size);
+        buffer = Msg_Serialize(msg, buffer, buffer_size);
         Msg_Log_t* data = (Msg_Log_t*)(msg + 1);
         if(data)
         {
@@ -211,11 +211,13 @@ uint8_t* Msg_LogSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_siz
     return buffer;
 }
 
-uint8_t* Msg_LogDeserialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size)
+moduleMsg_t* Msg_LogDeserialize(uint8_t* buffer, uint32_t buffer_size)
 {
-    if(msg && (msg->type == Msg_Log_e))
+    moduleMsg_t* msg = pvPortMalloc(buffer_size);
+
+    if(msg)
     {
-        buffer = Msg_DeSerialize(msg, buffer, &buffer_size);
+        buffer = Msg_DeSerialize(msg, buffer, buffer_size);
         Msg_Log_t* data = (Msg_Log_t*)(msg + 1);
         if(data)
         {
@@ -224,5 +226,6 @@ uint8_t* Msg_LogDeserialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_s
 
         }
     }
-    return buffer;
+    return msg;
 }
+

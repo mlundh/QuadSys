@@ -42,7 +42,7 @@ void Msg_SubscriptionsSetSubscriptions(moduleMsg_t* msg, uint32_t subscriptions)
 
 uint8_t* Msg_SubscriptionsSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
-uint8_t* Msg_SubscriptionsDeserialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
+moduleMsg_t* Msg_SubscriptionsDeserialize(uint8_t* buffer, uint32_t buffer_size);
 
 #endif /* MODULES_MESSAGES_INC_MSG_SUBSCRIPTIONS_H_ */
 

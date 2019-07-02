@@ -369,11 +369,11 @@ struct paramHander
                      result = 0;
                  }
              }
-             moduleMsg_t* loadedMsg = Msg_ParamCreate(0,0,0,0,0,PARAM_BUFFER_LEN);
+             moduleMsg_t* loadedMsg = NULL;
 
              if(result)
              {
-                 Msg_ParamDeserialize(loadedMsg, unpacked_buffer, PARAM_BUFFER_LEN);
+                 loadedMsg = Msg_ParamDeserialize(unpacked_buffer, PARAM_BUFFER_LEN);
 
                  uint8_t sequenceNo = Msg_ParamGetSequencenr(loadedMsg);
                  lastInSequence = Msg_ParamGetLastinsequence(loadedMsg);

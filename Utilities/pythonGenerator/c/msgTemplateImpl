@@ -59,7 +59,7 @@ uint8_t* {msgName}Serialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_s
 {{
     if(msg && (msg->type == {msgName}_e))
     {{
-        buffer = Msg_Serialize(msg, buffer, &buffer_size);
+        buffer = Msg_Serialize(msg, buffer, buffer_size);
         {msgName}_t* data = ({msgName}_t*)(msg + 1);
         if(data)
         {{
@@ -69,16 +69,19 @@ uint8_t* {msgName}Serialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_s
     return buffer;
 }}
 
-uint8_t* {msgName}Deserialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size)
+moduleMsg_t* {msgName}Deserialize(uint8_t* buffer, uint32_t buffer_size)
 {{
-    if(msg && (msg->type == {msgName}_e))
+    moduleMsg_t* msg = pvPortMalloc(buffer_size);
+
+    if(msg)
     {{
-        buffer = Msg_DeSerialize(msg, buffer, &buffer_size);
+        buffer = Msg_DeSerialize(msg, buffer, buffer_size);
         {msgName}_t* data = ({msgName}_t*)(msg + 1);
         if(data)
         {{
 {deserialize}
         }}
     }}
-    return buffer;
+    return msg;
 }}
+

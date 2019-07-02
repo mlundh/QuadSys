@@ -20,8 +20,7 @@ Msg_UiCommandResult --member std::string result
 # ---------- GS and FC ---------------
 *Param GS_Param FC_Param
 Msg_Param --member uint8_t control --member uint8_t sequenceNr --member uint8_t lastInSequence --member std::string payload
-Msg_ParamSave
-Msg_ParamLoad
+
 *
 *Log GS_Log FC_Log
 Msg_Log --member uint8_t control --member std::string payload

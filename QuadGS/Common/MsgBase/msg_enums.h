@@ -47,10 +47,16 @@ typedef enum mode{
 typedef enum {
     param_set,
     param_get,
-	param_save,
-	param_load,
-	param_error,
+    param_save,
+    param_load,
+    param_error,
 }ParamCtrl;
+
+typedef enum {
+    transmission_OK,
+    transmission_NOK,
+}TransmissionCtrl;
+
 
 }
 #endif /* QUADGS_MESSAGE_TYPES_H_ */

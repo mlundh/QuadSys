@@ -174,9 +174,10 @@ uint8_t Event_Receive(eventHandler_t* obj, uint32_t blockTime);
  *                      to 0 the call will return without doing anything.
  * @param bufferEvents  set to 1 to buffer events, and 0 if the events should be
  * processed as they arrive.
+ * @param blockTimeMs   Block for maximum this amount of time while waiting for the event.
  * @return              1 if the event waited for was properly handled, 0 if an error occured.
  */
-uint8_t Event_WaitForEvent(eventHandler_t* obj, messageTypes_t event, uint8_t waitForNr, uint8_t bufferEvents);
+uint8_t Event_WaitForEvent(eventHandler_t* obj, messageTypes_t event, uint8_t waitForNr, uint8_t bufferEvents, uint32_t blockTimeMs);
 
 /**
  * Handle events buffered by Event_WaitForEvent if buffering was enabled.

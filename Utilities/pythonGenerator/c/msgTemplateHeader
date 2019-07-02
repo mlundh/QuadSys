@@ -38,7 +38,7 @@ moduleMsg_t* {msgName}Create(uint32_t destination, uint8_t msgNr
 {memberFcnHeader}
 uint8_t* {msgName}Serialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
-uint8_t* {msgName}Deserialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
+moduleMsg_t* {msgName}Deserialize(uint8_t* buffer, uint32_t buffer_size);
 
 #endif /* MODULES_MESSAGES_INC_{msgNameUpper}_H_ */
 

@@ -50,7 +50,7 @@ void Msg_DebugSetPayloadbufferlength(moduleMsg_t* msg, uint32_t Payloadbufferlen
 
 uint8_t* Msg_DebugSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
-uint8_t* Msg_DebugDeserialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
+moduleMsg_t* Msg_DebugDeserialize(uint8_t* buffer, uint32_t buffer_size);
 
 #endif /* MODULES_MESSAGES_INC_MSG_DEBUG_H_ */
 

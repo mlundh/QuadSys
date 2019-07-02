@@ -35,8 +35,6 @@
 #include "Msg_RegUiCommand.h"
 #include "Msg_UiCommandResult.h"
 #include "Msg_Param.h"
-#include "Msg_ParamSave.h"
-#include "Msg_ParamLoad.h"
 #include "Msg_Log.h"
 #include "Msg_Debug.h"
 #include "Msg_Transmission.h"
@@ -152,22 +150,6 @@ QGS_ModuleMsgBase::ptr Parser::parse( std::vector<unsigned char>  data)
 	case messageTypes_t::Msg_Param_e:
 	{
 		Msg_Param::ptr ptr = std::make_unique<Msg_Param>(msgBase);
-		ptr->setSkipStreamHeader();
-		is >> *ptr;
-		returnPtr = std::move(ptr);
-		break;
-	}
-	case messageTypes_t::Msg_ParamSave_e:
-	{
-		Msg_ParamSave::ptr ptr = std::make_unique<Msg_ParamSave>(msgBase);
-		ptr->setSkipStreamHeader();
-		is >> *ptr;
-		returnPtr = std::move(ptr);
-		break;
-	}
-	case messageTypes_t::Msg_ParamLoad_e:
-	{
-		Msg_ParamLoad::ptr ptr = std::make_unique<Msg_ParamLoad>(msgBase);
 		ptr->setSkipStreamHeader();
 		is >> *ptr;
 		returnPtr = std::move(ptr);

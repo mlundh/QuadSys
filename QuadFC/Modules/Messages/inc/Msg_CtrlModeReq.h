@@ -42,7 +42,7 @@ void Msg_CtrlModeReqSetMode(moduleMsg_t* msg, uint8_t mode);
 
 uint8_t* Msg_CtrlModeReqSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
-uint8_t* Msg_CtrlModeReqDeserialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
+moduleMsg_t* Msg_CtrlModeReqDeserialize(uint8_t* buffer, uint32_t buffer_size);
 
 #endif /* MODULES_MESSAGES_INC_MSG_CTRLMODEREQ_H_ */
 

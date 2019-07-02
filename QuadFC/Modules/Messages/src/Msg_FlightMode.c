@@ -94,7 +94,7 @@ uint8_t* Msg_FlightModeSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buf
 {
     if(msg && (msg->type == Msg_FlightMode_e))
     {
-        buffer = Msg_Serialize(msg, buffer, &buffer_size);
+        buffer = Msg_Serialize(msg, buffer, buffer_size);
         Msg_FlightMode_t* data = (Msg_FlightMode_t*)(msg + 1);
         if(data)
         {
@@ -105,11 +105,13 @@ uint8_t* Msg_FlightModeSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buf
     return buffer;
 }
 
-uint8_t* Msg_FlightModeDeserialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size)
+moduleMsg_t* Msg_FlightModeDeserialize(uint8_t* buffer, uint32_t buffer_size)
 {
-    if(msg && (msg->type == Msg_FlightMode_e))
+    moduleMsg_t* msg = pvPortMalloc(buffer_size);
+
+    if(msg)
     {
-        buffer = Msg_DeSerialize(msg, buffer, &buffer_size);
+        buffer = Msg_DeSerialize(msg, buffer, buffer_size);
         Msg_FlightMode_t* data = (Msg_FlightMode_t*)(msg + 1);
         if(data)
         {
@@ -117,5 +119,6 @@ uint8_t* Msg_FlightModeDeserialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t b
 
         }
     }
-    return buffer;
+    return msg;
 }
+

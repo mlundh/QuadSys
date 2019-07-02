@@ -105,7 +105,7 @@ void create_main_control_task(eventHandler_t* evHandler)
   taskParam->setpoint = pvPortMalloc( sizeof(state_data_t) );
   taskParam->state = pvPortMalloc( sizeof(state_data_t) );
   taskParam->control_signal = pvPortMalloc( sizeof(control_signal_t) );
-  taskParam->motorControl = MotorCtrl_CreateAndInit(4);
+  taskParam->motorControl = MotorCtrl_CreateAndInit(4,ParamHandler_GetParam(taskParam->paramHandler));
   taskParam->flightModeHandler = FMode_CreateFmodeHandler(evHandler); // registers event handler for flight mode requests.
   taskParam->stateEst = StateEst_Create(evHandler, ParamHandler_GetParam(taskParam->paramHandler));
   taskParam->setPointHandler = SpHandl_Create(evHandler);

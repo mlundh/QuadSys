@@ -315,7 +315,7 @@ uint8_t Event_Receive(eventHandler_t* obj, uint32_t blockTime)
     return 1;
 }
 
-uint8_t Event_WaitForEvent(eventHandler_t* obj, messageTypes_t event, uint8_t waitForNr, uint8_t bufferEvents)
+uint8_t Event_WaitForEvent(eventHandler_t* obj, messageTypes_t event, uint8_t waitForNr, uint8_t bufferEvents, uint32_t blockTimeMs)
 {
     if(!obj)
     {
@@ -343,10 +343,15 @@ uint8_t Event_WaitForEvent(eventHandler_t* obj, messageTypes_t event, uint8_t wa
         }
     }
 
+    uint32_t blockTicks = blockTimeMs * portTICK_PERIOD_MS;
+    uint32_t remainingWaitTime = blockTicks;
+
+    uint32_t timeBeforeWait = xTaskGetTickCount();
+
     // Handle all new incoming events. Do this until we get the event we are waiting for.
-    while(nr_found < waitForNr)
+    while((nr_found < waitForNr) && (remainingWaitTime != 0))
     {
-        if(xQueueReceive(obj->eventQueue, &event_data, portMAX_DELAY) == pdTRUE)
+        if(xQueueReceive(obj->eventQueue, &event_data, remainingWaitTime) == pdTRUE)
         {
             if(!Event_FireOrBufferEvent(obj, event, &nr_found, event_data, bufferEvents))
             {
@@ -356,6 +361,16 @@ uint8_t Event_WaitForEvent(eventHandler_t* obj, messageTypes_t event, uint8_t wa
         else
         {
             return 0;
+        }
+        uint32_t timeAfterWait = xTaskGetTickCount();
+        uint32_t waitedTicks = timeBeforeWait - timeAfterWait;
+        if(waitedTicks >= blockTicks)
+        {
+            remainingWaitTime = 0;
+        }
+        else
+        {
+            remainingWaitTime = blockTicks - waitedTicks;
         }
     }
     // All events found.

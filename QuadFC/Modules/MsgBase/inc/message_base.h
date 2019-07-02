@@ -64,8 +64,8 @@ void Msg_SetDestination(moduleMsg_t* msg, uint32_t desitnation);
 uint32_t Msg_GetMsgNr(moduleMsg_t* msg);
 void Msg_SetMsgNr(moduleMsg_t* msg, uint32_t msgNr);
 
-uint8_t* Msg_Serialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t* buffer_size);
-uint8_t* Msg_DeSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t* buffer_size);
+uint8_t* Msg_Serialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
+uint8_t* Msg_DeSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* Msg_Clone(moduleMsg_t* msg);
 
