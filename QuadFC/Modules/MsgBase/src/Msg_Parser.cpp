@@ -184,7 +184,7 @@ moduleMsg_t* Msg_Parse(uint8_t* buffer, uint32_t bufferLength)
     return msgResult;
 }
 
-uint8_t Msg_Serializer(moduleMsg_t* msg, uint8_t* buffer, uint32_t bufferLength)
+uint8_t* Msg_Serializer(moduleMsg_t* msg, uint8_t* buffer, uint32_t bufferLength)
 {
     messageTypes_t type = Msg_GetType(msg);
     uint8_t* result = NULL;
