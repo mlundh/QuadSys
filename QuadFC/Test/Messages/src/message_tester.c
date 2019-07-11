@@ -64,15 +64,11 @@ uint8_t MessageT_TestSerializationMsg(TestFw_t* Tobj)
     uint8_t* buffP = &buffer[0];
 
     {
-        uint32_t  payloadLength = PAYLOAD_LENGTH;
-
-        Msg_Serialize(msg, buffP, &payloadLength);
+        Msg_Serialize(msg, buffP, PAYLOAD_LENGTH);
     }
     moduleMsg_t* msgVerify = Msg_Create(0,0);
     {
-        uint32_t  payloadLength = PAYLOAD_LENGTH;
-
-        Msg_DeSerialize(msgVerify, buffP, &payloadLength);
+        Msg_DeSerialize(msgVerify, buffP, PAYLOAD_LENGTH);
     }
     uint8_t result = 0;
     if(msgCmp(msg, msgVerify))
@@ -106,9 +102,7 @@ uint8_t MessageT_TestSerializationParam(TestFw_t* Tobj)
 
     Msg_ParamSerialize(msg, buffP, PAYLOAD_LENGTH * 2);
 
-    moduleMsg_t* msgVerify = Msg_ParamCreate(0,0,0,0,0,PAYLOAD_LENGTH);
-
-    Msg_ParamDeserialize(msgVerify, buffP, PAYLOAD_LENGTH * 2);
+    moduleMsg_t* msgVerify  = Msg_ParamDeserialize(buffP, PAYLOAD_LENGTH * 2);
 
 
     uint8_t result = 0;

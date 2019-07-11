@@ -1,3 +1,11 @@
+# QuadSys 
+QuadSys consists of two parts, one MCU part that contains the flight controller and all tests related to it, and the linux part QuadGS that is used for configuring the FC. 
+
+
+# QuadFC
+
+is a flight controller for quadcopters. It is designed to be easy to port to any mcu that can run FreeRTOS, but the only port currently availible is for the arduino due with certain peripherals. It is also designed for modularity, and the modules themselfs can easily be used for someting other than quadcopter control. 
+
 # QuadGS
 
 Ground station to configure and log data from QuadFC. A serial connection should be established to QuadFC. 
@@ -21,7 +29,7 @@ Other:
  - openCV (optional, required if WITH_VISION=true)
   
 ##### tested on:
-Linux (tested on Ubuntu 16.04 )
+Linux (tested on Ubuntu 16.04, 19.04 )
 
 ### Other
 - Set the following env variables to build: 
@@ -36,7 +44,7 @@ Build:
 ```
 mkdir build
 cd build
-cmake -DWITH_VISION=[true/false] .. 
+cmake -DWITH_VISION=[true/false] -DBoost_NO_BOOST_CMAKE=ON.. 
 make
 ```
 
