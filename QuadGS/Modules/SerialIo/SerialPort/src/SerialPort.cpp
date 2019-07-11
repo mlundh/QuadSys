@@ -318,7 +318,7 @@ SerialPort::~SerialPort()
 	mSerialPort.close( error );
 	if( error )
 	{
-		throw std::runtime_error(error.message());
+		QuadLog(severity_level::error, "Error closing the serial port: " + error.message());
 	}
 }
 

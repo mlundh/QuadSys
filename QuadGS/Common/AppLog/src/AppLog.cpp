@@ -25,6 +25,8 @@
 #include "AppLog.h"
 
 #include <boost/core/null_deleter.hpp>
+#include <boost/filesystem.hpp>
+
 namespace QuadGS {
 
 
@@ -79,6 +81,11 @@ std::ostream& operator<< (std::ostream& strm, QuadGS::severity_level level)
 
 void AppLog::Init( std::string FilenameAppLog, std::string FilenameMsgLog, std::ostream& outstream, severity_level svl , bool msg)
 {
+	if(boost::filesystem::exists(FilenameAppLog)) // foce libboost_filesystem.so to be an explicit dependency so that RUNPATH works as expeced.
+	{
+
+	}
+
 	// Create the formatter for all file sinks.
 	logging::formatter fmt = expr::stream
 			<< "[" << expr::attr< unsigned int >("RecordID") // First an attribute "RecordID" is written to the log

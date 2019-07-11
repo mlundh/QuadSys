@@ -78,7 +78,7 @@ std::string dbgModule::sendUiMsg(std::string msg)
 
 
 	msgAddr_t addr = msgAddr_t::Unassigned;
-	for(int i = msgAddr_t::Unassigned ; i < msgAddr_t::Last; i++)
+	for(int i = msgAddr_t::Unassigned ; i < msgAddr_t::Last_Address; i++)
 	{
 		if(address.compare(msgAddrStr[i]) == 0)
 		{
@@ -87,11 +87,11 @@ std::string dbgModule::sendUiMsg(std::string msg)
 		}
 	}
 
-	if(addr == msgAddr_t::Unassigned || addr == msgAddr_t::Last)
+	if(addr == msgAddr_t::Unassigned || addr == msgAddr_t::Last_Address)
 	{
 		std::stringstream ss;
 		ss << "No such address. " << std::endl << "Available addresses are: " << std::endl;
-		for(int i = Unassigned; i < Last; i++)
+		for(int i = Unassigned; i < Last_Address; i++)
 		{
 			ss << "	" << msgAddrStr[i] << std::endl;
 		}
