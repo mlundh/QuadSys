@@ -25,6 +25,8 @@
 
 #include "Communication/inc/communication_tasks.h"
 #include "Modules/MsgBase/inc/Msg_Parser.h"
+#include "Modules/Messages/inc/Msg_Transmission.h"
+#include "Modules/Messages/inc/Msg_Log.h"
 
 #include "FlightModeHandler/inc/flight_mode_handler.h"
 #include "Components/SLIP/inc/slip_packet.h"
@@ -52,9 +54,9 @@ uint16_t *crcTable;
 typedef struct RxCom
 {
     QuadFC_Serial_t * serialBuffer;
-    uint8_t readBuffer[COM_PACKET_LENGTH_MAX];
+    uint8_t messageBuffer[COM_PACKET_LENGTH_MAX];
     SLIP_t *SLIP;                   //!< RxTask owns SLIP package.
-    uint8_t *receive_buffer;
+    uint8_t receive_buffer[COM_RECEIVE_BUFFER_LENGTH];
     param_helper_t *helper;
     param_helper_t *saveHelper;
     FlightModeHandler_t* stateHandler;
@@ -80,13 +82,13 @@ typedef struct TxCom
  * Initialize the communication module.
  * @return    1 if OK, 0 otherwise.
  */
-TxCom_t* Com_InitTx(eventHandler_t eventHandler);
+TxCom_t* Com_InitTx(eventHandler_t* eventHandler);
 
 /**
  * Initialize the communication module.
  * @return    1 if OK, 0 otherwise.
  */
-RxCom_t* Com_InitRx(eventHandler_t eventHandler);
+RxCom_t* Com_InitRx(eventHandler_t* eventHandler);
 
 
 /**
@@ -95,6 +97,8 @@ RxCom_t* Com_InitRx(eventHandler_t eventHandler);
  */
 static void Com_TxTask( void *pvParameters );
 
+uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg);
+
 /**
  * FreeRTOS task handling the reception of messages.
  * @param pvParameters
@@ -102,26 +106,17 @@ static void Com_TxTask( void *pvParameters );
 static void Com_RxTask( void *pvParameters );
 
 
+
+
 uint8_t Com_TxTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg);
 
+uint8_t Com_HandleLog(eventHandler_t* obj, void* data, moduleMsg_t* msg);
+
+//uint8_t Com_HandleDebug(eventHandler_t* obj, void* data, moduleMsg_t* msg);
 
 
-/**
- * Handle a log message.
- * @param obj   The current object.
- * @return      0 if there is no response to be sent, 1 otherwise.
- */
-uint8_t Com_HandleLog(RxCom_t* obj);
 
-
-/**
- * Handle a Debug QSP message.
- * @param obj   The current object.
- * @return      0 if fail, 1 otherwise.
- */
-uint8_t Com_HandleDebug(RxCom_t* obj);
-
-TxCom_t* Com_InitTx(eventHandler_t eventHandler)
+TxCom_t* Com_InitTx(eventHandler_t* eventHandler)
 {
     TxCom_t* taskParam = pvPortMalloc(sizeof(TxCom_t));
     if(!taskParam)
@@ -132,7 +127,7 @@ TxCom_t* Com_InitTx(eventHandler_t eventHandler)
     taskParam->evHandler = eventHandler;
     taskParam->msgNr = 0;
     taskParam->transmission = transmission_OK;
-    taskParam->serializeBuffer = (uint8_t[COM_PACKET_LENGTH_MAX]){0}; // TODO does this work? It should...
+    taskParam->serializeBuffer[0] = '\0';
     taskParam->serializebufferSize = COM_PACKET_LENGTH_MAX;
 
     if( !taskParam->txSLIP || !taskParam->evHandler)
@@ -156,7 +151,7 @@ TxCom_t* Com_InitTx(eventHandler_t eventHandler)
 }
 
 
-RxCom_t* Com_InitRx(eventHandler_t eventHandler)
+RxCom_t* Com_InitRx(eventHandler_t* eventHandler)
 {
     /* Create the queue used to pass things to the display task*/
     RxCom_t* taskParam = pvPortMalloc(sizeof(RxCom_t));
@@ -166,14 +161,11 @@ RxCom_t* Com_InitRx(eventHandler_t eventHandler)
     }
     taskParam->helper = pvPortMalloc(sizeof(param_helper_t));
     taskParam->saveHelper = pvPortMalloc(sizeof(param_helper_t));
-    taskParam->readBuffer = QSP_Create(QSP_MAX_PACKET_SIZE);
     taskParam->SLIP =  Slip_Create(COM_PACKET_LENGTH_MAX);
-    taskParam->receive_buffer = pvPortMalloc(sizeof(uint8_t) * COM_RECEIVE_BUFFER_LENGTH );
     taskParam->evHandler = eventHandler;
-    taskParam->logHandler = LogHandler_CreateObj(0,taskParam->evHandler,"LogM",1);
-    if( !taskParam->helper || !taskParam->saveHelper || !taskParam->readBuffer
-            || !taskParam->SLIP || !taskParam->receive_buffer
-            || !taskParam->evHandler  || !taskParam->logHandler)
+    taskParam->logHandler = LogHandler_CreateObj(0,taskParam->evHandler,NULL,"LogM",1);
+    if( !taskParam->helper || !taskParam->saveHelper
+            || !taskParam->SLIP || !taskParam->evHandler  || !taskParam->logHandler)
     {
         return NULL;
     }
@@ -268,8 +260,6 @@ void Com_CreateTasks(eventHandler_t* eventHandlerRx, eventHandler_t* eventHandle
  */
 void Com_TxTask( void *pvParameters )
 {
-    TickType_t max_block_time_ms = 333UL; //!< Max block time for transmission of messages.
-
     /**
      * The struct containing all data needed by the task.
      */
@@ -323,7 +313,7 @@ uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
             QuadFC_Serial_t serialData;
             serialData.buffer = TxObj->txSLIP->payload;
             serialData.bufferLength = TxObj->txSLIP->packetSize;
-            uint8_t result = QuadFC_SerialWrite(&serialData, COM_SERIAL, portMAX_DELAY);
+            result = QuadFC_SerialWrite(&serialData, COM_SERIAL, portMAX_DELAY);
 
             if ( !result )
             {
@@ -384,7 +374,7 @@ void Com_RxTask( void *pvParameters )
             break;
         case SLIP_StatusOK:
         {
-            uint32_t payloadLength = Slip_DePacketize(obj->readBuffer, COM_PACKET_LENGTH_MAX, obj->SLIP);
+            uint32_t payloadLength = Slip_DePacketize(obj->messageBuffer, COM_PACKET_LENGTH_MAX, obj->SLIP);
             if(payloadLength == 0)
             {
                 moduleMsg_t* reply = Msg_TransmissionCreate(GS_SerialIO_e, 0, transmission_NOK);
@@ -393,18 +383,22 @@ void Com_RxTask( void *pvParameters )
             }
 
             // Parse the message and send to the interested parties!
-            moduleMsg_t* msg = Msg_Parse(obj->readBuffer, payloadLength);
+            moduleMsg_t* msg = Msg_Parse(obj->messageBuffer, payloadLength);
             Event_Send(obj->evHandler, msg);
 
-            moduleMsg_t* reply = Msg_TransmissionCreate(GS_SerialIO_e, 0/*TODO update the message number!!*/, transmission_OK);
+            uint8_t msgNr = Msg_GetMsgNr(msg);
+
+            moduleMsg_t* reply = Msg_TransmissionCreate(GS_SerialIO_e, msgNr, transmission_OK);
             Event_Send(obj->evHandler, reply);
 
         }
         break;
         case SLIP_StatusNok:
+        {
             moduleMsg_t* reply = Msg_TransmissionCreate(GS_SerialIO_e, 0, transmission_NOK);
             Event_Send(obj->evHandler, reply);
-            break;
+        }
+        break;
         default:
             break;
         }
@@ -412,6 +406,7 @@ void Com_RxTask( void *pvParameters )
     }
 }
 
+// This handler is called when the there is a transmission message received
 uint8_t Com_TxTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 {
     if(!obj || ! data || !msg)
@@ -422,19 +417,23 @@ uint8_t Com_TxTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 
     if(handlerObj->msgNr != Msg_GetMsgNr(msg))
     {
-        //Message out of sync!
+        //Message out of sync! TODO error.
     }
 
-
+    // This stops re-transmit.
     handlerObj->transmission = Msg_TransmissionGetStatus(msg);
     return 1;
 }
 
-
-uint8_t Com_HandleDebug(RxCom_t* obj)
+/*
+uint8_t Com_HandleDebug(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 {
+    if(!obj || ! data || !msg)
+    {
+        return 0;
+    }
     uint8_t result = 0;
-    switch ( QSP_GetControl(obj->readBuffer) )
+    switch ( QSP_GetControl(obj->messageBuffer) )
     {
     case QSP_DebugGetRuntimeStats:
         QuadFC_RuntimeStats(QSP_GetPayloadPtr(obj->QspRespPacket) , QSP_GetAvailibleSize(obj->QspRespPacket) - QSP_GetHeaderdSize());
@@ -445,44 +444,53 @@ uint8_t Com_HandleDebug(RxCom_t* obj)
         QSP_SetAddress(obj->QspRespPacket, QSP_Debug);
         QSP_SetControl(obj->QspRespPacket, QSP_DebugSetRuntimeStats);
         break;
-    case QSP_DebugGetErrorMessages:
-        break;
     default:
         break;
     }
 
     return result;
 }
-
-uint8_t Com_HandleLog(RxCom_t* obj)
+ */
+#define LOG_MSG_REPLY_LENGTH (255)
+uint8_t Com_HandleLog(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 {
-    uint8_t result = 0;
-    QSP_ClearPayload(obj->QspRespPacket);
+    if(!obj || ! data || !msg)
+    {
+        return 0;
+    }
 
-    switch ( QSP_GetControl(obj->readBuffer) )
+    RxCom_t* RxObj = (RxCom_t*)data;
+    uint8_t result = 0;
+
+    switch ( Msg_LogGetControl(msg))
     {
-    case QSP_LogName:
-    {
-        result = 1;
-        LogHandler_GetNameIdMapping(obj->logHandler, QSP_GetPayloadPtr(obj->QspRespPacket), QSP_GetAvailibleSize(obj->QspRespPacket));
-        uint16_t len =  strlen((char *)QSP_GetPayloadPtr(obj->QspRespPacket));
-        QSP_SetPayloadSize(obj->QspRespPacket, len);
-        QSP_SetAddress(obj->QspRespPacket, QSP_Log);
-        QSP_SetControl(obj->QspRespPacket, QSP_LogName);
-    }
-    break;
-    case QSP_LogEntry:
+    case log_name:
     {
         result = 1;
-        LogHandler_AppendSerializedlogs(obj->logHandler, QSP_GetPayloadPtr(obj->QspRespPacket), QSP_GetAvailibleSize(obj->QspRespPacket));
-        uint16_t len =  strlen((char *)QSP_GetPayloadPtr(obj->QspRespPacket));
-        QSP_SetPayloadSize(obj->QspRespPacket, len);
-        QSP_SetAddress(obj->QspRespPacket, QSP_Log);
-        QSP_SetControl(obj->QspRespPacket, QSP_LogEntry);
+        moduleMsg_t* reply = Msg_LogCreate(Msg_GetSource(msg), 0, log_name, LOG_MSG_REPLY_LENGTH);
+
+        LogHandler_GetNameIdMapping(RxObj->logHandler,Msg_LogGetPayload(reply), Msg_LogGetPayloadbufferlength(reply));
+
+        uint16_t len =  strlen((char *)Msg_LogGetPayload(reply));
+        Msg_LogSetPayloadlength(reply, len);
+
+        Event_Send(obj, reply);
     }
     break;
-    case QSP_LogStopAll:
-        LogHandler_StopAllLogs(obj->logHandler);
+    case log_entry:
+    {
+        result = 1;
+        moduleMsg_t* reply = Msg_LogCreate(Msg_GetSource(msg), 0, log_name, LOG_MSG_REPLY_LENGTH);
+
+        LogHandler_AppendSerializedlogs(RxObj->logHandler, Msg_LogGetPayload(reply), Msg_LogGetPayloadbufferlength(reply));
+        uint16_t len =  strlen((char *)Msg_LogGetPayload(reply));
+        Msg_LogSetPayloadlength(reply, len);
+
+        Event_Send(obj, reply);
+    }
+    break;
+    case log_stopAll:
+        LogHandler_StopAllLogs(RxObj->logHandler);
         result = 0;
         break;
     default:

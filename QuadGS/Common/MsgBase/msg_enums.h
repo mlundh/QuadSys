@@ -27,13 +27,13 @@
 
 namespace QuadGS {
 
-typedef enum CtrlModeState{
+typedef enum{
     Control_mode_rate,
     Control_mode_attitude,
     Control_mode_not_available,
 }CtrlMode_t;
 
-typedef enum mode{
+typedef enum {
     fmode_init,          // FC is initializing.
     fmode_disarmed,      // Disarmed mode, no action except changing to another state.
     fmode_config,        // Configuration. FC can be configured.
@@ -56,6 +56,12 @@ typedef enum {
     transmission_OK,
     transmission_NOK,
 }TransmissionCtrl;
+
+typedef enum {
+    log_name = 0,
+    log_entry = 1,
+    log_stopAll = 2,
+}LogCtrl;
 
 
 }

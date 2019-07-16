@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#include "../Msg_Parser.h"
+#include "../inc/Msg_Parser.h"
 #include "../../Messages/inc/Msg_Param.h"
 #include "../../Messages/inc/Msg_Log.h"
 #include "../../Messages/inc/Msg_Debug.h"

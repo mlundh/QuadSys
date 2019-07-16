@@ -35,9 +35,9 @@
 EXECUTABLES := QuadFC Test_Modules1 Test_Modules2 Test_Board Test_Utilities Test_Components1
 
 QuadFC_DEPS:= Top/QuadFC HAL/QuadFC
-QuadFC_DEPS+= $(addprefix Modules/, Communication FlightController HMI  EventHandler)
-QuadFC_DEPS+= $(addprefix Modules/, StateEstimator Utilities SetpointHandler FlightModeHandler Log LogMemBackend)
-QuadFC_DEPS+= $(addprefix Components/, Log LogMemBackend PidController Parameters)
+QuadFC_DEPS+= $(addprefix Modules/, Communication FlightController HMI  EventHandler Messages MsgBase)
+QuadFC_DEPS+= $(addprefix Modules/, StateEstimator Utilities SetpointHandler FlightModeHandler)
+QuadFC_DEPS+= $(addprefix Components/, Log LogMemBackend PidController Parameters SLIP)
 QuadFC_DEPS+= $(addprefix PortLayer/, ArduinoDueBoard SpectrumSatellite HMI CY15B104Q_SX_spi_fram)
 QuadFC_DEPS+= $(addprefix PortLayer/, MB85RC_i2c_fram Sensors)
 QuadFC_DEPS+= $(addprefix ThirdParty/, asf freertos asf_freertos)

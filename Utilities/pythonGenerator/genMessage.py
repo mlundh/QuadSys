@@ -337,7 +337,7 @@ def genParserc( types, interfaces, outputDirCpp ):
 	with open(dir+'/c/parserTemplate', 'r') as ftemp:
 		templateStringParser = ftemp.read()
 		
-	with open(outputDirCpp+'/src/Msg_Parser.cpp', 'w') as f:
+	with open(outputDirCpp+'/src/Msg_Parser.c', 'w') as f:
 		f.write(templateStringParser.format(**substTypes))
 
 

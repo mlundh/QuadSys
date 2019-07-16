@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#include "../Msg_Parser.h"
+#include "../inc/Msg_Parser.h"
 {headers}
 
 moduleMsg_t* Msg_Parse(uint8_t* buffer, uint32_t bufferLength)
