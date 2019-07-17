@@ -23,6 +23,7 @@
  */
 
 #include "dbgModule.h"
+#include "msg_enums.h"
 #include "msgAddr.h"
 #include "Msg_RegUiCommand.h"
 #include "Msg_UiCommandResult.h"
@@ -34,6 +35,8 @@ namespace QuadGS {
 dbgModule::dbgModule(msgAddr_t name):QGS_MessageHandlerBase(name)
 {
 	mCommands.push_back(UiCommand("dbgModuleSend","Send a message from the dbg module to any other module.",std::bind(&dbgModule::sendUiMsg, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("dbgGetRuntimeStats","Get runtime stats from the FC.",std::bind(&dbgModule::getRuntimeStats, this, std::placeholders::_1)));
+
 }
 
 dbgModule::~dbgModule()
@@ -122,6 +125,15 @@ std::string dbgModule::sendUiMsg(std::string msg)
 	return strResponce;
 }
 
+std::string dbgModule::getRuntimeStats(std::string)
+{
+	Msg_Debug::ptr ptr = std::make_unique<Msg_Debug>(msgAddr_t::FC_Dbg_e, DbgCtrl_t::QSP_DebugGetRuntimeStats, "");
+	sendMsg(std::move(ptr));
+
+	return "";
+}
+
+
 void dbgModule::process(Msg_GetUiCommands* message)
 {
 	for(UiCommand command : mCommands)
@@ -148,6 +160,12 @@ void dbgModule::process(Msg_FireUiCommand* message)
 	Msg_UiCommandResult::ptr ptr = std::make_unique<Msg_UiCommandResult>(message->getSource(), "No such command.");
 	sendMsg(std::move(ptr));
 	return;
+}
+void dbgModule::process(Msg_Debug* message)
+{
+	Msg_Display::ptr ptr = std::make_unique<Msg_Display>(msgAddr_t::GS_GUI_e, message->getPayload());
+
+	sendMsg(std::move(ptr));
 }
 
 } /* namespace QuadGS */

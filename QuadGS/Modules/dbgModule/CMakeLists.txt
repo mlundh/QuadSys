@@ -2,7 +2,8 @@ set(src "dbgModule.cpp")
 set(dep "CommandTree"
         "Param"
         "Ui_Command"
-        "QGS_Module")
+        "QGS_Module"
+        "Fc_Debug")
 
 qgs_make_shared_lib( dbgModule src dep)
 

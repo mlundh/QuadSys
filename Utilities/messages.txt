@@ -27,7 +27,7 @@ Msg_ParamLoad
 Msg_Log --member uint8_t control --member std::string payload
 *
 *Fc_Debug FC_Dbg GS_Dbg
-Msg_Debug --member std::string payload
+Msg_Debug --member uint8_t control --member std::string payload
 *
 
 *IO FC_SerialIO GS_SerialIO

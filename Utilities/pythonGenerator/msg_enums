@@ -22,3 +22,10 @@ typedef enum {
 	param_load,
 	param_error,
 }ParamCtrl;
+
+typedef enum 
+{
+  QSP_DebugGetRuntimeStats = 0,
+  QSP_DebugSetRuntimeStats = 1,
+  QSP_DebugGetErrorMessages = 2,
+}DbgCtrl_t;

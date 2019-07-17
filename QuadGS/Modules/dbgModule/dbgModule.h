@@ -30,6 +30,7 @@
 #include "Msg_GetUiCommands.h"
 #include "Msg_FireUiCommand.h"
 #include "Msg_Display.h"
+#include "Msg_Debug.h"
 
 #include "Msg_Test.h"
 
@@ -39,6 +40,8 @@ class dbgModule
 : public QGS_ReactiveModule
 , public QGS_MessageHandler<Msg_GetUiCommands>
 , public QGS_MessageHandler<Msg_FireUiCommand>
+, public QGS_MessageHandler<Msg_Debug>
+
 {
 
 public:
@@ -51,8 +54,11 @@ public:
 
 	std::string sendUiMsg(std::string msg);
 
+	std::string getRuntimeStats(std::string);
+
 	virtual void process(Msg_GetUiCommands* message);
 	virtual void process(Msg_FireUiCommand* message);
+	virtual void process(Msg_Debug* message);
 
 	std::vector<UiCommand> mCommands;
 

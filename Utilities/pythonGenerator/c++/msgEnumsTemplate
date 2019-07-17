@@ -22,13 +22,13 @@
  * THE SOFTWARE.
  */
 
-#ifndef QUADGS_MESSAGE_TYPES_H_
-#define QUADGS_MESSAGE_TYPES_H_
+#ifndef QUADGS_ENUM_TYPES_H_
+#define QUADGS_ENUM_TYPES_H_
 
 namespace QuadGS {{
 
 {msg_enums}
 
 }}
-#endif /* QUADGS_MESSAGE_TYPES_H_ */
+#endif /* QUADGS_ENUM_TYPES_H_ */
 
