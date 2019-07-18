@@ -32,7 +32,6 @@ namespace po = boost::program_options;
 #include "QGS_Router.h"
 #include "CLI.h"
 #include "LogHandler.h"
-#include "msgControl.h"
 #include "SerialManager.h"
 #include "dbgModule.h"
 

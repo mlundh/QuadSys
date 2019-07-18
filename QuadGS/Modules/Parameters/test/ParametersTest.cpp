@@ -29,7 +29,7 @@
 #include <memory>
 #include <iostream>
 
-#include "msgControl.h"
+#include "msg_enums.h"
 #include "gtest/gtest.h"
 
 
@@ -150,7 +150,7 @@ TEST_F(ParamTest, TestSetup)
 TEST_F(ParamTest, TestMessage)
 {
 	std::string payload_str = "/root/tmp/test[555]";
-	mFake.sendDummyParamMsg(ParametersControl_t::SetTree, payload_str);
+	mFake.sendDummyParamMsg(ParamCtrl::param_set, payload_str);
 	mFake.waitForMsg();
 
 	std::string result = mParameters.get("/root/tmp/test");

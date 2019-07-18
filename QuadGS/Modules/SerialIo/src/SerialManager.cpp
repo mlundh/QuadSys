@@ -25,7 +25,7 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include "msgControl.h"
+#include "msg_enums.h"
 #include "SlipPacket.h"
 
 #include "QGS_Msg.h"
@@ -54,7 +54,7 @@ Serial_Manager::Serial_Manager(msgAddr_t name)
 	mCommands.push_back(UiCommand("serialOpenPort","Open the serial port.",std::bind(&Serial_Manager::openCmd, this, std::placeholders::_1)));
 	mCommands.push_back(UiCommand("serialStartReadPort","Start the read operation.",std::bind(&Serial_Manager::startReadCmd, this, std::placeholders::_1)));
 
-	// TODO make a config file!
+	// TODO make address based with subnets.
 	setReceivingFcn(std::bind(&Serial_Manager::ReceivingFcnIo, this, std::placeholders::_1),msgAddr_t::FC_Dbg_e);
 	setReceivingFcn(std::bind(&Serial_Manager::ReceivingFcnIo, this, std::placeholders::_1),msgAddr_t::FC_Log_e);
 	setReceivingFcn(std::bind(&Serial_Manager::ReceivingFcnIo, this, std::placeholders::_1),msgAddr_t::FC_Param_e);

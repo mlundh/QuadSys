@@ -10,7 +10,7 @@
 #include <functional>
 #include <memory>
 
-#include "msgControl.h"
+#include "msg_enums.h"
 #include "QGS_Tree.h"
 #include "QGS_Module.h"
 #include "Msg_Log.h"
@@ -50,21 +50,21 @@ LogHandler::~LogHandler()
 
 std::string LogHandler::getLogNames(std::string )
 {
-	Msg_Log::ptr ptr = std::make_unique<Msg_Log>(msgAddr_t::FC_Log_e, LogControl::Name,"");
+	Msg_Log::ptr ptr = std::make_unique<Msg_Log>(msgAddr_t::FC_Log_e, LogCtrl_t::Name,"");
 	sendMsg(std::move(ptr));
 	return "";
 }
 
 std::string LogHandler::getLogEntries(std::string )
 {
-	Msg_Log::ptr ptr = std::make_unique<Msg_Log>(msgAddr_t::FC_Log_e, LogControl::Entry,"");
+	Msg_Log::ptr ptr = std::make_unique<Msg_Log>(msgAddr_t::FC_Log_e, LogCtrl_t::Entry,"");
 	sendMsg(std::move(ptr));
 	return "";
 }
 
 std::string LogHandler::stopAllLogs(std::string )
 {
-	Msg_Log::ptr ptr = std::make_unique<Msg_Log>(msgAddr_t::FC_Log_e, LogControl::StopAll,"");
+	Msg_Log::ptr ptr = std::make_unique<Msg_Log>(msgAddr_t::FC_Log_e, LogCtrl_t::StopAll,"");
 	sendMsg(std::move(ptr));
 	return "";
 }
@@ -113,7 +113,7 @@ void LogHandler::process(Msg_Log* message)
 {
 	switch (message->getControl())
 	{
-	case LogControl::Name: //TODO move enum to messages.txt when the generator scripts can handle enums...
+	case LogCtrl_t::Name:
 	{
 		std::string payloadStr = message->getPayload();
 		while(!payloadStr.empty())
@@ -156,7 +156,7 @@ void LogHandler::process(Msg_Log* message)
 		}
 	}
 	break;
-	case LogControl::Entry:
+	case LogCtrl_t::Entry:
 	{
 		std::string payloadStr = message->getPayload();
 		bool end = false;

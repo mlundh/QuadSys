@@ -29,3 +29,11 @@ typedef enum
   QSP_DebugSetRuntimeStats = 1,
   QSP_DebugGetErrorMessages = 2,
 }DbgCtrl_t;
+
+typedef enum 
+{
+    Name = 0,
+    Entry = 1,
+    StopAll = 2,
+}LogCtrl_t;
+
