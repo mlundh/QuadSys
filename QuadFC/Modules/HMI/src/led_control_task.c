@@ -31,6 +31,7 @@
 #include "EventHandler/inc/event_handler.h"
 #include "FlightModeHandler/inc/flight_mode_handler.h"
 #include "FlightController/inc/control_mode_handler.h"
+#include "Messages/inc/Msg_CtrlMode.h"
 #include "HAL/QuadFC/QuadFC_Gpio.h"
 
 #define NR_LEDS (6)
@@ -286,7 +287,7 @@ uint8_t Led_HandleFlightMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* 
 uint8_t Led_HandleCtrltMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* data)
 {
   ledTaskParams * param = (ledTaskParams*)(taskParam);
-  CtrlMode_t flightState = Ctrl_GetEventData(data);
+  CtrlMode_t flightState = Msg_CtrlModeGetMode(data);
   switch(flightState)
   {
   case Control_mode_not_available:

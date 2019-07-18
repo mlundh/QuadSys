@@ -201,8 +201,8 @@ SpiMaster_SlaveDevice_t* SpiMaster_CreateSlaveDevice(uint8_t SpiIndex,
 	spi_set_baudrate_div(Spi_instances[SpiIndex], slave->device.id, baud_div);
 	spi_configure_cs_behavior(Spi_instances[SpiIndex], slave->device.id, SPI_CS_KEEP_LOW); // TODO, allow changed behavior
 
-	uint8_t polarity;
-	uint8_t phase;
+	uint8_t polarity = 0;
+	uint8_t phase = 0;
 	switch (slave->mode)
 	{
 	case Spi_mode_0:
