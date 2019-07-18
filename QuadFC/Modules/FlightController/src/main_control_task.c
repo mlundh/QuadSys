@@ -100,7 +100,7 @@ void create_main_control_task(eventHandler_t* evHandler)
   /*Create the task*/
 
   MaintaskParams_t * taskParam = pvPortMalloc(sizeof(MaintaskParams_t));
-  taskParam->paramHandler = ParamHandler_CreateObj(1,evHandler, "QuadGS", 0); // Master handles all communication, we do not want to be master!
+  taskParam->paramHandler = ParamHandler_CreateObj(8,evHandler, "QuadGS", 0); // Master handles all communication, we do not want to be master!
   taskParam->ctrl = Ctrl_Create(ParamHandler_GetParam(taskParam->paramHandler));
   taskParam->setpoint = pvPortMalloc( sizeof(state_data_t) );
   taskParam->state = pvPortMalloc( sizeof(state_data_t) );

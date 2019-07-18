@@ -76,16 +76,18 @@ int main( void )
     for(;;); //Error!
   }
 
-  Event_InitHandler(evHandlerM, evHandlerComRx);
-  Event_InitHandler(evHandlerM, evHandlerComTx);
-  Event_InitHandler(evHandlerM, evHandlerLed);
-  Event_InitHandler(evHandlerM, evHandlerSatellite);
+
 
   create_main_control_task(evHandlerM);
 
   Satellite_CreateReceiverTask(evHandlerSatellite);
   Led_CreateLedControlTask(evHandlerLed);
   Com_CreateTasks(evHandlerComRx, evHandlerComTx); // Creates two tasks, RX and TX.
+
+  Event_InitHandler(evHandlerM, evHandlerComRx);
+  Event_InitHandler(evHandlerM, evHandlerComTx);
+  Event_InitHandler(evHandlerM, evHandlerLed);
+  Event_InitHandler(evHandlerM, evHandlerSatellite);
 
   /* Start the RTOS scheduler. */
   vTaskStartScheduler();
