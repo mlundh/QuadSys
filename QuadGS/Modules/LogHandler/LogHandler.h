@@ -38,6 +38,7 @@ class LogHandler
 		, public QGS_MessageHandler<Msg_GetUiCommands>
 		, public QGS_MessageHandler<Msg_FireUiCommand>
 		, public QGS_MessageHandler<Msg_Log>
+
 {
 	typedef std::function<std::string(std::string) > UiFcn;
 	class UiCommand
@@ -83,6 +84,8 @@ public:
      * @return           string containing the formatted log mapping.
      */
     std::string FormatLogMapping(std::string string);
+
+    std::string SetAppLogLevel(std::string string);
 
 
 	virtual void process(Msg_GetUiCommands* message);

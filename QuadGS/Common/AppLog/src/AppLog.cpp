@@ -26,9 +26,20 @@
 
 #include <boost/core/null_deleter.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>
 
 namespace QuadGS {
 
+std::vector<std::string> AppLog::mSeverityStrings =
+{
+		"invalid",
+		"off",
+	    "error",
+	    "warning",
+	    "info",
+	    "debug",
+	    "message_trace",
+};
 
 AppLog::AppLog()
 {
@@ -62,6 +73,7 @@ std::ostream& operator<< (std::ostream& strm, QuadGS::severity_level level)
 {
 	static const char* strings[] =
 	{
+			"invalid"
 			"off",
 			"error",
 			"warning",
@@ -127,7 +139,7 @@ void AppLog::Init( std::string FilenameAppLog, std::string FilenameMsgLog, std::
 			boost::make_shared< std::ofstream >(FilenameAppLog + ".log"));
 	// The same formatter is used for all log entries.
 	pSink->set_formatter(fmt);
-	pSink->set_filter(expr::attr< severity_level >("Severity") <= svl );
+	pSink->set_filter(expr::attr< severity_level >("Severity") < svl );
 	pSink->locked_backend()->auto_flush(true);
 	logging::core::get()->add_sink(pSink);
 
@@ -148,7 +160,7 @@ void AppLog::Init( std::string FilenameAppLog, std::string FilenameMsgLog, std::
 	boost::shared_ptr< std::ostream > stream(&outstream, boost::null_deleter());
 	pSink->locked_backend()->add_stream(stream);
 	pSink->set_formatter(fmt_clog);
-	pSink->set_filter(expr::attr< severity_level >("Severity") <= svl );
+	pSink->set_filter(expr::attr< severity_level >("Severity") < svl );
 	logging::core::get()->add_sink(pSink);
 
 
@@ -158,5 +170,48 @@ void AppLog::Init( std::string FilenameAppLog, std::string FilenameMsgLog, std::
 	attrs::local_clock TimeStamp;
 	logging::core::get()->add_global_attribute("TimeStamp", TimeStamp);
 
+}
+
+
+QuadGS::severity_level AppLog::logLevelFromStr(std::string level)
+{
+	QuadGS::severity_level logLevel = QuadGS::invalid;
+	boost::algorithm::trim(level);
+
+	for(unsigned int i = 0; i < AppLog::mSeverityStrings.size(); i++)
+	{
+		if(!level.compare(AppLog::mSeverityStrings[i]))
+		{
+			logLevel = static_cast<severity_level>(i);
+			break;
+		}
+	}
+	return logLevel;
+}
+std::string AppLog::setLogLevelFromStr(std::string level)
+{
+	QuadGS::severity_level lvl = AppLog::logLevelFromStr(level);
+	std::string result;
+	if(lvl != severity_level::invalid)
+	{
+		AppLog::logLevel(lvl);
+		result = "";
+	}
+	else
+	{
+		std::stringstream ss;
+		ss << "Invalid log level: " << level << " ." << std::endl << " Allowed options are: " << std::endl;
+		for(auto i : AppLog::mSeverityStrings)
+		{
+			ss << i << std::endl;
+		}
+		result = ss.str();
+	}
+	return result;
+}
+
+void AppLog::logLevel(QuadGS::severity_level const svl)
+{
+  boost::log::core::get()->set_filter(expr::attr< severity_level >("Severity") < svl);
 }
 } /* namespace QuadGS */

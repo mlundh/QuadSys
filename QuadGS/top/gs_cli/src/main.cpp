@@ -67,6 +67,7 @@ struct program_args
   {}
     string logLevel;
     severity_level lvl;
+    bool msgTrace;
 };
 }
 using namespace QuadGS;
@@ -76,7 +77,7 @@ int main(int ac, char* av[])
 {
     // Handle program options.
     QuadGS::program_args args;
-    try 
+    try
     {
         handle_program_args(ac, av, args);
     }
@@ -86,7 +87,7 @@ int main(int ac, char* av[])
         return 1;
     }
     //Initialize the app log.
-    QuadGS::AppLog::Init("app_log", "msg_log", std::clog, args.lvl);
+    QuadGS::AppLog::Init("app_log", "msg_log", std::clog, args.lvl, args.msgTrace);
 
 	//Instantiate modules.
 	Parameters mParameters(msgAddr_t::GS_Param_e);
@@ -120,45 +121,31 @@ void handle_program_args(int ac, char* av[], QuadGS::program_args& args)
                     ("help,h", "produce help message")
                     ("version,v", "print version string")
                     ("LogLevel,l", po::value< std::string >(&args.logLevel)->default_value("error"),
-                            "Log level for outputing to screen.");
+                            "Log level for outputing to screen.")
+					("msgTrace,t",po::value< bool >(&args.msgTrace)->default_value(false), "Trace all messages in the system to file.");
     po::variables_map opts;
     po::store(po::parse_command_line(ac, av, generic), opts);
     po::notify(opts);
-    if (opts.count("help")) {
+    if (opts.count("help"))
+    {
         cout << generic << std::endl;
         return;
     }
-    if (opts.count("version")) {
+    if (opts.count("version"))
+    {
         cout << "QuadGS, unofficial version\n";
         return;
     }
-    if (opts.count("LogLevel")) {
-      if(!args.logLevel.compare("error"))
-      {
-        args.lvl = QuadGS::severity_level::error;
-      }
-      else if(!args.logLevel.compare("warning"))
-      {
-        args.lvl = QuadGS::severity_level::warning;
-      }
-      else if(!args.logLevel.compare("info"))
-      {
-        args.lvl = QuadGS::severity_level::info;
-      }
-      else if(!args.logLevel.compare("debug"))
-      {
-        args.lvl = QuadGS::severity_level::debug;
-      }
-      else if(!args.logLevel.compare("message_trace"))
-      {
-        args.lvl = QuadGS::severity_level::message_trace;
-      }
-      else
-      {
-        cout <<  "Invalid log level, using default: error." << std::endl;
-      }
-        return;
+    if (opts.count("LogLevel"))
+    {
+    	args.lvl = AppLog::logLevelFromStr(args.logLevel);
+    	if(args.lvl == severity_level::invalid)
+    	{
+    		args.lvl = QuadGS::error;
+    		cout << "Invalid log level. Using default: error." << std::endl;
+    	}
     }
+    return;
 }
 
 
