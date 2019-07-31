@@ -423,7 +423,7 @@ uint8_t Satellite_UpdateState(Satellite_t* obj, spektrum_data_t *merged_data)
     if ((merged_data->ch[4].value > SATELLITE_CH_CENTER) // Flap is on
             && (merged_data->ch[0].value < 40)) // throttle is low
     {
-        if(obj->current_flight_mode_state != fmode_disarming)
+        if(obj->current_flight_mode_state != fmode_disarming && obj->current_flight_mode_state != fmode_disarmed)
         {
             moduleMsg_t* msg = Msg_FlightModeReqCreate(Broadcast, 0, fmode_disarming);
             Event_Send(obj->evHandler, msg);
@@ -435,7 +435,7 @@ uint8_t Satellite_UpdateState(Satellite_t* obj, spektrum_data_t *merged_data)
     else if ((merged_data->ch[4].value < SATELLITE_CH_CENTER) // Flap is off
             && (merged_data->ch[0].value < 40)) // throttle is low
     {
-        if(obj->current_flight_mode_state != fmode_arming)
+        if(obj->current_flight_mode_state != fmode_arming && obj->current_flight_mode_state != fmode_armed)
         {
             moduleMsg_t* msg = Msg_FlightModeReqCreate(Broadcast, 0, fmode_arming);
             Event_Send(obj->evHandler, msg);

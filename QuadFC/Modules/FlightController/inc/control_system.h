@@ -49,7 +49,7 @@ CtrlObj_t* Ctrl_Create(param_obj_t* param);
  * @param u_signal  Output, control signal.
  * @param current_mode Current mode of the system.
  */
-void Ctrl_Execute(CtrlObj_t *obj, state_data_t *state, state_data_t *setpoint
+uint8_t Ctrl_Execute(CtrlObj_t *obj, state_data_t *state, state_data_t *setpoint
         , control_signal_t *u_signal, CtrlMode_t current_mode);
 /**
  * Switch between the control schemes.
@@ -59,7 +59,7 @@ void Ctrl_Execute(CtrlObj_t *obj, state_data_t *state, state_data_t *setpoint
  * @param state     Measurement.
  * @param u_signal  Control signal.
  */
-void Ctrl_Switch(CtrlObj_t * param, CtrlMode_t newMode, state_data_t *state
+uint8_t Ctrl_Switch(CtrlObj_t * param, CtrlMode_t newMode, state_data_t *state
         , control_signal_t *u_signal);
 /**
  * Turn control on.

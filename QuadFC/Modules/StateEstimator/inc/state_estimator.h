@@ -55,7 +55,7 @@ typedef enum etstimation_types
   type_not_availible = 4
 } estimation_types_t;
 
-StateEst_t *StateEst_Create(eventHandler_t* eHandler, param_obj_t* param);
+StateEst_t *StateEst_Create(param_obj_t* param);
 
 /**
  * Initialize the state estimator. This causes all connected and configured
@@ -73,7 +73,7 @@ uint8_t StateEst_init(StateEst_t *obj);
  * @param state_vector The state vector.
  * @return 0 for Success or failure code.
  * */
-uint8_t StateEst_getState(StateEst_t *obj, state_data_t *state_vector);
+uint8_t StateEst_getState(StateEst_t *obj, state_data_t *state_vector, CtrlMode_t CurrentMode);
 
 
 #endif /* STATE_ESTIMATOR_H_ */

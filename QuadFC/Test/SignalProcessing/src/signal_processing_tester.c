@@ -74,7 +74,7 @@ void SigProsses_GetTCs(TestFw_t* obj)
     TestFW_Report(obj, tmpstr);
     return;
   }
-  SigProcessTester->stateEst = StateEst_Create(NULL, NULL);
+  SigProcessTester->stateEst = StateEst_Create(NULL);
   if(!SigProcessTester->stateEst)
   {
     snprintf (tmpstr, REPORT_STR_LEN,"Failed to create stateEst.\n");
@@ -259,7 +259,7 @@ uint8_t SigProsses_TestImuToRate(TestFw_t* obj)
 
   DummyI2C_AddResponse(1, 0, i2c_data);
 
-  if(!StateEst_getState(stateEst, state))
+  if(!StateEst_getState(stateEst, state, Control_mode_rate))
   {
     return 0;
   }
@@ -573,7 +573,7 @@ uint8_t SigProsses_TestImuToAngle(TestFw_t* obj)
 
   DummyI2C_AddResponse(1, i2c_data, i2c_data);
 
-  if(!StateEst_getState(stateEst, &state))
+  if(!StateEst_getState(stateEst, &state, Control_mode_attitude))
   {
     return 0;
   }
@@ -646,7 +646,7 @@ uint8_t SigProsses_TestImuToAngle2(TestFw_t* obj)
 
   DummyI2C_AddResponse(1, i2c_data, i2c_data);
 
-  if(!StateEst_getState(stateEst, state))
+  if(!StateEst_getState(stateEst, state,Control_mode_attitude))
   {
     return 0;
   }

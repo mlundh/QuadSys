@@ -35,12 +35,10 @@ struct StateEst
 {
   Imu_t * imu;
   state_data_t * gyroState;
-  CtrlMode_t CurrentMode;
 };
 
-uint8_t StateEst_ControlModeCB(eventHandler_t* obj, void* data, moduleMsg_t* eData);
 
-StateEst_t *StateEst_Create(eventHandler_t* eHandler, param_obj_t* param)
+StateEst_t *StateEst_Create(param_obj_t* param)
 {
   StateEst_t * stateEstObj = pvPortMalloc(sizeof(StateEst_t));
   if(!stateEstObj)
@@ -49,14 +47,12 @@ StateEst_t *StateEst_Create(eventHandler_t* eHandler, param_obj_t* param)
   }
   stateEstObj->imu = Imu_Create(param);
   stateEstObj->gyroState = pvPortMalloc(sizeof(state_data_t));
-  stateEstObj->CurrentMode = Control_mode_rate;
   if(!stateEstObj->imu || !stateEstObj->gyroState)
   {
     return NULL;
   }
   state_data_t stateTmp = {{0}};
   *stateEstObj->gyroState = stateTmp;
-  Event_RegisterCallback(eHandler, Msg_CtrlMode_e, StateEst_ControlModeCB, stateEstObj);
 
   return stateEstObj;
 }
@@ -68,14 +64,14 @@ uint8_t StateEst_init(StateEst_t *obj)
   return result;
 }
 
-uint8_t StateEst_getState(StateEst_t *obj, state_data_t *state_vector)
+uint8_t StateEst_getState(StateEst_t *obj, state_data_t *state_vector, CtrlMode_t CurrentMode)
 {
   if(!Imu_GetData(obj->imu))
   {
     return 0;
   }
   state_vector->state_valid_bf = 0;
-  switch (obj->CurrentMode)
+  switch (CurrentMode)
   {
   case Control_mode_rate:
     Signal_getRateGyro( state_vector, &obj->imu->ImuData );
@@ -104,21 +100,10 @@ uint8_t StateEst_getState(StateEst_t *obj, state_data_t *state_vector)
     /*----------------------------Mode not available------------
      * Something is very wrong, we have an unknown state.
      */
+      return 0;
     break;
   default:
     return 0;
   }
   return 1;
-}
-
-uint8_t StateEst_ControlModeCB(eventHandler_t* obj, void* data, moduleMsg_t* msg)
-{
-    if(!data || !msg || !obj || (msg->type != Msg_CtrlMode_e))
-    {
-        return 0;
-    }
-    StateEst_t * stateObj = (StateEst_t*)data; // Data should always be a state est pointer.
-    CtrlMode_t newMode = Msg_CtrlModeGetMode(msg);
-    stateObj->CurrentMode = newMode;
-    return 1;
 }

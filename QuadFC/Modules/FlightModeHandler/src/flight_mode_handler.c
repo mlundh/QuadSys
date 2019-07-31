@@ -156,7 +156,7 @@ uint8_t FMode_CB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
         return 0;
     }
     FlightModeHandler_t* FMobj = (FlightModeHandler_t*)data; // data should always be the current handler.
-    uint8_t result = FMode_ChangeFMode(FMobj, Msg_FlightModeGetMode(eData));
+    uint8_t result = FMode_ChangeFMode(FMobj, Msg_FlightModeReqGetMode(eData));
     if(!result)
     {
         moduleMsg_t* msg = Msg_FlightModeCreate(eData->mSource, 0, FMobj->current_mode);
@@ -169,7 +169,7 @@ void FMode_SendEvent(FlightModeHandler_t*  obj)
 {
     if(obj && obj->eHandler)
     {
-        moduleMsg_t* msg = Msg_FlightModeCreate(FC_Led_e, 0,obj->current_mode);
+        moduleMsg_t* msg = Msg_FlightModeCreate(Broadcast, 0,obj->current_mode);
         Event_Send(obj->eHandler, msg);
     }
 }

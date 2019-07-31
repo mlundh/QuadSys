@@ -158,7 +158,7 @@ uint8_t Ctrl_InitializeAttitude(CtrlObj_t *obj, param_obj_t* param)
     return 1;
 }
 
-void Ctrl_Execute(CtrlObj_t *obj, state_data_t *state, state_data_t *setpoint
+uint8_t Ctrl_Execute(CtrlObj_t *obj, state_data_t *state, state_data_t *setpoint
         , control_signal_t *u_signal, CtrlMode_t current_mode)
 {
     if(obj->current_mode != current_mode)
@@ -166,7 +166,7 @@ void Ctrl_Execute(CtrlObj_t *obj, state_data_t *state, state_data_t *setpoint
         Ctrl_Switch(obj, current_mode, state, u_signal);
     }
 
-    switch (current_mode)
+    switch (obj->current_mode)
     {
     case Control_mode_rate:
         /*-----------------------------Rate mode-----------------------
@@ -208,11 +208,15 @@ void Ctrl_Execute(CtrlObj_t *obj, state_data_t *state, state_data_t *setpoint
     case Control_mode_not_available:
         /*----------------------------Mode not available------------
          * Something is very wrong, we have an unknown state.
+         *
          */
+        return 0;
         break;
     default:
+        return 0;
         break;
     }
+    return 1;
 
 }
 
@@ -247,7 +251,7 @@ void Ctrl_On(CtrlObj_t * obj)
 
 }
 
-void Ctrl_Switch(CtrlObj_t * param, CtrlMode_t newMode, state_data_t *state
+uint8_t Ctrl_Switch(CtrlObj_t * param, CtrlMode_t newMode, state_data_t *state
         , control_signal_t *u_signal)
 {
 
@@ -259,7 +263,7 @@ void Ctrl_Switch(CtrlObj_t * param, CtrlMode_t newMode, state_data_t *state
          */
         if(!((state->state_valid_bf & (1 << pitch_rate_bf)) && (state->state_valid_bf & (1 << roll_rate_bf))))
         {
-            return;
+            return 0;
         }
         Pid_SetMode(param->RatePitch, pid_on, u_signal->control_signal[u_pitch], state->state_bf[pitch_rate_bf]);
         Pid_SetMode(param->RateRoll, pid_on, u_signal->control_signal[u_roll], state->state_bf[roll_rate_bf]);
@@ -274,7 +278,7 @@ void Ctrl_Switch(CtrlObj_t * param, CtrlMode_t newMode, state_data_t *state
          */
         if(!((state->state_valid_bf & (1 << pitch_bf)) && (state->state_valid_bf & (1 << pitch_bf))))
         {
-            return;
+            return 0;
         }
         Pid_SetMode(param->AttitudePitch, pid_on, u_signal->control_signal[u_pitch], state->state_bf[pitch_bf]);
         Pid_SetMode(param->AttitudeRoll, pid_on, u_signal->control_signal[u_roll], state->state_bf[pitch_bf]);
@@ -286,11 +290,15 @@ void Ctrl_Switch(CtrlObj_t * param, CtrlMode_t newMode, state_data_t *state
     case Control_mode_not_available:
         /*----------------------------Mode not available------------
          * Something is very wrong, we have an unknown state.
+         *
          */
+        return 0;
         break;
     default:
         break;
     }
+    param->current_mode = newMode;
+    return 1;
 }
 
 

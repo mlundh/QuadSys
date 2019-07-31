@@ -127,7 +127,7 @@ uint8_t Ctrl_ModeCB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
         return 0;
     }
     CtrlModeHandler_t* Mobj = (CtrlModeHandler_t*)data; // data should always be the current handler.
-    uint8_t result = Ctrl_ChangeMode(Mobj, Msg_CtrlModeGetMode(eData));
+    uint8_t result = Ctrl_ChangeMode(Mobj, Msg_CtrlModeReqGetMode(eData));
     if(!result)
     {
         moduleMsg_t* msg = Msg_CtrlModeCreate(eData->mSource, 0, Mobj->currentMode);
@@ -141,7 +141,7 @@ void Ctrl_SendEvent(CtrlModeHandler_t*  obj)
 {
     if(obj->eHandler && obj)
     {
-        moduleMsg_t* msg = Msg_CtrlModeCreate(FC_Led_e, 0,obj->currentMode);
+        moduleMsg_t* msg = Msg_CtrlModeCreate(Broadcast, 0,obj->currentMode);
         Event_Send(obj->eHandler, msg);
     }
 }
