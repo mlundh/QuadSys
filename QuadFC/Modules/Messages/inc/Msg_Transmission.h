@@ -26,9 +26,9 @@
 #define MODULES_MESSAGES_INC_MSG_TRANSMISSION_H_
 
 #include "MsgBase/inc/message_base.h"
-#include "MsgBase/inc/common_types.h"
-#include "MsgBase/inc/msg_enums.h"
-#include "MsgBase/inc/msgAddr.h"
+#include "Messages/inc/common_types.h"
+#include "Messages/inc/msg_enums.h"
+#include "Messages/inc/msgAddr.h"
 
 
 

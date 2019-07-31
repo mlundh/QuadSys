@@ -39,7 +39,7 @@
 #include <stdint.h>
 #include "FreeRTOS.h"
 #include "semphr.h"
-#include "Modules/MsgBase/inc/common_types.h"
+#include "Modules/Messages/inc/common_types.h"
 #include "QuadFC/QuadFC_IMU.h"
 #include "QuadFC/src/QuadFC_IMUInternal.h"
 #include "Utilities/inc/my_math.h"

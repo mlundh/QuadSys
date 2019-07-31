@@ -31,7 +31,7 @@
  */
 
 #include <stdint.h>
-#include "Modules/MsgBase/inc/common_types.h"
+#include "Modules/Messages/inc/common_types.h"
 #include "Parameters/inc/parameters.h"
 
 typedef struct Imu

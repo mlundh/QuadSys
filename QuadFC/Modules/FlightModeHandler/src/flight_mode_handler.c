@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 #include "FlightModeHandler/inc/flight_mode_handler.h"
-#include "MsgBase/inc/msgAddr.h"
+#include "Messages/inc/msgAddr.h"
 
 #include "EventHandler/inc/event_handler.h"
 

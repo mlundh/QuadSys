@@ -39,7 +39,7 @@
 
 #include "freertos_twi_master.h"
 #include "portmacro.h"
-#include "Modules/MsgBase/inc/common_types.h"
+#include "Modules/Messages/inc/common_types.h"
 #include "HAL/QuadFC/QuadFC_IMU.h"
 #define BLOCK_TIME_IMU (2UL / portTICK_PERIOD_MS)
 

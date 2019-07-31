@@ -24,7 +24,7 @@
 #ifndef PORTLAYER_COMMUNICATION_INC_SATELLITE_RECEIVER_PUBLIC_H_
 #define PORTLAYER_COMMUNICATION_INC_SATELLITE_RECEIVER_PUBLIC_H_
 #include "SetpointHandler/inc/setpoint_handler.h"
-#include "Modules/MsgBase/inc/common_types.h"
+#include "Modules/Messages/inc/common_types.h"
 
 /**
  * Public interface for the satellite receiver task.

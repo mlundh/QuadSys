@@ -26,7 +26,7 @@
 #define STATE_HANDLER_H_
 
 #include "stdint.h"
-#include "MsgBase/inc/common_types.h"
+#include "Messages/inc/common_types.h"
 #include "EventHandler/inc/event_handler.h"
 
 #include "Messages/inc/Msg_FlightMode.h"

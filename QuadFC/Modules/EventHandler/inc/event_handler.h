@@ -27,9 +27,9 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
-#include "MsgBase/inc/common_types.h"
+#include "Messages/inc/common_types.h"
 #include "MsgBase/inc/message_base.h"
-#include "MsgBase/inc/msgAddr.h"
+#include "Messages/inc/msgAddr.h"
 #include "Modules/EventHandler/inc/event_circular_buffer.h"
 
 /**

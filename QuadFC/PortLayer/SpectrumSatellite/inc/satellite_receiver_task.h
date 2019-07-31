@@ -22,7 +22,7 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
-#include "Modules/MsgBase/inc/common_types.h"
+#include "Modules/Messages/inc/common_types.h"
 #include "Modules/Messages/inc/Msg_FlightModeReq.h"
 #include "Modules/Messages/inc/Msg_CtrlModeReq.h"
 #include "Modules/Messages/inc/Msg_NewSetpoint.h"

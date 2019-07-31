@@ -10,7 +10,7 @@ public:
 
 	Msg_Debug(QGS_ModuleMsgBase& msg);
 
-	Msg_Debug(const msgAddr_t destination, std::string payload);
+	Msg_Debug(const msgAddr_t destination, uint8_t control, std::string payload);
 
 	Msg_Debug(const Msg_Debug& msg);
 
@@ -27,6 +27,10 @@ public:
 	
 	virtual BinaryIStream& stream(BinaryIStream& is);
 	
+	uint8_t getControl() const;
+
+	void setControl(uint8_t control);
+	
 	std::string getPayload() const;
 
 	void setPayload(std::string payload);
@@ -34,6 +38,7 @@ public:
 
 	
 private:
+	uint8_t mControl;
 	std::string mPayload;
 	
 };

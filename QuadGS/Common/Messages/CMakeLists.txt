@@ -1,3 +1,5 @@
+list(APPEND dep "")
+qgs_make_header_lib( Messages dep)
 add_subdirectory(GS_System)
 add_subdirectory(Ui_Command)
 add_subdirectory(Param)

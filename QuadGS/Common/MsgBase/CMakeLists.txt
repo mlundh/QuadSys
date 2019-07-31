@@ -2,7 +2,8 @@ list(APPEND src "QGS_Msg.cpp"
                 "QGS_ModuleMsg.cpp")
                 
 list(APPEND dep "BinaryStream"
-				"AppLog")
+				"AppLog"
+				"Messages")
 				
 qgs_make_shared_lib( MsgBase src dep)
 

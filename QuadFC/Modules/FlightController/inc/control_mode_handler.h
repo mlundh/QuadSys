@@ -28,7 +28,7 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "semphr.h"
-#include "Modules/MsgBase/inc/common_types.h"
+#include "Modules/Messages/inc/common_types.h"
 #include "EventHandler/inc/event_handler.h"
 
 

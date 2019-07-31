@@ -22,10 +22,9 @@
  * THE SOFTWARE.
  */
 
-#ifndef QUADGS_MESSAGE_TYPES_H_
-#define QUADGS_MESSAGE_TYPES_H_
+#ifndef QUADFC_MESSAGE_ENUMS_H_
+#define QUADFC_MESSAGE_ENUMS_H_
 
-namespace QuadGS {
 
 typedef enum{
     Control_mode_rate,
@@ -52,6 +51,20 @@ typedef enum {
     param_error,
 }ParamCtrl;
 
+typedef enum 
+{
+  QSP_DebugGetRuntimeStats = 0,
+  QSP_DebugSetRuntimeStats = 1,
+  QSP_DebugGetErrorMessages = 2,
+}DbgCtrl_t;
+
+typedef enum 
+{
+    Name = 0,
+    Entry = 1,
+    StopAll = 2,
+}LogCtrl_t;
+
 typedef enum {
     transmission_OK,
     transmission_NOK,
@@ -64,6 +77,5 @@ typedef enum {
 }LogCtrl;
 
 
-}
-#endif /* QUADGS_MESSAGE_TYPES_H_ */
+#endif /* QUADFC_MESSAGE_ENUMS_H_ */
 

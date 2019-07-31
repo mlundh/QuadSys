@@ -29,7 +29,8 @@
 
  typedef struct
 {
-    uint8_t* mPayload;
+    uint8_t mControl;
+	uint8_t* mPayload;
 	uint32_t mPayloadlength;
 	uint32_t mPayloadbufferlength;
 	
@@ -37,7 +38,7 @@
 
 
 moduleMsg_t* Msg_DebugCreate(uint32_t destination, uint8_t msgNr
-    , uint32_t Payloadbufferlength)
+    , uint8_t control, uint32_t Payloadbufferlength)
 {
     size_t size = sizeof(moduleMsg_t) + sizeof(Msg_Debug_t)  + (Payloadbufferlength);
     moduleMsg_t* msg = pvPortMalloc(size);
@@ -52,6 +53,7 @@ moduleMsg_t* Msg_DebugCreate(uint32_t destination, uint8_t msgNr
 
         Msg_Debug_t* internal_data = (Msg_Debug_t*)(msg + 1);
         
+        internal_data->mControl = control;
         internal_data->mPayload = (uint8_t*)(internal_data+1);
         internal_data->mPayloadlength = 0;
         internal_data->mPayloadbufferlength = Payloadbufferlength;
@@ -60,6 +62,39 @@ moduleMsg_t* Msg_DebugCreate(uint32_t destination, uint8_t msgNr
     return msg;
 }
 
+uint8_t Msg_DebugGetControl(moduleMsg_t* msg)
+{
+    uint8_t value = {0};
+    if(msg && (msg->type == Msg_Debug_e))
+    {
+        Msg_Debug_t* internal_data = (Msg_Debug_t*)(msg + 1);
+        if(internal_data)
+        {
+            value = internal_data->mControl;
+        }
+    }
+    else
+    {
+       configASSERT(0);
+    }
+    return value;
+}
+
+void Msg_DebugSetControl(moduleMsg_t* msg, uint8_t control)
+{
+    if(msg && (msg->type == Msg_Debug_e))
+    {
+        Msg_Debug_t* internal_data = (Msg_Debug_t*)(msg + 1);
+        if(internal_data)
+        {
+            internal_data->mControl  = control;
+        }
+    }
+    else
+    {
+       configASSERT(0);
+    }
+}
 uint8_t* Msg_DebugGetPayload(moduleMsg_t* msg)
 {
     uint8_t* value = {0};
@@ -168,6 +203,7 @@ uint8_t* Msg_DebugSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_s
         Msg_Debug_t* data = (Msg_Debug_t*)(msg + 1);
         if(data)
         {
+            buffer = serialize_uint8_t(buffer, &buffer_size, &data->mControl);
             buffer = serialize_string(buffer, &buffer_size, data->mPayload, data->mPayloadlength);
 
         }
@@ -185,6 +221,7 @@ moduleMsg_t* Msg_DebugDeserialize(uint8_t* buffer, uint32_t buffer_size)
         Msg_Debug_t* data = (Msg_Debug_t*)(msg + 1);
         if(data)
         {
+            buffer = deserialize_uint8_t(buffer, &buffer_size, &data->mControl);
             buffer = deserialize_string(buffer, &buffer_size, data->mPayload, &data->mPayloadlength, data->mPayloadbufferlength);
 
         }

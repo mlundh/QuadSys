@@ -24,7 +24,7 @@
 #ifndef MODULES_EVENTHANDLER_INC_EVENT_CIRCULAR_BUFFER_H_
 #define MODULES_EVENTHANDLER_INC_EVENT_CIRCULAR_BUFFER_H_
 
-#include "MsgBase/inc/common_types.h"
+#include "Messages/inc/common_types.h"
 #include "MsgBase/inc/message_base.h"
 #include <stdint.h>
 

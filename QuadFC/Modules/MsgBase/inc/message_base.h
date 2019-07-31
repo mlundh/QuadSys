@@ -27,8 +27,8 @@
 #define MODULES_MSGBASE_INC_MESSAGE_BASE_H_
 
 #include <stdint.h>
-#include "messageTypes.h"
-#include "msg_enums.h"
+#include "Messages/inc/messageTypes.h"
+#include "Messages/inc/msg_enums.h"
 #include "Utilities/inc/serialization.h"
 
 /**

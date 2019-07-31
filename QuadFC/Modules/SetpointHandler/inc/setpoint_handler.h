@@ -25,7 +25,7 @@
 #define MODULES_SETPOINTGENERATOR_INC_SETPOINT_GENERATOR_H_
 
 #include <stdint.h>
-#include "Modules/MsgBase/inc/common_types.h"
+#include "Modules/Messages/inc/common_types.h"
 #include "Modules/EventHandler/inc/event_handler.h"
 
 typedef struct SpObj SpHandler_t;

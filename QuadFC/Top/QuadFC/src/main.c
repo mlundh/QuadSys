@@ -36,7 +36,7 @@
 #include "PortLayer/SpectrumSatellite/inc/satellite_receiver_public.h"
 
 /*include utilities*/
-#include "Modules/MsgBase/inc/common_types.h"
+#include "Modules/Messages/inc/common_types.h"
 
 /*Include task communication modules*/
 #include "FlightController/inc/control_mode_handler.h"

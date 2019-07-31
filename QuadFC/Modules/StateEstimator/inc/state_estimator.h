@@ -38,7 +38,7 @@
  */
 
 #include "stdint.h"
-#include "Modules/MsgBase/inc/common_types.h"
+#include "Modules/Messages/inc/common_types.h"
 #include "Modules/EventHandler/inc/event_handler.h"
 #include "Parameters/inc/parameters.h"
 

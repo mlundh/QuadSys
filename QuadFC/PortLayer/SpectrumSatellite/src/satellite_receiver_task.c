@@ -43,7 +43,7 @@
 #include "QuadFC/QuadFC_Peripherals.h"
 #include "SetpointHandler/inc/setpoint_handler.h"
 #include "EventHandler/inc/event_handler.h"
-#include "Modules/MsgBase/inc/common_types.h"
+#include "Modules/Messages/inc/common_types.h"
 #include "Modules/Messages/inc/Msg_FlightMode.h"
 #include "Modules/Messages/inc/Msg_CtrlMode.h"
 

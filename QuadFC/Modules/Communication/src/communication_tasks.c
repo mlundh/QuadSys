@@ -24,7 +24,7 @@
 #include "string.h"
 
 #include "Communication/inc/communication_tasks.h"
-#include "Modules/MsgBase/inc/Msg_Parser.h"
+#include "Modules/Messages/inc/Msg_Parser.h"
 #include "Modules/Messages/inc/Msg_Transmission.h"
 #include "Modules/Messages/inc/Msg_Log.h"
 

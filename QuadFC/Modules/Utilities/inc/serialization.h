@@ -26,7 +26,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include "MsgBase/inc/common_types.h"
+#include "Messages/inc/common_types.h"
 /**
  * Serialize the value pointed to by value.
  * @param buffer    Pointer to the buffer where the serialized value will be stored.

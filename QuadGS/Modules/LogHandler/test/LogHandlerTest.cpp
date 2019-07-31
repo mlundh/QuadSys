@@ -24,7 +24,7 @@ class LogHandlerTest : public ::testing::Test {
 protected:
 	LogHandlerTest():mLog(msgAddr_t::GS_Log_e), mFake(msgAddr_t::FC_Log_e), router(msgAddr_t::Router) {
 
-		QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error);
+		QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error, false);
 
 		router.bind(&mLog);
 		router.bind(&mFake);

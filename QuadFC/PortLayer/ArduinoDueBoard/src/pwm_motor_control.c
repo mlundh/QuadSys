@@ -23,7 +23,7 @@
  */
 
 #include "QuadFC/QuadFC_MotorControl.h"
-#include "Modules/MsgBase/inc/common_types.h"
+#include "Modules/Messages/inc/common_types.h"
 #include <pwm.h>
 #include <pio.h>
 #include <board.h>

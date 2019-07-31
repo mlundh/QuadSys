@@ -7,7 +7,7 @@
 
 #ifndef IMU_SIGNAL_PROCESSING_H_
 #define IMU_SIGNAL_PROCESSING_H_
-#include "Modules/MsgBase/inc/common_types.h"
+#include "Modules/Messages/inc/common_types.h"
 
 // (int32_t)0.8 * 65536 + 0.5 = 52429
 #define FILTER_COEFFICENT_GYRO_FP (52429)

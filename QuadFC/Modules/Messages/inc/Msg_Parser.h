@@ -1,7 +1,7 @@
 /*
- * ParametersTest.cpp
+ * Msg_Parser.h
  *
- * Copyright (C) 2017 Martin Lundh
+ * Copyright (C) 2019 Martin Lundh
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,38 +22,13 @@
  * THE SOFTWARE.
  */
 
-#include "Parameters.h"
-#include "QGS_Router.h"
-#include "CLI.h"
-#include "LogHandler.h"
-#include "SerialManager.h"
-#include "dbgModule.h"
 
+#ifndef MODULES_MESSAGES_INC_MSG_PARSER_H_
+#define MODULES_MESSAGES_INC_MSG_PARSER_H_
+#include "MsgBase/inc/message_base.h"
 
-using namespace QuadGS;
+moduleMsg_t* Msg_Parse(uint8_t* buffer, uint32_t bufferLength);
 
+uint8_t* Msg_Serializer(moduleMsg_t* msg, uint8_t* buffer, uint32_t bufferLength);
 
-int main(int ac, char* av[])
-{
-	QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::message_trace, false);
-
-	//Instantiate modules.
-	Parameters mParameters(msgAddr_t::GS_Param_e);
-	CLI mCli(msgAddr_t::GS_GUI_e);
-	LogHandler mLogHandler(msgAddr_t::GS_Log_e);
-	Serial_Manager serialIo(msgAddr_t::GS_SerialIO_e);
-	dbgModule dbgModule(msgAddr_t::GS_Dbg_e);
-	//Instantiate the router.
-	QGS_Router mRouter(msgAddr_t::Router);
-
-	//Bind all modules to the router.
-	mRouter.bind(&mParameters);
-	mRouter.bind(&mCli);
-	mRouter.bind(&mLogHandler);
-	mRouter.bind(&serialIo);
-	mRouter.bind(&dbgModule);
-	//Run the CLI.
-	while(mCli.RunUI());
-
-	return 0;
-}
+#endif /* MODULES_MESSAGES_INC_MSG_PARSER_H_ */

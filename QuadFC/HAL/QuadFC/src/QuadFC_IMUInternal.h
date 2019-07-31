@@ -33,7 +33,7 @@
 
 
 #include <stdint.h>
-#include "Modules/MsgBase/inc/common_types.h"
+#include "Modules/Messages/inc/common_types.h"
 #include "Components/Parameters/inc/parameters.h"
 /**
  * Create the IMU unit. This function should be called before the

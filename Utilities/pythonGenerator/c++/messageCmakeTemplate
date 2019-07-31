@@ -1,0 +1,3 @@
+list(APPEND dep "")
+qgs_make_header_lib( Messages dep)
+{cmakeTemplate}

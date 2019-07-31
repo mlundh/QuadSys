@@ -28,7 +28,7 @@
 #define COMMUNICATION_TASKS_H_
 
 #include <stdint.h>
-#include "Modules/MsgBase/inc/common_types.h"
+#include "Modules/Messages/inc/common_types.h"
 #include "EventHandler/inc/event_handler.h"
 
 /**

@@ -2,7 +2,8 @@ import argparse
 import sys
 import os
 from enum import Enum
-
+from distutils.dir_util import copy_tree
+import shutil
 
 def genCppMessage( lineIn, outputDirCpp):
 	parser = argparse.ArgumentParser(description='Script to generate message types used in QuadGS. Messages have data carriers (members), signals do not. To create a signal, simply do not specify any members. ')
@@ -298,8 +299,11 @@ def genParsercpp( types, interfaces, outputDirCpp ):
 	substTypes['typeParser']=typeParser
 	with open(dir+'/c++/parserTemplate', 'r') as ftemp:
 		templateStringParser = ftemp.read()
+	
+	if not os.path.exists(outputDirCpp+'/src/'):
+		os.makedirs(outputDirCpp+'/src/')
 		
-	with open(outputDirCpp+'/Parser.cpp', 'w') as f:
+	with open(outputDirCpp+'/src/Parser.cpp', 'w') as f:
 		f.write(templateStringParser.format(**substTypes))
 		
 	deps=''
@@ -311,9 +315,11 @@ def genParsercpp( types, interfaces, outputDirCpp ):
 		templateStringCmake = ftemp.read()
 		
 
-	with open(outputDirCpp+'/../CMakeLists.txt', 'w') as f:
+	with open(outputDirCpp+'/CMakeLists.txt', 'w') as f:
 		f.write(templateStringCmake.format(**subst))
-
+	
+	copy_tree(dir+'/c++/parser/', outputDirCpp)
+	
 def genParserc( types, interfaces, outputDirCpp ):
 	dir = sys.path[0] + '/'
 	typeParser = ""
@@ -339,6 +345,8 @@ def genParserc( types, interfaces, outputDirCpp ):
 		
 	with open(outputDirCpp+'/src/Msg_Parser.c', 'w') as f:
 		f.write(templateStringParser.format(**substTypes))
+		
+	shutil.copy2(dir+'/c/Msg_Parser.h', outputDirCpp + '/inc/')
 
 
 
@@ -464,14 +472,19 @@ with open(args.file, "r") as file:
 		cTypes.append(line.split()[0])
 		files += '"' + (line.split()[0]) + '.cpp"\n				'
 
-genTypes(cTypes, 'messageTypes', args.outputDirCpp + '/../MsgBase', args.outputDirC + '/../MsgBase')
-genAdresses(addresses, 'msgAddr', args.outputDirCpp + '/../MsgBase', args.outputDirC + '/../MsgBase')
-genMsgEnums(args.outputDirCpp + '/../MsgBase', args.outputDirC + '/../MsgBase')
-genCommonTypes(args.outputDirCpp + '/../MsgBase', args.outputDirC + '/../MsgBase')
-genParsercpp(cppTypes, interfaceUsedByGS, args.outputDirCpp + '/Parser/src')
-genParserc(cTypesSerializable, interfaceUsedByGS, args.outputDirC + '/../MsgBase')
+genTypes(cTypes, 'messageTypes', args.outputDirCpp, args.outputDirC)
+genAdresses(addresses, 'msgAddr', args.outputDirCpp, args.outputDirC)
+genMsgEnums(args.outputDirCpp, args.outputDirC)
+genCommonTypes(args.outputDirCpp , args.outputDirC)
+genParsercpp(cppTypes, interfaceUsedByGS, args.outputDirCpp + '/Parser')
+genParserc(cTypesSerializable, interfaceUsedByGS, args.outputDirC)
 
 # Generate the top level Message cmakelist.
 messageCmake += "add_subdirectory(Parser)\n" # Parser is a special case.
+substTypes = {}
+substTypes['cmakeTemplate'] = messageCmake
+with open(dir+'/c++/messageCmakeTemplate', 'r') as ftemp:
+	cmakeTemplate = ftemp.read()
+	
 with open(args.outputDirCpp+'/CMakeLists.txt', 'w') as f:
-	f.write(messageCmake)
+	f.write(cmakeTemplate.format(**substTypes))

@@ -26,14 +26,18 @@
 #define MODULES_MESSAGES_INC_MSG_DEBUG_H_
 
 #include "MsgBase/inc/message_base.h"
-#include "MsgBase/inc/common_types.h"
-#include "MsgBase/inc/msg_enums.h"
-#include "MsgBase/inc/msgAddr.h"
+#include "Messages/inc/common_types.h"
+#include "Messages/inc/msg_enums.h"
+#include "Messages/inc/msgAddr.h"
 
 
 
 moduleMsg_t* Msg_DebugCreate(uint32_t destination, uint8_t msgNr
-    , uint32_t Payloadbufferlength);
+    , uint8_t control, uint32_t Payloadbufferlength);
+
+uint8_t Msg_DebugGetControl(moduleMsg_t* msg);
+
+void Msg_DebugSetControl(moduleMsg_t* msg, uint8_t control);
 
 uint8_t* Msg_DebugGetPayload(moduleMsg_t* msg);
 

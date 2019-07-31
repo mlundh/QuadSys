@@ -23,8 +23,8 @@
  */
 
 #include "../inc/message_base.h"
-#include "../inc/messageTypes.h"
-#include "../inc/msgAddr.h"
+#include "Messages/inc/messageTypes.h"
+#include "Messages/inc/msgAddr.h"
 #include <stddef.h>
 #include "FreeRTOS.h"
 #include <string.h>
