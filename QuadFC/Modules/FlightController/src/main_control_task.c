@@ -33,7 +33,6 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
-#include "timers.h"
 
 
 #include "HAL/QuadFC/QuadFC_Gpio.h"
@@ -59,8 +58,7 @@
 //TODO remove
 #include "Parameters/inc/parameters.h"
 
-const static uint16_t SpTimeoutTimeMs = 500;
-
+const static unsigned int SpTimeoutMs = 500;
 
 // Struct only used here to pass parameters to the task.
 typedef struct mainTaskParams
@@ -75,9 +73,9 @@ typedef struct mainTaskParams
     SpHandler_t* setPointHandler;
     CtrlModeHandler_t * CtrlModeHandler;
     eventHandler_t* evHandler;
-    TimerHandle_t xTimer;
     LogHandler_t* logHandler;
     paramHander_t* paramHandler;
+    int32_t SetpointTimeoutCounter;
 }MaintaskParams_t;
 
 void main_control_task( void *pvParameters );
@@ -87,9 +85,6 @@ void main_control_task( void *pvParameters );
  * @param param
  */
 void main_fault(MaintaskParams_t *param);
-
-
-void main_TimerCallback( TimerHandle_t pxTimer );
 
 /*
  * void create_main_control_task(void)
@@ -111,9 +106,8 @@ void create_main_control_task(eventHandler_t* evHandler)
     taskParam->setPointHandler = SpHandl_Create(evHandler);
     taskParam->CtrlModeHandler = Ctrl_CreateModeHandler(evHandler);
     taskParam->evHandler = evHandler;
-    taskParam->xTimer = xTimerCreate("Tmain", SpTimeoutTimeMs / portTICK_PERIOD_MS, pdFALSE, ( void * ) taskParam, main_TimerCallback);
     taskParam->logHandler = LogHandler_CreateObj(20,evHandler,ParamHandler_GetParam(taskParam->paramHandler),"LogSctr",0);
-
+    taskParam->SetpointTimeoutCounter = 0;
     /*Ensure that all mallocs returned valid pointers*/
     if (   !taskParam                    || !taskParam->ctrl             || !taskParam->setpoint
             || !taskParam->state             || !taskParam->control_signal   || !taskParam->motorControl
@@ -251,32 +245,22 @@ void main_control_task( void *pvParameters )
              * The FC is armed and operational. The main control loop only handles
              * the Control system.
              *
-             * Get current setpoint. If there is no active setpoint start a timer
+             * Get current setpoint. If there is no active setpoint start a counter
              * that will disarm the copter when it expires. If a valid setpoint
-             * is received before the timer expires, then the timer is stopped.
+             * is received before the counter expires, then it is stopped.
              * */
-            if(!SpHandl_GetSetpoint(param->setPointHandler, param->setpoint, 0 )) // did we fail to retrieve a new setpoint?
+            if(SpHandl_GetSetpoint(param->setPointHandler, param->setpoint, 0 )) // We have an active setpoint!
             {
-                if( xTimerIsTimerActive( param->xTimer ) != pdTRUE )    // yes, we failed. id the timer stopped?
-                {
-                    if( xTimerStart( param->xTimer, 0 ) != pdPASS )   // yes, it is stopped. Start it.
-                    {
-                        //TODO add warning message to log. // we failed to start the timer.
-                        main_fault(param);
-                    }
-                }
-
+                param->SetpointTimeoutCounter = 0;
             }
-            else
+            else // we do not have an active setpoint!
             {
-                if( xTimerIsTimerActive( param->xTimer ) == pdTRUE ) // we got a setpoint.Is the timer active?
-                {
-                    if( xTimerStop( param->xTimer, 1 ) == pdPASS ) // then stop it!
-                    {
-                        //TODO add warning message to log.
-                        main_fault(param);
-                    }
-                }
+                param->SetpointTimeoutCounter++;
+            }
+
+            if(param->SetpointTimeoutCounter >= SpTimeoutMs/CTRL_TIME)
+            {
+                main_fault(param);
             }
 
             // Get the estimated physical state of the copter.
@@ -292,6 +276,7 @@ void main_control_task( void *pvParameters )
             }
             Ctrl_Allocate(param->control_signal, param->motorControl->motorSetpoint);
             MotorCtrl_UpdateSetpoint( param->motorControl);
+
 
             Log_Report(logPitchRate);
             Log_Report(logRollRate);
@@ -313,7 +298,6 @@ void main_control_task( void *pvParameters )
              * Transitional state. Only executed once.
              */
             MotorCtrl_Disable(param->motorControl);
-            xTimerStop( param->xTimer, 0 ); // if this fails we end up in fault mode, acceptable.
             Ctrl_Off(param->ctrl);
             if( !FMode_ChangeFMode(param->flightModeHandler, fmode_disarmed) )
             {
@@ -363,14 +347,8 @@ void main_control_task( void *pvParameters )
 
 void main_fault(MaintaskParams_t *param)
 {
-    FMode_Fault(param->flightModeHandler);
     MotorCtrl_Disable(param->motorControl);
+    FMode_Fault(param->flightModeHandler);
     Ctrl_Off(param->ctrl);
 }
 
-void main_TimerCallback( TimerHandle_t pxTimer )
-{
-    MaintaskParams_t *obj = ( MaintaskParams_t * ) pvTimerGetTimerID( pxTimer );
-    main_fault(obj);
-    //TODO write error message!
-}

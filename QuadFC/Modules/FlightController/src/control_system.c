@@ -267,10 +267,10 @@ uint8_t Ctrl_Switch(CtrlObj_t * param, CtrlMode_t newMode, state_data_t *state
         }
         Pid_SetMode(param->RatePitch, pid_on, u_signal->control_signal[u_pitch], state->state_bf[pitch_rate_bf]);
         Pid_SetMode(param->RateRoll, pid_on, u_signal->control_signal[u_roll], state->state_bf[roll_rate_bf]);
-        //Pid_SetMode(param->RateYaw, pid_on, 0, state->state_bf[pitch_rate_bf]);
+        Pid_SetMode(param->RateYaw, pid_on, u_signal->control_signal[u_yaw], state->state_bf[pitch_rate_bf]);
         Pid_SetMode(param->AttitudePitch, pid_off, 0, 0);
         Pid_SetMode(param->AttitudeRoll, pid_off, 0, 0);
-        //Pid_SetMode(param->AttitudeYaw, pid_off, 0, 0);
+        Pid_SetMode(param->AttitudeYaw, pid_off, 0, 0);
         break;
     case Control_mode_attitude:
         /*-----------------------------Attitude mode-------------------
@@ -282,10 +282,10 @@ uint8_t Ctrl_Switch(CtrlObj_t * param, CtrlMode_t newMode, state_data_t *state
         }
         Pid_SetMode(param->AttitudePitch, pid_on, u_signal->control_signal[u_pitch], state->state_bf[pitch_bf]);
         Pid_SetMode(param->AttitudeRoll, pid_on, u_signal->control_signal[u_roll], state->state_bf[pitch_bf]);
-        //Pid_SetMode(param->AttitudeYaw, pid_on, 0, 0);
+        Pid_SetMode(param->AttitudeYaw, pid_on, u_signal->control_signal[u_yaw], state->state_bf[pitch_rate_bf]);
         Pid_SetMode(param->RatePitch, pid_off, 0, 0);
         Pid_SetMode(param->RateRoll, pid_off, 0, 0);
-        //Pid_SetMode(param->RateYaw, pid_off, 0, 0);
+        Pid_SetMode(param->RateYaw, pid_off, 0, 0);
         break;
     case Control_mode_not_available:
         /*----------------------------Mode not available------------
