@@ -24,8 +24,9 @@
 #include "SerialManager.h"
 
 #include <boost/algorithm/string.hpp>
-
+#include <string>
 #include "msg_enums.h"
+#include "msgAddr.h"
 #include "SlipPacket.h"
 
 #include "QGS_Msg.h"
@@ -33,7 +34,8 @@
 #include "Msg_RegUiCommand.h"
 #include "Msg_UiCommandResult.h"
 #include "Msg_Transmission.h"
-
+#include "Msg_TestTransmission.h"
+#include "Msg_Display.h"
 namespace QuadGS {
 
 
@@ -53,6 +55,7 @@ Serial_Manager::Serial_Manager(msgAddr_t name)
 	mCommands.push_back(UiCommand("serialSetStopBits","Set the number of stop bits used. ",std::bind(&Serial_Manager::setStopBitsCmd, this, std::placeholders::_1)));
 	mCommands.push_back(UiCommand("serialOpenPort","Open the serial port.",std::bind(&Serial_Manager::openCmd, this, std::placeholders::_1)));
 	mCommands.push_back(UiCommand("serialStartReadPort","Start the read operation.",std::bind(&Serial_Manager::startReadCmd, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("serialTest","Test the serial connection.",std::bind(&Serial_Manager::testSerial, this, std::placeholders::_1)));
 
 	// TODO make address based with subnets.
 	setReceivingFcn(std::bind(&Serial_Manager::ReceivingFcnIo, this, std::placeholders::_1),msgAddr_t::FC_Dbg_e);
@@ -140,7 +143,13 @@ std::string Serial_Manager::startReadCmd(std::string)
 	return "Reading from port.";
 }
 
-
+std::string Serial_Manager::testSerial(std::string path)
+{
+	Msg_TestTransmission::ptr msg = std::make_unique<Msg_TestTransmission>(FC_SerialIO_e, 0xDEADBEEF, "Test string\0");
+	std::string result = "Test message sent: \n" + msg->toString();
+	sendMsg(std::move(msg));
+	return result;
+}
 
 
 std::string Serial_Manager::getStatus()
@@ -175,9 +184,26 @@ void Serial_Manager::process(Msg_FireUiCommand* message)
 	sendMsg(std::move(ptr));
 	return;
 }
+void Serial_Manager::process(Msg_TestTransmission* message)
+{
+	bool result = true;
+	if(message->getTest() != 1)
+	{
+		result = false;
+	}
+	if(message->getPayload().compare("Test OK") != 0)
+	{
+		result = false;
+	}
+	std::string display = "Test result: " + result;
+	Msg_Display::ptr dispMsg = std::make_unique<Msg_Display>(GS_GUI_e, display);
+	sendMsg(std::move(dispMsg));
+}
+
 
 void Serial_Manager::ReceivingFcnIo(std::unique_ptr<QGS_ModuleMsgBase> message)
 {
+	mLogger.QuadLog(severity_level::message_trace, "Pushing message to outgoingFifo: \n"  + message->toString());
 	mOutgoingFifo.push(std::move(message));
 	doWrite();
 }
@@ -311,5 +337,7 @@ void Serial_Manager::timerReadCallback( const boost::system::error_code& error )
 
 	return;
 }
+
+
 
 } /* namespace QuadGS */

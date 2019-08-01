@@ -26,6 +26,7 @@
 #define QUADGS_UTILITIES_QGS_MODULE_SRC_QGS_MODULEMSG_H_
 #include "QGS_Msg.h"
 #include "msgAddr.h"
+#include "messageTypes.h"
 #include "common_types.h"
 
 namespace QuadGS {

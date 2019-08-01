@@ -31,6 +31,7 @@ Msg_Debug --member uint8_t control --member std::string payload
 
 *IO FC_SerialIO GS_SerialIO
 Msg_Transmission --member uint8_t status
+Msg_TestTransmission --member uint32_t test --member std::string payload
 *
 
 *FC_Status FC_Ctrl FC_Led  GS_GUI

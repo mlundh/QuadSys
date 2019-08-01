@@ -1,4 +1,5 @@
 list(APPEND src "Msg_Transmission.cpp"
+				"Msg_TestTransmission.cpp"
 				)
                 
 list(APPEND dep "BinaryStream"

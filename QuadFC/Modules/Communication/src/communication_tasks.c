@@ -24,8 +24,12 @@
 #include "string.h"
 
 #include "Communication/inc/communication_tasks.h"
+#include "Components/Parameters/inc/paramHandler.h"
+
 #include "Modules/Messages/inc/Msg_Parser.h"
 #include "Modules/Messages/inc/Msg_Transmission.h"
+#include "Modules/Messages/inc/Msg_TestTransmission.h"
+
 #include "Modules/Messages/inc/Msg_Log.h"
 
 #include "FlightModeHandler/inc/flight_mode_handler.h"
@@ -63,6 +67,7 @@ typedef struct RxCom
     eventHandler_t* evHandler;
     LogHandler_t* logHandler;
     uint8_t msgNr;
+    paramHander_t* paramHandler;
 
 }RxCom_t;
 
@@ -112,6 +117,9 @@ uint8_t Com_TxTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg);
 
 uint8_t Com_HandleLog(eventHandler_t* obj, void* data, moduleMsg_t* msg);
 
+uint8_t Com_TestTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg);
+
+
 //uint8_t Com_HandleDebug(eventHandler_t* obj, void* data, moduleMsg_t* msg);
 
 
@@ -146,6 +154,8 @@ TxCom_t* Com_InitTx(eventHandler_t* eventHandler)
     Event_RegisterCallback(taskParam->evHandler, Msg_CtrlMode_e, Com_TxSend, taskParam);
     Event_RegisterCallback(taskParam->evHandler, Msg_FcFault_e, Com_TxSend, taskParam);
     Event_RegisterCallback(taskParam->evHandler, Msg_Error_e, Com_TxSend, taskParam);
+    Event_RegisterCallback(taskParam->evHandler, Msg_TestTransmission_e, Com_TxSend, taskParam);
+
 
     return taskParam;
 }
@@ -164,6 +174,7 @@ RxCom_t* Com_InitRx(eventHandler_t* eventHandler)
     taskParam->SLIP =  Slip_Create(COM_PACKET_LENGTH_MAX);
     taskParam->evHandler = eventHandler;
     taskParam->logHandler = LogHandler_CreateObj(0,taskParam->evHandler,NULL,"LogM",1);
+    taskParam->paramHandler = ParamHandler_CreateObj(1,eventHandler, "Com_RX", 1); // Master handles all communication, we are master!
     if( !taskParam->helper || !taskParam->saveHelper
             || !taskParam->SLIP || !taskParam->evHandler  || !taskParam->logHandler)
     {
@@ -181,8 +192,8 @@ RxCom_t* Com_InitRx(eventHandler_t* eventHandler)
 
 
     // Subscribe to the events that the task is interested in. None right now.
+    Event_RegisterCallback(taskParam->evHandler, Msg_TestTransmission_e, Com_TestTransmission, taskParam);
 
-    //Event_RegisterCallback(taskParam->evHandler, eFcFault          ,Led_HandleFcFault);
 
     return taskParam;
 }
@@ -384,9 +395,10 @@ void Com_RxTask( void *pvParameters )
 
             // Parse the message and send to the interested parties!
             moduleMsg_t* msg = Msg_Parse(obj->messageBuffer, payloadLength);
+            uint8_t msgNr = Msg_GetMsgNr(msg);
+
             Event_Send(obj->evHandler, msg);
 
-            uint8_t msgNr = Msg_GetMsgNr(msg);
 
             moduleMsg_t* reply = Msg_TransmissionCreate(GS_SerialIO_e, msgNr, transmission_OK);
             Event_Send(obj->evHandler, reply);
@@ -498,4 +510,31 @@ uint8_t Com_HandleLog(eventHandler_t* obj, void* data, moduleMsg_t* msg)
     }
     return result;
 }
+
+uint8_t Com_TestTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg)
+{
+    if(!obj || ! data || !msg)
+    {
+        return 0;
+    }
+
+    uint8_t result = 1;
+
+    if(Msg_TestTransmissionGetTest(msg) != 0xDEADBEEF)
+    {
+        result = 0;
+    }
+    if(strncmp((char*)Msg_TestTransmissionGetPayload(msg),"Test string\0",12) != 0)
+    {
+        result = 0;
+    }
+    if(result)
+    {
+        moduleMsg_t* reply = Msg_TestTransmissionCreate(Msg_GetSource(msg),0,1,10);
+        strncpy((char*)Msg_TestTransmissionGetPayload(reply), "Test OK\0",8);
+        Event_Send(obj, reply);
+    }
+    return result;
+}
+
 

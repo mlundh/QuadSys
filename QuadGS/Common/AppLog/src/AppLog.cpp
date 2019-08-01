@@ -34,11 +34,11 @@ std::vector<std::string> AppLog::mSeverityStrings =
 {
 		"invalid",
 		"off",
-	    "error",
-	    "warning",
-	    "info",
-	    "debug",
-	    "message_trace",
+		"error",
+		"warning",
+		"info",
+		"debug",
+		"message_trace",
 };
 
 AppLog::AppLog()
@@ -71,19 +71,9 @@ void AppLog::QuadLog(QuadGS::severity_level svl, std::string msg)
 // The operator puts a human-friendly representation of the severity level to the stream
 std::ostream& operator<< (std::ostream& strm, QuadGS::severity_level level)
 {
-	static const char* strings[] =
-	{
-			"invalid"
-			"off",
-			"error",
-			"warning",
-			"info",
-			"debug",
-			"message_trace"
-	};
 
-	if (static_cast< std::size_t >(level) < sizeof(strings) / sizeof(*strings))
-		strm << strings[level];
+	if (static_cast< std::size_t >(level) < AppLog::mSeverityStrings.size())
+		strm << AppLog::mSeverityStrings[level];
 	else
 		strm << static_cast< int >(level);
 
@@ -139,7 +129,7 @@ void AppLog::Init( std::string FilenameAppLog, std::string FilenameMsgLog, std::
 			boost::make_shared< std::ofstream >(FilenameAppLog + ".log"));
 	// The same formatter is used for all log entries.
 	pSink->set_formatter(fmt);
-	pSink->set_filter(expr::attr< severity_level >("Severity") < svl );
+	pSink->set_filter(expr::attr< severity_level >("Severity") <= svl );
 	pSink->locked_backend()->auto_flush(true);
 	logging::core::get()->add_sink(pSink);
 
@@ -160,7 +150,7 @@ void AppLog::Init( std::string FilenameAppLog, std::string FilenameMsgLog, std::
 	boost::shared_ptr< std::ostream > stream(&outstream, boost::null_deleter());
 	pSink->locked_backend()->add_stream(stream);
 	pSink->set_formatter(fmt_clog);
-	pSink->set_filter(expr::attr< severity_level >("Severity") < svl );
+	pSink->set_filter(expr::attr< severity_level >("Severity") <= svl );
 	logging::core::get()->add_sink(pSink);
 
 
@@ -212,6 +202,6 @@ std::string AppLog::setLogLevelFromStr(std::string level)
 
 void AppLog::logLevel(QuadGS::severity_level const svl)
 {
-  boost::log::core::get()->set_filter(expr::attr< severity_level >("Severity") < svl);
+	boost::log::core::get()->set_filter(expr::attr< severity_level >("Severity") < svl);
 }
 } /* namespace QuadGS */

@@ -66,7 +66,7 @@ int main( void )
   /* Create all tasks used in the application.*/
   eventHandler_t* evHandlerM = Event_CreateHandler(FC_Ctrl_e,1);
   eventHandler_t* evHandlerSatellite = Event_CreateHandler(RC_SetpointGen_e,0);
-  eventHandler_t* evHandlerComRx = Event_CreateHandler(Router,0);
+  eventHandler_t* evHandlerComRx = Event_CreateHandler(FC_SerialIO_e,0);
   eventHandler_t* evHandlerComTx = Event_CreateHandler(Router,0);
 
   eventHandler_t* evHandlerLed = Event_CreateHandler(FC_Led_e,0);

@@ -38,6 +38,7 @@
 #include "Msg_Log.h"
 #include "Msg_Debug.h"
 #include "Msg_Transmission.h"
+#include "Msg_TestTransmission.h"
 #include "Msg_FlightMode.h"
 #include "Msg_CtrlMode.h"
 #include "Msg_FcFault.h"
@@ -174,6 +175,14 @@ QGS_ModuleMsgBase::ptr Parser::parse( std::vector<unsigned char>  data)
 	case messageTypes_t::Msg_Transmission_e:
 	{
 		Msg_Transmission::ptr ptr = std::make_unique<Msg_Transmission>(msgBase);
+		ptr->setSkipStreamHeader();
+		is >> *ptr;
+		returnPtr = std::move(ptr);
+		break;
+	}
+	case messageTypes_t::Msg_TestTransmission_e:
+	{
+		Msg_TestTransmission::ptr ptr = std::make_unique<Msg_TestTransmission>(msgBase);
 		ptr->setSkipStreamHeader();
 		is >> *ptr;
 		returnPtr = std::move(ptr);

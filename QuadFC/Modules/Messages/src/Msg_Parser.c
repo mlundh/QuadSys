@@ -26,6 +26,7 @@
 #include "../../Messages/inc/Msg_Log.h"
 #include "../../Messages/inc/Msg_Debug.h"
 #include "../../Messages/inc/Msg_Transmission.h"
+#include "../../Messages/inc/Msg_TestTransmission.h"
 #include "../../Messages/inc/Msg_FlightMode.h"
 #include "../../Messages/inc/Msg_CtrlMode.h"
 #include "../../Messages/inc/Msg_FcFault.h"
@@ -77,6 +78,12 @@ moduleMsg_t* Msg_Parse(uint8_t* buffer, uint32_t bufferLength)
     case Msg_Transmission_e:
     {
         msgResult = Msg_TransmissionDeserialize(buffer, bufferLength);
+        break;
+    }
+    
+    case Msg_TestTransmission_e:
+    {
+        msgResult = Msg_TestTransmissionDeserialize(buffer, bufferLength);
         break;
     }
     
@@ -209,6 +216,11 @@ uint8_t* Msg_Serializer(moduleMsg_t* msg, uint8_t* buffer, uint32_t bufferLength
         case Msg_Transmission_e:
     {
         result = Msg_TransmissionSerialize(msg, buffer, bufferLength);
+        break;
+    }
+        case Msg_TestTransmission_e:
+    {
+        result = Msg_TestTransmissionSerialize(msg, buffer, bufferLength);
         break;
     }
         case Msg_FlightMode_e:

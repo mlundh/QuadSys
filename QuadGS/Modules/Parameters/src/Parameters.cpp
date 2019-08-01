@@ -30,6 +30,7 @@
 #include <functional>
 
 #include "msg_enums.h"
+#include "msgAddr.h"
 #include "Msg_RegUiCommand.h"
 #include "Msg_UiCommandResult.h"
 

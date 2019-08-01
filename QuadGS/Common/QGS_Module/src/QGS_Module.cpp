@@ -26,6 +26,8 @@
 #include "QGS_Module.h"
 #include "QGS_Router.h"
 #include "Msg_Stop.h"
+#include "msgAddr.h"
+#include "messageTypes.h"
 
 namespace QuadGS
 {
