@@ -32,7 +32,7 @@
 namespace QuadGS
 {
 
-QGS_Router::QGS_Router(msgAddr_t name): mFifo(200), mNrModules(0), mName(name), mStop(false), mLogger(msgAddrStr.at(name))
+QGS_Router::QGS_Router(msgAddr_t name): mFifo(200), mPortWriteFcn(NULL), mNrModules(0), mName(name), mStop(false), mLogger(msgAddrStr.at(name))
 {
 	mThread = std::thread(std::bind(&QGS_Router::runRouter, this));
 }
@@ -60,6 +60,13 @@ void QGS_Router::bind(QGS_Module* module)
 
 }
 
+void QGS_Router::bind(QGS_PortModule* module)
+{
+	bind(static_cast<QGS_Module*>(module)); // first bind normally.
+	mPortWriteFcn = module->getPortFcn();
+}
+
+
 bool QGS_Router::done()
 {
 	return mFifo.empty();
@@ -74,48 +81,45 @@ void QGS_Router::incomingPort(QGS_ModuleMsgBase::ptr message)
 
 void QGS_Router::sendMsg(QGS_ModuleMsgBase::ptr message)
 {
-	messageTypes_t type = message->getType();
-		// If we already know where to send to, then send.
-		msgAddr_t dest = message->getDestination();
-		if((dest & REGION_MASK) ==  msgAddrRegion_t::GS_e) // Did we get a local destination?
-		{
-			if(dest == msgAddr_t::GS_Broadcast_e) // Did we get a local broadcast?
-			{
-				internalBC(std::move(message));
-			}
-			else // No broadcast, only send to one!
-			{
-				internalSend(std::move(message), dest, false);
-			}
-		}
-		else if((dest & REGION_MASK) ==  msgAddrRegion_t::BC_e) // Global broadcast!.
-		{
-			if(dest == msgAddr_t::Broadcast_e)
-			{
-				QGS_ModuleMsgBase::ptr ptr(message->clone());
-				internalBC(std::move(message));
-				externalSend(std::move(ptr));
-			}
-			else
-			{
-				mLogger.QuadLog(severity_level::error, "Received a message without destination!" );
-			}
-
-		}
-
-
-
-	else
+	// If we already know where to send to, then send.
+	msgAddr_t dest = message->getDestination();
+	if((dest & REGION_MASK) ==  msgAddrRegion_t::GS_e) // Did we get a local destination?
 	{
-		std::stringstream ss;
-		ss << "No subscriber to message type: " << messageTypesStr[type];
-		mLogger.QuadLog(severity_level::warning, ss.str() );
+		if(dest == msgAddr_t::GS_Broadcast_e) // Did we get a local broadcast?
+		{
+			internalBC(std::move(message));
+		}
+		else // No broadcast, only send to one!
+		{
+			internalSend(std::move(message), dest, false);
+		}
+	}
+	else if((dest & REGION_MASK) ==  msgAddrRegion_t::BC_e) // did we get a global desitnation?
+	{
+		if(dest == msgAddr_t::Broadcast_e)
+		{
+			QGS_ModuleMsgBase::ptr ptr(message->clone());
+			internalBC(std::move(message));
+			externalSend(std::move(ptr));
+		}
+		else
+		{
+			mLogger.QuadLog(severity_level::error, "Received a message without destination!" );
+		}
+
+	}
+	else // not a message to us, send to other side!
+	{
+		externalSend(std::move(message));
 	}
 }
 
 void QGS_Router::externalSend(QGS_ModuleMsgBase::ptr message)
 {
-//TODO!
+	if(mPortWriteFcn)
+	{
+		mPortWriteFcn(std::move(message));
+	}
 }
 
 
@@ -141,17 +145,17 @@ QGS_ModuleMsgBase::ptr QGS_Router::internalSend(QGS_ModuleMsgBase::ptr message, 
 	{
 		try
 		{
-		if(broadcast)
-		{
-			// each module gets its own copy. This ensures thread safety.
-			QGS_ModuleMsgBase::ptr ptr(message->clone());
-			mWriteFunctions[port](std::move(ptr));
-		}
-		else
-		{
-			// only one destination, move!
-			mWriteFunctions[port](std::move(message));
-		}
+			if(broadcast)
+			{
+				// each module gets its own copy. This ensures thread safety.
+				QGS_ModuleMsgBase::ptr ptr(message->clone());
+				mWriteFunctions[port](std::move(ptr));
+			}
+			else
+			{
+				// only one destination, move!
+				mWriteFunctions[port](std::move(message));
+			}
 		}
 		catch (std::runtime_error& e)
 		{
@@ -195,11 +199,11 @@ void QGS_Router::route(QGS_ModuleMsgBase::ptr msg)
 	{
 		switch (msg->getType())
 		{
-			case messageTypes_t::Msg_Stop_e:
-				mStop = true;
-				break;
-			default:
-				break;
+		case messageTypes_t::Msg_Stop_e:
+			mStop = true;
+			break;
+		default:
+			break;
 		}
 	}
 	else

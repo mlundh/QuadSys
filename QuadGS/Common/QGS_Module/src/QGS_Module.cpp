@@ -125,6 +125,30 @@ void QGS_ReactiveModule::ReceivingFcn(std::unique_ptr<QGS_ModuleMsgBase> message
 	message->dispatch(this);
 }
 
+QGS_PortModule::QGS_PortModule()
+:QGS_MessageHandlerBase(msgAddr_t::Unassigned_e), mPortFcn(NULL)
+{
+
+}
+QGS_PortModule::~QGS_PortModule()
+{
+
+}
+
+WriteFcn QGS_PortModule::getPortFcn()
+{
+	return mPortFcn;
+}
+
+void QGS_PortModule::setPortFcn(WriteFcn fcn)
+{
+	if(!fcn)
+	{
+		return;
+	}
+	mPortFcn = fcn;
+}
+
 
 QGS_ThreadedModule::QGS_ThreadedModule()
 :QGS_MessageHandlerBase(msgAddr_t::Unassigned_e), mStop(false)

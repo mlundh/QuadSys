@@ -132,6 +132,25 @@ private:
 };
 
 
+class QGS_PortModule: public virtual QGS_ReactiveModule
+{
+
+public:
+	QGS_PortModule();
+
+	virtual ~QGS_PortModule();
+
+
+	WriteFcn getPortFcn();
+
+protected:
+	void setPortFcn(WriteFcn fcn);
+
+private:
+	WriteFcn mPortFcn;
+};
+
+
 
 /**
  * @class QGS_ThreadedModule

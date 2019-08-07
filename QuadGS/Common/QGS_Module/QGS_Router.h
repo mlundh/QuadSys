@@ -35,6 +35,7 @@
 namespace QuadGS {
 
 class QGS_Module;
+class QGS_PortModule;
 
 class QGS_Router
 {
@@ -43,6 +44,8 @@ public:
 	virtual ~QGS_Router();
 
 	void bind(QGS_Module* module);
+
+	void bind(QGS_PortModule* module);
 
 	bool done();
 protected:
@@ -69,6 +72,7 @@ private:
 
 	ThreadSafeFifo<QGS_ModuleMsgBase::ptr> mFifo;
 	std::map<msgAddr_t, WriteFcn> mWriteFunctions;
+	WriteFcn mPortWriteFcn;
     std::thread mThread;
 	unsigned int mNrModules;
 	msgAddr_t mName;

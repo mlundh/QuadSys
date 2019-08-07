@@ -56,7 +56,7 @@ Serial_Manager::Serial_Manager(msgAddr_t name)
 	mCommands.push_back(UiCommand("serialOpenPort","Open the serial port.",std::bind(&Serial_Manager::openCmd, this, std::placeholders::_1)));
 	mCommands.push_back(UiCommand("serialStartReadPort","Start the read operation.",std::bind(&Serial_Manager::startReadCmd, this, std::placeholders::_1)));
 	mCommands.push_back(UiCommand("serialTest","Test the serial connection.",std::bind(&Serial_Manager::testSerial, this, std::placeholders::_1)));
-
+	setPortFcn(std::bind(&Serial_Manager::ReceivingFcnIo, this, std::placeholders::_1));
 	initialize();
 }
 
@@ -139,7 +139,7 @@ std::string Serial_Manager::startReadCmd(std::string)
 
 std::string Serial_Manager::testSerial(std::string path)
 {
-	Msg_TestTransmission::ptr msg = std::make_unique<Msg_TestTransmission>(FC_SerialIO_e, 0xDEADBEEF, "Test string\0");
+	Msg_TestTransmission::ptr msg = std::make_unique<Msg_TestTransmission>(msgAddr_t::FC_SerialIOrx_e, 0xDEADBEEF, "Test string\0");
 	std::string result = "Test message sent: \n" + msg->toString();
 	sendMsg(std::move(msg));
 	return result;

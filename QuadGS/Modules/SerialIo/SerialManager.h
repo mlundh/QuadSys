@@ -52,7 +52,7 @@ namespace QuadGS {
  * be connected to a Core object.
  */
 class Serial_Manager
-		: public QGS_ReactiveModule
+		: public QGS_PortModule
 		, public QGS_MessageHandler<Msg_GetUiCommands>
 		, public QGS_MessageHandler<Msg_FireUiCommand>
 		, public QGS_MessageHandler<Msg_TestTransmission>

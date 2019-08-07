@@ -144,7 +144,7 @@ bool CLI::RunUI()
 {
 	if(!mIsInitilized)
 	{
-		Msg_GetUiCommands::ptr ptr = std::make_unique<Msg_GetUiCommands>(static_cast<msgAddr_t>(msgAddr_t::Broadcast_e));
+		Msg_GetUiCommands::ptr ptr = std::make_unique<Msg_GetUiCommands>(static_cast<msgAddr_t>(msgAddr_t::GS_Broadcast_e));
 		sendMsg(std::move(ptr));
 
 		mIsInitilized = true;
