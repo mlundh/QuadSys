@@ -39,7 +39,7 @@ QGS_Module::UiCommand::UiCommand(std::string command,  std::string doc, UiFcn fu
 }
 
 QGS_Module::QGS_Module()
-:QGS_MessageHandlerBase(msgAddr_t::Unassigned), mSendFcn(NULL)
+:QGS_MessageHandlerBase(msgAddr_t::Unassigned_e), mSendFcn(NULL)
 {
 
 }
@@ -109,7 +109,7 @@ void QGS_Module::setSendFunc(WriteFcn func)
 }
 
 QGS_ReactiveModule::QGS_ReactiveModule()
-:QGS_MessageHandlerBase(msgAddr_t::Unassigned)
+:QGS_MessageHandlerBase(msgAddr_t::Unassigned_e)
 {
 	setReceivingFcn(std::bind(&QGS_ReactiveModule::ReceivingFcn, this, std::placeholders::_1), getName());
 }
@@ -127,7 +127,7 @@ void QGS_ReactiveModule::ReceivingFcn(std::unique_ptr<QGS_ModuleMsgBase> message
 
 
 QGS_ThreadedModule::QGS_ThreadedModule()
-:QGS_MessageHandlerBase(msgAddr_t::Unassigned), mStop(false)
+:QGS_MessageHandlerBase(msgAddr_t::Unassigned_e), mStop(false)
 {
 	setReceivingFcn(std::bind(&QGS_ThreadedModule::ReceivingFcn, this, std::placeholders::_1), getName());
 }

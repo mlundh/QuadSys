@@ -147,13 +147,6 @@ TxCom_t* Com_InitTx(eventHandler_t* eventHandler)
 
     Event_RegisterCallback(taskParam->evHandler, Msg_Transmission_e, Com_TxTransmission, taskParam);
 
-    Event_RegisterCallback(taskParam->evHandler, Msg_Param_e, Com_TxSend, taskParam);
-    Event_RegisterCallback(taskParam->evHandler, Msg_Log_e, Com_TxSend, taskParam);
-    Event_RegisterCallback(taskParam->evHandler, Msg_Debug_e, Com_TxSend, taskParam);
-    Event_RegisterCallback(taskParam->evHandler, Msg_FlightMode_e, Com_TxSend, taskParam);
-    Event_RegisterCallback(taskParam->evHandler, Msg_CtrlMode_e, Com_TxSend, taskParam);
-    Event_RegisterCallback(taskParam->evHandler, Msg_FcFault_e, Com_TxSend, taskParam);
-    Event_RegisterCallback(taskParam->evHandler, Msg_Error_e, Com_TxSend, taskParam);
     Event_RegisterCallback(taskParam->evHandler, Msg_TestTransmission_e, Com_TxSend, taskParam);
 
 

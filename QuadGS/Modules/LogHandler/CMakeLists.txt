@@ -1,7 +1,7 @@
 set(src "LogHandler.cpp")
 set(dep "CommandTree"
-        "Ui_Command"
-        "Log"
+        "GS_Ui_Command"
+        "GS_FC_Log"
         "QGS_Module")
 
 qgs_make_shared_lib( LogHandler src dep)

@@ -42,7 +42,7 @@ moduleMsg_t* Msg_HasParamCreate(uint32_t destination, uint8_t msgNr
     if(msg)
     {
         msg->mDestination = destination;
-        msg->mSource = Unassigned;
+        msg->mSource = Unassigned_e;
         msg->mMsgNr = msgNr;
         msg->type = Msg_HasParam_e;
         msg->mAllocatedSize = size;

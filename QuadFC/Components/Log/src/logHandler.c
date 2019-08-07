@@ -224,7 +224,7 @@ uint8_t LogHandler_SendLogEvent(LogHandler_t*  obj)
         return 1; // OK to not have an event handler.
     }
 
-    moduleMsg_t* event = Msg_FcLogCreate(Broadcast, 0, obj->logQueue);
+    moduleMsg_t* event = Msg_FcLogCreate(FC_Broadcast_e, 0, obj->logQueue);
     return Event_Send(obj->evHandler, event);
 
 }
@@ -239,7 +239,7 @@ uint8_t LogHandler_SendNameReqEvent(LogHandler_t*  obj)
     {
         return 1; // OK to not have an event handler.
     }
-    moduleMsg_t* event = Msg_LogNameReqCreate(Broadcast, 0, obj->logNameQueue);
+    moduleMsg_t* event = Msg_LogNameReqCreate(FC_Broadcast_e, 0, obj->logNameQueue);
     return Event_Send(obj->evHandler, event);
 
     return 1;
@@ -547,7 +547,7 @@ uint8_t LogHandler_StopAllLogs(LogHandler_t* obj)
     }
     if(obj->backend && obj->evHandler)
     {
-        moduleMsg_t* event = Msg_Create(LogStop_e, Broadcast);
+        moduleMsg_t* event = Msg_Create(LogStop_e, FC_Broadcast_e);
         result &= Event_Send(obj->evHandler, event);
     }
     return result;

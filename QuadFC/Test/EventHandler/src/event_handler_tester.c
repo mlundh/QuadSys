@@ -443,11 +443,11 @@ void stimuli_test_task( void *pvParameters )
 
     // WARNING! This is not the proper way of creating messages, use the appropriate create functions instead. This is just for testing.
     {
-        moduleMsg_t* msg = Msg_Create(Msg_NewSetpoint_e, Broadcast);
+        moduleMsg_t* msg = Msg_Create(Msg_NewSetpoint_e, FC_Broadcast_e);
         Event_Send(param->evHandler, msg);
     }
     {
-        moduleMsg_t* msg = Msg_Create(Msg_CtrlSig_e, Broadcast);
+        moduleMsg_t* msg = Msg_Create(Msg_CtrlSig_e, FC_Broadcast_e);
         Event_Send(param->evHandler, msg);
     }
     {
@@ -466,15 +466,15 @@ void stimuli_test_task( void *pvParameters )
 
 
     {
-        moduleMsg_t* msg = Msg_Create(Msg_GetUiCommands_e, Broadcast);
+        moduleMsg_t* msg = Msg_Create(Msg_GetUiCommands_e, FC_Broadcast_e);
         Event_Send(param->evHandler, msg);
     }
     {
-        moduleMsg_t* msg = Msg_Create(Msg_FcFault_e, Broadcast);
+        moduleMsg_t* msg = Msg_Create(Msg_FcFault_e, FC_Broadcast_e);
         Event_Send(param->evHandler, msg);
     }
     {
-        moduleMsg_t* msg = Msg_Create(Msg_FireUiCommand_e, Broadcast);
+        moduleMsg_t* msg = Msg_Create(Msg_FireUiCommand_e, FC_Broadcast_e);
         Event_Send(param->evHandler, msg);
     }
 
@@ -536,7 +536,7 @@ uint8_t stateCb(eventHandler_t* obj, void* taskParam, moduleMsg_t* data)
     eventRsp.event = Msg_NewSetpoint_e;
     xQueueSend(param->responseQueue, &eventRsp, EVENT_BLOCK_TIME);
     // Sync with stimuli thread
-    moduleMsg_t* msg = Msg_Create(Msg_Error_e, Broadcast);
+    moduleMsg_t* msg = Msg_Create(Msg_Error_e, FC_Broadcast_e);
     Event_Send(param->evHandler, msg);
     return 1;
 }
@@ -548,7 +548,7 @@ uint8_t ctrlCb(eventHandler_t* obj, void* taskParam, moduleMsg_t* data)
     eventRsp.event = Msg_CtrlSig_e;
     xQueueSend(param->responseQueue, &eventRsp, EVENT_BLOCK_TIME);
     // Sync with stimuli thread
-    moduleMsg_t* msg = Msg_Create(Msg_Error_e, Broadcast);
+    moduleMsg_t* msg = Msg_Create(Msg_Error_e, FC_Broadcast_e);
     Event_Send(param->evHandler, msg);
     return 1;
 }
@@ -560,7 +560,7 @@ uint8_t setpointCb(eventHandler_t* obj, void* taskParam, moduleMsg_t* data)
     eventRsp.event = Msg_NewSetpoint_e;
     xQueueSend(param->responseQueue, &eventRsp, EVENT_BLOCK_TIME);
     // Sync with stimuli thread
-    moduleMsg_t* msg = Msg_Create(Msg_Error_e, Broadcast);
+    moduleMsg_t* msg = Msg_Create(Msg_Error_e, FC_Broadcast_e);
     Event_Send(param->evHandler, msg);
     return 1;
 }

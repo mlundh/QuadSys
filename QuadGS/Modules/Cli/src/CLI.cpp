@@ -144,7 +144,7 @@ bool CLI::RunUI()
 {
 	if(!mIsInitilized)
 	{
-		Msg_GetUiCommands::ptr ptr = std::make_unique<Msg_GetUiCommands>(static_cast<msgAddr_t>(msgAddr_t::Broadcast));
+		Msg_GetUiCommands::ptr ptr = std::make_unique<Msg_GetUiCommands>(static_cast<msgAddr_t>(msgAddr_t::Broadcast_e));
 		sendMsg(std::move(ptr));
 
 		mIsInitilized = true;
@@ -354,7 +354,7 @@ char * CLI::dupstr (const char * s)
 
 void CLI::process(Msg_RegUiCommand* message)
 {
-	mLogger.QuadLog(debug, "Received UI command: " + message->getCommand() + " from " + msgAddrStr[message->getSource()]);
+	mLogger.QuadLog(debug, "Received UI command: " + message->getCommand() + " from " + msgAddrStr.at(message->getSource()));
 	mCommands.push_back(UiCommand(message->getCommand(), message->getDoc(), message->getSource()));
 }
 void CLI::process(Msg_UiCommandResult* message)

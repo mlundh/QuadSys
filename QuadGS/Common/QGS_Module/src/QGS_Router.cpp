@@ -32,7 +32,7 @@
 namespace QuadGS
 {
 
-QGS_Router::QGS_Router(msgAddr_t name): mFifo(200), mNrModules(0), mName(name), mStop(false), mLogger(msgAddrStr[name])
+QGS_Router::QGS_Router(msgAddr_t name): mFifo(200), mNrModules(0), mName(name), mStop(false), mLogger(msgAddrStr.at(name))
 {
 	mThread = std::thread(std::bind(&QGS_Router::runRouter, this));
 }
@@ -77,28 +77,58 @@ void QGS_Router::sendMsg(QGS_ModuleMsgBase::ptr message)
 	messageTypes_t type = message->getType();
 		// If we already know where to send to, then send.
 		msgAddr_t dest = message->getDestination();
-		if(dest != msgAddr_t::Unassigned && dest != msgAddr_t::Broadcast) // Did we get a destination?
+		if((dest & REGION_MASK) ==  msgAddrRegion_t::GS_e) // Did we get a local destination?
 		{
-			internalSend(std::move(message), dest, false);
-		}
-		else if(dest == msgAddr_t::Broadcast) // Did not get a destination, send to all subscribers.
-		{
-			msgAddr_t source = message->getSource();
-			for(auto module : mWriteFunctions)
+			if(dest == msgAddr_t::GS_Broadcast_e) // Did we get a local broadcast?
 			{
-				if(module.first != source && message) // Do not return to sender
-				{
-					message->setDestination(module.first);
-					message = internalSend(std::move(message), module.first, true);
-				}
+				internalBC(std::move(message));
+			}
+			else // No broadcast, only send to one!
+			{
+				internalSend(std::move(message), dest, false);
 			}
 		}
+		else if((dest & REGION_MASK) ==  msgAddrRegion_t::BC_e) // Global broadcast!.
+		{
+			if(dest == msgAddr_t::Broadcast_e)
+			{
+				QGS_ModuleMsgBase::ptr ptr(message->clone());
+				internalBC(std::move(message));
+				externalSend(std::move(ptr));
+			}
+			else
+			{
+				mLogger.QuadLog(severity_level::error, "Received a message without destination!" );
+			}
+
+		}
+
+
 
 	else
 	{
 		std::stringstream ss;
 		ss << "No subscriber to message type: " << messageTypesStr[type];
 		mLogger.QuadLog(severity_level::warning, ss.str() );
+	}
+}
+
+void QGS_Router::externalSend(QGS_ModuleMsgBase::ptr message)
+{
+//TODO!
+}
+
+
+void QGS_Router::internalBC(QGS_ModuleMsgBase::ptr message)
+{
+	msgAddr_t source = message->getSource();
+	for(auto module : mWriteFunctions)
+	{
+		if(module.first != source && message) // Do not return to sender
+		{
+			message->setDestination(module.first);
+			message = internalSend(std::move(message), module.first, true);
+		}
 	}
 }
 
@@ -125,12 +155,12 @@ QGS_ModuleMsgBase::ptr QGS_Router::internalSend(QGS_ModuleMsgBase::ptr message, 
 		}
 		catch (std::runtime_error& e)
 		{
-			mLogger.QuadLog(severity_level::error, "Module: " + msgAddrStr[port] + " encountered an error: " + e.what());
+			mLogger.QuadLog(severity_level::error, "Module: " + msgAddrStr.at(port) + " encountered an error: " + e.what());
 		}
 	}
 	else
 	{
-		mLogger.QuadLog(severity_level::error, "No port: " + msgAddrStr[port] + ", error in topology? ");
+		mLogger.QuadLog(severity_level::error, "No port: " + msgAddrStr.at(port) + ", error in topology? ");
 	}
 	return message;
 }
@@ -154,7 +184,7 @@ void QGS_Router::checkUniqueName(msgAddr_t name)
 	std::map<msgAddr_t,WriteFcn>::iterator it = mWriteFunctions.find(name);
 	if(it != mWriteFunctions.end())
 	{
-		mLogger.QuadLog(severity_level::warning, "Name collision, two modules named: " + msgAddrStr[name] + ". Advice to change name.");
+		mLogger.QuadLog(severity_level::warning, "Name collision, two modules named: " + msgAddrStr.at(name) + ". Advice to change name.");
 	}
 }
 
@@ -174,7 +204,7 @@ void QGS_Router::route(QGS_ModuleMsgBase::ptr msg)
 	}
 	else
 	{
-		mLogger.QuadLog(severity_level::debug, "sending to " + msgAddrStr[msg->getDestination()]);
+		mLogger.QuadLog(severity_level::debug, "sending to " + msgAddrStr.at(msg->getDestination()));
 		sendMsg(std::move(msg));
 	}
 

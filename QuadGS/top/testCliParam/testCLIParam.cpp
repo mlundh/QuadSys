@@ -44,7 +44,7 @@ int main(int ac, char* av[])
 	Serial_Manager serialIo(msgAddr_t::GS_SerialIO_e);
 	dbgModule dbgModule(msgAddr_t::GS_Dbg_e);
 	//Instantiate the router.
-	QGS_Router mRouter(msgAddr_t::Router);
+	QGS_Router mRouter(msgAddr_t::GS_Router_e);
 
 	//Bind all modules to the router.
 	mRouter.bind(&mParameters);

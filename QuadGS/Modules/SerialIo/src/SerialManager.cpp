@@ -57,12 +57,6 @@ Serial_Manager::Serial_Manager(msgAddr_t name)
 	mCommands.push_back(UiCommand("serialStartReadPort","Start the read operation.",std::bind(&Serial_Manager::startReadCmd, this, std::placeholders::_1)));
 	mCommands.push_back(UiCommand("serialTest","Test the serial connection.",std::bind(&Serial_Manager::testSerial, this, std::placeholders::_1)));
 
-	// TODO make address based with subnets.
-	setReceivingFcn(std::bind(&Serial_Manager::ReceivingFcnIo, this, std::placeholders::_1),msgAddr_t::FC_Dbg_e);
-	setReceivingFcn(std::bind(&Serial_Manager::ReceivingFcnIo, this, std::placeholders::_1),msgAddr_t::FC_Log_e);
-	setReceivingFcn(std::bind(&Serial_Manager::ReceivingFcnIo, this, std::placeholders::_1),msgAddr_t::FC_Param_e);
-	setReceivingFcn(std::bind(&Serial_Manager::ReceivingFcnIo, this, std::placeholders::_1),msgAddr_t::FC_SerialIO_e);
-
 	initialize();
 }
 

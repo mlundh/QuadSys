@@ -30,8 +30,8 @@ namespace QuadGS {
 
 QGS_ModuleMsgBase::QGS_ModuleMsgBase()
 :mType(0),
- mSource(msgAddr_t::Unassigned),
- mDestination(msgAddr_t::Unassigned),
+ mSource(msgAddr_t::Unassigned_e),
+ mDestination(msgAddr_t::Unassigned_e),
  mMsgNr(0)
 {
 
@@ -105,8 +105,8 @@ std::string QGS_ModuleMsgBase::toString() const
 {
 	std::stringstream ss;
 	ss << "ModuleMsg type: " << messageTypesStr[mType] << std::endl;
-	ss << "Source: " << msgAddrStr[mSource] << std::endl;
-	ss << "Destination: " << msgAddrStr[mDestination] << std::endl;
+	ss << "Source: " << msgAddrStr.at(mSource) << std::endl;
+	ss << "Destination: " << msgAddrStr.at(mDestination) << std::endl;
 
 	return ss.str();
 }

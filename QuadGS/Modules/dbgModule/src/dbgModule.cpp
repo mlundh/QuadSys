@@ -80,23 +80,23 @@ std::string dbgModule::sendUiMsg(std::string msg)
 
 
 
-	msgAddr_t addr = msgAddr_t::Unassigned;
-	for(int i = msgAddr_t::Unassigned ; i < msgAddr_t::Last_Address; i++)
+	msgAddr_t addr = msgAddr_t::Unassigned_e;
+	for(const auto i : msgAddrStr)
 	{
-		if(address.compare(msgAddrStr[i]) == 0)
+		if(address.compare(i.second) == 0)
 		{
-			addr = static_cast<msgAddr_t>(i);
+			addr = static_cast<msgAddr_t>(i.first);
 			break;
 		}
 	}
 
-	if(addr == msgAddr_t::Unassigned || addr == msgAddr_t::Last_Address)
+	if(addr == msgAddr_t::Unassigned_e)
 	{
 		std::stringstream ss;
 		ss << "No such address. " << std::endl << "Available addresses are: " << std::endl;
-		for(int i = Unassigned; i < Last_Address; i++)
+		for(unsigned int i = Unassigned_e; i < msgAddrStr.size(); i++)
 		{
-			ss << "	" << msgAddrStr[i] << std::endl;
+			ss << "	" << msgAddrStr.at(i) << std::endl;
 		}
 		return ss.str();
 	}

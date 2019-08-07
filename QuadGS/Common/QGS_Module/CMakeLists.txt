@@ -13,7 +13,7 @@ list(APPEND src_Test "QGS_ModuleTest.cpp"
                      
 list(APPEND dep_Test "gtest_main"
                      "QGS_Module"
-                     "Param"
-                     "Log")
+                     "GS_FC_Param"
+                     "GS_FC_Log")
 
 qgs_add_test(QGS_ModuleTest src_Test dep_Test)

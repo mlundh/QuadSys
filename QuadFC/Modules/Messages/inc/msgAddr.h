@@ -1,50 +1,39 @@
 #ifndef QUADFC_MESSAGE_ADDRESSES_H_
 #define QUADFC_MESSAGE_ADDRESSES_H_
 
-enum msgAddr
+#define REGION_MASK (0xFF00)
+typedef enum
 {
-	Unassigned,
-	Router,
-	Broadcast,
-	GS_SetpointGen_e,
-	FC_eventSys_e,
-	FC_Param_e,
-	GS_Log_e,
-	GS_Param_e,
-	FC_Led_e,
-	FC_Dbg_e,
-	RC_SetpointGen_e,
-	FC_Log_e,
-	GS_Dbg_e,
-	GS_SerialIO_e,
-	FC_Ctrl_e,
-	FC_SerialIO_e,
-	GS_GUI_e,
+	Broadcast_e = 0x0,
+	Unassigned_e = 0x1,
+	GS_Broadcast_e = 0x100,
+	GS_Dbg_e = 0x101,
+	GS_GUI_e = 0x102,
+	GS_Param_e = 0x103,
+	GS_Log_e = 0x104,
+	GS_SerialIO_e = 0x105,
+	GS_SetpointGen_e = 0x106,
+	GS_Router_e = 0x107,
+	FC_Broadcast_e = 0x200,
+	FC_Param_e = 0x201,
+	FC_Log_e = 0x202,
+	FC_Dbg_e = 0x203,
+	FC_SerialIOrx_e = 0x204,
+	FC_SerialIOtx_e = 0x205,
+	FC_Ctrl_e = 0x206,
+	FC_Led_e = 0x207,
+	RC_SetpointGen_e = 0x208,
+	FC_eventSys_e = 0x209,
 
-	Last_Address
-};
-typedef enum msgAddr msgAddr_t;
+}msgAddr_t;
 
-static const char* const msgAddrStr[] =
+
+typedef enum
 {
-	"Unassigned",
-	"Router",
-	"Broadcast",
-	"GS_SetpointGen",
-	"FC_eventSys",
-	"FC_Param",
-	"GS_Log",
-	"GS_Param",
-	"FC_Led",
-	"FC_Dbg",
-	"RC_SetpointGen",
-	"FC_Log",
-	"GS_Dbg",
-	"GS_SerialIO",
-	"FC_Ctrl",
-	"FC_SerialIO",
-	"GS_GUI",
+	BC_e = 0x0,
+	GS_e = 0x100,
+	FC_e = 0x200,
 
-	"Last_Address",
-};
+}msgAddrRegion_t;
+
 #endif /* QUADFC_MESSAGE_ADDRESSES_H_ */

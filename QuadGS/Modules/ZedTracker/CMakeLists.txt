@@ -2,7 +2,7 @@
 list(APPEND src "ZedTracker.cpp" )
 
 list(APPEND dep ${ZED_LIBRARIES}
-                "Ui_Command"
+                "GS_Ui_Command"
                 "QGS_Module")
 
 qgs_make_shared_lib( ZedTracker src dep)

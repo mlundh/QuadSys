@@ -3,14 +3,14 @@
 
 
 # ---------- GS only ---------------
-*GS_System GS_Dbg GS_GUI
+*GS_System
 Msg_Stop
 Msg_RegisterName --member uint32_t name
 Msg_Display --member std::string message
 Msg_Test 
 *
 
-*Ui_Command GS_GUI GS_Param
+*GS_Ui_Command
 Msg_FindParam --member std::string toFind --member std::string found
 Msg_GetUiCommands
 Msg_FireUiCommand --member std::string command --member std::string args
@@ -18,30 +18,30 @@ Msg_RegUiCommand --member std::string command --member std::string doc
 Msg_UiCommandResult --member std::string result
 *
 # ---------- GS and FC ---------------
-*Param GS_Param FC_Param
+*GS_FC_Param
 Msg_Param --member uint8_t control --member uint8_t sequenceNr --member uint8_t lastInSequence --member std::string payload
 
 *
-*Log GS_Log FC_Log
+*GS_FC_Log
 Msg_Log --member uint8_t control --member std::string payload
 *
-*Fc_Debug FC_Dbg GS_Dbg
+*GS_FC_Debug
 Msg_Debug --member uint8_t control --member std::string payload
 *
 
-*IO FC_SerialIO GS_SerialIO
+*GS_FC_IO
 Msg_Transmission --member uint8_t status
 Msg_TestTransmission --member uint32_t test --member std::string payload
 *
 
-*FC_Status FC_Ctrl FC_Led  GS_GUI
+*GS_FC_Status
 Msg_FlightMode --member uint8_t mode
 Msg_CtrlMode --member uint8_t mode
 Msg_FcFault
 Msg_Error --member std::string error
 *
 
-*FC_Control FC_Ctrl GS_SetpointGen RC_SetpointGen
+*GS_FC_Control
 Msg_FlightModeReq --member uint8_t mode
 Msg_CtrlModeReq --member uint8_t mode
 Msg_NewSetpoint --member state_data_t setpoint --member uint8_t priority --member uint8_t validFor
@@ -49,7 +49,7 @@ Msg_NewSetpoint --member state_data_t setpoint --member uint8_t priority --membe
 
 # ---------- FC only ---------------
 
-*FC_System FC_eventSys
+*FC_System
 Msg_RegisterHandler --member QueueHandle_t data --include FreeRTOS.h --include queue.h  --include task.h --internal
 Msg_Subscriptions --internal --member uint32_t subscriptions
 Msg_FcLog --member QueueHandle_t data --include FreeRTOS.h --include queue.h  --include task.h --internal

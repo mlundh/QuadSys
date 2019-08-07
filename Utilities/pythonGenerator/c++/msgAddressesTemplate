@@ -1,26 +1,24 @@
 #ifndef QUADGS_MESSAGE_ADDRESSES_H_
 #define QUADGS_MESSAGE_ADDRESSES_H_
-#include <vector>
+#include <map>
 #include <string>
 namespace QuadGS {{
 
-enum {enumName}
-{{
-	Unassigned,
-	Router,
-	Broadcast,
-{addresses}
-	Last_Address
-}};
-typedef enum {enumName} {enumName}_t;
+#define REGION_MASK (0xFF00)
 
-static const std::vector<std::string> {enumName}Str =
+typedef enum
 {{
-	"Unassigned",
-	"Router",
-	"Broadcast",
+{addresses}
+}}{enumName}_t;
+
+typedef enum
+{{
+{regionStrings}
+}}{enumNameRegion}_t;
+
+static const std::map<int, std::string> {enumName}Str =
+{{
 {strings}
-	"Last_Address",
 }};
 }}
 #endif /* QUADGS_MESSAGE_ADDRESSES_H_ */

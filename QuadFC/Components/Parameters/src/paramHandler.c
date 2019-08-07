@@ -110,8 +110,8 @@ struct paramHander
      obj->nrRegisteredHandlers = 0;
      obj->currentlyGetting = 0;
      obj->currentlySavinging = 0;
-     obj->getter = Unassigned;
-     obj->saver = Unassigned;
+     obj->getter = Unassigned_e;
+     obj->saver = Unassigned_e;
      obj->sequenceGet = 0;
      obj->sequenceSet = 0;
      obj->setAddress = 0;
@@ -169,7 +169,7 @@ struct paramHander
      {
          return 0;
      }
-     moduleMsg_t* msg = Msg_Create(Msg_HasParam_e, Broadcast);
+     moduleMsg_t* msg = Msg_Create(Msg_HasParam_e, FC_Broadcast_e);
      Event_Send(obj->evHandler, msg);
      return 1;
  }
@@ -710,7 +710,7 @@ struct paramHander
      paramHander_t* handlerObj = (paramHander_t*)data; // The data should always be the handler object when a Msg_paramSave is received.
      if(handlerObj->master)
      {
-         if(Msg_GetDestination(msg) == Broadcast)
+         if(Msg_GetDestination(msg) == FC_Broadcast_e)
          {
              return 0; // master does not answer to broadcasts of this type.
          }
@@ -719,7 +719,7 @@ struct paramHander
      }
      else
      {
-         if(Msg_GetDestination(msg) != Broadcast)
+         if(Msg_GetDestination(msg) != FC_Broadcast_e)
          {
              return 0; // Handlers that are not master should only answer broadcasts of this type.
          }

@@ -1,22 +1,16 @@
 #ifndef QUADFC_MESSAGE_ADDRESSES_H_
 #define QUADFC_MESSAGE_ADDRESSES_H_
 
-enum {enumName}
+#define REGION_MASK (0xFF00)
+typedef enum
 {{
-	Unassigned,
-	Router,
-	Broadcast,
 {addresses}
-	Last_Address
-}};
-typedef enum {enumName} {enumName}_t;
+}}{enumName}_t;
 
-static const char* const {enumName}Str[] =
+
+typedef enum
 {{
-	"Unassigned",
-	"Router",
-	"Broadcast",
-{strings}
-	"Last_Address",
-}};
+{regionStrings}
+}}{enumNameRegion}_t;
+
 #endif /* QUADFC_MESSAGE_ADDRESSES_H_ */

@@ -141,7 +141,7 @@ void Ctrl_SendEvent(CtrlModeHandler_t*  obj)
 {
     if(obj->eHandler && obj)
     {
-        moduleMsg_t* msg = Msg_CtrlModeCreate(Broadcast, 0,obj->currentMode);
+        moduleMsg_t* msg = Msg_CtrlModeCreate(Broadcast_e, 0,obj->currentMode);
         Event_Send(obj->eHandler, msg);
     }
 }

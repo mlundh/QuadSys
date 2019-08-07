@@ -35,7 +35,7 @@ using namespace QuadGS;
 // Test fixture to setup the topology.
 class ModuleTest : public ::testing::Test {
 protected:
-	ModuleTest(): module_1(msgAddr_t::FC_SerialIO_e),module_2(msgAddr_t::FC_Log_e),router(msgAddr_t::Router)
+	ModuleTest(): module_1(msgAddr_t::FC_SerialIO_e),module_2(msgAddr_t::FC_Log_e),router(msgAddr_t::GS_Router_e)
 {
 		QuadGS::AppLog::Init("app_log", "msg_log", std::cout, QuadGS::severity_level::warning, false);
 
@@ -86,7 +86,7 @@ TEST_F(ModuleTest, TwoSameName)
 // Test fixture to setup the topology.
 class ThreadedModuleTest : public ::testing::Test {
 protected:
-	ThreadedModuleTest(): module_1(msgAddr_t::FC_SerialIO_e),module_2(msgAddr_t::FC_Log_e),module_3(msgAddr_t::FC_Param_e),router(msgAddr_t::Router)
+	ThreadedModuleTest(): module_1(msgAddr_t::FC_SerialIO_e),module_2(msgAddr_t::FC_Log_e),module_3(msgAddr_t::FC_Param_e),router(msgAddr_t::GS_Router_e)
 {
 		QuadGS::AppLog::Init("app_log", "msg_log", std::cout, QuadGS::severity_level::warning, false);
 
@@ -171,7 +171,9 @@ TEST_F(ThreadedModuleTest, SendABunch)
 // Test fixture to setup the topology.
 class MultipleModuleTypesTest : public ::testing::Test {
 protected:
-	MultipleModuleTypesTest(): tmodule_1(msgAddr_t::Unassigned),tmodule_2(msgAddr_t::FC_Log_e),tmodule_3(msgAddr_t::FC_Param_e),rmodule_1(msgAddr_t::FC_SerialIO_e),rmodule_2(msgAddr_t::GS_Log_e), router(msgAddr_t::Router)
+	MultipleModuleTypesTest(): tmodule_1(msgAddr_t::Unassigned_e),tmodule_2(msgAddr_t::FC_Log_e),
+	tmodule_3(msgAddr_t::FC_Param_e),rmodule_1(msgAddr_t::FC_SerialIO_e),rmodule_2(msgAddr_t::GS_Log_e),
+	router(msgAddr_t::GS_Router_e)
 {
 		QuadGS::AppLog::Init("app_log", "msg_log", std::cout, QuadGS::severity_level::warning, false);
 

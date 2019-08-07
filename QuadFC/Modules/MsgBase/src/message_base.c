@@ -38,7 +38,7 @@ moduleMsg_t* Msg_Create(uint32_t type, uint32_t destination)
     if(msg)
     {
         msg->mDestination = destination;
-        msg->mSource = Unassigned;
+        msg->mSource = Unassigned_e;
         msg->mMsgNr = 0;
         msg->type = type;
         msg->mAllocatedSize = sizeof(moduleMsg_t);

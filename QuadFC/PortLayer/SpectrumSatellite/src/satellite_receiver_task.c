@@ -425,7 +425,7 @@ uint8_t Satellite_UpdateState(Satellite_t* obj, spektrum_data_t *merged_data)
     {
         if(obj->current_flight_mode_state != fmode_disarming && obj->current_flight_mode_state != fmode_disarmed)
         {
-            moduleMsg_t* msg = Msg_FlightModeReqCreate(Broadcast, 0, fmode_disarming);
+            moduleMsg_t* msg = Msg_FlightModeReqCreate(FC_Broadcast_e, 0, fmode_disarming);
             Event_Send(obj->evHandler, msg);
             // latch to avoid multiple events. Will get updated to real system state in event CB.
             obj->current_flight_mode_state = fmode_disarming;
@@ -437,7 +437,7 @@ uint8_t Satellite_UpdateState(Satellite_t* obj, spektrum_data_t *merged_data)
     {
         if(obj->current_flight_mode_state != fmode_arming && obj->current_flight_mode_state != fmode_armed)
         {
-            moduleMsg_t* msg = Msg_FlightModeReqCreate(Broadcast, 0, fmode_arming);
+            moduleMsg_t* msg = Msg_FlightModeReqCreate(FC_Broadcast_e, 0, fmode_arming);
             Event_Send(obj->evHandler, msg);
             // latch to avoid multiple events. Will get updated to real system state in event CB.
             obj->current_flight_mode_state = fmode_arming;
@@ -461,7 +461,7 @@ uint8_t Satellite_UpdateControlMode(Satellite_t* obj, spektrum_data_t *merged_da
     {
         if(obj->current_control_mode != Control_mode_attitude)
         {
-            moduleMsg_t* msg = Msg_CtrlModeReqCreate(Broadcast, 0, Control_mode_attitude);
+            moduleMsg_t* msg = Msg_CtrlModeReqCreate(FC_Broadcast_e, 0, Control_mode_attitude);
             Event_Send(obj->evHandler, msg);
             // latch to avoid multiple events. Will get updated to real system state in event CB.
             obj->current_control_mode = Control_mode_attitude;
@@ -473,7 +473,7 @@ uint8_t Satellite_UpdateControlMode(Satellite_t* obj, spektrum_data_t *merged_da
     {
         if(obj->current_control_mode != Control_mode_rate)
         {
-            moduleMsg_t* msg = Msg_CtrlModeReqCreate(Broadcast, 0, Control_mode_rate);
+            moduleMsg_t* msg = Msg_CtrlModeReqCreate(FC_Broadcast_e, 0, Control_mode_rate);
             Event_Send(obj->evHandler, msg);
             // latch to avoid multiple events. Will get updated to real system state in event CB.
             obj->current_control_mode = Control_mode_rate;

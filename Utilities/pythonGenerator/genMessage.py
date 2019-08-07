@@ -351,16 +351,47 @@ def genParserc( types, interfaces, outputDirCpp ):
 
 
 def genAdresses(addresses, enumName, outputDirCpp, outputDirC):
-	uniqueAddress = set(addresses)
-	enumString = ''
+	
+	regionsInt = 0
+	regionStrings = ''
+	masks = []
+	region = ''
+	currentRegion = 0
+	currentAddress = 0
 	addressString = ''
-	for address in uniqueAddress:
-		enumString += '	' + address + '_e,\n'
-		addressString += '	"' + address + '",\n'
+	enumString = ''
+	#Go through all interfaces and generate messages, enums and addresses based on that. 
+	with open(args.addresses, "r") as file:
+		for line in file:
+			if (line[0] == '*'): # Interface divider.
+				regionTest = line.split()[0][1:]
+				if (len(regionTest) > 1):
+					region = regionTest
+					regionint = (  currentRegion << 8)
+					currentAddress = 0
+					regionStrings += "	" + region + "_e = {},\n".format(hex(regionint))
+					print('New region: ' + region)
+					print('Current region: ' + hex(currentRegion))
+					print('RegionsInt:' + hex(regionsInt) )
+					print('regionStrings:' + regionStrings )
+				else:
+					currentRegion += 1
+				continue
+			if (line == '\n' or line == '' or line[0] == '#'): #Skipp newline, empty line and comments.
+				continue
+			address = (currentRegion << 8) + currentAddress;
+			currentAddress += 1
+			addressString += "	" + line.rstrip() + "_e = {},\n".format(hex(address))
+			enumString += "	{" + hex(address) + ", " + '"' + line.rstrip() + '_e"' + "},\n"
+	print("All addresses: \n" + addressString)
+	
+
 	substTypes = {}
+	substTypes['regionStrings'] = regionStrings
+	substTypes['enumNameRegion'] = enumName+"Region"
 	substTypes['enumName'] = enumName
-	substTypes['addresses'] = enumString
-	substTypes['strings'] = addressString
+	substTypes['addresses'] = addressString
+	substTypes['strings'] = enumString
 	with open(dir+'/c++/msgAddressesTemplate', 'r') as ftemp:
 		templateStringEnum = ftemp.read()
 		
@@ -418,6 +449,7 @@ def genCommonTypes(outputDirCpp, outputDirC):
 parser = argparse.ArgumentParser(description='Script to generate a cmake file to build the message class.')
 
 parser.add_argument('file', help='Name of the file containing all types.')
+parser.add_argument('addresses', help='Name of the file containing all addresses.')
 parser.add_argument('outputDirCpp', help='output dir cpp code')
 parser.add_argument('outputDirC', help='output dir c code')
 
@@ -425,7 +457,6 @@ args = parser.parse_args()
 
 interfaces = []
 interface = ''
-addresses = []
 usedByGS = False
 usedByFC = False
 interfaceUsedByGS = []
@@ -446,13 +477,10 @@ with open(args.file, "r") as file:
 			if (len(interfaceTest) > 1):
 				interface = interfaceTest
 				interfaces.append(interface)
-				addressesInLine = line.split()[1:]
-				for item in addressesInLine:
-					addresses.append(item)
-					if(item.find('GS') != -1):
-						usedByGS = True
-					if(item.find('FC') != -1):
-						usedByFC = True
+				if(interface.find('GS_') != -1):
+					usedByGS = True
+				if(interface.find('FC_') != -1):
+					usedByFC = True
 				if(usedByGS):
 					messageCmake += 'add_subdirectory(' + interface + ')\n' 
 					interfaceUsedByGS.append(interface)
@@ -473,8 +501,8 @@ with open(args.file, "r") as file:
 		files += '"' + (line.split()[0]) + '.cpp"\n				'
 
 genTypes(cTypes, 'messageTypes', args.outputDirCpp, args.outputDirC)
-genAdresses(addresses, 'msgAddr', args.outputDirCpp, args.outputDirC)
 genMsgEnums(args.outputDirCpp, args.outputDirC)
+genAdresses(args.addresses, 'msgAddr', args.outputDirCpp, args.outputDirC)
 genCommonTypes(args.outputDirCpp , args.outputDirC)
 genParsercpp(cppTypes, interfaceUsedByGS, args.outputDirCpp + '/Parser')
 genParserc(cTypesSerializable, interfaceUsedByGS, args.outputDirC)

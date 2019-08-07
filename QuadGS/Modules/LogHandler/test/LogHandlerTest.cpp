@@ -22,7 +22,7 @@ using namespace QuadGS;
 
 class LogHandlerTest : public ::testing::Test {
 protected:
-	LogHandlerTest():mLog(msgAddr_t::GS_Log_e), mFake(msgAddr_t::FC_Log_e), router(msgAddr_t::Router) {
+	LogHandlerTest():mLog(msgAddr_t::GS_Log_e), mFake(msgAddr_t::FC_Log_e), router(msgAddr_t::GS_Router_e) {
 
 		QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error, false);
 

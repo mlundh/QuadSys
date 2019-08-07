@@ -169,7 +169,7 @@ void FMode_SendEvent(FlightModeHandler_t*  obj)
 {
     if(obj && obj->eHandler)
     {
-        moduleMsg_t* msg = Msg_FlightModeCreate(Broadcast, 0,obj->current_mode);
+        moduleMsg_t* msg = Msg_FlightModeCreate(Broadcast_e, 0,obj->current_mode);
         Event_Send(obj->eHandler, msg);
     }
 }

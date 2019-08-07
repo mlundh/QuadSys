@@ -42,7 +42,7 @@ namespace QuadGS {
 class QGS_MessageHandlerBase
 {
 public:
-	QGS_MessageHandlerBase(msgAddr_t address):mLogger(msgAddrStr[address]), mName(address)
+	QGS_MessageHandlerBase(msgAddr_t address):mLogger(msgAddrStr.at(address)), mName(address)
 	{
 
 	}
@@ -95,7 +95,7 @@ class B = QGS_Msg, class = typename std::enable_if<std::is_base_of<B,MessageType
 class QGS_MessageHandler: public virtual QGS_MessageHandlerBase
 {
 public:
-	QGS_MessageHandler():QGS_MessageHandlerBase(msgAddr_t::Unassigned)
+	QGS_MessageHandler():QGS_MessageHandlerBase(msgAddr_t::Unassigned_e)
 {
 }
 	virtual ~QGS_MessageHandler() = default;

@@ -1,7 +1,7 @@
 set(src "Parameters.cpp")
 set(dep "CommandTree"
-        "Param"
-        "Ui_Command"
+        "GS_FC_Param"
+        "GS_Ui_Command"
         "QGS_Module")
 
 qgs_make_shared_lib( Parameters src dep)

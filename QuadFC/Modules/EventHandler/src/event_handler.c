@@ -155,7 +155,7 @@ msgAddr_t Event_GetId(eventHandler_t* obj)
 {
     if(!obj)
     {
-        return Last_Address;
+        return Unassigned_e;
     }
     return obj->handlerId;
 }
@@ -218,7 +218,7 @@ uint8_t Event_Send(eventHandler_t* obj, moduleMsg_t* msg)
     }
     uint8_t result = 1;
     Msg_SetSource(msg, obj->handlerId);
-    if(msg->mDestination == Broadcast) // Broadcast, send to all that are subscribed.
+    if(msg->mDestination == Broadcast_e) // Broadcast, send to all that are subscribed.
     {
         for(int i = 0; i < obj->registeredHandlers; i++)
         {
@@ -270,7 +270,7 @@ uint8_t Event_SendSubscription(eventHandler_t* obj, uint32_t subscription)
 {
     uint8_t result = 1;
 
-    moduleMsg_t* msg = Msg_SubscriptionsCreate(Broadcast, 0, subscription);
+    moduleMsg_t* msg = Msg_SubscriptionsCreate(FC_Broadcast_e, 0, subscription);
     Msg_SetSource(msg, obj->handlerId);
     // Send to everyone except self.
     for(int i = 0; i < obj->registeredHandlers; i++)

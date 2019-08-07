@@ -7,5 +7,5 @@ list(APPEND dep "BinaryStream"
 				"MsgBase"
 				"AppLog")
 				
-qgs_make_shared_lib( FC_Control src dep)
+qgs_make_shared_lib( GS_FC_Control src dep)
 

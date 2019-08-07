@@ -97,7 +97,7 @@ uint8_t LogEv_createTestTasks(TestFw_t* obj, SemaphoreHandle_t semaphore, logEvT
         for(;;);
     }
     slaveParam->xSemaphore = NULL;
-    slaveParam->evHandler = Event_CreateHandler(FC_SerialIO_e,0);
+    slaveParam->evHandler = Event_CreateHandler(FC_SerialIOrx_e,0);
     slaveParam->paramHandler = ParamHandler_CreateObj(2, slaveParam->evHandler,"paramH", 0);
     slaveParam->logHObj = LogHandler_CreateObj(2,slaveParam->evHandler, ParamHandler_GetParam(slaveParam->paramHandler), "logEvTS",0);
     slaveParam->logValue0 = 0;

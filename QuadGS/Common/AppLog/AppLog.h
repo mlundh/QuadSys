@@ -72,7 +72,7 @@ class AppLog
 {
 public:
     AppLog();
-    AppLog(std::string tag);
+    AppLog(const std::string tag);
     virtual ~AppLog();
     static void Init( std::string FilenameAppLog, std::string FilenameMsgLog, std::ostream& outstream, severity_level svl, bool msg);
     void QuadLog(QuadGS::severity_level svl, std::string msg);

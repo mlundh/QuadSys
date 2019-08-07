@@ -46,7 +46,7 @@ AppLog::AppLog()
 
 }
 
-AppLog::AppLog(std::string tag)
+AppLog::AppLog(const std::string tag)
 {
 	slg.add_attribute("Tag", attrs::constant< std::string >(tag));
 }

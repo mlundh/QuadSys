@@ -39,7 +39,7 @@ using namespace QuadGS;
 
 class ParamTest : public ::testing::Test {
 protected:
-	ParamTest():mParameters(msgAddr_t::GS_Param_e), mFake(msgAddr_t::FC_Param_e), router(msgAddr_t::Router) {
+	ParamTest():mParameters(msgAddr_t::GS_Param_e), mFake(msgAddr_t::FC_Param_e), router(msgAddr_t::GS_Router_e) {
 
 		QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error, false);
 
