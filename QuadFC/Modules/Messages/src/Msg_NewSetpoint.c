@@ -180,9 +180,9 @@ uint8_t* Msg_NewSetpointSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t bu
 moduleMsg_t* Msg_NewSetpointDeserialize(uint8_t* buffer, uint32_t buffer_size)
 {
     moduleMsg_t* msg = pvPortMalloc(buffer_size);
-
     if(msg)
     {
+        msg->mAllocatedSize = buffer_size;
         buffer = Msg_DeSerialize(msg, buffer, buffer_size);
         Msg_NewSetpoint_t* data = (Msg_NewSetpoint_t*)(msg + 1);
         if(data)

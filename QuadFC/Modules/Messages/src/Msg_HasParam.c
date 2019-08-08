@@ -72,9 +72,9 @@ uint8_t* Msg_HasParamSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffe
 moduleMsg_t* Msg_HasParamDeserialize(uint8_t* buffer, uint32_t buffer_size)
 {
     moduleMsg_t* msg = pvPortMalloc(buffer_size);
-
     if(msg)
     {
+        msg->mAllocatedSize = buffer_size;
         buffer = Msg_DeSerialize(msg, buffer, buffer_size);
         Msg_HasParam_t* data = (Msg_HasParam_t*)(msg + 1);
         if(data)

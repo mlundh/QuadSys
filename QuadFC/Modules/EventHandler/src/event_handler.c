@@ -27,6 +27,30 @@
 #include "Modules/Messages/inc/Msg_Subscriptions.h"
 #define NO_ID (255)
 
+/**
+ * Send to the current node. The address of the message should correspond to the current segment.
+ * @param obj			Current event handler object.
+ * @param msg			The message to be sent.
+ * @return
+ */
+uint8_t Event_SendInternal(eventHandler_t* obj, moduleMsg_t* msg);
+
+
+/**
+ * Send a broadcast to the local segment.
+ * @param obj		Current event handler object.
+ * @param msg		The message to be broadcast.
+ * @return
+ */
+uint8_t Event_SendBCInternal(eventHandler_t* obj, moduleMsg_t* msg);
+
+/**
+ * Send the message to a different segment.
+ * @param obj		Current event handler object.
+ * @param msg		The message to be transfered to a different segment.
+ * @return
+ */
+uint8_t Event_SendExternal(eventHandler_t* obj, moduleMsg_t* msg);
 
 /**
  * Internal function to distribute the new subscription to all nodes in the system.
@@ -87,6 +111,8 @@ eventHandler_t* Event_CreateHandler(msgAddr_t id, uint8_t master)
     {
         obj->eventDataBinding[i] = NULL;
     }
+    obj->portFcn = NULL;
+    obj->portQueue = NULL;
 
     Event_RegisterCallback(obj, Msg_Subscriptions_e, Event_SubscriptionReq, NULL);
 
@@ -101,6 +127,19 @@ eventHandler_t* Event_CreateHandler(msgAddr_t id, uint8_t master)
         obj->registeredHandlers++;
     }
     return obj;
+}
+
+
+void Event_RegisterPortFunction(eventHandler_t* obj, eventHandlerFcn fcn, void* data)
+{
+    if(!obj || !fcn || obj->portFcn)
+    {
+        return;
+    }
+    obj->portQueue = xQueueCreate( EVENT_QUEUE_LENGTH,
+            EVENT_QUEUE_ITEM_SIZE );
+    obj->portFcn = fcn;
+    obj->portDataBinding = data;
 }
 
 void Event_DeleteHandler(eventHandler_t* obj)
@@ -136,6 +175,20 @@ uint8_t Event_InitHandler(eventHandler_t* master, eventHandler_t* obj)
     master->handlers[master->registeredHandlers] = obj;
     master->handlerIds[master->registeredHandlers] = obj->handlerId;
     master->registeredHandlers++;
+
+    // Spread the knowledge of the port. First to register wins.
+    if(master->portQueue) // If the master knows of the port queue, write it!
+    {
+        obj->portQueue = master->portQueue;
+    }
+    else if(obj->portFcn) // Else if the new handler has a port function, then we copy the queue to all known handlers.
+    {
+        master->portQueue = obj->portQueue;
+        for(int j = 0; j < master->registeredHandlers; j++)
+        {
+            master->handlers[j]->portQueue = obj->portQueue;
+        }
+    }
 
     // Each time we register a new handler, we will spread the knowledge of that handler to all other handlers.
     for(int i = 0; i < master->registeredHandlers; i++)
@@ -218,51 +271,98 @@ uint8_t Event_Send(eventHandler_t* obj, moduleMsg_t* msg)
     }
     uint8_t result = 1;
     Msg_SetSource(msg, obj->handlerId);
-    if(msg->mDestination == Broadcast_e) // Broadcast, send to all that are subscribed.
+    if((msg->mDestination & REGION_MASK) == BC_e) // Message is addressed to the global segment.
     {
-        for(int i = 0; i < obj->registeredHandlers; i++)
+        if(msg->mDestination == Broadcast_e) // Global broadcast
         {
-            if(obj->handlerIds[i] != obj->handlerId) // do not send to self.
-            {
-                uint32_t eventMask = (1 << msg->type);
-                uint32_t subscribed = obj->handlerSubscriptions[i] & eventMask;
-                if(subscribed) // only send if the receiver has subscribed to this message.
-                {
-                    // clone the message so that all subscribers gets a unique message.
-                    // TODO save number of subscribers so we can send the initial message.
-                    moduleMsg_t* clone = Msg_Clone(msg);
-                    if(!xQueueSendToBack(obj->handlers[i]->eventQueue, &clone, EVENT_BLOCK_TIME))
-                    {
-                        result = 0;
-                        Msg_Delete(msg);
-                        Msg_Delete(clone);
-                    }
-                }
-            }
+            Event_SendBCInternal(obj, msg);
+            Event_SendExternal(obj, msg);
         }
-        Msg_Delete(msg); // original message is deleted.
+        else
+        {
+            // We got a message without destination...
+        }
     }
-    else // send only to the destination.
+    else if((msg->mDestination & REGION_MASK) == (obj->handlerId & REGION_MASK)) // Message is addressed to this segment.
     {
-        for(int i = 0; i < obj->registeredHandlers; i++)
+        if(msg->mDestination == FC_Broadcast_e)// Local broadcast
         {
-            if(obj->handlerIds[i] == msg->mDestination)
-            {
-                uint32_t eventMask = (1 << msg->type);
-                uint32_t subscribed = obj->handlerSubscriptions[i] & eventMask;
-                if(subscribed)
-                {
-                    if(!xQueueSendToBack(obj->handlers[i]->eventQueue, &msg, EVENT_BLOCK_TIME))
-                    {
-                        result = 0;
-                        Msg_Delete(msg);
-                    }
-                }
-                break;
-            }
+            Event_SendBCInternal(obj, msg);
         }
+        else
+        {
+            Event_SendInternal(obj, msg);
+        }
+    }
+    else // Message not addressed to this segment, send it to other segment to be handled.
+    {
+        Event_SendExternal(obj, msg);
     }
 
+    return result;
+}
+uint8_t Event_SendInternal(eventHandler_t* obj, moduleMsg_t* msg)
+{
+    uint8_t result = 1;
+    for(int i = 0; i < obj->registeredHandlers; i++)
+    {
+        if(obj->handlerIds[i] == msg->mDestination)
+        {
+            uint32_t eventMask = (1 << msg->type);
+            uint32_t subscribed = obj->handlerSubscriptions[i] & eventMask;
+            if(subscribed)
+            {
+                if(!xQueueSendToBack(obj->handlers[i]->eventQueue, &msg, EVENT_BLOCK_TIME))
+                {
+                    result = 0;
+                    Msg_Delete(msg);
+                }
+            }
+            break;
+        }
+    }
+    return result;
+}
+
+
+uint8_t Event_SendBCInternal(eventHandler_t* obj, moduleMsg_t* msg)
+{
+    uint8_t result = 1;
+    for(int i = 0; i < obj->registeredHandlers; i++)
+    {
+        if(obj->handlerIds[i] != obj->handlerId) // do not send to self.
+        {
+            uint32_t eventMask = (1 << msg->type);
+            uint32_t subscribed = obj->handlerSubscriptions[i] & eventMask;
+            if(subscribed) // only send if the receiver has subscribed to this message.
+            {
+                // clone the message so that all subscribers gets a unique message.
+                // TODO save number of subscribers so we can send the initial message.
+                moduleMsg_t* clone = Msg_Clone(msg);
+                if(!xQueueSendToBack(obj->handlers[i]->eventQueue, &clone, EVENT_BLOCK_TIME))
+                {
+                    result = 0;
+                    Msg_Delete(msg);
+                    Msg_Delete(clone);
+                }
+            }
+        }
+    }
+    Msg_Delete(msg); // original message is deleted.
+    return result;
+}
+uint8_t Event_SendExternal(eventHandler_t* obj, moduleMsg_t* msg)
+{
+    if(!obj || !msg || !obj->portQueue)
+    {
+        return 0;
+    }
+    uint8_t result = 1;
+    if(!xQueueSendToBack(obj->portQueue, &msg, EVENT_BLOCK_TIME))
+    {
+        result = 0;
+        Msg_Delete(msg);
+    }
     return result;
 }
 
@@ -290,6 +390,26 @@ uint8_t Event_SendSubscription(eventHandler_t* obj, uint32_t subscription)
         }
     }
     return result;
+}
+
+uint8_t Event_ReceiveExternal(eventHandler_t* obj, uint32_t blockTime)
+{
+    if(!obj || !obj->portFcn)
+    {
+        return 0;
+    }
+    // Handle all incoming events.
+    moduleMsg_t* event_data = NULL;
+    if(xQueueReceive(obj->portQueue, &event_data, blockTime) == pdTRUE)
+    {
+        obj->portFcn(obj, obj->portDataBinding, event_data);
+        Msg_Delete(event_data);
+    }
+    else
+    {
+        return 0;
+    }
+    return 1;
 }
 
 uint8_t Event_Receive(eventHandler_t* obj, uint32_t blockTime)

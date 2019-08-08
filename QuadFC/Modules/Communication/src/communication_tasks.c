@@ -145,6 +145,8 @@ TxCom_t* Com_InitTx(eventHandler_t* eventHandler)
 
     // Subscribe to the events that the task is interested in. All events that can be sent over the uart link.
 
+    Event_RegisterPortFunction(taskParam->evHandler, Com_TxSend, taskParam);
+
     Event_RegisterCallback(taskParam->evHandler, Msg_Transmission_e, Com_TxTransmission, taskParam);
 
     Event_RegisterCallback(taskParam->evHandler, Msg_TestTransmission_e, Com_TxSend, taskParam);
@@ -272,8 +274,11 @@ void Com_TxTask( void *pvParameters )
     for ( ;; )
     {
         //Process incoming events.
-        while(Event_Receive(obj->evHandler, portMAX_DELAY))
+        while(Event_Receive(obj->evHandler, 0))
         {}
+        while(Event_ReceiveExternal(obj->evHandler, 0))
+        {}
+        vTaskDelay(1);
         // error, event receive should not fail...
     }
 

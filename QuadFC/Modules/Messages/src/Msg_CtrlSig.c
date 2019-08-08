@@ -107,9 +107,9 @@ uint8_t* Msg_CtrlSigSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer
 moduleMsg_t* Msg_CtrlSigDeserialize(uint8_t* buffer, uint32_t buffer_size)
 {
     moduleMsg_t* msg = pvPortMalloc(buffer_size);
-
     if(msg)
     {
+        msg->mAllocatedSize = buffer_size;
         buffer = Msg_DeSerialize(msg, buffer, buffer_size);
         Msg_CtrlSig_t* data = (Msg_CtrlSig_t*)(msg + 1);
         if(data)

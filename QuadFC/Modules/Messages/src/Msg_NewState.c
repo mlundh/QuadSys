@@ -107,9 +107,9 @@ uint8_t* Msg_NewStateSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffe
 moduleMsg_t* Msg_NewStateDeserialize(uint8_t* buffer, uint32_t buffer_size)
 {
     moduleMsg_t* msg = pvPortMalloc(buffer_size);
-
     if(msg)
     {
+        msg->mAllocatedSize = buffer_size;
         buffer = Msg_DeSerialize(msg, buffer, buffer_size);
         Msg_NewState_t* data = (Msg_NewState_t*)(msg + 1);
         if(data)

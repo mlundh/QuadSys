@@ -370,10 +370,6 @@ def genAdresses(addresses, enumName, outputDirCpp, outputDirC):
 					regionint = (  currentRegion << 8)
 					currentAddress = 0
 					regionStrings += "	" + region + "_e = {},\n".format(hex(regionint))
-					print('New region: ' + region)
-					print('Current region: ' + hex(currentRegion))
-					print('RegionsInt:' + hex(regionsInt) )
-					print('regionStrings:' + regionStrings )
 				else:
 					currentRegion += 1
 				continue
@@ -383,7 +379,6 @@ def genAdresses(addresses, enumName, outputDirCpp, outputDirC):
 			currentAddress += 1
 			addressString += "	" + line.rstrip() + "_e = {},\n".format(hex(address))
 			enumString += "	{" + hex(address) + ", " + '"' + line.rstrip() + '_e"' + "},\n"
-	print("All addresses: \n" + addressString)
 	
 
 	substTypes = {}

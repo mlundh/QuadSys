@@ -30,6 +30,7 @@
 #include "Messages/inc/common_types.h"
 #include "MsgBase/inc/message_base.h"
 #include "Messages/inc/msgAddr.h"
+#include "Messages/inc/messageTypes.h"
 #include "Modules/EventHandler/inc/event_circular_buffer.h"
 
 /**
@@ -87,6 +88,9 @@ typedef uint8_t (*eventHandlerFcn)(eventHandler_t* obj, void* data, moduleMsg_t*
 struct eventHandler
 {
 	QueueHandle_t     eventQueue;
+	QueueHandle_t     portQueue;
+	eventHandlerFcn   portFcn;
+	void*             portDataBinding;
 	msgAddr_t         handlerId;
 	uint32_t          subscriptions;
 	eventHandler_t*   handlers[NR_QUEUES_MAX];                    //Registered handlers. Only use queue after the scheduler has been started.
@@ -105,6 +109,14 @@ struct eventHandler
  * @return
  */
 eventHandler_t* Event_CreateHandler(msgAddr_t id, uint8_t master);
+
+/**
+ * Register the function that receives the external messages.
+ * @param obj
+ * @param fcn
+ * @param data
+ */
+void Event_RegisterPortFunction(eventHandler_t* obj, eventHandlerFcn fcn, void* data);
 
 /**
  * Delete and event handler.
@@ -154,6 +166,15 @@ uint8_t Event_Unsubscribe(eventHandler_t* obj, messageTypes_t event);
  * @return        1 if successful, 0 otherwise.
  */
 uint8_t Event_Send(eventHandler_t* obj, moduleMsg_t* event);
+
+/**
+ * Process the external mailbox. The messages will be processed in the order they arrive.
+ * The messages will be deleted automatically.
+ * @param obj           Current handler.
+ * @param blockTime     Time the task can block. 0 for no block.
+ * @return              1 if the task processed an event, 0 if timeout.
+ */
+uint8_t Event_ReceiveExternal(eventHandler_t* obj, uint32_t blockTime);
 
 /**
  * Process events from the mailbox. The events are processed as they arrive. If there

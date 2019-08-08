@@ -108,9 +108,9 @@ uint8_t* Msg_FlightModeReqSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t 
 moduleMsg_t* Msg_FlightModeReqDeserialize(uint8_t* buffer, uint32_t buffer_size)
 {
     moduleMsg_t* msg = pvPortMalloc(buffer_size);
-
     if(msg)
     {
+        msg->mAllocatedSize = buffer_size;
         buffer = Msg_DeSerialize(msg, buffer, buffer_size);
         Msg_FlightModeReq_t* data = (Msg_FlightModeReq_t*)(msg + 1);
         if(data)
