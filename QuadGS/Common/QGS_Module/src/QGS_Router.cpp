@@ -83,7 +83,7 @@ void QGS_Router::sendMsg(QGS_ModuleMsgBase::ptr message)
 {
 	// If we already know where to send to, then send.
 	msgAddr_t dest = message->getDestination();
-	if((dest & REGION_MASK) ==  msgAddrRegion_t::GS_e) // Did we get a local destination?
+	if((dest & REGION_MASK) ==  msgAddrDomain_t::GS_e) // Did we get a local destination?
 	{
 		if(dest == msgAddr_t::GS_Broadcast_e) // Did we get a local broadcast?
 		{
@@ -94,7 +94,7 @@ void QGS_Router::sendMsg(QGS_ModuleMsgBase::ptr message)
 			internalSend(std::move(message), dest, false);
 		}
 	}
-	else if((dest & REGION_MASK) ==  msgAddrRegion_t::BC_e) // did we get a global desitnation?
+	else if((dest & REGION_MASK) ==  msgAddrDomain_t::BC_e) // did we get a global desitnation?
 	{
 		if(dest == msgAddr_t::Broadcast_e)
 		{

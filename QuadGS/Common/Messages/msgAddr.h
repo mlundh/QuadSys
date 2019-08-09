@@ -37,7 +37,7 @@ typedef enum
 	GS_e = 0x100,
 	FC_e = 0x200,
 
-}msgAddrRegion_t;
+}msgAddrDomain_t;
 
 static const std::map<int, std::string> msgAddrStr =
 {

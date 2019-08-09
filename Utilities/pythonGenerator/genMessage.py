@@ -383,7 +383,7 @@ def genAdresses(addresses, enumName, outputDirCpp, outputDirC):
 
 	substTypes = {}
 	substTypes['regionStrings'] = regionStrings
-	substTypes['enumNameRegion'] = enumName+"Region"
+	substTypes['enumNameRegion'] = enumName+"Domain"
 	substTypes['enumName'] = enumName
 	substTypes['addresses'] = addressString
 	substTypes['strings'] = enumString

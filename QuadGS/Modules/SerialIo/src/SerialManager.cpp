@@ -261,6 +261,11 @@ void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 	{
 		// Log message.
 		mLogger.QuadLog(severity_level::message_trace, "Received: \n" + msg->toString() );
+		// If we get a broadcast message, we should only handle it internally.
+		if(msg->getDestination() == msgAddr_t::Broadcast_e)
+		{
+			msg->setDestination(msgAddr_t::GS_Broadcast_e); // TODO make this dynamic based on name...
+		}
 		// then send to the router.
 		sendExternalMsg(std::move(msg));
 	}

@@ -394,6 +394,10 @@ void Com_RxTask( void *pvParameters )
             // Parse the message and send to the interested parties!
             moduleMsg_t* msg = Msg_Parse(obj->messageBuffer, payloadLength);
             uint8_t msgNr = Msg_GetMsgNr(msg);
+            if(Msg_GetDestination(msg) == BC_e)
+            {
+            	Msg_SetDestination(msg, GS_Broadcast_e);
+            }
 
             Event_Send(obj->evHandler, msg);
 

@@ -34,6 +34,6 @@ typedef enum
 	GS_e = 0x100,
 	FC_e = 0x200,
 
-}msgAddrRegion_t;
+}msgAddrDomain_t;
 
 #endif /* QUADFC_MESSAGE_ADDRESSES_H_ */
