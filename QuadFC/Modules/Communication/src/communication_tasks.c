@@ -286,6 +286,8 @@ void Com_TxTask( void *pvParameters )
 
 uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 {
+    return 0;
+
     if(!obj || ! data || !msg)
     {
         return 0;
@@ -352,7 +354,6 @@ uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 
 void Com_RxTask( void *pvParameters )
 {
-
     int ParserIndex = 0; //!< Variable containing static information for the parser.
 
     /*The already allocated data is passed to the task.*/
@@ -393,17 +394,17 @@ void Com_RxTask( void *pvParameters )
 
             // Parse the message and send to the interested parties!
             moduleMsg_t* msg = Msg_Parse(obj->messageBuffer, payloadLength);
-            uint8_t msgNr = Msg_GetMsgNr(msg);
             if(Msg_GetDestination(msg) == BC_e)
             {
             	Msg_SetDestination(msg, GS_Broadcast_e);
             }
 
+            uint8_t msgNr = Msg_GetMsgNr(msg);
+            //TODO ack on non-transmission messages.
+            //TODO check messageNr...
+
+
             Event_Send(obj->evHandler, msg);
-
-
-            moduleMsg_t* reply = Msg_TransmissionCreate(GS_SerialIO_e, msgNr, transmission_OK);
-            Event_Send(obj->evHandler, reply);
 
         }
         break;
