@@ -352,7 +352,8 @@ uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
             if(reTransmittNr >= NR_RETRANSMITT)
             {
                 // TODO log failed retransmitt.
-                break; // Retransmitt failed.
+            	TxObj->transmission = transmission_OK; // We failed, and have notified this. Prepare for next message.
+                break; // Retransmit failed.
             }
         }
 

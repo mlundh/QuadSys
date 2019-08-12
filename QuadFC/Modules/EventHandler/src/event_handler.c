@@ -133,7 +133,7 @@ eventHandler_t* Event_CreateHandler(msgAddr_t id, uint8_t master)
 
 void Event_RegisterPortFunction(eventHandler_t* obj, eventHandlerFcn fcn, void* data)
 {
-    if(!obj || !fcn || obj->portFcn)
+    if(!obj || !fcn || obj->portFcn || !data)
     {
         return;
     }
