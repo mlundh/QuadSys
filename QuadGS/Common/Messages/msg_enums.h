@@ -77,6 +77,11 @@ typedef enum {
     log_stopAll = 2,
 }LogCtrl;
 
+typedef enum {
+    getAppLog,
+    writeAppLog,
+}AppLogCtrl;
+
 
 }
 #endif /* QUADGS_ENUM_TYPES_H_ */

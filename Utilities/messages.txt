@@ -24,6 +24,7 @@ Msg_Param --member uint8_t control --member uint8_t sequenceNr --member uint8_t 
 *
 *GS_FC_Log
 Msg_Log --member uint8_t control --member std::string payload
+Msg_AppLog --member uint8_t control --member std::string payload
 *
 *GS_FC_Debug
 Msg_Debug --member uint8_t control --member std::string payload

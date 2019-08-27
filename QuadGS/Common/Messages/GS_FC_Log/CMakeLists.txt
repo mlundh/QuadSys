@@ -1,4 +1,5 @@
 list(APPEND src "Msg_Log.cpp"
+				"Msg_AppLog.cpp"
 				)
                 
 list(APPEND dep "BinaryStream"

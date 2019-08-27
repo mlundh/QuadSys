@@ -36,6 +36,7 @@
 #include "Msg_UiCommandResult.h"
 #include "Msg_Param.h"
 #include "Msg_Log.h"
+#include "Msg_AppLog.h"
 #include "Msg_Debug.h"
 #include "Msg_Transmission.h"
 #include "Msg_TestTransmission.h"
@@ -159,6 +160,14 @@ QGS_ModuleMsgBase::ptr Parser::parse( std::vector<unsigned char>  data)
 	case messageTypes_t::Msg_Log_e:
 	{
 		Msg_Log::ptr ptr = std::make_unique<Msg_Log>(msgBase);
+		ptr->setSkipStreamHeader();
+		is >> *ptr;
+		returnPtr = std::move(ptr);
+		break;
+	}
+	case messageTypes_t::Msg_AppLog_e:
+	{
+		Msg_AppLog::ptr ptr = std::make_unique<Msg_AppLog>(msgBase);
 		ptr->setSkipStreamHeader();
 		is >> *ptr;
 		returnPtr = std::move(ptr);

@@ -47,3 +47,8 @@ typedef enum {
     log_entry = 1,
     log_stopAll = 2,
 }LogCtrl;
+
+typedef enum {
+    getAppLog,
+    writeAppLog,
+}AppLogCtrl;

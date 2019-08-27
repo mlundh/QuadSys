@@ -24,6 +24,7 @@
 #include "../inc/Msg_Parser.h"
 #include "../../Messages/inc/Msg_Param.h"
 #include "../../Messages/inc/Msg_Log.h"
+#include "../../Messages/inc/Msg_AppLog.h"
 #include "../../Messages/inc/Msg_Debug.h"
 #include "../../Messages/inc/Msg_Transmission.h"
 #include "../../Messages/inc/Msg_TestTransmission.h"
@@ -66,6 +67,12 @@ moduleMsg_t* Msg_Parse(uint8_t* buffer, uint32_t bufferLength)
     case Msg_Log_e:
     {
         msgResult = Msg_LogDeserialize(buffer, bufferLength);
+        break;
+    }
+    
+    case Msg_AppLog_e:
+    {
+        msgResult = Msg_AppLogDeserialize(buffer, bufferLength);
         break;
     }
     
@@ -206,6 +213,11 @@ uint8_t* Msg_Serializer(moduleMsg_t* msg, uint8_t* buffer, uint32_t bufferLength
         case Msg_Log_e:
     {
         result = Msg_LogSerialize(msg, buffer, bufferLength);
+        break;
+    }
+        case Msg_AppLog_e:
+    {
+        result = Msg_AppLogSerialize(msg, buffer, bufferLength);
         break;
     }
         case Msg_Debug_e:

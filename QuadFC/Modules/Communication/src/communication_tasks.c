@@ -66,6 +66,7 @@ typedef struct RxCom
     FlightModeHandler_t* stateHandler;
     eventHandler_t* evHandler;
     LogHandler_t* logHandler;
+
     paramHander_t* paramHandler;
 
 }RxCom_t;
@@ -286,8 +287,6 @@ void Com_TxTask( void *pvParameters )
 
 uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 {
-    //return 0;
-
     if(!obj || ! data || !msg)
     {
         return 0;
