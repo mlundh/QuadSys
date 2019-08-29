@@ -350,7 +350,7 @@ uint8_t EventHandler_createTestTasks(eventTester_t* obj)
 
 
     testEventTaskParams * taskParam3 = pvPortMalloc(sizeof(testEventTaskParams));
-    taskParam3->evHandler = Event_CreateHandler(GS_SetpointGen_e, 0);
+    taskParam3->evHandler = Event_CreateHandler(FC_SerialIOrx_e, 0);
     // Task 3 is interested in new setpoint.
     taskParam3->responseQueue = obj->responseQueue;
     obj->taskParam3 = taskParam3;
@@ -376,7 +376,7 @@ uint8_t EventHandler_createTestTasks(eventTester_t* obj)
 
     portBASE_TYPE create_result1 = xTaskCreate( event_test_task,   /* The function that implements the task.  */
             (const char *const) "Test1",                  /* The name of the task. This is not used by the kernel, only aids in debugging*/
-            100,                                          /* The stack size for the task*/
+            300,                                          /* The stack size for the task*/
             taskParam1,                                   /* pass params to task.*/
             configMAX_PRIORITIES-1,                       /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
             &taskParam1->xHandle );                                       /* Handle to the task. Not used here and therefore NULL*/
@@ -384,7 +384,7 @@ uint8_t EventHandler_createTestTasks(eventTester_t* obj)
 
     portBASE_TYPE create_result2 = xTaskCreate( event_test_task,   /* The function that implements the task.  */
             (const char *const) "Test2",                  /* The name of the task. This is not used by the kernel, only aids in debugging*/
-            100,                                          /* The stack size for the task*/
+            300,                                          /* The stack size for the task*/
             taskParam2,                                   /* pass params to task.*/
             configMAX_PRIORITIES-1,                       /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
             &taskParam2->xHandle );                                       /* Handle to the task. Not used here and therefore NULL*/
@@ -393,7 +393,7 @@ uint8_t EventHandler_createTestTasks(eventTester_t* obj)
 
     portBASE_TYPE create_result3 = xTaskCreate( event_test_task,   /* The function that implements the task.  */
             (const char *const) "Test3",                  /* The name of the task. This is not used by the kernel, only aids in debugging*/
-            100,                                          /* The stack size for the task*/
+            300,                                          /* The stack size for the task*/
             taskParam3,                                   /* pass params to task.*/
             configMAX_PRIORITIES-1,                       /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
             &taskParam3->xHandle );                                       /* Handle to the task. Not used here and therefore NULL*/
@@ -401,7 +401,7 @@ uint8_t EventHandler_createTestTasks(eventTester_t* obj)
 
     portBASE_TYPE create_result4 = xTaskCreate( stimuli_test_task,   /* The function that implements the task.  */
             (const char *const) "Stimuli",                  /* The name of the task. This is not used by the kernel, only aids in debugging*/
-            100,                                          /* The stack size for the task*/
+            300,                                          /* The stack size for the task*/
             stimuliTask,                                   /* pass params to task.*/
             configMAX_PRIORITIES-1,                       /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
             &stimuliTask->xHandle );                                       /* Handle to the task. Not used here and therefore NULL*/

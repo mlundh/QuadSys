@@ -286,7 +286,7 @@ void Com_TxTask( void *pvParameters )
 
 uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 {
-    return 0;
+    //return 0;
 
     if(!obj || ! data || !msg)
     {
@@ -368,6 +368,7 @@ void Com_RxTask( void *pvParameters )
         /*--------------------------Receive the packet---------------------*/
 
         QuadFC_Serial_t serialData;
+        obj->receive_buffer[0] = 0;
         serialData.buffer = obj->receive_buffer;
         serialData.bufferLength = 1;
 
@@ -387,13 +388,18 @@ void Com_RxTask( void *pvParameters )
             uint32_t payloadLength = Slip_DePacketize(obj->messageBuffer, COM_PACKET_LENGTH_MAX, obj->SLIP);
             if(payloadLength == 0)
             {
-                moduleMsg_t* reply = Msg_TransmissionCreate(GS_SerialIO_e, 0, transmission_NOK);
-                Event_Send(obj->evHandler, reply);
+                //moduleMsg_t* reply = Msg_TransmissionCreate(GS_SerialIO_e, 0, transmission_NOK);
+                //Event_Send(obj->evHandler, reply);
                 break;
             }
 
             // Parse the message and send to the interested parties!
             moduleMsg_t* msg = Msg_Parse(obj->messageBuffer, payloadLength);
+            if(!msg)
+            {
+                //TODO error
+                break;
+            }
             if(Msg_GetDestination(msg) == BC_e)
             {
             	Msg_SetDestination(msg, GS_Broadcast_e);

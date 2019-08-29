@@ -40,9 +40,10 @@ uint8_t Event_SendInternal(eventHandler_t* obj, moduleMsg_t* msg);
  * Send a broadcast to the local segment.
  * @param obj		Current event handler object.
  * @param msg		The message to be broadcast.
+ * @param msg       Delete the original message after send. Normally this should be done.
  * @return
  */
-uint8_t Event_SendBCInternal(eventHandler_t* obj, moduleMsg_t* msg);
+uint8_t Event_SendBCInternal(eventHandler_t* obj, moduleMsg_t* msg, uint8_t delete);
 
 /**
  * Send the message to a different segment.
@@ -275,8 +276,11 @@ uint8_t Event_Send(eventHandler_t* obj, moduleMsg_t* msg)
     {
         if(msg->mDestination == Broadcast_e) // Global broadcast
         {
-            Event_SendBCInternal(obj, msg);
-            Event_SendExternal(obj, msg);
+            result = Event_SendBCInternal(obj, msg, 0);
+            if(result)
+            {
+                result = Event_SendExternal(obj, msg);
+            }
         }
         else
         {
@@ -287,22 +291,26 @@ uint8_t Event_Send(eventHandler_t* obj, moduleMsg_t* msg)
     {
         if(msg->mDestination == FC_Broadcast_e)// Local broadcast
         {
-            Event_SendBCInternal(obj, msg);
+            result = Event_SendBCInternal(obj, msg, 1);
         }
         else
         {
-            Event_SendInternal(obj, msg);
+            result = Event_SendInternal(obj, msg);
         }
     }
     else // Message not addressed to this segment, send it to other segment to be handled.
     {
-        Event_SendExternal(obj, msg);
+        result = Event_SendExternal(obj, msg);
     }
 
     return result;
 }
 uint8_t Event_SendInternal(eventHandler_t* obj, moduleMsg_t* msg)
 {
+    if(!obj || !msg)
+    {
+        return 0;
+    }
     uint8_t result = 1;
     for(int i = 0; i < obj->registeredHandlers; i++)
     {
@@ -325,8 +333,12 @@ uint8_t Event_SendInternal(eventHandler_t* obj, moduleMsg_t* msg)
 }
 
 
-uint8_t Event_SendBCInternal(eventHandler_t* obj, moduleMsg_t* msg)
+uint8_t Event_SendBCInternal(eventHandler_t* obj, moduleMsg_t* msg, uint8_t delete)
 {
+    if(!obj || !msg)
+    {
+        return 0;
+    }
     uint8_t result = 1;
     for(int i = 0; i < obj->registeredHandlers; i++)
     {
@@ -348,7 +360,10 @@ uint8_t Event_SendBCInternal(eventHandler_t* obj, moduleMsg_t* msg)
             }
         }
     }
-    Msg_Delete(msg); // original message is deleted.
+    if(delete)
+    {
+        Msg_Delete(msg); // original message is deleted.
+    }
     return result;
 }
 uint8_t Event_SendExternal(eventHandler_t* obj, moduleMsg_t* msg)
