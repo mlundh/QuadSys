@@ -36,6 +36,7 @@
 #include "Test/Parameters/parameter_tester.h"
 #include "Test/Log/log_tester.h"
 #include "Test/Log/logEventTester.h"
+#include "Test/AppLog/AppLogTest.h"
 /**
  * @file Top used for regression testing. This top uses freeRTOS and
  * all of its features.
@@ -88,6 +89,7 @@ void mainTester(void *pvParameters)
     ParamT_GetTCs(testFW);
     Log_GetTCs(testFW);
     LogEv_GetTCs(testFW);
+    AppLogHandler_TestCreate(testFW);
     /***************************************************************/
 
     uint8_t result = TestFW_ExecuteTests(testFW);
