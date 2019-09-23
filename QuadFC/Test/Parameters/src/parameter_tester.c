@@ -52,6 +52,7 @@ typedef struct
 
     uint8_t*        response;
     uint32_t        responseSize;
+    uint32_t        receivedSize;
     uint8_t         done;
     uint8_t         sequenceNr;
     uint8_t         lastInSequence;
@@ -118,9 +119,9 @@ void ParamT_GetTCs(TestFw_t* Tobj)
 ParamTestTwoHandlers_t* ParamT_InitializeTwoHandlers(uint32_t responseSize)
 {
     ParamTestTwoHandlers_t* obj = pvPortMalloc(sizeof(ParamTestTwoHandlers_t));
-    obj->evHandler = Event_CreateHandler(GS_Log_e, 0);
+    obj->evHandler = Event_CreateHandler(FC_Log_e, 0);
     obj->evHandlerMaster = Event_CreateHandler(FC_Param_e, 1);
-    obj->evHandlerTester = Event_CreateHandler(GS_Param_e, 0);
+    obj->evHandlerTester = Event_CreateHandler(FC_Dbg_e, 0);
 
     obj->paramHandler = ParamHandler_CreateObj(1, obj->evHandler,"paramH", 0);
     obj->paramHandlerMaster = ParamHandler_CreateObj(1, obj->evHandlerMaster,"paramHM", 1);
@@ -169,7 +170,7 @@ ParamTestOneHandler_t* ParamT_InitializeOneHandler(uint32_t responseSize)
 {
     ParamTestOneHandler_t* obj = pvPortMalloc(sizeof(ParamTestOneHandler_t));
     obj->evHandlerMaster = Event_CreateHandler(FC_Param_e, 1);
-    obj->evHandlerTester = Event_CreateHandler(GS_Param_e, 0);
+    obj->evHandlerTester = Event_CreateHandler(FC_Log_e, 0);
 
     obj->paramHandlerMaster = ParamHandler_CreateObj(1, obj->evHandlerMaster,"paramHM", 1);
 
@@ -367,7 +368,7 @@ uint8_t ParamT_TestSetGetOneHandler(TestFw_t* Tobj)
     //Then we want to read back the updated parameters.
     moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_get, 0, 0, PAYLOAD_LENGTH);
     Event_Send(obj->evHandlerTester, msg);
-
+ 
     //We are only using one thread, so now we have to poll the receiver.
     Event_Receive(obj->evHandlerMaster, 2);
 
@@ -1016,15 +1017,22 @@ uint8_t ParamT_TestSetGetTwoHandlers(TestFw_t* Tobj)
 
     // And validate that result.
     {
-        char expected[PAYLOAD_LENGTH] = "/paramH<0>/param1<6>[256]/param11<6>[512]/../param12<6>[1024]/../../";
-        if((strncmp((char*)obj->response, expected,obj->responseSize) == 0))
+        char expected[PAYLOAD_LENGTH] = "/paramH<0>/param1<6>[256]/param11<6>[512]/../param12<6>[1024]/../../\0";
+        if(obj->receivedSize > obj->responseSize)
+        {
+            char tmpstr[REPORT_LONG] = {0};
+            snprintf (tmpstr, REPORT_LONG,"received size to large.");
+            TestFW_Report(Tobj, tmpstr);
+            result = 0; 
+        }
+        if(result && (strncmp((char*)obj->response, expected,obj->receivedSize) == 0))
         {
             result &= 1;
         }
         else
         {
             char tmpstr[REPORT_LONG] = {0};
-            snprintf (tmpstr, REPORT_LONG,"Expected:\n%s \nGot:\n%s\n", expected, obj->response);
+            snprintf (tmpstr, REPORT_LONG,"Expected:\n%s\nWith %d bytes, \nGot:\n%s\nWith %ld bytes", expected, strlen(expected), obj->response, obj->receivedSize);
             TestFW_Report(Tobj, tmpstr);
             result = 0;
         }
@@ -1077,6 +1085,7 @@ uint8_t ParamT_HandleGetParam(eventHandler_t* obj, void* data, moduleMsg_t* msg)
     }
     ParamTestTwoHandlers_t* testObj = (ParamTestTwoHandlers_t*)data;
 
+    testObj->receivedSize = Msg_ParamGetPayloadlength(msg);
     memcpy(testObj->response, Msg_ParamGetPayload(msg), testObj->responseSize);
     testObj->done = Msg_ParamGetLastinsequence(msg) ? 1 : 0;
     testObj->lastInSequence = Msg_ParamGetLastinsequence(msg);

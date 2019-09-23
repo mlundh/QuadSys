@@ -185,6 +185,8 @@ moduleMsg_t* Msg_ErrorDeserialize(uint8_t* buffer, uint32_t buffer_size)
         Msg_Error_t* data = (Msg_Error_t*)(msg + 1);
         if(data)
         {
+            data->mErrorbufferlength = buffer_size - (((uint8_t*)(data+1)) - (uint8_t*)msg);
+            data->mError = (uint8_t*)(data+1);
             buffer = deserialize_string(buffer, &buffer_size, data->mError, &data->mErrorlength, data->mErrorbufferlength);
 
         }

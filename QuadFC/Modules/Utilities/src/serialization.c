@@ -158,6 +158,7 @@ uint8_t* deserialize_string(uint8_t *buffer, uint32_t* size, uint8_t* string, ui
     //ensure that the string will fit in current string buffer.
     if((*stringLength > *size) || (*stringLength > stringBufferLength) || !buffer)
     {
+        string = NULL;
         return NULL;
     }
     memcpy(string, buffer, *stringLength);

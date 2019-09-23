@@ -296,6 +296,8 @@ moduleMsg_t* Msg_ParamDeserialize(uint8_t* buffer, uint32_t buffer_size)
             buffer = deserialize_uint8_t(buffer, &buffer_size, &data->mControl);
             buffer = deserialize_uint8_t(buffer, &buffer_size, &data->mSequencenr);
             buffer = deserialize_uint8_t(buffer, &buffer_size, &data->mLastinsequence);
+            data->mPayloadbufferlength = buffer_size - (((uint8_t*)(data+1)) - (uint8_t*)msg);
+            data->mPayload = (uint8_t*)(data+1);
             buffer = deserialize_string(buffer, &buffer_size, data->mPayload, &data->mPayloadlength, data->mPayloadbufferlength);
 
         }

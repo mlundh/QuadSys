@@ -1,1 +1,3 @@
+            data->{name}bufferlength = buffer_size - (((uint8_t*)(data+1)) - (uint8_t*)msg);
+            data->{name} = (uint8_t*)(data+1);
             buffer = deserialize_{serializationType}(buffer, &buffer_size, data->{name}, &data->{name}length, data->{name}bufferlength);

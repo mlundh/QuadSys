@@ -222,6 +222,8 @@ moduleMsg_t* Msg_TestTransmissionDeserialize(uint8_t* buffer, uint32_t buffer_si
         if(data)
         {
             buffer = deserialize_uint32_t(buffer, &buffer_size, &data->mTest);
+            data->mPayloadbufferlength = buffer_size - (((uint8_t*)(data+1)) - (uint8_t*)msg);
+            data->mPayload = (uint8_t*)(data+1);
             buffer = deserialize_string(buffer, &buffer_size, data->mPayload, &data->mPayloadlength, data->mPayloadbufferlength);
 
         }
