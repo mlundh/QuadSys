@@ -51,7 +51,7 @@ typedef struct
 
 moduleMsg_t* Msg_Create(uint32_t type, uint32_t destination);
 
-uint8_t Msg_Delete(moduleMsg_t* msg);
+uint8_t Msg_Delete(moduleMsg_t** msg);
 
 uint32_t Msg_GetType(moduleMsg_t* msg);
 

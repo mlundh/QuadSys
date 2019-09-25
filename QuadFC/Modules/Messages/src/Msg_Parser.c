@@ -50,7 +50,7 @@ moduleMsg_t* Msg_Parse(uint8_t* buffer, uint32_t bufferLength)
     moduleMsg_t* msg = Msg_Create(0,0);
     Msg_DeSerialize(msg, buffer, bufferLength);
     messageTypes_t type = Msg_GetType(msg);
-    Msg_Delete(msg);
+    Msg_Delete(&msg);
     
     moduleMsg_t* msgResult = NULL;
 

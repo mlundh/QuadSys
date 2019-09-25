@@ -177,15 +177,18 @@ uint8_t* Msg_ErrorSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_s
 
 moduleMsg_t* Msg_ErrorDeserialize(uint8_t* buffer, uint32_t buffer_size)
 {
-    moduleMsg_t* msg = pvPortMalloc(buffer_size);
+    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_Error_t)  + (buffer_size);
+    moduleMsg_t* msg = pvPortMalloc(size);
     if(msg)
     {
         msg->mAllocatedSize = buffer_size;
+        uint8_t* bufferOrig = buffer;
         buffer = Msg_DeSerialize(msg, buffer, buffer_size);
+        buffer_size -= buffer - bufferOrig;
         Msg_Error_t* data = (Msg_Error_t*)(msg + 1);
         if(data)
         {
-            data->mErrorbufferlength = buffer_size - (((uint8_t*)(data+1)) - (uint8_t*)msg);
+            data->mErrorbufferlength = buffer_size;
             data->mError = (uint8_t*)(data+1);
             buffer = deserialize_string(buffer, &buffer_size, data->mError, &data->mErrorlength, data->mErrorbufferlength);
 

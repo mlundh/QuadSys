@@ -213,16 +213,19 @@ uint8_t* Msg_TestTransmissionSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32
 
 moduleMsg_t* Msg_TestTransmissionDeserialize(uint8_t* buffer, uint32_t buffer_size)
 {
-    moduleMsg_t* msg = pvPortMalloc(buffer_size);
+    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_TestTransmission_t)  + (buffer_size);
+    moduleMsg_t* msg = pvPortMalloc(size);
     if(msg)
     {
         msg->mAllocatedSize = buffer_size;
+        uint8_t* bufferOrig = buffer;
         buffer = Msg_DeSerialize(msg, buffer, buffer_size);
+        buffer_size -= buffer - bufferOrig;
         Msg_TestTransmission_t* data = (Msg_TestTransmission_t*)(msg + 1);
         if(data)
         {
             buffer = deserialize_uint32_t(buffer, &buffer_size, &data->mTest);
-            data->mPayloadbufferlength = buffer_size - (((uint8_t*)(data+1)) - (uint8_t*)msg);
+            data->mPayloadbufferlength = buffer_size;
             data->mPayload = (uint8_t*)(data+1);
             buffer = deserialize_string(buffer, &buffer_size, data->mPayload, &data->mPayloadlength, data->mPayloadbufferlength);
 

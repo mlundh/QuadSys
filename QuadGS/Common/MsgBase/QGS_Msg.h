@@ -50,7 +50,7 @@ public:
 
 	virtual void unhandledMsg()
 	{
-		mLogger.QuadLog( severity_level::error ,"Received unhandled message.");
+		//mLogger.QuadLog( severity_level::error ,"Received unhandled message.");
 	}
 
 	msgAddr_t getName()

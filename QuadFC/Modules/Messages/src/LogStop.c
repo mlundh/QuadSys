@@ -71,11 +71,14 @@ uint8_t* LogStopSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_siz
 
 moduleMsg_t* LogStopDeserialize(uint8_t* buffer, uint32_t buffer_size)
 {
-    moduleMsg_t* msg = pvPortMalloc(buffer_size);
+    size_t size = sizeof(moduleMsg_t) + sizeof(LogStop_t) ;
+    moduleMsg_t* msg = pvPortMalloc(size);
     if(msg)
     {
         msg->mAllocatedSize = buffer_size;
+        uint8_t* bufferOrig = buffer;
         buffer = Msg_DeSerialize(msg, buffer, buffer_size);
+        buffer_size -= buffer - bufferOrig;
         LogStop_t* data = (LogStop_t*)(msg + 1);
         if(data)
         {

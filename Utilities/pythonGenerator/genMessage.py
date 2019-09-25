@@ -159,6 +159,7 @@ def genCMessage( lineIn, outputDirC):
 	serialize = ''
 	deserialize = ''
 	stringInit = ''
+	stringInitDeserialize = ''
 	index = 0;
 
 	class StringStatus(Enum):
@@ -185,6 +186,7 @@ def genCMessage( lineIn, outputDirC):
 				args.member.append(['uint32_t',nameFcn+'length', StringStatus.PayloadLength]) #add the Length parameter.
 				args.member.append(['uint32_t',nameFcn+'bufferlength', StringStatus.BufferLength]) #add the bufferLength parameter. This should be considered not a string sinde it will be a part of the interface.
 				stringInit += ' + (' + nameFcn+'bufferlength)'
+				stringInitDeserialize += ' + (buffer_size)'
 			mSubst = {}
 			mSubst['msgName'] = args.className
 			mSubst['nameFcn'] = nameFcn
@@ -227,6 +229,7 @@ def genCMessage( lineIn, outputDirC):
 
 	subst = {}
 	subst['stringInit'] = stringInit
+	subst['stringInitDeserialize'] = stringInitDeserialize
 	subst['includes'] = includes
 	subst['msgName'] = args.className
 	subst['msgNameUpper'] = args.className.upper()

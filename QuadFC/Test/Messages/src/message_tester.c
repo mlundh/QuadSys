@@ -76,8 +76,8 @@ uint8_t MessageT_TestSerializationMsg(TestFw_t* Tobj)
         result = 1;
     }
 
-    Msg_Delete(msg);
-    Msg_Delete(msgVerify);
+    Msg_Delete(&msg);
+    Msg_Delete(&msgVerify);
 
     return result;
 }
@@ -111,8 +111,8 @@ uint8_t MessageT_TestSerializationParam(TestFw_t* Tobj)
         result = 1;
     }
 
-    Msg_Delete(msg);
-    Msg_Delete(msgVerify);
+    Msg_Delete(&msg);
+    Msg_Delete(&msgVerify);
 
     return result;
 }

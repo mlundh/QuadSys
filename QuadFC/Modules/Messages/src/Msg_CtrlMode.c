@@ -107,11 +107,14 @@ uint8_t* Msg_CtrlModeSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffe
 
 moduleMsg_t* Msg_CtrlModeDeserialize(uint8_t* buffer, uint32_t buffer_size)
 {
-    moduleMsg_t* msg = pvPortMalloc(buffer_size);
+    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_CtrlMode_t) ;
+    moduleMsg_t* msg = pvPortMalloc(size);
     if(msg)
     {
         msg->mAllocatedSize = buffer_size;
+        uint8_t* bufferOrig = buffer;
         buffer = Msg_DeSerialize(msg, buffer, buffer_size);
+        buffer_size -= buffer - bufferOrig;
         Msg_CtrlMode_t* data = (Msg_CtrlMode_t*)(msg + 1);
         if(data)
         {

@@ -263,11 +263,12 @@ uint8_t Event_Send(eventHandler_t* obj, moduleMsg_t* msg)
 {
     // Use subscribeEvent to subscribe to an event, and
     // unsubscribeEvent to unsubscribe.
-    if(!obj || (msg->type == Msg_Subscriptions_e)
+    if(!obj || !msg 
+            || (msg->type == Msg_Subscriptions_e)
             || (msg->type == Msg_NoType_e)
             || (msg->type == Msg_LastType_e))
     {
-        Msg_Delete(msg);
+        Msg_Delete(&msg);
         return 0;
     }
     uint8_t result = 1;
@@ -311,7 +312,7 @@ uint8_t Event_SendInternal(eventHandler_t* obj, moduleMsg_t* msg)
     {
         return 0;
     }
-    uint8_t result = 1;
+    uint8_t result = 0;
     for(int i = 0; i < obj->registeredHandlers; i++)
     {
         if(obj->handlerIds[i] == msg->mDestination)
@@ -323,11 +324,19 @@ uint8_t Event_SendInternal(eventHandler_t* obj, moduleMsg_t* msg)
                 if(!xQueueSendToBack(obj->handlers[i]->eventQueue, &msg, EVENT_BLOCK_TIME))
                 {
                     result = 0;
-                    Msg_Delete(msg);
+                    Msg_Delete(&msg);
+                }
+                else
+                {
+                    result = 1;
                 }
             }
             break;
         }
+    }
+    if(!result)
+    {
+        Msg_Delete(&msg);
     }
     return result;
 }
@@ -354,15 +363,15 @@ uint8_t Event_SendBCInternal(eventHandler_t* obj, moduleMsg_t* msg, uint8_t dele
                 if(!xQueueSendToBack(obj->handlers[i]->eventQueue, &clone, EVENT_BLOCK_TIME))
                 {
                     result = 0;
-                    Msg_Delete(msg);
-                    Msg_Delete(clone);
+                    Msg_Delete(&msg);
+                    Msg_Delete(&clone);
                 }
             }
         }
     }
     if(delete)
     {
-        Msg_Delete(msg); // original message is deleted.
+        Msg_Delete(&msg); // original message is deleted.
     }
     return result;
 }
@@ -376,7 +385,7 @@ uint8_t Event_SendExternal(eventHandler_t* obj, moduleMsg_t* msg)
     if(!xQueueSendToBack(obj->portQueue, &msg, EVENT_BLOCK_TIME))
     {
         result = 0;
-        Msg_Delete(msg);
+        Msg_Delete(&msg);
     }
     return result;
 }
@@ -399,7 +408,7 @@ uint8_t Event_SendSubscription(eventHandler_t* obj, uint32_t subscription)
                 if(!xQueueSendToBack(obj->handlers[i]->eventQueue, &msg, EVENT_BLOCK_TIME))
                 {
                     result = 0;
-                    Msg_Delete(msg);
+                    Msg_Delete(&msg);
                 }
             }
         }
@@ -418,7 +427,7 @@ uint8_t Event_ReceiveExternal(eventHandler_t* obj, uint32_t blockTime)
     if(xQueueReceive(obj->portQueue, &event_data, blockTime) == pdTRUE)
     {
         obj->portFcn(obj, obj->portDataBinding, event_data);
-        Msg_Delete(event_data);
+        Msg_Delete(&event_data);
     }
     else
     {
@@ -568,7 +577,7 @@ uint8_t Event_FireCB(eventHandler_t* obj, moduleMsg_t* event_data)
         //Received unhandled event.
         return 0;
     }
-    Msg_Delete(event_data);
+    Msg_Delete(&event_data);
     return 1;
 }
 

@@ -163,7 +163,7 @@ uint8_t* deserialize_string(uint8_t *buffer, uint32_t* size, uint8_t* string, ui
     }
     memcpy(string, buffer, *stringLength);
     *size -= *stringLength;
-    return buffer + *size;
+    return buffer + *stringLength;
 }
 
 uint8_t* serialize_control_signal_t(uint8_t *buffer, uint32_t* size, control_signal_t* value)

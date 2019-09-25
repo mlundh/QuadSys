@@ -47,14 +47,14 @@ moduleMsg_t* Msg_Create(uint32_t type, uint32_t destination)
     return msg;
 }
 
-uint8_t Msg_Delete(moduleMsg_t* msg)
+uint8_t Msg_Delete(moduleMsg_t** msg)
 {
     uint8_t result = 0;
-    if(msg)
+    if(*msg)
     {
-        vPortFree(msg);
+        vPortFree(*msg);
         result = 1;
-        msg = NULL;
+        *msg = NULL;
     }
     return result;
 }

@@ -135,8 +135,8 @@ uint8_t EventHandler_TestCBReadWrite(TestFw_t* obj)
         result = 0; // did not get the expected result.
     }
     vPortFree(eventBuffer);
-    Msg_Delete(event1Result);
-    Msg_Delete(event2Result);
+    Msg_Delete(&event1Result);
+    Msg_Delete(&event2Result);
 
     return result;
 }
@@ -172,7 +172,7 @@ uint8_t EventHandler_TestCBFullEmpty(TestFw_t* obj)
         TestFW_Report(obj, "ERROR: Write successful when buffer was full.\n");
         result = 0; // We were able to write to the full buffer, not good!
     }
-    Msg_Delete(event);
+    Msg_Delete(&event);
 
 
     // Read all positions in the buffer.
@@ -189,7 +189,7 @@ uint8_t EventHandler_TestCBFullEmpty(TestFw_t* obj)
             TestFW_Report(obj, "ERROR: Did not get the right event.\n");
             result = 0; // Expected a control signal event.
         }
-        Msg_Delete(event1);
+        Msg_Delete(&event1);
     }
 
     // Try to read another entry, this should fail.
@@ -221,8 +221,8 @@ uint8_t EventHandler_TestCBFullEmpty(TestFw_t* obj)
         TestFW_Report(obj, "ERROR: Did not get the correct events back from buffer.\n");
         result = 0; // did not get the expected result.
     }
-    Msg_Delete(event1Result);
-    Msg_Delete(event2Result);
+    Msg_Delete(&event1Result);
+    Msg_Delete(&event2Result);
     Event_DeleteCBuff(eventBuffer);
 
     return result;

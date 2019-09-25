@@ -50,7 +50,7 @@
 #define COM_RECEIVE_BUFFER_LENGTH       (2)
 
 #define COM_PACKET_LENGTH_MAX       512
-
+#define NR_RETRANSMITT (3)
 /*Global crc table*/
 uint16_t *crcTable;
 
@@ -300,8 +300,12 @@ uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
         // ERROR...
     }
 
-    Msg_SetMsgNr(msg, TxObj->msgNr);
-    TxObj->msgNr = TxObj->msgNr % 255; // wrap at 255...
+    if(Msg_GetType(msg) != Msg_Transmission_e)
+    {
+        Msg_SetMsgNr(msg, TxObj->msgNr);
+        TxObj->msgNr = TxObj->msgNr % 255; // wrap at 255...
+    }
+
 
     uint8_t serializeBuffer[COM_PACKET_LENGTH_MAX];
     uint32_t serializebufferSize = COM_PACKET_LENGTH_MAX;
@@ -329,13 +333,19 @@ uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
             if ( !result )
             {
                 //TODO error led?
+                //Try retransmitt.
+            }
+            // We should not wait for an answer on a transmission message.
+            if(Msg_GetType(msg) == Msg_Transmission_e)
+            {   
+                break; // TODO ugly...
             }
 
             if(!Event_WaitForEvent(TxObj->evHandler, Msg_Transmission_e, 1, 1, (1000 / portTICK_PERIOD_MS ))) // wait for the transmission event.
             {
                 reTransmittNr ++;
             }
-            if(reTransmittNr >= 2)
+            if(reTransmittNr >= NR_RETRANSMITT)
             {
                 // TODO log failed retransmitt.
                 break; // Retransmitt failed.
@@ -388,8 +398,8 @@ void Com_RxTask( void *pvParameters )
             uint32_t payloadLength = Slip_DePacketize(obj->messageBuffer, COM_PACKET_LENGTH_MAX, obj->SLIP);
             if(payloadLength == 0)
             {
-                //moduleMsg_t* reply = Msg_TransmissionCreate(GS_SerialIO_e, 0, transmission_NOK);
-                //Event_Send(obj->evHandler, reply);
+                moduleMsg_t* reply = Msg_TransmissionCreate(GS_SerialIO_e, 0, transmission_NOK);
+                Event_Send(obj->evHandler, reply);
                 break;
             }
 
@@ -400,18 +410,21 @@ void Com_RxTask( void *pvParameters )
                 //TODO error
                 break;
             }
+            // Only relay Broadcasts to the local segment, the sender is responcible for relaying to all segments.
             if(Msg_GetDestination(msg) == BC_e)
             {
             	Msg_SetDestination(msg, GS_Broadcast_e);
             }
 
             uint8_t msgNr = Msg_GetMsgNr(msg);
-            //TODO ack on non-transmission messages.
-            //TODO check messageNr...
 
+            if(Msg_GetType(msg) != Msg_Transmission_e) // we ack all messages except for transmission messages.
+            {
+                moduleMsg_t* reply = Msg_TransmissionCreate(GS_SerialIO_e, msgNr, transmission_OK);
+                Event_Send(obj->evHandler, reply);
+            }
 
             Event_Send(obj->evHandler, msg);
-
         }
         break;
         case SLIP_StatusNok:

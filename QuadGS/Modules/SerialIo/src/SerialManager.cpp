@@ -36,6 +36,7 @@
 #include "Msg_Transmission.h"
 #include "Msg_TestTransmission.h"
 #include "Msg_Display.h"
+#define NR_RETRIES (2)
 namespace QuadGS {
 
 
@@ -229,24 +230,23 @@ void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 	// Transmission ok, pop from fifo and set ok to send again.
 	if(msg->getType() == messageTypes_t::Msg_Transmission_e)
 	{
+		mTimeoutRead.cancel();
 		Msg_Transmission* nameMsg = dynamic_cast<Msg_Transmission*>(msg.get());
 
 		mOngoing.release(); // we got a transmission message, this is the end of an ongoing transmission.
-		if(nameMsg->getStatus() == 1) // TODO make enum...
+		if(nameMsg->getStatus() == transmission_OK) 
 		{
 			// Transmission ok, discard the outgoing message, no need to save after successful transmission.
 			mLogger.QuadLog(severity_level::message_trace, "Received: TransmissionOK ");
-
 			mRetries = 0;
 		}
-		else if(nameMsg->getStatus() == 2)
+		else if(nameMsg->getStatus() == transmission_NOK)
 		{
 			mLogger.QuadLog(severity_level::message_trace, "Received: TransmissionNOK ");
-			if(mRetries < 2)
+			if(mRetries < NR_RETRIES)
 			{
 				mRetries++;
 				mLogger.QuadLog(severity_level::warning, "Transmission failed, retrying");
-
 			}
 			else
 			{
@@ -317,7 +317,7 @@ void Serial_Manager::timerReadCallback( const boost::system::error_code& error )
 		mLogger.QuadLog(severity_level::warning, " Read timeout fired.");
 	}
 
-	if(mRetries < 2)
+	if(mRetries < NR_RETRIES) 
 	{
 		mRetries++;
 		mLogger.QuadLog(severity_level::warning, "No reply, retrying");

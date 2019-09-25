@@ -285,18 +285,21 @@ uint8_t* Msg_ParamSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_s
 
 moduleMsg_t* Msg_ParamDeserialize(uint8_t* buffer, uint32_t buffer_size)
 {
-    moduleMsg_t* msg = pvPortMalloc(buffer_size);
+    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_Param_t)  + (buffer_size);
+    moduleMsg_t* msg = pvPortMalloc(size);
     if(msg)
     {
         msg->mAllocatedSize = buffer_size;
+        uint8_t* bufferOrig = buffer;
         buffer = Msg_DeSerialize(msg, buffer, buffer_size);
+        buffer_size -= buffer - bufferOrig;
         Msg_Param_t* data = (Msg_Param_t*)(msg + 1);
         if(data)
         {
             buffer = deserialize_uint8_t(buffer, &buffer_size, &data->mControl);
             buffer = deserialize_uint8_t(buffer, &buffer_size, &data->mSequencenr);
             buffer = deserialize_uint8_t(buffer, &buffer_size, &data->mLastinsequence);
-            data->mPayloadbufferlength = buffer_size - (((uint8_t*)(data+1)) - (uint8_t*)msg);
+            data->mPayloadbufferlength = buffer_size;
             data->mPayload = (uint8_t*)(data+1);
             buffer = deserialize_string(buffer, &buffer_size, data->mPayload, &data->mPayloadlength, data->mPayloadbufferlength);
 

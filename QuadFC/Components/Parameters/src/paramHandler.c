@@ -387,7 +387,7 @@ struct paramHander
              }
              else // Readwas not successful.
              {
-                 Msg_Delete(loadedMsg);
+                 Msg_Delete(&loadedMsg);
                  Slip_Delete(packet);
                  //TODO log error.
                  break;
@@ -500,7 +500,7 @@ struct paramHander
                  }
                  Slip_Delete(packet);
 
-                 Msg_Delete(msgReply); // need to delete the message ourself since we created but did not send.
+                 Msg_Delete(&msgReply); // need to delete the message ourself since we created but did not send.
              }
          }
          else if((*actingOn)-1 < handlerObj->nrRegisteredHandlers) // -1 since we are counted as "0".
@@ -609,7 +609,7 @@ struct paramHander
              }
              Slip_Delete(packet);
 
-             Msg_Delete(paramMsg); // need to delete the message ourself since we created but did not send.
+             Msg_Delete(&paramMsg); // need to delete the message ourself since we created but did not send.
          }
 
      }
