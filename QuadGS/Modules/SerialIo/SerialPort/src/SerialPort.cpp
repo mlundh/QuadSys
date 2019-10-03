@@ -166,7 +166,8 @@ QGS_ModuleMsgBase::ptr SerialPort::write(QGS_ModuleMsgBase::ptr msg)
 {
 	if( ! mSerialPort.is_open() )
 	{
-		throw std::runtime_error("Port is not open.");
+		QuadLog(severity_level::error, "Port is not open." );
+		return;
 	}
 	if(mWriteBuff.use_count() != 0)
 	{
@@ -224,6 +225,11 @@ void SerialPort::read()
 					boost::asio::placeholders::error,
 					boost::asio::placeholders::bytes_transferred ) );
 
+}
+
+bool SerialPort::ready()
+{
+	return mWriteBuff.use_count() == 0;
 }
 
 /*Callback from write operation.*/

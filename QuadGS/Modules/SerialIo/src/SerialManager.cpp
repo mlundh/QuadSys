@@ -36,7 +36,7 @@
 #include "Msg_Transmission.h"
 #include "Msg_TestTransmission.h"
 #include "Msg_Display.h"
-#define NR_RETRIES (0)
+#define NR_RETRIES (2)
 namespace QuadGS {
 
 
@@ -228,14 +228,12 @@ void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 {
 	if(!msg)
 	{
-		Msg_Transmission::ptr transmission = std::make_unique<Msg_Transmission>(msgAddr_t::FC_SerialIOtx_e, transmission_NOK);
-		sendMsg(std::move(transmission));
+		return;
 	}
-	mLogger.QuadLog(severity_level::message_trace, "Received: \n"  + msg->toString());
-
 	// Transmission ok, pop from fifo and set ok to send again.
-	if(msg->getType() == messageTypes_t::Msg_Transmission_e)
+	else if(msg->getType() == messageTypes_t::Msg_Transmission_e)
 	{
+		mLogger.QuadLog(severity_level::message_trace, "Received: \n"  + msg->toString());
 		mTimeoutRead.cancel();
 		Msg_Transmission* nameMsg = dynamic_cast<Msg_Transmission*>(msg.get());
 
@@ -265,10 +263,10 @@ void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 	}
 	else
 	{
+		mLogger.QuadLog(severity_level::message_trace, "Received: \n"  + msg->toString());
+
 		//Received message OK, return transmission OK!
-
 		Msg_Transmission::ptr transmission = std::make_unique<Msg_Transmission>(msgAddr_t::FC_SerialIOtx_e, transmission_OK);
-
 		sendMsg(std::move(transmission));
 
 		// Log message.
@@ -287,7 +285,7 @@ void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 }
 void Serial_Manager::doWrite()
 {
-	if(mOngoing || mOutgoingFifo.empty() || !mPort->isOpen())
+	if(mOngoing || mOutgoingFifo.empty() || !mPort->isOpen() || !mPort->ready())
 	{
 		return;
 	}
@@ -296,15 +294,16 @@ void Serial_Manager::doWrite()
 
 	msg->setMsgNr(mRetries > 0 ? (mMsgNr) : (mMsgNr++)%256);
 	mLogger.QuadLog(severity_level::message_trace, "Transmitting: \n"  + msg->toString());
+
 	// Do not expect a result, and do not re-transmitt a transmission message.
 	if(msg->getType() != Msg_Transmission_e)
 	{
 		startReadTimer();
 		mOngoing = mPort->write( std::move(msg) );
-
 	}
 	else
 	{
+		// Transmissions should not be re-sent.
 		mPort->write( std::move(msg) );
 	}
 }

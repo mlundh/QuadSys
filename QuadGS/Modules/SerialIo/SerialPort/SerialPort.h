@@ -108,6 +108,12 @@ public:
     void read( void );
 
     /**
+     * @brief Inquire the status of the port. True means it is ready for a new transmission,
+     * false that a tranmission is ongoing.
+     **/
+    bool ready( void );
+
+    /**
      * @brief Start an async write operation on the configured
      * and opened serial port.
      * @param msg to a QSP instance to be transmitted.

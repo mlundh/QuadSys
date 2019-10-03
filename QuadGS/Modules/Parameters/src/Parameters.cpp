@@ -363,13 +363,7 @@ void Parameters::process(Msg_Param* message)
 	uint8_t sequenceNo = message->getSequencenr();
 	uint8_t lastInSeq = message->getLastinsequence();
 	std::string path = message->getPayload();
-{
-	std::stringstream ss;
-	ss << "Sequence number: " << (int)sequenceNo << " expected: " << (int) lastSequenceNo << std::endl;
-	ss << "lastInSeq: " << (int)lastInSeq;
-
-	mLogger.QuadLog(QuadGS::error, ss.str());
-}
+	
 	switch (control){
 	case ParamCtrl::param_set:
 		if((lastSequenceNo) != sequenceNo)
