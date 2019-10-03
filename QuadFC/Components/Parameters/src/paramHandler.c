@@ -469,7 +469,7 @@ struct paramHander
              {
                  // send the parameters collected from this handler.
                  // Prep the already created message.
-                 Msg_ParamSetControl(msgReply, param_get);
+                 Msg_ParamSetControl(msgReply, param_set);//Set this tree on the caller.
                  Msg_SetDestination(msgReply, Msg_GetSource(msg));
 
                  Event_Send(handlerObj->evHandler,msgReply);
@@ -572,7 +572,7 @@ struct paramHander
          (*sequence)++;
 
          // We have to create a new message as it has a different type. Copy the data.
-         moduleMsg_t* paramMsg = Msg_ParamCreate(*originator,0,param_get,*sequence, lastInSequence, payloadLength);
+         moduleMsg_t* paramMsg = Msg_ParamCreate(*originator,0,param_set,*sequence, lastInSequence, payloadLength);
          uint8_t* paramPayload = Msg_ParamGetPayload(paramMsg);
          memcpy(paramPayload, payload, payloadLength);
 

@@ -28,7 +28,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include <functional>
-
+#include <sstream> 
 #include "msg_enums.h"
 #include "msgAddr.h"
 #include "Msg_RegUiCommand.h"
@@ -40,7 +40,7 @@ using namespace std::placeholders;
 
 namespace QuadGS {
 
-Parameters::Parameters(msgAddr_t name):QGS_MessageHandlerBase(name)
+Parameters::Parameters(msgAddr_t name, msgAddr_t send_name):QGS_MessageHandlerBase(name),mSendName(send_name)
 
 {
 	mTree = QGS_Tree::ptr();
@@ -304,7 +304,7 @@ std::string Parameters::writeCmd(std::string path_dump)
 		cont = !(mTmpBranch->DumpTree(Path, StartPosition, Depth, 256));
 		Path += "/";
 
-		Msg_Param::ptr ptr = std::make_unique<Msg_Param>(msgAddr_t::FC_Param_e, ParamCtrl::param_set, SequenceNumber++, 0, Path);
+		Msg_Param::ptr ptr = std::make_unique<Msg_Param>(mSendName, ParamCtrl::param_set, SequenceNumber++, 0, Path);
 		sendMsg(std::move(ptr));
 		return "";
 	}
@@ -319,14 +319,14 @@ std::string Parameters::requestUpdateCmd(std::string )
 
 std::string Parameters::saveParamCmd(std::string )
 {
-	Msg_Param::ptr ptr = std::make_unique<Msg_Param>(msgAddr_t::FC_Param_e, ParamCtrl::param_save,0,0,"");
+	Msg_Param::ptr ptr = std::make_unique<Msg_Param>(mSendName, ParamCtrl::param_save,0,0,"");
 	sendMsg(std::move(ptr));
 	return "";
 }
 
 std::string Parameters::loadParamCmd(std::string )
 {
-	Msg_Param::ptr ptr = std::make_unique<Msg_Param>(msgAddr_t::FC_Param_e, ParamCtrl::param_load,0,0,"");
+	Msg_Param::ptr ptr = std::make_unique<Msg_Param>(mSendName, ParamCtrl::param_load,0,0,"");
 	sendMsg(std::move(ptr));
 	return "";
 }
@@ -348,28 +348,38 @@ void Parameters::FindPartial(std::string& name, std::vector<std::string>& vec)
 
 void Parameters::RequestTree()
 {
-	Msg_Param::ptr ptr = std::make_unique<Msg_Param>(msgAddr_t::FC_Param_e, ParamCtrl::param_get,0,0,"");
+	Msg_Param::ptr ptr = std::make_unique<Msg_Param>(mSendName, ParamCtrl::param_get,0,0,"");
 	sendMsg(std::move(ptr));
 }
 
 
 void Parameters::process(Msg_Param* message)
 {
+	mLogger.QuadLog(severity_level::message_trace, "Processing: " + message->toString());
+
 	uint8_t control = message->getControl();
 
 	static uint8_t lastSequenceNo = 0;
 	uint8_t sequenceNo = message->getSequencenr();
 	uint8_t lastInSeq = message->getLastinsequence();
 	std::string path = message->getPayload();
+{
+	std::stringstream ss;
+	ss << "Sequence number: " << (int)sequenceNo << " expected: " << (int) lastSequenceNo << std::endl;
+	ss << "lastInSeq: " << (int)lastInSeq;
 
+	mLogger.QuadLog(QuadGS::error, ss.str());
+}
 	switch (control){
 	case ParamCtrl::param_set:
-		if((lastSequenceNo++) != sequenceNo)
+		if((lastSequenceNo) != sequenceNo)
 		{
-			mLogger.QuadLog(QuadGS::error, "Lost a setTree package, try again!" );
-			SetAndRegister(message->getPayload());
-			lastSequenceNo = 0;
-			RequestTree(); // We have not yet got the whole tree, continue!
+			std::stringstream ss;
+			ss << "Lost a setTree package! Got: " << (int)sequenceNo << "expected: " << (int) lastSequenceNo;
+			mLogger.QuadLog(QuadGS::error, ss.str());
+			//SetAndRegister(message->getPayload());
+			//lastSequenceNo = 0;
+			//RequestTree(); // We have not yet got the whole tree, continue!
 			return;
 		}
 
@@ -380,6 +390,7 @@ void Parameters::process(Msg_Param* message)
 		}
 		else
 		{
+			lastSequenceNo++;
 			RequestTree(); // We have not yet got the whole tree, continue!
 		}
 		break;

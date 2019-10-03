@@ -109,7 +109,7 @@ size_t CLI::FindCommand(std::string& line)
 std::string CLI::ExecuteLine(std::string line)
 {
 	size_t i = FindCommand(line); // FindCommands leaves only args in line.
-	mLogger.QuadLog(debug, "Calling command: " + mCommands[i].command);
+	//mLogger.QuadLog(debug, "Calling command: " + mCommands[i].command);
 	if(mCommands[i].address == getName() && mCommands[i].command == "quit")
 	{
 		stopProcessing();

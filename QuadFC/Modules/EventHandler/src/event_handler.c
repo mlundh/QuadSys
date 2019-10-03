@@ -261,6 +261,12 @@ uint8_t Event_Unsubscribe(eventHandler_t* obj, messageTypes_t event)
 
 uint8_t Event_Send(eventHandler_t* obj, moduleMsg_t* msg)
 {
+        Msg_SetSource(msg, obj->handlerId);
+        Event_SendGeneric(obj, msg);
+}
+
+uint8_t Event_SendGeneric(eventHandler_t* obj, moduleMsg_t* msg)
+{
     // Use subscribeEvent to subscribe to an event, and
     // unsubscribeEvent to unsubscribe.
     if(!obj || !msg 
@@ -272,7 +278,6 @@ uint8_t Event_Send(eventHandler_t* obj, moduleMsg_t* msg)
         return 0;
     }
     uint8_t result = 1;
-    Msg_SetSource(msg, obj->handlerId);
     if((msg->mDestination & REGION_MASK) == BC_e) // Message is addressed to the global segment.
     {
         if(msg->mDestination == Broadcast_e) // Global broadcast

@@ -50,7 +50,7 @@ class Parameters
 {
 public:
 
-	Parameters(msgAddr_t name);
+	Parameters(msgAddr_t name, msgAddr_t send_name);
 
 	virtual ~Parameters();
 
@@ -121,6 +121,7 @@ public:
 	QGS_Tree::ptr mCurrentBranch;
 	QGS_Tree::ptr mSavedBranch;
 	QGS_Tree::ptr mTree;
+	msgAddr_t mSendName;
 };
 
 } /* namespace QuadGS */

@@ -208,7 +208,7 @@ void QGS_Router::route(QGS_ModuleMsgBase::ptr msg)
 	}
 	else
 	{
-		mLogger.QuadLog(severity_level::debug, "sending to " + msgAddrStr.at(msg->getDestination()));
+		//mLogger.QuadLog(severity_level::debug, "sending to " + msgAddrStr.at(msg->getDestination()));
 		sendMsg(std::move(msg));
 	}
 

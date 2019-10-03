@@ -90,7 +90,7 @@ int main(int ac, char* av[])
     QuadGS::AppLog::Init("app_log", "msg_log", std::clog, args.lvl, args.msgTrace);
 
 	//Instantiate modules.
-	Parameters mParameters(msgAddr_t::GS_Param_e);
+	Parameters mParameters(msgAddr_t::GS_Param_e, msgAddr_t::FC_SerialIOrx_e);
 	CLI mCli(msgAddr_t::GS_GUI_e);
 	LogHandler mLogHandler(msgAddr_t::GS_Log_e);
 	Serial_Manager serialIo(msgAddr_t::GS_SerialIO_e);

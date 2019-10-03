@@ -341,7 +341,7 @@ uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
                 break; // TODO ugly...
             }
 
-            if(!Event_WaitForEvent(TxObj->evHandler, Msg_Transmission_e, 1, 1, (1000 / portTICK_PERIOD_MS ))) // wait for the transmission event.
+            if(!Event_WaitForEvent(TxObj->evHandler, Msg_Transmission_e, 1, 0, (1000 / portTICK_PERIOD_MS ))) // wait for the transmission event.
             {
                 reTransmittNr ++;
             }
@@ -369,12 +369,17 @@ void Com_RxTask( void *pvParameters )
     /*The already allocated data is passed to the task.*/
     RxCom_t * obj = (RxCom_t *) pvParameters;
 
+    ParamHandler_InitMaster(obj->paramHandler);
+
     for ( ;; )
     {
 
         //Process incoming events.
         while(Event_Receive(obj->evHandler, 0) == 1)
-        {}
+        {
+            //received event and processed it successfully! 
+            (void)(obj);
+        }
         /*--------------------------Receive the packet---------------------*/
 
         QuadFC_Serial_t serialData;
@@ -424,7 +429,7 @@ void Com_RxTask( void *pvParameters )
                 Event_Send(obj->evHandler, reply);
             }
 
-            Event_Send(obj->evHandler, msg);
+            Event_SendGeneric(obj->evHandler, msg);
         }
         break;
         case SLIP_StatusNok:

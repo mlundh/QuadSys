@@ -36,7 +36,7 @@
 #include "Msg_Transmission.h"
 #include "Msg_TestTransmission.h"
 #include "Msg_Display.h"
-#define NR_RETRIES (2)
+#define NR_RETRIES (0)
 namespace QuadGS {
 
 
@@ -198,7 +198,6 @@ void Serial_Manager::process(Msg_TestTransmission* message)
 
 void Serial_Manager::ReceivingFcnIo(std::unique_ptr<QGS_ModuleMsgBase> message)
 {
-	mLogger.QuadLog(severity_level::message_trace, "Pushing message to outgoingFifo: \n"  + message->toString());
 	mOutgoingFifo.push(std::move(message));
 	doWrite();
 }
@@ -227,6 +226,13 @@ void Serial_Manager::timeoutHandler()
 
 void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 {
+	if(!msg)
+	{
+		Msg_Transmission::ptr transmission = std::make_unique<Msg_Transmission>(msgAddr_t::FC_SerialIOtx_e, transmission_NOK);
+		sendMsg(std::move(transmission));
+	}
+	mLogger.QuadLog(severity_level::message_trace, "Received: \n"  + msg->toString());
+
 	// Transmission ok, pop from fifo and set ok to send again.
 	if(msg->getType() == messageTypes_t::Msg_Transmission_e)
 	{
@@ -237,7 +243,7 @@ void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 		if(nameMsg->getStatus() == transmission_OK) 
 		{
 			// Transmission ok, discard the outgoing message, no need to save after successful transmission.
-			mLogger.QuadLog(severity_level::message_trace, "Received: TransmissionOK ");
+			//mLogger.QuadLog(severity_level::message_trace, "Received: TransmissionOK ");
 			mRetries = 0;
 		}
 		else if(nameMsg->getStatus() == transmission_NOK)
@@ -259,8 +265,15 @@ void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 	}
 	else
 	{
+		//Received message OK, return transmission OK!
+
+		Msg_Transmission::ptr transmission = std::make_unique<Msg_Transmission>(msgAddr_t::FC_SerialIOtx_e, transmission_OK);
+
+		sendMsg(std::move(transmission));
+
 		// Log message.
-		mLogger.QuadLog(severity_level::message_trace, "Received: \n" + msg->toString() );
+		// mLogger.QuadLog(severity_level::message_trace, "Received: \n" + msg->toString() );
+
 		// If we get a broadcast message, we should only handle it internally.
 		if(msg->getDestination() == msgAddr_t::Broadcast_e)
 		{
@@ -283,10 +296,17 @@ void Serial_Manager::doWrite()
 
 	msg->setMsgNr(mRetries > 0 ? (mMsgNr) : (mMsgNr++)%256);
 	mLogger.QuadLog(severity_level::message_trace, "Transmitting: \n"  + msg->toString());
+	// Do not expect a result, and do not re-transmitt a transmission message.
+	if(msg->getType() != Msg_Transmission_e)
+	{
+		startReadTimer();
+		mOngoing = mPort->write( std::move(msg) );
 
-	startReadTimer();
-	mOngoing = mPort->write( std::move(msg) );
-
+	}
+	else
+	{
+		mPort->write( std::move(msg) );
+	}
 }
 
 void Serial_Manager::startReadTimer(int timeout)

@@ -160,12 +160,25 @@ uint8_t Event_Unsubscribe(eventHandler_t* obj, messageTypes_t event);
 
 /**
  * Send event nr event to all event handlers that has registered for
- * that particular event.
+ * that particular event. The normal version does update the sender
+ * address.
  * @param obj     Current handler.
  * @param event   Event to be sent.
  * @return        1 if successful, 0 otherwise.
  */
+
 uint8_t Event_Send(eventHandler_t* obj, moduleMsg_t* event);
+
+/**
+ * Send event nr event to all event handlers that has registered for
+ * that particular event. The generic version does not update the sender
+ * address.
+ * @param obj     Current handler.
+ * @param event   Event to be sent.
+ * @return        1 if successful, 0 otherwise.
+ */
+
+uint8_t Event_SendGeneric(eventHandler_t* obj, moduleMsg_t* event);
 
 /**
  * Process the external mailbox. The messages will be processed in the order they arrive.

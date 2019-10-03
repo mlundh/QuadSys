@@ -276,6 +276,11 @@ void SerialPort::readCallback( const boost::system::error_code& error,
 		else
 		{
 			QuadLog(severity_level::error,  "Parser error");
+			if(mMessageHandler)
+			{
+
+				mMessageHandler(NULL);
+			}
 		}
 
 		mReadBuff.reset();
