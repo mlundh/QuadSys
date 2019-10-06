@@ -24,9 +24,10 @@ LogHandler::UiCommand::UiCommand(std::string command,  std::string doc, UiFcn fu
 {
 
 }
-LogHandler::LogHandler(msgAddr_t name)
+LogHandler::LogHandler(msgAddr_t name, msgAddr_t loggerAddr)
 :QGS_MessageHandlerBase(name)
 ,mNames()
+,mLoggerAddr(loggerAddr)
 {
 	mLogFile.open ("LogFile.txt", std::ofstream::out);
 	mMapFile.open ("MapFile.txt", std::ofstream::out);
@@ -51,21 +52,21 @@ LogHandler::~LogHandler()
 
 std::string LogHandler::getLogNames(std::string )
 {
-	Msg_Log::ptr ptr = std::make_unique<Msg_Log>(msgAddr_t::FC_Log_e, LogCtrl_t::Name,"");
+	Msg_Log::ptr ptr = std::make_unique<Msg_Log>(mLoggerAddr, LogCtrl_t::Name,"");
 	sendMsg(std::move(ptr));
 	return "";
 }
 
 std::string LogHandler::getLogEntries(std::string )
 {
-	Msg_Log::ptr ptr = std::make_unique<Msg_Log>(msgAddr_t::FC_Log_e, LogCtrl_t::Entry,"");
+	Msg_Log::ptr ptr = std::make_unique<Msg_Log>(mLoggerAddr, LogCtrl_t::Entry,"");
 	sendMsg(std::move(ptr));
 	return "";
 }
 
 std::string LogHandler::stopAllLogs(std::string )
 {
-	Msg_Log::ptr ptr = std::make_unique<Msg_Log>(msgAddr_t::FC_Log_e, LogCtrl_t::StopAll,"");
+	Msg_Log::ptr ptr = std::make_unique<Msg_Log>(mLoggerAddr, LogCtrl_t::StopAll,"");
 	sendMsg(std::move(ptr));
 	return "";
 }

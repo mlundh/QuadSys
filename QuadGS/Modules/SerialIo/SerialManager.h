@@ -61,7 +61,7 @@ class Serial_Manager
 
 public:
 
-    Serial_Manager(msgAddr_t name);
+    Serial_Manager(msgAddr_t name, msgAddr_t transmissionAddr);
 
 
     virtual ~Serial_Manager();
@@ -151,7 +151,7 @@ private:
     int mRetries;
     QGS_ModuleMsgBase::ptr mOngoing;
     uint8_t mMsgNr = 0;
-
+    msgAddr_t mTransmissionAddr;
 
 };
 

@@ -79,7 +79,6 @@ int main( void )
 
 
   create_main_control_task(evHandlerM);
-
   Satellite_CreateReceiverTask(evHandlerSatellite);
   Led_CreateLedControlTask(evHandlerLed);
   Com_CreateTasks(evHandlerComRx, evHandlerComTx); // Creates two tasks, RX and TX.

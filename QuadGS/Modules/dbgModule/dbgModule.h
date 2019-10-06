@@ -48,7 +48,7 @@ public:
 
 
 
-	dbgModule(msgAddr_t name);
+	dbgModule(msgAddr_t name, msgAddr_t dbgAddr);
 
 	virtual ~dbgModule();
 
@@ -61,7 +61,7 @@ public:
 	virtual void process(Msg_Debug* message);
 
 	std::vector<UiCommand> mCommands;
-
+	msgAddr_t mDbgAddr;
 };
 
 } /* namespace QuadGS */

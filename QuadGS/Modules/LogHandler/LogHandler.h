@@ -51,7 +51,7 @@ class LogHandler
 	};
 public:
 
-    LogHandler(msgAddr_t name);
+    LogHandler(msgAddr_t name, msgAddr_t loggerAddr);
 
 
     virtual ~LogHandler();
@@ -96,7 +96,7 @@ public:
     std::ofstream mMapFile;
     std::map<std::string, int> mNames;
 	std::vector<UiCommand> mCommands;
-
+    msgAddr_t mLoggerAddr;
 
 };
 

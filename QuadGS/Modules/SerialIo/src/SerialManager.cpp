@@ -40,7 +40,7 @@
 namespace QuadGS {
 
 
-Serial_Manager::Serial_Manager(msgAddr_t name)
+Serial_Manager::Serial_Manager(msgAddr_t name, msgAddr_t transmissionAddr)
 :QGS_MessageHandlerBase(name)
 ,mIo_service()
 ,mWork(new boost::asio::io_service::work(mIo_service))
@@ -49,6 +49,7 @@ Serial_Manager::Serial_Manager(msgAddr_t name)
 ,mOutgoingFifo(10)
 ,mRetries(0)
 ,mOngoing()
+,mTransmissionAddr(transmissionAddr)
 {
 	mCommands.push_back(UiCommand("serialSetBaudRate","Set the baud rate of the serial port.",std::bind(&Serial_Manager::setBaudRateCmd, this, std::placeholders::_1)));
 	mCommands.push_back(UiCommand("serialSetFlowControl","Set the flow control of the serial port.",std::bind(&Serial_Manager::setFlowControlCmd, this, std::placeholders::_1)));
@@ -266,7 +267,7 @@ void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 		mLogger.QuadLog(severity_level::message_trace, "Received: \n"  + msg->toString());
 
 		//Received message OK, return transmission OK!
-		Msg_Transmission::ptr transmission = std::make_unique<Msg_Transmission>(msgAddr_t::FC_SerialIOtx_e, transmission_OK);
+		Msg_Transmission::ptr transmission = std::make_unique<Msg_Transmission>(mTransmissionAddr, transmission_OK);
 		sendMsg(std::move(transmission));
 
 		// Log message.
