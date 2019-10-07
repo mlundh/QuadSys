@@ -233,23 +233,25 @@ std::string Parameters::add(std::string path)
 
 std::string Parameters::SetAndRegister(std::string path)
 {
+	// If there is no tree registerd, then create a root. The root is no used in the comunication, but
+	// is there to hold all other trees.
 	if(!mTree)
 	{
-		size_t pos = path.find(QGS_Tree::mBranchDelimiter);
-		if (pos == 0)
-		{
-			path.erase(0, pos + QGS_Tree::mBranchDelimiter.length());
-			mTree = QGS_Tree::ptr(new QGS_Tree(path));
-			mCurrentBranch = mTree;
-			mTmpBranch = mTree;
-			mSavedBranch = mTree;
-			QGS_Tree::RemoveModuleString(path);
-		}
-		else
-		{
-			mLogger.QuadLog(QuadGS::error, "Packet not relative root: " + path );
-			return "";
-		}
+		mTree = QGS_Tree::ptr(new QGS_Tree("root"));
+		mCurrentBranch = mTree;
+		mTmpBranch = mTree;
+		mSavedBranch = mTree;
+	}
+	// Remove delimiter, there has to be a delimiter in the begnining of the message.
+	size_t pos = path.find(QGS_Tree::mBranchDelimiter);
+	if (pos == 0)
+	{
+		path.erase(0, pos + QGS_Tree::mBranchDelimiter.length());
+	}
+	else
+	{
+		mLogger.QuadLog(QuadGS::error, "Packet not relative root: " + path );
+		return "";
 	}
 	std::exception_ptr eptr;
 	SaveBranch();
@@ -305,6 +307,7 @@ std::string Parameters::writeCmd(std::string path_dump)
 		Path += "/";
 
 		Msg_Param::ptr ptr = std::make_unique<Msg_Param>(mSendName, ParamCtrl::param_set, SequenceNumber++, 0, Path);
+
 		sendMsg(std::move(ptr));
 		return "";
 	}
@@ -376,7 +379,6 @@ void Parameters::process(Msg_Param* message)
 			//RequestTree(); // We have not yet got the whole tree, continue!
 			return;
 		}
-
 		SetAndRegister(message->getPayload());
 		if(lastInSeq)
 		{

@@ -167,7 +167,7 @@ QGS_ModuleMsgBase::ptr SerialPort::write(QGS_ModuleMsgBase::ptr msg)
 	if( ! mSerialPort.is_open() )
 	{
 		QuadLog(severity_level::error, "Port is not open." );
-		return;
+		return msg;
 	}
 	if(mWriteBuff.use_count() != 0)
 	{
