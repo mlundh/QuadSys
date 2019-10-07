@@ -65,16 +65,6 @@ public:
 	bool UpdateTmp(std::string& path);
 
 	/**
-	 * Save current branch. Current branch can be restored by a call to RestoreBranch()
-	 */
-	void SaveBranch();
-
-	/**
-	 * Restore the previously saved branch.
-	 */
-	void RestoreBranch();
-
-	/**
 	 * Change branch to path. If path includes nodes that need to be updated, then
 	 * the method will only change to the first of the branches that needs an update.
 	 * @param path
@@ -119,8 +109,7 @@ public:
 	std::vector<UiCommand> mCommands;
 	QGS_Tree::ptr mTmpBranch;
 	QGS_Tree::ptr mCurrentBranch;
-	QGS_Tree::ptr mSavedBranch;
-	QGS_Tree::ptr mTree;
+	std::vector<QGS_Tree::ptr> mTree;
 	msgAddr_t mSendName;
 };
 

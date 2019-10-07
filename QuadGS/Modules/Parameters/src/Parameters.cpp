@@ -46,7 +46,6 @@ Parameters::Parameters(msgAddr_t name, msgAddr_t send_name):QGS_MessageHandlerBa
 	mTree = QGS_Tree::ptr();
 	mCurrentBranch = QGS_Tree::ptr();
 	mTmpBranch = QGS_Tree::ptr();
-	mSavedBranch = QGS_Tree::ptr();
 	mCommands.push_back(UiCommand("ParamCd","Change working branch",std::bind(&Parameters::ChangeBranchCmd, this, std::placeholders::_1)));
 	mCommands.push_back(UiCommand("ParamPrintBranch","Print current branch",std::bind(&Parameters::PrintCurrentPath, this, std::placeholders::_1)));
 	mCommands.push_back(UiCommand("ParamList","List children on branch",std::bind(&Parameters::list, this, std::placeholders::_1)));
@@ -67,15 +66,17 @@ Parameters::~Parameters()
 
 bool Parameters::UpdateTmp(std::string& path)
 {
-	if(!mTree)
+	if(mTree.empty())
 	{
 		throw std::runtime_error("No tree registered");
 	}
+
 	size_t pos = path.find(QGS_Tree::mBranchDelimiter);
 	if (pos == 0) // Update from root.
 	{
+		//TODO update tmp should search all root trees and update accordingly.
 
-		mTmpBranch = mTree;
+		mTmpBranch = mTree[""];
 
 		path.erase(0, pos + QGS_Tree::mBranchDelimiter.length());
 
@@ -88,7 +89,7 @@ bool Parameters::UpdateTmp(std::string& path)
 	}
 	else
 	{
-		mTmpBranch = mCurrentBranch;
+		//ERROR! 
 	}
 	while(!path.empty())
 	{
@@ -116,16 +117,6 @@ bool Parameters::UpdateTmp(std::string& path)
 	}
 	//we found the whole path! Return true, we found a node.
 	return true;
-}
-
-void Parameters::SaveBranch()
-{
-	mSavedBranch = mCurrentBranch;
-}
-
-void Parameters::RestoreBranch()
-{
-	mCurrentBranch = mSavedBranch;
 }
 
 bool Parameters::ChangeBranch(std::string& path)
@@ -188,12 +179,11 @@ std::string Parameters::get(std::string path)
 std::string Parameters::set(std::string path)
 {
 	std::exception_ptr eptr;
-	SaveBranch();
 	try
 	{
 		while(!path.empty())
 		{
-			ChangeBranch(path);
+			UpdateTmp(path);
 			if(!path.empty())
 			{
 				mTmpBranch->SetValue(path);
@@ -204,10 +194,8 @@ std::string Parameters::set(std::string path)
 	catch(...)
 	{
 		eptr = std::current_exception();
-		RestoreBranch();
 		std::rethrow_exception(eptr);
 	}
-	RestoreBranch();
 	writeCmd("");
 	return "";
 }
@@ -233,14 +221,9 @@ std::string Parameters::add(std::string path)
 
 std::string Parameters::SetAndRegister(std::string path)
 {
-	// If there is no tree registerd, then create a root. The root is no used in the comunication, but
-	// is there to hold all other trees.
-	if(!mTree)
+	if(mTree.empty())
 	{
-		mTree = QGS_Tree::ptr(new QGS_Tree("root"));
-		mCurrentBranch = mTree;
-		mTmpBranch = mTree;
-		mSavedBranch = mTree;
+		mTree.push_back(QGS_Tree::ptr(new QGS_Tree(path)));
 	}
 	// Remove delimiter, there has to be a delimiter in the begnining of the message.
 	size_t pos = path.find(QGS_Tree::mBranchDelimiter);
@@ -253,13 +236,25 @@ std::string Parameters::SetAndRegister(std::string path)
 		mLogger.QuadLog(QuadGS::error, "Packet not relative root: " + path );
 		return "";
 	}
+
+	// If a tree with this root is not registerd, then create a new.
+	for(auto item : mTree)
+	{
+		if(item.name == path) // Find root...
+		{
+			mTmpBranch = item;
+			UpdateTmp(path);
+			break;
+		}
+
+	}
+
 	std::exception_ptr eptr;
-	SaveBranch();
 	try
 	{
 		while(!path.empty())
 		{
-			bool found = ChangeBranch(path);
+			bool found = UpdateTmp(path);
 			if(!path.empty())
 			{
 				if(!found)
@@ -277,10 +272,8 @@ std::string Parameters::SetAndRegister(std::string path)
 	catch(...)
 	{
 		eptr = std::current_exception();
-		RestoreBranch();
 		std::rethrow_exception(eptr);
 	}
-	RestoreBranch();
 	return "";
 }
 
@@ -307,6 +300,7 @@ std::string Parameters::writeCmd(std::string path_dump)
 		Path += "/";
 
 		Msg_Param::ptr ptr = std::make_unique<Msg_Param>(mSendName, ParamCtrl::param_set, SequenceNumber++, 0, Path);
+		mLogger.QuadLog(QuadGS::error, ptr->getPayload());
 
 		sendMsg(std::move(ptr));
 		return "";
