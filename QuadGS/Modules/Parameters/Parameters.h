@@ -60,9 +60,11 @@ public:
 	 * updated to correspond to the path. All nodes in path before the function
 	 * returns will be removed.
 	 * @param path      Path to the node.
+	 * @param reset
 	 * @return          return true if path was found, false otherwise.
 	 */
-	bool UpdateTmp(std::string& path);
+	bool UpdateTmp(std::string& path, bool restart = true);
+
 
 	/**
 	 * Change branch to path. If path includes nodes that need to be updated, then
@@ -83,6 +85,13 @@ public:
 	std::string add(std::string path);
 	std::string SetAndRegister(std::string path);
 	std::string writeCmd(std::string path_dump);
+	/**
+	 * @brief Write parameters to the parameter owner. Used only internaly.
+	 * 
+	 * @param path_dump The path to the starting point of the dump.
+	 * @param restart Set to false if the tmpBranch is on the correct starting point. true otherwise. Not used if path_dump is empty.
+	 */
+	void writeInternal(std::string path_dump, bool restart);
 	std::string requestUpdateCmd(std::string path_dump);
 	std::string saveParamCmd(std::string );
 	std::string loadParamCmd(std::string );

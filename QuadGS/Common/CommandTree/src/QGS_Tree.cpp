@@ -212,7 +212,7 @@ QGS_Tree::ptr QGS_Tree::Find(const std::string& path)
     // If name is this, and value is different from recorded, return self.
     if((name.compare(mSelfDelimiter) == 0)) // empty. throw?
     {
-        std::cout << "QuadGSTree::Find 2 returning self: " << module << " on branch: " << GetName() << std::endl;
+        //std::cout << "QuadGSTree::Find 2 returning self: " << module << " on branch: " << GetName() << std::endl;
         return GetSelf();
 
     }

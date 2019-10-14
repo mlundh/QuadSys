@@ -286,7 +286,12 @@ void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 }
 void Serial_Manager::doWrite()
 {
-	if(mOngoing || mOutgoingFifo.empty() || !mPort->isOpen() || !mPort->ready())
+	if(!mPort->isOpen())
+	{
+		mLogger.QuadLog(severity_level::error, "Port not open.");
+		return;
+	}
+	if(mOngoing || mOutgoingFifo.empty() || !mPort->ready())
 	{
 		return;
 	}

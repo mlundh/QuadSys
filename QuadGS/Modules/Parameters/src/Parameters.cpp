@@ -40,15 +40,14 @@ using namespace std::placeholders;
 
 namespace QuadGS {
 
-Parameters::Parameters(msgAddr_t name, msgAddr_t send_name):QGS_MessageHandlerBase(name),mSendName(send_name)
+Parameters::Parameters(msgAddr_t name, msgAddr_t send_name):QGS_MessageHandlerBase(name),mTree(), mSendName(send_name)
 
 {
-	mTree = QGS_Tree::ptr();
 	mCurrentBranch = QGS_Tree::ptr();
 	mTmpBranch = QGS_Tree::ptr();
-	mCommands.push_back(UiCommand("ParamCd","Change working branch",std::bind(&Parameters::ChangeBranchCmd, this, std::placeholders::_1)));
-	mCommands.push_back(UiCommand("ParamPrintBranch","Print current branch",std::bind(&Parameters::PrintCurrentPath, this, std::placeholders::_1)));
-	mCommands.push_back(UiCommand("ParamList","List children on branch",std::bind(&Parameters::list, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("paramCd","Change working branch",std::bind(&Parameters::ChangeBranchCmd, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("paramPrintBranch","Print current branch",std::bind(&Parameters::PrintCurrentPath, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("paramList","List children on branch",std::bind(&Parameters::list, this, std::placeholders::_1)));
 	mCommands.push_back(UiCommand("paramSet","Set value of the command tree. [parameter] [value]",std::bind(&Parameters::set, this, std::placeholders::_1)));
 	mCommands.push_back(UiCommand("paramGet","Get value of the command tree. [parameter]",std::bind(&Parameters::get, this, std::placeholders::_1)));
 	mCommands.push_back(UiCommand("paramAdd","Add the given value to the specified node. [parameter] [value]",std::bind(&Parameters::add, this, std::placeholders::_1)));
@@ -64,22 +63,30 @@ Parameters::~Parameters()
 {
 }
 
-bool Parameters::UpdateTmp(std::string& path)
+bool Parameters::UpdateTmp(std::string& path, bool restart)
 {
-	if(mTree.empty())
-	{
-		throw std::runtime_error("No tree registered");
-	}
-
 	size_t pos = path.find(QGS_Tree::mBranchDelimiter);
 	if (pos == 0) // Update from root.
 	{
-		//TODO update tmp should search all root trees and update accordingly.
-
-		mTmpBranch = mTree[""];
-
+		mTmpBranch.reset();
 		path.erase(0, pos + QGS_Tree::mBranchDelimiter.length());
+		std::string moduleName = QGS_Tree::GetModuleName(path);
+		std::string module = QGS_Tree::GetModuleString(path);
 
+		for(auto &item : mTree)
+		{
+			if(item->GetName().compare(moduleName) == 0 ) // Find root...
+			{
+				mTmpBranch = item;
+				break;
+			}
+		}
+		// If a tree with this root is not registerd, then create a new.
+		if(!mTmpBranch)
+		{
+			mTree.push_back(QGS_Tree::ptr(new QGS_Tree(module)));
+			mTmpBranch = mTree.back();
+		}
 		if(mTmpBranch->NeedUpdate(path))
 		{
 			return true;
@@ -89,8 +96,22 @@ bool Parameters::UpdateTmp(std::string& path)
 	}
 	else
 	{
-		//ERROR! 
+		if(mTree.empty())
+		{
+			throw std::runtime_error("No tree registered");
+		}		
+		if(!mCurrentBranch)
+		{
+			mCurrentBranch = mTree.front();
+		}
+		if(restart)
+		{
+			// Update relative to current path. 
+			mTmpBranch = mCurrentBranch;
+		}
+
 	}
+
 	while(!path.empty())
 	{
 		// Find will return shared_ptr to next element, or current if there is work to do in current node.
@@ -138,7 +159,7 @@ std::string Parameters::ChangeBranchCmd(std::string path)
 
 std::string Parameters::PrintCurrentPath(std::string)
 {
-	if(!mTree)
+	if(mTree.empty())
 	{
 		throw std::runtime_error("No tree registered");
 	}
@@ -183,7 +204,7 @@ std::string Parameters::set(std::string path)
 	{
 		while(!path.empty())
 		{
-			UpdateTmp(path);
+			UpdateTmp(path,false);
 			if(!path.empty())
 			{
 				mTmpBranch->SetValue(path);
@@ -220,41 +241,15 @@ std::string Parameters::add(std::string path)
 
 
 std::string Parameters::SetAndRegister(std::string path)
-{
-	if(mTree.empty())
-	{
-		mTree.push_back(QGS_Tree::ptr(new QGS_Tree(path)));
-	}
-	// Remove delimiter, there has to be a delimiter in the begnining of the message.
-	size_t pos = path.find(QGS_Tree::mBranchDelimiter);
-	if (pos == 0)
-	{
-		path.erase(0, pos + QGS_Tree::mBranchDelimiter.length());
-	}
-	else
-	{
-		mLogger.QuadLog(QuadGS::error, "Packet not relative root: " + path );
-		return "";
-	}
-
-	// If a tree with this root is not registerd, then create a new.
-	for(auto item : mTree)
-	{
-		if(item.name == path) // Find root...
-		{
-			mTmpBranch = item;
-			UpdateTmp(path);
-			break;
-		}
-
-	}
-
+{	
 	std::exception_ptr eptr;
-	try
+	// Update tmp and then register a new child, or set the correct value. Do this untill the 
+	// path is empty. 
+ 	try
 	{
 		while(!path.empty())
 		{
-			bool found = UpdateTmp(path);
+			bool found = UpdateTmp(path, false);
 			if(!path.empty())
 			{
 				if(!found)
@@ -281,12 +276,29 @@ std::string Parameters::SetAndRegister(std::string path)
 
 std::string Parameters::writeCmd(std::string path_dump)
 {
+	if(path_dump.empty())
+	{
+		for(auto &item : mTree)
+		{
+			mTmpBranch = item;
+			writeInternal(path_dump, false);
+		}
+	}
+	else
+	{
+		writeInternal(path_dump, true);
+	}
+	return "";
+}
+
+void Parameters::writeInternal(std::string path_dump, bool restart)
+{
 	bool cont = true;
 	std::vector<size_t> StartPosition(QGS_Tree::mMaxDepth,0);
 	uint8_t SequenceNumber = 0;
 	while(cont)
 	{
-		UpdateTmp(path_dump);
+		UpdateTmp(path_dump, restart);
 		std::string Path;
 		QGS_Tree* tmp = mTmpBranch->GetParent();
 		while(tmp)
@@ -300,12 +312,10 @@ std::string Parameters::writeCmd(std::string path_dump)
 		Path += "/";
 
 		Msg_Param::ptr ptr = std::make_unique<Msg_Param>(mSendName, ParamCtrl::param_set, SequenceNumber++, 0, Path);
-		mLogger.QuadLog(QuadGS::error, ptr->getPayload());
+		//mLogger.QuadLog(QuadGS::error, ptr->getPayload());
 
 		sendMsg(std::move(ptr));
-		return "";
 	}
-	return "";
 }
 
 std::string Parameters::requestUpdateCmd(std::string )
@@ -330,8 +340,21 @@ std::string Parameters::loadParamCmd(std::string )
 
 std::string Parameters::dump(std::string path)
 {
-	UpdateTmp(path);
-	return  mTmpBranch->DumpTreeFormatted(0);
+	std::stringstream result;
+	if(path.empty())
+	{
+		for(auto &item : mTree)
+		{
+			result << std::endl << item->DumpTreeFormatted(0);
+		}
+	}
+	else
+	{
+		UpdateTmp(path);
+		result << mTmpBranch->DumpTreeFormatted(0);	
+	}
+	
+	return  result.str();
 
 }
 
