@@ -345,6 +345,11 @@ uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
             {
                 reTransmittNr ++;
             }
+            else if(TxObj->transmission == transmission_NOK) // We got a transmission message. Check if it was a NOK message.
+            {
+                reTransmittNr++; // If we got a tranmission_NOK message we should also re-transmitt.
+            }
+            
             if(reTransmittNr >= NR_RETRANSMITT)
             {
                 // TODO log failed retransmitt.

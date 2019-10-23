@@ -229,6 +229,9 @@ void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 {
 	if(!msg)
 	{
+		//Received NOK message, trigger a re-try!
+		Msg_Transmission::ptr transmission = std::make_unique<Msg_Transmission>(mTransmissionAddr, transmission_NOK);
+		sendMsg(std::move(transmission));
 		return;
 	}
 	// Transmission ok, pop from fifo and set ok to send again.
@@ -247,7 +250,6 @@ void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 		}
 		else if(nameMsg->getStatus() == transmission_NOK)
 		{
-			mLogger.QuadLog(severity_level::message_trace, "Received: TransmissionNOK ");
 			if(mRetries < NR_RETRIES)
 			{
 				mRetries++;
