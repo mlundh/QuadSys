@@ -187,11 +187,12 @@ void Serial_Manager::process(Msg_TestTransmission* message)
 	{
 		result = false;
 	}
-	if(message->getPayload().compare("Test OK") != 0)
+	if(message->getPayload().compare("Test OK\0") != 0)
 	{
 		result = false;
 	}
-	std::string display = "Test result: " + result;
+	std::string resultStr = result ? "Pass":"Fail";
+	std::string display = "Test result: " + resultStr;
 	Msg_Display::ptr dispMsg = std::make_unique<Msg_Display>(GS_GUI_e, display);
 	sendMsg(std::move(dispMsg));
 }
@@ -234,9 +235,11 @@ void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 		sendMsg(std::move(transmission));
 		return;
 	}
+
 	// Transmission ok, pop from fifo and set ok to send again.
-	else if(msg->getType() == messageTypes_t::Msg_Transmission_e)
+	if(msg->getType() == messageTypes_t::Msg_Transmission_e)
 	{
+
 		mLogger.QuadLog(severity_level::message_trace, "Received: \n"  + msg->toString());
 		mTimeoutRead.cancel();
 		Msg_Transmission* nameMsg = dynamic_cast<Msg_Transmission*>(msg.get());

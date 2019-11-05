@@ -253,6 +253,7 @@ uint8_t LogHandler_GetNameIdMapping(LogHandler_t*  obj, uint8_t* buffer, uint32_
     }
     uint8_t result = 1;
 
+    buffer[0] = '\0';
     result &= LogHandler_GetMapping(obj, obj->logNameQueueItems.logNames, MAX_LOGGERS_PER_HANDLER, &obj->logNameQueueItems.nrLogNames );
 
     result &= LogHandler_AppendNodeString(&obj->logNameQueueItems, buffer, buffer_length);
@@ -310,6 +311,20 @@ uint8_t LogHandler_HandleLogMsg(eventHandler_t* obj, void* data, moduleMsg_t* ms
     return result;
 }
 
+/**
+ * @brief Handler for nameReq messages.
+ * 
+ * Will update the current handlers (non master) mapping and store it in handlerObj->logNameItems. 
+ * This data field will then be sent to the master via a queue that the master sends in the req message,
+ * therefore it is important to ensure thread safety. 
+ * 
+ * TODO possibly change behaviour to send the data in a message instead. 
+ * 
+ * @param obj 
+ * @param data 
+ * @param msg 
+ * @return uint8_t 
+ */
 uint8_t LogHandler_HandleNameReqMsg(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 {
     if(!obj || ! data || !msg)

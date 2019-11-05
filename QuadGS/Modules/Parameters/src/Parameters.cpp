@@ -389,7 +389,7 @@ void Parameters::process(Msg_Param* message)
 		if((lastSequenceNo) != sequenceNo)
 		{
 			std::stringstream ss;
-			ss << "Lost a setTree package! Got: " << (int)sequenceNo << "expected: " << (int) lastSequenceNo;
+			ss << "Lost a setTree package! Got: " << (int)sequenceNo << " expected: " << (int) lastSequenceNo;
 			mLogger.QuadLog(QuadGS::error, ss.str());
 			//SetAndRegister(message->getPayload());
 			//lastSequenceNo = 0;

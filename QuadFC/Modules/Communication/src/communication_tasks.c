@@ -188,6 +188,7 @@ RxCom_t* Com_InitRx(eventHandler_t* eventHandler)
 
     // Subscribe to the events that the task is interested in. None right now.
     Event_RegisterCallback(taskParam->evHandler, Msg_TestTransmission_e, Com_TestTransmission, taskParam);
+    Event_RegisterCallback(taskParam->evHandler, Msg_Log_e, Com_HandleLog, taskParam);
 
 
     return taskParam;
@@ -564,6 +565,7 @@ uint8_t Com_TestTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg)
     {
         moduleMsg_t* reply = Msg_TestTransmissionCreate(Msg_GetSource(msg),0,1,10);
         strncpy((char*)Msg_TestTransmissionGetPayload(reply), "Test OK\0",8);
+        Msg_TestTransmissionSetPayloadlength(reply, 8);
         Event_Send(obj, reply);
     }
     return result;

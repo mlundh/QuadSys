@@ -134,15 +134,15 @@ void LogHandler::process(Msg_Log* message)
 				std::string name = QGS_Tree::GetModuleName(module);
 				std::string valueType = QGS_Tree::GetValueTypeString(module);
 				std::string id_str = QGS_Tree::GetValueString(module);
-				if(!id_str.empty() && !valueType.empty())
+				if(!id_str.empty() && valueType.empty())
 				{
 					int id = std::stoi(id_str);
-					int type = std::stoi(valueType);
+					//int type = std::stoi(valueType); TODO add value type as well?
 					auto search = mNames.find(name);
 					if(search == mNames.end())
 					{
 						mNames[name] = id;
-						mMapFile << name << "," << id << "," << type << std::endl;
+						mMapFile << name << "," << id << "," << std::endl;
 
 					}
 					else

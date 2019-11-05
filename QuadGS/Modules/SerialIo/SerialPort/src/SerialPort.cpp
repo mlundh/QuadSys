@@ -216,7 +216,7 @@ void SerialPort::read()
 		throw std::runtime_error("Read called during read operation.");
 	}
 	QuadLog(severity_level::debug, "Read called.");
-	mReadBuff = std::make_shared<std::vector<unsigned char> >(255,0);;
+	mReadBuff = std::make_shared<std::vector<unsigned char> >(512,0);;
 
 	boost::asio::async_read( mSerialPort,
 			boost::asio::buffer( *mReadBuff),
