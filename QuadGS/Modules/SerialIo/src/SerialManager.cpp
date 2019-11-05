@@ -187,7 +187,7 @@ void Serial_Manager::process(Msg_TestTransmission* message)
 	{
 		result = false;
 	}
-	if(message->getPayload().compare("Test OK\0") != 0)
+	if(strcmp(message->getPayload().c_str(), "Test OK") != 0)
 	{
 		result = false;
 	}
