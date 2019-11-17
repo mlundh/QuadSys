@@ -40,7 +40,7 @@ using namespace std::placeholders;
 
 namespace QuadGS {
 
-Parameters::Parameters(msgAddr_t name, msgAddr_t send_name):QGS_MessageHandlerBase(name),mTree(), mSendName(send_name)
+Parameters::Parameters(msgAddr_t name, msgAddr_t send_name):QGS_MessageHandlerBase(name),mTree(), mSendName(send_name), sequenceNr(0)
 
 {
 	mCurrentBranch = QGS_Tree::ptr();
@@ -320,6 +320,10 @@ void Parameters::writeInternal(std::string path_dump, bool restart)
 
 std::string Parameters::requestUpdateCmd(std::string )
 {
+	if(sequenceNr != 0)
+	{
+		return "Ongoing.";
+	}
 	RequestTree();
 	return "";
 }
@@ -380,32 +384,29 @@ void Parameters::process(Msg_Param* message)
 
 	uint8_t control = message->getControl();
 
-	static uint8_t lastSequenceNo = 0;
-	uint8_t sequenceNo = message->getSequencenr();
+	uint8_t receivedNr = message->getSequencenr();
 	uint8_t lastInSeq = message->getLastinsequence();
 	std::string path = message->getPayload();
 	
 	switch (control){
 	case ParamCtrl::param_set:
-		if((lastSequenceNo) != sequenceNo)
+		if(sequenceNr != receivedNr)
 		{
 			std::stringstream ss;
-			ss << "Lost a setTree package! Got: " << (int)sequenceNo << " expected: " << (int) lastSequenceNo;
+			ss << "Lost a setTree package! Got: " << (int)receivedNr << " expected: " << (int) sequenceNr;
 			mLogger.QuadLog(QuadGS::error, ss.str());
-			//SetAndRegister(message->getPayload());
-			//lastSequenceNo = 0;
-			//RequestTree(); // We have not yet got the whole tree, continue!
-			return;
+			sequenceNr = 0;
+			break;
 		}
 		SetAndRegister(message->getPayload());
 		if(lastInSeq)
 		{
 			std::cout << "last in sequence!" << std::endl;
-			lastSequenceNo = 0;
+			sequenceNr = 0;
 		}
 		else
 		{
-			lastSequenceNo++;
+			sequenceNr++;
 			RequestTree(); // We have not yet got the whole tree, continue!
 		}
 		break;

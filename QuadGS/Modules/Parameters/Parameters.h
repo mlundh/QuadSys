@@ -120,6 +120,7 @@ public:
 	QGS_Tree::ptr mCurrentBranch;
 	std::vector<QGS_Tree::ptr> mTree;
 	msgAddr_t mSendName;
+	uint8_t sequenceNr;
 };
 
 } /* namespace QuadGS */
