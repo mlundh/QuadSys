@@ -25,10 +25,12 @@
 
 #include "../message_tester.h"
 #include "Messages/inc/Msg_Param.h"
+#include "Messages/inc/Msg_Transmission.h"
 #include <string.h>
 
 uint8_t MessageT_TestSerializationMsg(TestFw_t* Tobj);
 uint8_t MessageT_TestSerializationParam(TestFw_t* Tobj);
+uint8_t MessageT_TestSerializationTransmission(TestFw_t* Tobj);
 
 uint8_t msgCmp(moduleMsg_t* msg, moduleMsg_t* msg2)
 {
@@ -47,6 +49,8 @@ void MessageT_GetTCs(TestFw_t* Tobj)
 {
     TestFW_RegisterTest(Tobj, "Msg Test serialization", MessageT_TestSerializationMsg);
     TestFW_RegisterTest(Tobj, "Msg Test Param serialization", MessageT_TestSerializationParam);
+    TestFW_RegisterTest(Tobj, "Msg Test Transmission serialization", MessageT_TestSerializationTransmission);
+
 }
 
 
@@ -107,6 +111,31 @@ uint8_t MessageT_TestSerializationParam(TestFw_t* Tobj)
 
     uint8_t result = 0;
     if(msgCmp(msg, msgVerify) && memcmp(Msg_ParamGetPayload(msg), Msg_ParamGetPayload(msgVerify), payloadLength) == 0)
+    {
+        result = 1;
+    }
+
+    Msg_Delete(&msg);
+    Msg_Delete(&msgVerify);
+
+    return result;
+}
+
+uint8_t MessageT_TestSerializationTransmission(TestFw_t* Tobj)
+{
+    moduleMsg_t* msg = Msg_TransmissionCreate(432, 244, 0);
+
+
+    uint8_t buffer[PAYLOAD_LENGTH * 2] = {0};
+    uint8_t* buffP = &buffer[0];
+
+    Msg_TransmissionSerialize(msg, buffP, PAYLOAD_LENGTH * 2);
+
+    moduleMsg_t* msgVerify  = Msg_TransmissionDeserialize(buffP, PAYLOAD_LENGTH * 2);
+
+
+    uint8_t result = 0;
+    if(msgCmp(msg, msgVerify) && (Msg_TransmissionGetStatus(msg) == Msg_TransmissionGetStatus(msgVerify)))
     {
         result = 1;
     }

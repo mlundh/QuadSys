@@ -84,7 +84,7 @@ void mainTester(void *pvParameters)
   TestFw_t* testFW = TestFW_Create("Sig, event, log");
 
   /**************Add test module instantiation here***************/
-//  SigProsses_GetTCs(testFW);
+  SigProsses_GetTCs(testFW);
   EventHandler_GetTCs(testFW);
   /***************************************************************/
 

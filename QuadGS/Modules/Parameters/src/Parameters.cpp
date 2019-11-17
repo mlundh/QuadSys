@@ -369,6 +369,7 @@ void Parameters::FindPartial(std::string& name, std::vector<std::string>& vec)
 void Parameters::RequestTree()
 {
 	Msg_Param::ptr ptr = std::make_unique<Msg_Param>(mSendName, ParamCtrl::param_get,0,0,"");
+	std::cout << "Request tree" << std::endl;
 	sendMsg(std::move(ptr));
 }
 
@@ -399,6 +400,7 @@ void Parameters::process(Msg_Param* message)
 		SetAndRegister(message->getPayload());
 		if(lastInSeq)
 		{
+			std::cout << "last in sequence!" << std::endl;
 			lastSequenceNo = 0;
 		}
 		else

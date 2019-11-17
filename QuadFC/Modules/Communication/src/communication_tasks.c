@@ -66,7 +66,6 @@ typedef struct RxCom
     FlightModeHandler_t* stateHandler;
     eventHandler_t* evHandler;
     LogHandler_t* logHandler;
-    uint8_t msgNr;
     paramHander_t* paramHandler;
 
 }RxCom_t;
@@ -304,7 +303,6 @@ uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
     if(Msg_GetType(msg) != Msg_Transmission_e)
     {
         Msg_SetMsgNr(msg, TxObj->msgNr);
-        TxObj->msgNr = TxObj->msgNr % 255; // wrap at 255...
     }
 
 
@@ -342,7 +340,7 @@ uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
                 break; // TODO ugly...
             }
 
-            if(!Event_WaitForEvent(TxObj->evHandler, Msg_Transmission_e, 1, 0, (1000 / portTICK_PERIOD_MS ))) // wait for the transmission event.
+            if(!Event_WaitForEvent(TxObj->evHandler, Msg_Transmission_e, 1, 0, 1000)) // wait for the transmission event.
             {
                 reTransmittNr ++;
             }
@@ -427,10 +425,10 @@ void Com_RxTask( void *pvParameters )
             	Msg_SetDestination(msg, GS_Broadcast_e);
             }
 
-            uint8_t msgNr = Msg_GetMsgNr(msg);
 
             if(Msg_GetType(msg) != Msg_Transmission_e) // we ack all messages except for transmission messages.
             {
+                uint8_t msgNr = Msg_GetMsgNr(msg);
                 moduleMsg_t* reply = Msg_TransmissionCreate(GS_SerialIO_e, msgNr, transmission_OK);
                 Event_Send(obj->evHandler, reply);
             }
@@ -464,9 +462,14 @@ uint8_t Com_TxTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg)
     {
         //Message out of sync! TODO error.
     }
+    else
+    {
+        handlerObj->msgNr = (handlerObj->msgNr+1) % 255; // wrap at 255...
+        handlerObj->transmission = Msg_TransmissionGetStatus(msg); // stop transmission 
+    }
+    
 
     // This stops re-transmit.
-    handlerObj->transmission = Msg_TransmissionGetStatus(msg);
     return 1;
 }
 

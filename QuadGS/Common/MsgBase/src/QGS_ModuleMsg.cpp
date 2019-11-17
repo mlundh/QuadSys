@@ -47,7 +47,7 @@ QGS_ModuleMsgBase::QGS_ModuleMsgBase(const QGS_ModuleMsgBase& msg)
 :mType(static_cast<uint8_t>(msg.getType()))
 , mSource(msg.getSource())
 , mDestination(msg.getDestination())
-, mMsgNr(0)
+, mMsgNr(msg.getMsgNr())
 {
 
 }

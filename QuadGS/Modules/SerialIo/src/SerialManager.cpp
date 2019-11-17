@@ -236,22 +236,28 @@ void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 		return;
 	}
 
-	// Transmission ok, pop from fifo and set ok to send again.
 	if(msg->getType() == messageTypes_t::Msg_Transmission_e)
 	{
 
-		mLogger.QuadLog(severity_level::message_trace, "Received: \n"  + msg->toString());
 		mTimeoutRead.cancel();
-		Msg_Transmission* nameMsg = dynamic_cast<Msg_Transmission*>(msg.get());
-
-		mOngoing.release(); // we got a transmission message, this is the end of an ongoing transmission.
-		if(nameMsg->getStatus() == transmission_OK) 
+		Msg_Transmission* transMsg = dynamic_cast<Msg_Transmission*>(msg.get());
+		
+		if(mMsgNrTx != transMsg->getMsgNr())
 		{
-			// Transmission ok, discard the outgoing message, no need to save after successful transmission.
-			//mLogger.QuadLog(severity_level::message_trace, "Received: TransmissionOK ");
-			mRetries = 0;
+			std::stringstream ss;
+			ss << "Ack does not match expected message number: " << (int)transMsg->getMsgNr() << " expected: " << (int) mMsgNrTx;
+			mLogger.QuadLog(QuadGS::error, ss.str());
 		}
-		else if(nameMsg->getStatus() == transmission_NOK)
+
+		if(transMsg->getStatus() == transmission_OK) 
+		{
+			// Transmission ok, discard the outgoing message, no need to save after successful transmission. Increase the messageNumber.
+			mOngoing.release(); // we got a transmissionOK message, this is the end of an ongoing transmission.
+			mRetries = 0;
+			msg->setMsgNr((mMsgNrTx++)%256);
+
+		}
+		else if(transMsg->getStatus() == transmission_NOK)
 		{
 			if(mRetries < NR_RETRIES)
 			{
@@ -265,18 +271,19 @@ void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 			}
 
 		}
+
 		doWrite();
 	}
+	// Respond transmission OK and forward the message.
 	else
 	{
 		mLogger.QuadLog(severity_level::message_trace, "Received: \n"  + msg->toString());
 
 		//Received message OK, return transmission OK!
 		Msg_Transmission::ptr transmission = std::make_unique<Msg_Transmission>(mTransmissionAddr, transmission_OK);
-		sendMsg(std::move(transmission));
+		transmission->setMsgNr(msg->getMsgNr());
 
-		// Log message.
-		// mLogger.QuadLog(severity_level::message_trace, "Received: \n" + msg->toString() );
+		sendMsg(std::move(transmission));
 
 		// If we get a broadcast message, we should only handle it internally.
 		if(msg->getDestination() == msgAddr_t::Broadcast_e)
@@ -303,7 +310,11 @@ void Serial_Manager::doWrite()
 
 	QGS_ModuleMsgBase::ptr msg = mOutgoingFifo.dequeue();
 
-	msg->setMsgNr(mRetries > 0 ? (mMsgNr) : (mMsgNr++)%256);
+	if(msg->getType() != Msg_Transmission_e)
+	{
+		msg->setMsgNr(mMsgNrTx);
+	}
+
 	mLogger.QuadLog(severity_level::message_trace, "Transmitting: \n"  + msg->toString());
 
 	// Do not expect a result, and do not re-transmitt a transmission message.

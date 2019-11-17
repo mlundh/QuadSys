@@ -150,7 +150,7 @@ private:
     ThreadSafeFifo<QGS_ModuleMsgBase::ptr> mOutgoingFifo;
     int mRetries;
     QGS_ModuleMsgBase::ptr mOngoing;
-    uint8_t mMsgNr = 0;
+    uint8_t mMsgNrTx = 0;
     msgAddr_t mTransmissionAddr;
 
 };
