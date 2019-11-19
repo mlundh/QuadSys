@@ -181,4 +181,13 @@ gpio_configure_pin(PIN_USART1_RXD_IDX, PIN_USART1_RXD_FLAGS);
 gpio_configure_pin(PIN_USART1_TXD_IDX, PIN_USART1_TXD_FLAGS);
 #endif
 
+#ifdef CONF_BOARD_USART3_RXD
+/* Configure USART RXD pin */
+gpio_configure_pin(PIN_USART3_RXD_IDX, PIN_USART3_RXD_FLAGS);
+#endif
+
+#ifdef CONF_BOARD_USART3_TXD
+/* Configure USART TXD pin */
+gpio_configure_pin(PIN_USART3_TXD_IDX, PIN_USART3_TXD_FLAGS);
+#endif
 }

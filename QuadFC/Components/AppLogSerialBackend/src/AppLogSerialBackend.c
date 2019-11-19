@@ -25,11 +25,13 @@
 
 #include "Components/AppLog/inc/AppLogBackend.h"
 #include "QuadFC/QuadFC_Peripherals.h"
-#define APP_LOG_SERIAL (2) // todo check.
+#define APP_LOG_SERIAL (3)
 #define APP_LOG_INTERNAL_BUFFER (512)
+#define APP_LOG_RECEIVE_BUFF (2)
 struct AppLogBackend
 {
     uint8_t write;
+    uint8_t receiveBuff[APP_LOG_RECEIVE_BUFF];
 };
 
 AppLogBackend_t* AppLogBackend_CreateObj()
@@ -39,6 +41,16 @@ AppLogBackend_t* AppLogBackend_CreateObj()
     {
         return NULL;
     }
+    QuadFC_SerialOptions_t opt = {
+        57600,
+        EightDataBits,
+        NoParity,
+        OneStopBit,
+        NoFlowControl,
+        obj->receiveBuff,
+        APP_LOG_RECEIVE_BUFF
+    };
+    QuadFC_SerialInit(APP_LOG_SERIAL, &opt);
     return obj;
 }
 

@@ -28,7 +28,4 @@
 
 void AppLog_GetTCs(TestFw_t* obj);
 
-uint8_t AppLogHandler_TestCreate(TestFw_t* obj);
-
-
 #endif /* TEST_APPLOG_SRC_APPLOGTEST_H_ */

@@ -1,7 +1,7 @@
 /*
- * AppLogHandler.h
+ * AppLog.h
  *
- *  Created on: Aug 12, 2019
+ *  Created on: nov 19, 2019
  *      Author: mlundh
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,28 +22,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+#include <string.h>
+#include "Messages/inc/Msg_AppLog.h"
+#include "FreeRTOS.h"
 
-#ifndef COMPONENTS_APPLOG_INC_APPLOGHANDLER_H_
-#define COMPONENTS_APPLOG_INC_APPLOGHANDLER_H_
-
-#include "EventHandler/inc/event_handler.h"
-
-typedef struct AppLogHandler AppLogHandler_t;
-
-/**
- * Create the AppLogHandler. The handler will register the handler function for
- * AppLog messages, and write the log entry to the backend. The backend is responsible
- * for writing to either memory, or serial port etc.
- * @param evHandler		Event handler.
- * @return
- */
-AppLogHandler_t* AppLogHandler_Create(eventHandler_t* evHandler);
-
-/**
- * @brief Delete the AppLogHandler.
- * @param obj object to delete.
- */
-void AppLogHandler_Delete(AppLogHandler_t* obj);
-
-
-#endif /* COMPONENTS_APPLOG_INC_APPLOGHANDLER_H_ */
+#define LOG_LENGTH_MAX (200)
+#define LOG_ENTRY(addr, text, evHandler) {  \
+    moduleMsg_t* msg = Msg_AppLogCreate(addr,0,writeAppLog,LOG_LENGTH_MAX); \
+    snprintf((char*)Msg_AppLogGetPayload(msg), LOG_LENGTH_MAX, "%8lu: %s\n", xTaskGetTickCount(),text);\
+    uint32_t buffSize = strlen((char*)Msg_AppLogGetPayload(msg))+1;\
+    Msg_AppLogSetPayloadlength(msg, buffSize);\
+    Event_Send(evHandler, msg);\
+    }
+    

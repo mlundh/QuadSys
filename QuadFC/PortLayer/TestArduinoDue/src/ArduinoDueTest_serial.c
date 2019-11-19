@@ -51,7 +51,7 @@ uint8_t Test_SerialInit()
       .stopbits = false
   };
 
-  usart_serial_init(USART1, &usart_options);
+  usart_serial_init(USART3, &usart_options);
 
   test_usart_init = 1;
   return 1;
@@ -66,7 +66,7 @@ uint8_t Test_SerialWrite(QuadFC_Serial_t *serial_data)
     return 0;
   }
 
-  usart_serial_write_packet(USART1, serial_data->buffer, serial_data->bufferLength);
+  usart_serial_write_packet(USART3, serial_data->buffer, serial_data->bufferLength);
 
   return 1;
 }

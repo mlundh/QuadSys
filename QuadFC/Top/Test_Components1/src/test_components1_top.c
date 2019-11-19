@@ -89,7 +89,7 @@ void mainTester(void *pvParameters)
     ParamT_GetTCs(testFW);
     Log_GetTCs(testFW);
     LogEv_GetTCs(testFW);
-    AppLogHandler_TestCreate(testFW);
+    AppLog_GetTCs(testFW);
     /***************************************************************/
 
     uint8_t result = TestFW_ExecuteTests(testFW);

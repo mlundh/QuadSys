@@ -47,6 +47,16 @@ AppLogHandler_t* AppLogHandler_Create(eventHandler_t* evHandler)
 	return obj;
 }
 
+void AppLogHandler_Delete(AppLogHandler_t* obj)
+{
+    if(!obj)
+    {
+        return;
+    }
+	AppLogBackend_DeleteObj(obj->backend);
+    vPortFree(obj);
+	return;
+}
 
 uint8_t AppLogHandler_HandleLog(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 {

@@ -24,14 +24,28 @@
  */
 
 #include "../AppLogTest.h"
+#include "Components/AppLog/inc/AppLog.h"
+
 #include "Components/AppLog/src/AppLogHandlerPrivate.h"
+#include "Messages/inc/Msg_AppLog.h"
 
 #include "Components/AppLog/inc/AppLogHandler.h"
 
 #include <stddef.h>
+#include <string.h>
+
+
+uint8_t AppLogHandler_TestCreate(TestFw_t* obj);
+uint8_t AppLogHandler_TestReport(TestFw_t* obj);
+uint8_t AppLogHandler_TestReportMacro(TestFw_t* obj);
+
+
 void AppLog_GetTCs(TestFw_t* obj)
 {
     TestFW_RegisterTest(obj, "AppLog Create", AppLogHandler_TestCreate);
+    TestFW_RegisterTest(obj, "AppLog Report", AppLogHandler_TestReport);
+    TestFW_RegisterTest(obj, "AppLog ReportM", AppLogHandler_TestReportMacro);
+
 
 }
 #define SHORT_MSG (200)
@@ -56,6 +70,110 @@ uint8_t AppLogHandler_TestCreate(TestFw_t* obj)
         TestFW_Report(obj, tmpstr);
         result = 0;
     }
-    return 0;
+    AppLogHandler_Delete(logobj);
+    return result;
 }
 
+uint8_t AppLogHandler_TestReport(TestFw_t* obj)
+{
+    eventHandler_t* evHandlerAppLog = Event_CreateHandler(FC_SerialIOrx_e, 1);
+    eventHandler_t* evHandlerTester = Event_CreateHandler(FC_Led_e, 0);
+    AppLogHandler_t* logobj = AppLogHandler_Create(evHandlerAppLog);
+
+    Event_InitHandler(evHandlerAppLog, evHandlerTester);
+
+
+    uint8_t result = 1;
+    if(!logobj || !evHandlerAppLog || !evHandlerTester)
+    {
+        char tmpstr[SHORT_MSG] = {0};
+        snprintf (tmpstr, SHORT_MSG,"Could not create a AppLogHandler or eventHandler object(s).\n");
+        TestFW_Report(obj, tmpstr);
+        result = 0;
+    }
+    // TODO the desitnation address should not be known by the module.
+    moduleMsg_t* msg = Msg_AppLogCreate(FC_SerialIOrx_e,0,writeAppLog,SHORT_MSG); 
+
+    uint8_t bufferOrig[SHORT_MSG] = "TestingTesting this is from the appLog.\0";
+    uint8_t* ptr = Msg_AppLogGetPayload(msg);
+    uint32_t buffSize = strlen((char*)bufferOrig);
+
+    Msg_AppLogSetPayloadlength(msg, buffSize);
+    memcpy((char*)ptr,bufferOrig, buffSize);
+
+    Event_Send(evHandlerTester, msg);
+
+    //We are only using one thread, so now we have to poll the receiver.
+    Event_Receive(evHandlerAppLog, 2);
+
+    uint8_t buffer[SHORT_MSG] = {0};
+    AppLogBackend_GetLog(logobj->backend, buffer, SHORT_MSG);
+    
+   if(strncmp((char*)bufferOrig, (char*)buffer,buffSize) == 0)
+    {
+        result &= 1;
+    }
+    else
+    {
+        char tmpstr[SHORT_MSG] = {0};
+        snprintf (tmpstr, SHORT_MSG,"expected: \"%s\" \ngot: \"%s\"!.\n", (char*)bufferOrig, (char*)buffer);
+        TestFW_Report(obj, tmpstr);
+        result = 0;
+    }
+
+    AppLogHandler_Delete(logobj);
+    Event_DeleteHandler(evHandlerAppLog);
+    Event_DeleteHandler(evHandlerTester);
+    return result;
+}
+
+
+uint8_t AppLogHandler_TestReportMacro(TestFw_t* obj)
+{
+    eventHandler_t* evHandlerAppLog = Event_CreateHandler(FC_SerialIOrx_e, 1);
+    eventHandler_t* evHandlerTester = Event_CreateHandler(FC_Led_e, 0);
+    AppLogHandler_t* logobj = AppLogHandler_Create(evHandlerAppLog);
+
+    Event_InitHandler(evHandlerAppLog, evHandlerTester);
+
+
+    uint8_t result = 1;
+    if(!logobj || !evHandlerAppLog || !evHandlerTester)
+    {
+        char tmpstr[SHORT_MSG] = {0};
+        snprintf (tmpstr, SHORT_MSG,"Could not create a AppLogHandler or eventHandler object(s).\n");
+        TestFW_Report(obj, tmpstr);
+        result = 0;
+    }
+    portENTER_CRITICAL();
+    char orig[] = {"hello!"};
+    LOG_ENTRY(FC_SerialIOrx_e ,orig ,evHandlerTester);
+
+    char expected[LOG_LENGTH_MAX] = {};
+
+    snprintf(expected, LOG_LENGTH_MAX, "%8lu: %s\n", xTaskGetTickCount(),orig);
+
+    //We are only using one thread, so now we have to poll the receiver.
+    Event_Receive(evHandlerAppLog, 2);
+
+    uint8_t buffer[SHORT_MSG] = {0};
+    AppLogBackend_GetLog(logobj->backend, buffer, SHORT_MSG);
+    
+   if(strncmp(expected, (char*)buffer,8) == 0)
+    {
+        result &= 1;
+    }
+    else
+    {
+        char tmpstr[SHORT_MSG] = {0};
+        snprintf (tmpstr, SHORT_MSG,"expected: \"%s\" \ngot: \"%s\"!.\n", expected, (char*)buffer);
+        TestFW_Report(obj, tmpstr);
+        result = 0;
+    }
+    portEXIT_CRITICAL();
+
+    AppLogHandler_Delete(logobj);
+    Event_DeleteHandler(evHandlerAppLog);
+    Event_DeleteHandler(evHandlerTester);
+    return result;
+}

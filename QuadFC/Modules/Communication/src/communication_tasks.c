@@ -35,6 +35,7 @@
 #include "FlightModeHandler/inc/flight_mode_handler.h"
 #include "Components/SLIP/inc/slip_packet.h"
 #include "Components/SLIP/inc/crc.h"
+#include "Components/AppLog/inc/AppLogHandler.h"
 #include "Parameters/inc/parameters.h"
 #include "QuadFC/QuadFC_Memory.h"
 #include "QuadFC/QuadFC_Peripherals.h"
@@ -66,7 +67,6 @@ typedef struct RxCom
     FlightModeHandler_t* stateHandler;
     eventHandler_t* evHandler;
     LogHandler_t* logHandler;
-
     paramHander_t* paramHandler;
 
 }RxCom_t;
@@ -80,6 +80,8 @@ typedef struct TxCom
     TransmissionCtrl transmission;
     uint8_t serializeBuffer[COM_PACKET_LENGTH_MAX];
     uint32_t serializebufferSize;
+    AppLogHandler_t* AppLogHandler;
+
 }TxCom_t;
 
 
@@ -137,6 +139,7 @@ TxCom_t* Com_InitTx(eventHandler_t* eventHandler)
     taskParam->transmission = transmission_OK;
     taskParam->serializeBuffer[0] = '\0';
     taskParam->serializebufferSize = COM_PACKET_LENGTH_MAX;
+    taskParam->AppLogHandler = AppLogHandler_Create(eventHandler);
 
     if( !taskParam->txSLIP || !taskParam->evHandler)
     {

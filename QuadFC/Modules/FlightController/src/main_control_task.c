@@ -39,8 +39,7 @@
 
 #include "Modules/StateEstimator/inc/signal_processing.h"
 
-/* Task includes. TODO remove...*/
-#include "Communication/inc/communication_tasks.h"
+#include "Components/AppLog/inc/AppLog.h"
 
 /* Modules */
 #include "FlightController/inc/control_system.h"
@@ -233,6 +232,7 @@ void main_control_task( void *pvParameters )
                 {
                     main_fault(param);
                 }
+                
             }
             else
             {
@@ -337,6 +337,7 @@ void main_control_task( void *pvParameters )
         heartbeat_counter++;
         if ( heartbeat_counter >= 500 )
         {
+            LOG_ENTRY(FC_SerialIOtx_e, "Heartbeat!", param->evHandler);
             Gpio_TogglePin( ledGreen1 );
             heartbeat_counter = 0;
         }

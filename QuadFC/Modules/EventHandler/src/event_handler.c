@@ -262,7 +262,8 @@ uint8_t Event_Unsubscribe(eventHandler_t* obj, messageTypes_t event)
 uint8_t Event_Send(eventHandler_t* obj, moduleMsg_t* msg)
 {
         Msg_SetSource(msg, obj->handlerId);
-        Event_SendGeneric(obj, msg);
+        uint8_t result = Event_SendGeneric(obj, msg);
+        return result;
 }
 
 uint8_t Event_SendGeneric(eventHandler_t* obj, moduleMsg_t* msg)

@@ -74,5 +74,11 @@
 /* Configure USART1 TXD pin */
 #define CONF_BOARD_USART1_TXD
 
+/* Configure USART3 RXD pin */
+#define CONF_BOARD_USART3_RXD
+
+/* Configure USART3 TXD pin */
+#define CONF_BOARD_USART3_TXD
+
 
 #endif /* CONF_BOARD_H_INCLUDED */
