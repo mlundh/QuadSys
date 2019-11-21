@@ -30,7 +30,7 @@
 #include "Modules/Utilities/inc/string_utils.h"
 #include "Components/SLIP/inc/slip_packet.h"
 #include "HAL/QuadFC/QuadFC_Memory.h"
-
+#include "Components/AppLog/inc/AppLog.h"
 #define MAX_PARAM_HANDLERS (8)
 #define PARAM_BUFFER_LEN (200)
 #define SLIP_PACKET_LEN (PARAM_BUFFER_LEN + 10)

@@ -182,13 +182,13 @@ uint8_t TestFW_ExecuteTests(TestFw_t* obj)
             snprintf (memLeakStr, REPORTLEN,"\e[31mMemory leak in test case %s! Lost %d bytes.\e[0m\n",obj->testFcns[i].tc_names, usedHeapM);
             TestFW_Report(obj, memLeakStr);
         }
-        char* result = (obj->testFcns[i].testOK) ? "\e[32mPASS\e[0m" : "\e[31mFAIL\e[0m";
+        const char* result = (obj->testFcns[i].testOK) ? "\e[32mPASS\e[0m" : "\e[31mFAIL\e[0m";
         snprintf(tmpstr, REPORTLEN, "\n**** RESULT %s: %s **** \n" , obj->testFcns[i].tc_names, result);
         TestFW_Report(obj, tmpstr);
         TestFW_GetReport(obj);
         SuiteResult &= obj->testFcns[i].testOK;
     }
-    char* result = (SuiteResult) ? "\e[32mPASS\e[0m" : "\e[31mFAIL\e[0m";
+    const char* result = (SuiteResult) ? "\e[32mPASS\e[0m" : "\e[31mFAIL\e[0m";
     snprintf(tmpstr, REPORTLEN, "\n********************** Testsuite %s RESULT: %s ********************** \n", obj->name, result);
     TestFW_Report(obj, tmpstr);
     TestFW_GetReport(obj);
