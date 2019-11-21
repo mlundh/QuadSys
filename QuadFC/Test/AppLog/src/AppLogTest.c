@@ -147,7 +147,7 @@ uint8_t AppLogHandler_TestReportMacro(TestFw_t* obj)
     }
     portENTER_CRITICAL();
     char orig[] = {"hello!"};
-    LOG_ENTRY(FC_SerialIOrx_e ,orig ,evHandlerTester);
+    LOG_ENTRY(FC_SerialIOrx_e ,evHandlerTester, "%s", orig);
 
     char expected[LOG_LENGTH_MAX] = {};
 
