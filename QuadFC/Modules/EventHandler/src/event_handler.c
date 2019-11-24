@@ -25,6 +25,7 @@
 
 #include "Modules/EventHandler/inc/event_handler.h"
 #include "Modules/Messages/inc/Msg_Subscriptions.h"
+#include "Components/AppLog/inc/AppLog.h"
 #define NO_ID (255)
 
 /**

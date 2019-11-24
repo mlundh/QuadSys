@@ -25,12 +25,9 @@
 
 #include "../AppLogTest.h"
 #include "Components/AppLog/inc/AppLog.h"
-
 #include "Components/AppLog/src/AppLogHandlerPrivate.h"
 #include "Messages/inc/Msg_AppLog.h"
-
 #include "Components/AppLog/inc/AppLogHandler.h"
-
 #include <stddef.h>
 #include <string.h>
 

@@ -28,9 +28,9 @@
 
 #define LOG_LENGTH_MAX (200)
 #define LOG_ENTRY(addr, evHandler,  format, ...) {  \
-    moduleMsg_t* msg = Msg_AppLogCreate(addr,0,writeAppLog,LOG_LENGTH_MAX); \
-    snprintf((char*)Msg_AppLogGetPayload(msg), LOG_LENGTH_MAX, "%8lu: "format"\n" ,xTaskGetTickCount(), __VA_ARGS__);\
-    uint32_t buffSize = strlen((char*)Msg_AppLogGetPayload(msg))+1;\
-    Msg_AppLogSetPayloadlength(msg, buffSize);\
-    Event_Send(evHandler, msg);\
+    moduleMsg_t* msgAppLog = Msg_AppLogCreate(addr,0,writeAppLog,LOG_LENGTH_MAX); \
+    snprintf((char*)Msg_AppLogGetPayload(msgAppLog), LOG_LENGTH_MAX, "%8lu: "format"\n" ,xTaskGetTickCount(), ##__VA_ARGS__);\
+    uint32_t buffSize = strlen((char*)Msg_AppLogGetPayload(msgAppLog))+1;\
+    Msg_AppLogSetPayloadlength(msgAppLog, buffSize);\
+    Event_Send(evHandler, msgAppLog);\
     }

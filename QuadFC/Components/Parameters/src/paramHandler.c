@@ -282,7 +282,6 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
     uint8_t result = 0;
     paramHander_t* handlerObj = (paramHander_t*)data; // The data should always be the handler object when a Msg_param is received.
 
-
     uint8_t control = Msg_ParamGetControl(msg);
 
     switch (control)
@@ -398,6 +397,7 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
     case param_get:
     {
         handlerObj->getter = Msg_GetSource(msg); // save who is currently getting the tree.
+        LOG_ENTRY(FC_SerialIOtx_e, obj, "Param: Recieved message from: %u", handlerObj->getter);
         if(handlerObj->currentlyGetting == 0)
         {
             uint32_t bufferLength = PARAM_BUFFER_LEN;
@@ -415,6 +415,8 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
             uint32_t payloadLength = strlen((char*)payload);
             if(result_get) // Dump from root is finished in local handler, reset helper.
             {
+                LOG_ENTRY(FC_SerialIOtx_e, obj, "Param: Master dump finished.");
+
                 memset(handlerObj->helper.dumpStart, 0, MAX_DEPTH); // Starting point of dump.
                 handlerObj->helper.sequence = 0;
                 // Set last in sequence if we are the only paramHandler in the system.
@@ -431,6 +433,8 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
             } // else dump is not finished, keep helper till next time.
             else
             {
+                LOG_ENTRY(FC_SerialIOtx_e, obj, "Param: Master dump continue.");
+
                 handlerObj->helper.sequence++;
             }
 
@@ -450,6 +454,8 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
         }
         else if((handlerObj->currentlyGetting)-1 < handlerObj->nrRegisteredHandlers) // -1 since we are counted as "0".
         {
+            LOG_ENTRY(FC_SerialIOtx_e, obj, "Param: Master Request from other handlers.");
+
             moduleMsg_t* msgParam = Msg_ParamFcCreate(handlerObj->handlers[(handlerObj->currentlyGetting)-1],
                     0,control,0,0,0);
             Event_Send(obj, msgParam);
@@ -565,6 +571,7 @@ uint8_t ParamHandler_HandleParamFcMsgMaster(eventHandler_t* obj, void* data, mod
     break;
     case param_get:
        {
+        LOG_ENTRY(FC_SerialIOrx_e, obj, "ParamFC: Master received from %lu.", Msg_GetSource(msg));
         uint8_t lastInSequence = 0;
         if(Msg_ParamFcGetLastinsequence(msg))
         {
