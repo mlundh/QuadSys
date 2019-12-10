@@ -55,11 +55,15 @@ public:
   template <typename Error>
   std::size_t operator()(const Error& err, std::size_t bytes_transferred)
   {
-      if((bytes_transferred >= 4) && (mBuffer[ bytes_transferred - 1 ] == mDelimiter) && (!err))
+      if(!err && !mBuffer.empty())
       {
-          return 0;
+        if((bytes_transferred >= 4) && (mBuffer[ bytes_transferred - 1 ] == mDelimiter) && (!err))
+        {
+            return 0;
+        }
+        return 1;
       }
-      return 1;
+      return 0;
   }
 
 private:
@@ -164,6 +168,13 @@ public:
     void setReadCallback( msgCallbackFcn fcn  );
 
     /**
+     * @brief Set the callback function for a successful write operation.
+     * 
+     * @param fcn 
+     */
+    void setWriteCallback(  timeoutHandlerFcn fcn  );
+
+    /**
      * Set the function to be called when a read has timed out.
      * @param fcn
      */
@@ -221,6 +232,7 @@ private:
     Parser mParser;
     msgCallbackFcn mMessageHandler;
     timeoutHandlerFcn mReadTimeoutHandler;
+    timeoutHandlerFcn mWriteCallback;
 };
 
 } /* namespace QuadGS */

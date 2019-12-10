@@ -80,6 +80,7 @@ void Serial_Manager::initialize()
 	mThread_io = new std::thread(std::bind(&Serial_Manager::runThread, this));
 	mPort = QuadGS::SerialPort::create(mIo_service);
 	mPort->setReadCallback( std::bind(&Serial_Manager::messageHandler, this, std::placeholders::_1) );
+	mPort->setWriteCallback( std::bind(&Serial_Manager::writeCallback, this) );
 
 }
 
@@ -142,7 +143,7 @@ std::string Serial_Manager::startReadCmd(std::string)
 std::string Serial_Manager::testSerial(std::string path)
 {
 	Msg_TestTransmission::ptr msg = std::make_unique<Msg_TestTransmission>(msgAddr_t::FC_SerialIOrx_e, 0xDEADBEEF, "Test string\0");
-	std::string result = "Test message sent: \n" + msg->toString();
+	std::string result = "Test message sent!";
 	sendMsg(std::move(msg));
 	return result;
 }
@@ -228,16 +229,19 @@ void Serial_Manager::timeoutHandler()
 
 void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 {
+	doWrite();
 	if(!msg)
 	{
 		//Received NOK message, trigger a re-try!
 		Msg_Transmission::ptr transmission = std::make_unique<Msg_Transmission>(mTransmissionAddr, transmission_NOK);
 		sendMsg(std::move(transmission));
 		return;
-	}
-
+	}	
 	if(msg->getType() == messageTypes_t::Msg_Transmission_e)
 	{
+		std::stringstream ss;
+		ss << "Received OK/NOK msg nr: " << (int)msg->getMsgNr();
+		mLogger.QuadLog(severity_level::message_trace, ss.str());
 
 		mTimeoutRead.cancel();
 		Msg_Transmission* transMsg = dynamic_cast<Msg_Transmission*>(msg.get());
@@ -262,22 +266,25 @@ void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 			if(mRetries < NR_RETRIES)
 			{
 				mRetries++;
-				mLogger.QuadLog(severity_level::warning, "Transmission failed, retrying");
+				std::stringstream ss;
+				ss << "Transmission failed, resending msg nr: " << (int)transMsg->getMsgNr();
+				mLogger.QuadLog(severity_level::warning, ss.str());
 			}
 			else
 			{
+				mOngoing.release(); 
 				mRetries = 0;
-				mLogger.QuadLog(severity_level::error, "Transmission failed NOK.");
+				mLogger.QuadLog(severity_level::error, "Transmission failed, droping package.");
 			}
 
 		}
-
-		doWrite();
 	}
 	// Respond transmission OK and forward the message.
 	else
 	{
-		mLogger.QuadLog(severity_level::message_trace, "Received: \n"  + msg->toString());
+		std::stringstream ss;
+		ss << "Received msg nr: " << (int)msg->getMsgNr();
+		mLogger.QuadLog(severity_level::message_trace, ss.str());
 
 		//Received message OK, return transmission OK!
 		Msg_Transmission::ptr transmission = std::make_unique<Msg_Transmission>(mTransmissionAddr, transmission_OK);
@@ -293,8 +300,6 @@ void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 		// then send to the router.
 		sendExternalMsg(std::move(msg));
 	}
-
-
 }
 void Serial_Manager::doWrite()
 {
@@ -303,8 +308,13 @@ void Serial_Manager::doWrite()
 		mLogger.QuadLog(severity_level::error, "Port not open.");
 		return;
 	}
-	if(mOngoing || mOutgoingFifo.empty() || !mPort->ready())
+	if(mOngoing || mOutgoingFifo.empty() )
 	{
+		return;
+	}
+	else if(!mPort->ready())
+	{
+		mLogger.QuadLog(severity_level::error, "Port not ready.");
 		return;
 	}
 
@@ -314,10 +324,21 @@ void Serial_Manager::doWrite()
 	{
 		msg->setMsgNr(mMsgNrTx);
 	}
+	if(msg->getType() == messageTypes_t::Msg_Transmission_e)
+	{
+		std::stringstream ss;
+		ss << "Transmitting OK/NOK nr: " << (int)msg->getMsgNr();
+		mLogger.QuadLog(severity_level::message_trace, ss.str());
+	}
+	else
+	{
+		std::stringstream ss;
+		ss << "Transmitting msg nr: " << (int)msg->getMsgNr();
+		mLogger.QuadLog(severity_level::message_trace, ss.str());
+	}	// Do not expect a result, and do not re-transmitt a transmission message.
 
-	mLogger.QuadLog(severity_level::message_trace, "Transmitting: \n"  + msg->toString());
 
-	// Do not expect a result, and do not re-transmitt a transmission message.
+
 	if(msg->getType() != Msg_Transmission_e)
 	{
 		startReadTimer();
@@ -328,6 +349,13 @@ void Serial_Manager::doWrite()
 		// Transmissions should not be re-sent.
 		mPort->write( std::move(msg) );
 	}
+}
+
+void Serial_Manager::writeCallback()
+{
+	mLogger.QuadLog(severity_level::message_trace, "Write callback.");
+
+	doWrite();
 }
 
 void Serial_Manager::startReadTimer(int timeout)
@@ -362,7 +390,6 @@ void Serial_Manager::timerReadCallback( const boost::system::error_code& error )
 	{
 		mRetries++;
 		mLogger.QuadLog(severity_level::warning, "No reply, retrying");
-		mLogger.QuadLog(severity_level::message_trace, "Transmitting: \n"  + mOngoing->toString());
 		startReadTimer();
 		mOngoing = mPort->write( std::move(mOngoing) ); // resend.
 

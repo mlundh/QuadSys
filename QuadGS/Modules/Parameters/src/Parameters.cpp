@@ -380,7 +380,7 @@ void Parameters::RequestTree()
 
 void Parameters::process(Msg_Param* message)
 {
-	mLogger.QuadLog(severity_level::message_trace, "Processing: " + message->toString());
+	mLogger.QuadLog(severity_level::message_trace, "Processing incoming param message.");
 
 	uint8_t control = message->getControl();
 

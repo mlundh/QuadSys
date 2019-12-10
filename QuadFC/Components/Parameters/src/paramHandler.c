@@ -365,6 +365,7 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
                 if(!Slip_DePacketize(unpacked_buffer, PARAM_BUFFER_LEN, packet))
                 {
                     result = 0;
+                    LOG_ENTRY(FC_SerialIOtx_e, obj, "Param: Error. Could not depacketize SLIP.");
                 }
             }
             moduleMsg_t* loadedMsg = NULL;
@@ -387,7 +388,8 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
             {
                 Msg_Delete(&loadedMsg);
                 Slip_Delete(packet);
-                //TODO log error.
+                LOG_ENTRY(FC_SerialIOtx_e, obj, "Param: Error. Failed to read param.");
+
                 break;
             }
             Slip_Delete(packet);
@@ -397,9 +399,10 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
     case param_get:
     {
         handlerObj->getter = Msg_GetSource(msg); // save who is currently getting the tree.
-        LOG_ENTRY(FC_SerialIOtx_e, obj, "Param: Recieved message from: %u", handlerObj->getter);
         if(handlerObj->currentlyGetting == 0)
         {
+            LOG_ENTRY(FC_SerialIOrx_e, obj, "ParamFC Master: Getting from master.");
+
             uint32_t bufferLength = PARAM_BUFFER_LEN;
             // Create the message here to use the memory.
             moduleMsg_t* msgReply = Msg_ParamCreate(obj->handlerId, 0, param_set, 0, 0, bufferLength );
@@ -556,6 +559,7 @@ uint8_t ParamHandler_HandleParamFcMsgMaster(eventHandler_t* obj, void* data, mod
     paramHander_t* handlerObj = (paramHander_t*)data; // The data should always be the handler object when a Msg_param is received.
 
     uint8_t control = Msg_ParamFcGetControl(msg);
+    LOG_ENTRY(FC_SerialIOrx_e, obj, "ParamFC Master: Received from %lu.", Msg_GetSource(msg));
 
     // Parameter messages uses string payload, and they have persistent storage, and has to
     // be manually allocated and freed. This means we can re-use the buffer provided in this
@@ -571,7 +575,7 @@ uint8_t ParamHandler_HandleParamFcMsgMaster(eventHandler_t* obj, void* data, mod
     break;
     case param_get:
        {
-        LOG_ENTRY(FC_SerialIOrx_e, obj, "ParamFC: Master received from %lu.", Msg_GetSource(msg));
+        LOG_ENTRY(FC_SerialIOrx_e, obj, "ParamFC Master: Received from %lu.", Msg_GetSource(msg));
         uint8_t lastInSequence = 0;
         if(Msg_ParamFcGetLastinsequence(msg))
         {
@@ -686,6 +690,7 @@ uint8_t ParamHandler_HandleParamFcMsg(eventHandler_t* obj, void* data, moduleMsg
     case param_get:
     case param_save:
     {
+        LOG_ENTRY(FC_SerialIOtx_e, obj, "ParamFC Module: Received from Master.");
         param_helper_t* helper = NULL;
         if(control == param_get)
         {
@@ -706,6 +711,7 @@ uint8_t ParamHandler_HandleParamFcMsg(eventHandler_t* obj, void* data, moduleMsg
         uint32_t payloadLength = strlen((char*)payload);
         if(result_get) // Dump from root is finished, reset helper.
         {
+            LOG_ENTRY(FC_SerialIOtx_e, obj, "ParamFC Module: dump finished.");
             memset(helper->dumpStart, 0, MAX_DEPTH); // Starting point of dump.
             //handlerObj->helper.sequence = 0;
             lastInSequence = 1;
@@ -719,6 +725,7 @@ uint8_t ParamHandler_HandleParamFcMsg(eventHandler_t* obj, void* data, moduleMsg
         Msg_ParamFcSetSequencenr(paramMsg, helper->sequence);
 
         // send the reply to the caller, should always be the master ParamHandler.
+        LOG_ENTRY(FC_SerialIOtx_e, obj, "ParamFC Module: Sending to master");
         Event_Send(handlerObj->evHandler,paramMsg);
         result = 1;
     }

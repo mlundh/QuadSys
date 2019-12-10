@@ -127,6 +127,12 @@ private:
      */
     void doWrite();
 
+    /**
+     * @brief Callback function for write.
+     * 
+     */
+    void writeCallback();
+
 
     /**
      * Start the read timer. If timeout occurs then the read will be considered failed.

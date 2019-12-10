@@ -332,6 +332,7 @@ uint8_t Event_SendInternal(eventHandler_t* obj, moduleMsg_t* msg)
                 {
                     result = 0;
                     Msg_Delete(&msg);
+                    LOG_ENTRY(FC_SerialIOtx_e, obj, "Event: Error. Failed sendToBack SendInternal.");
                 }
                 else
                 {
@@ -369,6 +370,7 @@ uint8_t Event_SendBCInternal(eventHandler_t* obj, moduleMsg_t* msg, uint8_t dele
                 moduleMsg_t* clone = Msg_Clone(msg);
                 if(!xQueueSendToBack(obj->handlers[i]->eventQueue, &clone, EVENT_BLOCK_TIME))
                 {
+                    LOG_ENTRY(FC_SerialIOtx_e, obj, "Event: Error. Failed sendToBack BC internal.");
                     result = 0;
                     Msg_Delete(&msg);
                     Msg_Delete(&clone);
@@ -389,8 +391,10 @@ uint8_t Event_SendExternal(eventHandler_t* obj, moduleMsg_t* msg)
         return 0;
     }
     uint8_t result = 1;
+   
     if(!xQueueSendToBack(obj->portQueue, &msg, EVENT_BLOCK_TIME))
     {
+        LOG_ENTRY(FC_SerialIOtx_e, obj, "Event: Error. Failed send to external queue.");
         result = 0;
         Msg_Delete(&msg);
     }
@@ -514,7 +518,7 @@ uint8_t Event_WaitForEvent(eventHandler_t* obj, messageTypes_t event, uint8_t wa
             return 0;
         }
         uint32_t timeAfterWait = xTaskGetTickCount();
-        uint32_t waitedTicks = timeBeforeWait - timeAfterWait;
+        uint32_t waitedTicks = timeAfterWait - timeBeforeWait;
         if(waitedTicks >= blockTicks)
         {
             remainingWaitTime = 0;

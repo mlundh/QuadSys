@@ -36,6 +36,7 @@
 #include "Components/SLIP/inc/slip_packet.h"
 #include "Components/SLIP/inc/crc.h"
 #include "Components/AppLog/inc/AppLogHandler.h"
+#include "Components/AppLog/inc/AppLog.h"
 #include "Parameters/inc/parameters.h"
 #include "QuadFC/QuadFC_Memory.h"
 #include "QuadFC/QuadFC_Peripherals.h"
@@ -325,6 +326,14 @@ uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
         uint8_t reTransmittNr = 0;
         while(TxObj->transmission == transmission_NOK)
         {
+            if(Msg_Transmission_e == Msg_GetType(msg))
+            {
+                LOG_ENTRY(FC_SerialIOtx_e, obj, "COM: Sending OK/NOK nr: %lu", Msg_GetMsgNr(msg));
+            }
+            else
+            {
+                LOG_ENTRY(FC_SerialIOtx_e, obj, "COM: Sending message nr: %lu", Msg_GetMsgNr(msg));
+            }
             /* TX is blocking */
             QuadFC_Serial_t serialData;
             serialData.buffer = TxObj->txSLIP->payload;
@@ -341,20 +350,22 @@ uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
             {   
                 break; // TODO ugly...
             }
-
             if(!Event_WaitForEvent(TxObj->evHandler, Msg_Transmission_e, 1, 0, 1000)) // wait for the transmission event.
             {
                 reTransmittNr ++;
+                LOG_ENTRY(FC_SerialIOtx_e, obj, "COM: Error: Transfer failed, retransmitt. Message nr: %lu", Msg_GetMsgNr(msg));
             }
             else if(TxObj->transmission == transmission_NOK) // We got a transmission message. Check if it was a NOK message.
             {
+                LOG_ENTRY(FC_SerialIOtx_e, obj, "COM: Timeout or NOK, retransmitt. Message nr: %lu", Msg_GetMsgNr(msg));
                 reTransmittNr++; // If we got a tranmission_NOK message we should also re-transmitt.
             }
             
             if(reTransmittNr >= NR_RETRANSMITT)
             {
-                // TODO log failed retransmitt.
+                LOG_ENTRY(FC_SerialIOtx_e, obj, "COM: Transmission failed, dropping package. Message nr: %lu", Msg_GetMsgNr(msg));
             	TxObj->transmission = transmission_OK; // We failed, and have notified this. Prepare for next message.
+                TxObj->msgNr = (TxObj->msgNr+1) % 255; // wrap at 255...
                 break; // Retransmit failed.
             }
         }
@@ -410,6 +421,8 @@ void Com_RxTask( void *pvParameters )
             uint32_t payloadLength = Slip_DePacketize(obj->messageBuffer, COM_PACKET_LENGTH_MAX, obj->SLIP);
             if(payloadLength == 0)
             {
+                LOG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "COM: RX - Creating NOK message, payloadLength = 0");
+
                 moduleMsg_t* reply = Msg_TransmissionCreate(GS_SerialIO_e, 0, transmission_NOK);
                 Event_Send(obj->evHandler, reply);
                 break;
@@ -431,16 +444,26 @@ void Com_RxTask( void *pvParameters )
 
             if(Msg_GetType(msg) != Msg_Transmission_e) // we ack all messages except for transmission messages.
             {
+                LOG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "COM: RX - Creating OK/NOK nr: %lu", Msg_GetMsgNr(msg));
                 uint8_t msgNr = Msg_GetMsgNr(msg);
                 moduleMsg_t* reply = Msg_TransmissionCreate(GS_SerialIO_e, msgNr, transmission_OK);
                 Event_Send(obj->evHandler, reply);
             }
-
+            if(Msg_Transmission_e == Msg_GetType(msg))
+            {
+                LOG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "COM: Received OK/NOK nr: %lu", Msg_GetMsgNr(msg));
+            }
+            else
+            {
+                LOG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "COM: Received message nr: %lu", Msg_GetMsgNr(msg));
+            }
+            
             Event_SendGeneric(obj->evHandler, msg);
         }
         break;
         case SLIP_StatusNok:
         {
+            LOG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "COM: RX Creating NOK message, SLIP NOK");
             moduleMsg_t* reply = Msg_TransmissionCreate(GS_SerialIO_e, 0, transmission_NOK);
             Event_Send(obj->evHandler, reply);
         }
@@ -463,7 +486,7 @@ uint8_t Com_TxTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 
     if(handlerObj->msgNr != Msg_GetMsgNr(msg))
     {
-        //Message out of sync! TODO error.
+        LOG_ENTRY(FC_SerialIOtx_e, obj, "COM: Message out of sync, expected: %d, got: %lu", handlerObj->msgNr, Msg_GetMsgNr(msg) );
     }
     else
     {
@@ -561,10 +584,13 @@ uint8_t Com_TestTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 
     if(Msg_TestTransmissionGetTest(msg) != 0xDEADBEEF)
     {
+        LOG_ENTRY(FC_SerialIOtx_e, obj, "SerialTest: failed, did not get correct data!");
         result = 0;
     }
-    if(strncmp((char*)Msg_TestTransmissionGetPayload(msg),"Test string\0",12) != 0)
+    if(strncmp((char*)Msg_TestTransmissionGetPayload(msg),"Test string\0",11) != 0) // Null termination not sent serially.
     {
+        LOG_ENTRY(FC_SerialIOtx_e, obj, "SerialTest: failed, expected \"%s\", got \"%s\"!","Test string\0", Msg_TestTransmissionGetPayload(msg));
+        LOG_ENTRY(FC_SerialIOtx_e, obj, "SerialTest: msgLength = %ld ", Msg_TestTransmissionGetPayloadlength(msg));
         result = 0;
     }
     if(result)
@@ -572,6 +598,7 @@ uint8_t Com_TestTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg)
         moduleMsg_t* reply = Msg_TestTransmissionCreate(Msg_GetSource(msg),0,1,10);
         strncpy((char*)Msg_TestTransmissionGetPayload(reply), "Test OK\0",8);
         Msg_TestTransmissionSetPayloadlength(reply, 8);
+        LOG_ENTRY(FC_SerialIOtx_e, obj, "SerialTest: Passed, sending reply.");
         Event_Send(obj, reply);
     }
     return result;

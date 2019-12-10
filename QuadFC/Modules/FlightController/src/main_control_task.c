@@ -157,6 +157,7 @@ void main_control_task( void *pvParameters )
     //This takes some time due to calibration.
     if(!StateEst_init(param->stateEst))
     {
+        LOG_ENTRY(FC_SerialIOtx_e, param->evHandler, "Main: Error - Failed to initialize IMU!");
         main_fault(param);
     }
     /*Utility variables*/
@@ -197,6 +198,7 @@ void main_control_task( void *pvParameters )
 
             if(pdTRUE != FMode_ChangeFMode(param->flightModeHandler, fmode_disarming))
             {
+                LOG_ENTRY(FC_SerialIOtx_e, param->evHandler, "Main: Error - Failed to change flight mode to disarming!");
                 main_fault(param);
             }
 
@@ -230,6 +232,7 @@ void main_control_task( void *pvParameters )
                 arming_counter = 0;
                 if( !FMode_ChangeFMode(param->flightModeHandler, fmode_armed) )
                 {
+                    LOG_ENTRY(FC_SerialIOtx_e, param->evHandler, "Main: Error - Failed to change flight mode to armed!");
                     main_fault(param);
                 }
                 
@@ -259,18 +262,21 @@ void main_control_task( void *pvParameters )
 
             if(param->SetpointTimeoutCounter >= SpTimeoutMs/CTRL_TIME)
             {
+                LOG_ENTRY(FC_SerialIOtx_e, param->evHandler, "Main: Error - Setpoint timeout!");
                 main_fault(param);
             }
 
             // Get the estimated physical state of the copter.
             if(!StateEst_getState(param->stateEst, param->state, Ctrl_GetCurrentMode(param->CtrlModeHandler)))
             {
+                LOG_ENTRY(FC_SerialIOtx_e, param->evHandler, "Main: Error - Not able to get the current state.");
                 main_fault(param);
             }
             //Execute the control, allocate the control signals to the different
             // motors, and then update the motor setpoint.
             if(!Ctrl_Execute(param->ctrl, param->state, param->setpoint, param->control_signal, Ctrl_GetCurrentMode(param->CtrlModeHandler)))
             {
+                LOG_ENTRY(FC_SerialIOtx_e, param->evHandler, "Main: Error - Unable to execute the control loop.");
                 main_fault(param);
             }
             Ctrl_Allocate(param->control_signal, param->motorControl->motorSetpoint);
@@ -300,6 +306,7 @@ void main_control_task( void *pvParameters )
             Ctrl_Off(param->ctrl);
             if( !FMode_ChangeFMode(param->flightModeHandler, fmode_disarmed) )
             {
+                LOG_ENTRY(FC_SerialIOtx_e, param->evHandler, "Main: Error - Failed to change flight mode to disarmed.");
                 main_fault(param);
             }
 
@@ -337,7 +344,7 @@ void main_control_task( void *pvParameters )
         heartbeat_counter++;
         if ( heartbeat_counter >= 500 )
         {
-            LOG_ENTRY(FC_SerialIOtx_e, param->evHandler, "%s", "Heartbeat!");
+            //LOG_ENTRY(FC_SerialIOtx_e, param->evHandler, "%s", "Heartbeat!");
             Gpio_TogglePin( ledGreen1 );
             heartbeat_counter = 0;
         }

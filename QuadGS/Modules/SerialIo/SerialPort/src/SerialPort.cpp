@@ -46,6 +46,7 @@ SerialPort::SerialPort(  boost::asio::io_service &io_service ) :
 , mTimeoutWrite( io_service )
 , mParser()
 , mReadTimeoutHandler()
+, mWriteCallback()
 {
 	if( mSerialPort.is_open() )
 	{
@@ -138,6 +139,11 @@ void SerialPort::setReadCallback( msgCallbackFcn fcn  )
 	return;
 }
 
+void SerialPort::setWriteCallback(  timeoutHandlerFcn fcn  )
+{
+	mWriteCallback = fcn;
+	return;
+}
 void SerialPort::setReadTimeoutCallback(  timeoutHandlerFcn fcn  )
 {
 	mReadTimeoutHandler = fcn;
@@ -215,9 +221,7 @@ void SerialPort::read()
 		QuadLog(severity_level::error, "Read called during read operation." );
 		throw std::runtime_error("Read called during read operation.");
 	}
-	QuadLog(severity_level::debug, "Read called.");
 	mReadBuff = std::make_shared<std::vector<unsigned char> >(512,0);;
-
 	boost::asio::async_read( mSerialPort,
 			boost::asio::buffer( *mReadBuff),
 			transferUntil(SlipPacket::SlipControlOctets::frame_boundary_octet, *mReadBuff),
@@ -244,12 +248,15 @@ void SerialPort::writeCallback( const boost::system::error_code& error,
 			QuadLog(severity_level::error, "Read_callback called with an error: " + error.message() );
 			doClose( error );
 		}
-		QuadLog(severity_level::debug, "Bytes written: " + std::to_string(bytes_transferred) +  " bytes.");
 		mTimeoutWrite.cancel();
 	}
 	catch (const std::runtime_error& e)
 	{
 		QuadLog(severity_level::error, e.what() );
+	}
+	if(mWriteCallback)
+	{
+		mWriteCallback();
 	}
 }
 
@@ -264,13 +271,10 @@ void SerialPort::readCallback( const boost::system::error_code& error,
 			QuadLog(severity_level::error,  " Read_callback called with an error: " + error.message());
 			doClose( error );
 		}
-		QuadLog(severity_level::debug, "Bytes read: " + std::to_string(bytes_transferred) +  " bytes.");
-
-
-
 		mReadBuff->erase(mReadBuff->begin()+bytes_transferred, mReadBuff->end()); // remove unused bytes.
 		SlipPacket::ptr tmpSlip = SlipPacket::Create(*mReadBuff, false);
 		QGS_ModuleMsgBase::ptr msg = mParser.parse(std::vector<unsigned char>(std::move(tmpSlip->GetPayload())));
+		mReadBuff.reset();
 		if(msg) // do not use tmpSlip after move!
 		{
 			if(mMessageHandler)
@@ -289,7 +293,6 @@ void SerialPort::readCallback( const boost::system::error_code& error,
 			}
 		}
 
-		mReadBuff.reset();
 	}
 	catch (const std::runtime_error& e)
 	{
@@ -313,6 +316,7 @@ void SerialPort::timerWriteCallback( const boost::system::error_code& error )
 			doClose( error );
 			throw std::runtime_error(error.message());
 		}
+
 		return;
 	}
 
