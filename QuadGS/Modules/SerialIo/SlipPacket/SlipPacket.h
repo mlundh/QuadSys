@@ -79,9 +79,11 @@ public:
      */
     virtual ~SlipPacket();
 
-private:
     SlipPacket(const uint8_t* data, uint8_t dataLength, bool isPayload);
+    
     SlipPacket(const data_t& data, bool isPayload);
+private:
+
     void initCrc();
     /**
      * @brief Encode the payload.

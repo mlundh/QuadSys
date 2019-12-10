@@ -228,7 +228,8 @@ private:
     boost::system::error_code mError;
     boost::asio::deadline_timer mTimeoutWrite;
     std::shared_ptr<std::vector<unsigned char> > mWriteBuff;
-    std::shared_ptr<std::vector<unsigned char> > mReadBuff;
+    boost::asio::streambuf mStreambuf;
+    std::string mReceivedData;
     Parser mParser;
     msgCallbackFcn mMessageHandler;
     timeoutHandlerFcn mReadTimeoutHandler;
