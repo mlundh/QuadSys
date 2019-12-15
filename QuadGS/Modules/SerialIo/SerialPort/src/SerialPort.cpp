@@ -44,6 +44,7 @@ SerialPort::SerialPort(  boost::asio::io_service &io_service ) :
 , mIoService( io_service )
 , mSerialPort( io_service )
 , mTimeoutWrite( io_service )
+, mWriteOngoing ( false )
 , mParser()
 , mReadTimeoutHandler()
 , mWriteCallback()
@@ -53,7 +54,6 @@ SerialPort::SerialPort(  boost::asio::io_service &io_service ) :
 		throw std::runtime_error( "The serial port is already open." );
 		return;
 	}
-
 
 }
 
@@ -175,11 +175,10 @@ QGS_ModuleMsgBase::ptr SerialPort::write(QGS_ModuleMsgBase::ptr msg)
 		QuadLog(severity_level::error, "Port is not open." );
 		return msg;
 	}
-	if(mWriteBuff.use_count() != 0)
+	if(mWriteOngoing)
 	{
 		//error
 		QuadLog(severity_level::error, "Write called during ongoing write operation." );
-		throw std::runtime_error("Write called during ongoing write operation.");
 	}
 	//Package into a slip packet and send the packaged data.
 	BinaryOStream os;
@@ -188,18 +187,15 @@ QGS_ModuleMsgBase::ptr SerialPort::write(QGS_ModuleMsgBase::ptr msg)
 		os << *msg; // All messages are serializable to the BinaryOStream via base class.
 	}
 
-	{
-		SlipPacket::ptr tmpSlip = SlipPacket::Create(os.get_internal_vec(), true);
-		mWriteBuff =  std::make_shared<std::vector<unsigned char> >(std::move(tmpSlip->GetPacket())); // Do not use tmpSlip after move!
-	}
+	SlipPacket tmpSlip = SlipPacket(os.get_internal_vec(), true);
+
 	mTimeoutWrite.expires_from_now( boost::posix_time::milliseconds( 1000 ) );
 	mTimeoutWrite.async_wait(
 			boost::bind( & SerialPort::timerWriteCallback,
 					shared_from_this(),
 					boost::asio::placeholders::error ) );
 
-	boost::asio::async_write( mSerialPort, boost::asio::buffer( *mWriteBuff ),
-			transferUntil(SlipPacket::SlipControlOctets::frame_boundary_octet, *mWriteBuff),
+	boost::asio::async_write( mSerialPort,boost::asio::buffer( &tmpSlip.GetPacket().front(), tmpSlip.GetPacket().size()),
 			boost::bind( & SerialPort::writeCallback, shared_from_this(),
 					boost::asio::placeholders::error,
 					boost::asio::placeholders::bytes_transferred ) );
@@ -223,14 +219,14 @@ void SerialPort::read()
 
 bool SerialPort::ready()
 {
-	return mWriteBuff.use_count() == 0;
+	return !mWriteOngoing;
 }
 
 /*Callback from write operation.*/
 void SerialPort::writeCallback( const boost::system::error_code& error,
 		std::size_t bytes_transferred )
 {
-	mWriteBuff.reset();
+	mWriteOngoing = false;
 	try
 	{
 		if( error )
@@ -312,7 +308,7 @@ void SerialPort::readCallback( const boost::system::error_code& error,
 /* Called when the write timer's deadline expire */
 void SerialPort::timerWriteCallback( const boost::system::error_code& error )
 {
-	mWriteBuff.reset();
+	mWriteOngoing = false;
 	if( error )
 	{
 		/*If the timer was called with the operation_aborted error code then

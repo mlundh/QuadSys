@@ -38,38 +38,6 @@ typedef boost::asio::serial_port b_a_sp;
 
 namespace QuadGS {
 
-/**
- * @brief Helper class to boost async_read_untill
- */
-class transferUntil
-{
-public:
-  typedef std::size_t result_type;
-
-  explicit transferUntil(uint8_t delimiter, std::vector<unsigned char>& buffer)
-    : mDelimiter(delimiter)
-    , mBuffer(buffer)
-  {
-  }
-
-  template <typename Error>
-  std::size_t operator()(const Error& err, std::size_t bytes_transferred)
-  {
-      if(!err && !mBuffer.empty())
-      {
-        if((bytes_transferred >= 4) && (mBuffer[ bytes_transferred - 1 ] == mDelimiter) && (!err))
-        {
-            return 0;
-        }
-        return 1;
-      }
-      return 0;
-  }
-
-private:
-  uint8_t mDelimiter;
-  std::vector<unsigned char>& mBuffer;
-};
 
 /**
  * Forward declarations
@@ -94,6 +62,12 @@ public:
     typedef std::shared_ptr< SerialPort > ptr;
 
     /**
+     * @brief Private constructor, only use create method.
+     * @param io_service An io_service instance.
+     */
+    SerialPort( boost::asio::io_service &io_service );
+    
+    /**
      * @brief Destructor.
      */
     virtual ~SerialPort();
@@ -104,6 +78,7 @@ public:
      * @return ptr to the created serial port interface.
      */
     static ptr create( boost::asio::io_service &io_service );
+
 
     /**
      * @brief start an async read operation on the configured
@@ -181,11 +156,7 @@ public:
     void setReadTimeoutCallback(  timeoutHandlerFcn fcn  );
 
 private:
-    /**
-     * @brief Private constructor, only use create method.
-     * @param io_service An io_service instance.
-     */
-    SerialPort( boost::asio::io_service &io_service );
+
 
     /**
      * @brief Do Close the serial port.
@@ -227,8 +198,8 @@ private:
     boost::asio::serial_port mSerialPort;
     boost::system::error_code mError;
     boost::asio::deadline_timer mTimeoutWrite;
-    std::shared_ptr<std::vector<unsigned char> > mWriteBuff;
     boost::asio::streambuf mStreambuf;
+    bool mWriteOngoing;
     std::string mReceivedData;
     Parser mParser;
     msgCallbackFcn mMessageHandler;

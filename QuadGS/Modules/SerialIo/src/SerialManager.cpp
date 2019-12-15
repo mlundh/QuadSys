@@ -33,7 +33,6 @@
 #include "QGS_Module.h"
 #include "Msg_RegUiCommand.h"
 #include "Msg_UiCommandResult.h"
-#include "Msg_Transmission.h"
 #include "Msg_TestTransmission.h"
 #include "Msg_Display.h"
 #define NR_RETRIES (2)
@@ -181,6 +180,7 @@ void Serial_Manager::process(Msg_FireUiCommand* message)
 	sendMsg(std::move(ptr));
 	return;
 }
+
 void Serial_Manager::process(Msg_TestTransmission* message)
 {
 	bool result = true;
@@ -198,6 +198,42 @@ void Serial_Manager::process(Msg_TestTransmission* message)
 	sendMsg(std::move(dispMsg));
 }
 
+void Serial_Manager::process(Msg_Transmission* transMsg)
+{
+
+	mTimeoutRead.cancel();
+
+	if(mMsgNrTx != transMsg->getMsgNr())
+	{
+		std::stringstream ss;
+		ss << "Ack does not match expected message number: " << (int)transMsg->getMsgNr() << " expected: " << (int) mMsgNrTx;
+		mLogger.QuadLog(QuadGS::error, ss.str());
+	}
+	if(transMsg->getStatus() == transmission_OK) 
+	{
+		// Transmission ok, discard the outgoing message, no need to save after successful transmission. Increase the messageNumber.
+		mOngoing.release(); // we got a transmissionOK message, this is the end of an ongoing transmission.
+		mRetries = 0;
+		mMsgNrTx = ((mMsgNrTx+1)%256);
+	}
+	else if(transMsg->getStatus() == transmission_NOK)
+	{
+		if(mRetries < NR_RETRIES)
+		{
+			mRetries++;
+			std::stringstream ss;
+			ss << "Transmission failed, resending msg nr: " << (int)transMsg->getMsgNr();
+			startReadTimer(); // we received a message, but it was a NOK one. Trigger re-transmitt. 
+			mLogger.QuadLog(severity_level::warning, ss.str());
+		}
+		else
+		{
+			mOngoing.release(); 
+			mRetries = 0;
+			mLogger.QuadLog(severity_level::error, "Transmission failed, droping package.");
+		}
+	}
+}
 
 void Serial_Manager::ReceivingFcnIo(std::unique_ptr<QGS_ModuleMsgBase> message)
 {
@@ -227,9 +263,9 @@ void Serial_Manager::timeoutHandler()
 
 }
 
+// excecuted in the io-service thread.
 void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 {
-	doWrite();
 	if(!msg)
 	{
 		//Received NOK message, trigger a re-try!
@@ -242,42 +278,6 @@ void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 		std::stringstream ss;
 		ss << "Received OK/NOK msg nr: " << (int)msg->getMsgNr();
 		mLogger.QuadLog(severity_level::message_trace, ss.str());
-
-		mTimeoutRead.cancel();
-		Msg_Transmission* transMsg = dynamic_cast<Msg_Transmission*>(msg.get());
-		
-		if(mMsgNrTx != transMsg->getMsgNr())
-		{
-			std::stringstream ss;
-			ss << "Ack does not match expected message number: " << (int)transMsg->getMsgNr() << " expected: " << (int) mMsgNrTx;
-			mLogger.QuadLog(QuadGS::error, ss.str());
-		}
-
-		if(transMsg->getStatus() == transmission_OK) 
-		{
-			// Transmission ok, discard the outgoing message, no need to save after successful transmission. Increase the messageNumber.
-			mOngoing.release(); // we got a transmissionOK message, this is the end of an ongoing transmission.
-			mRetries = 0;
-			msg->setMsgNr((mMsgNrTx++)%256);
-
-		}
-		else if(transMsg->getStatus() == transmission_NOK)
-		{
-			if(mRetries < NR_RETRIES)
-			{
-				mRetries++;
-				std::stringstream ss;
-				ss << "Transmission failed, resending msg nr: " << (int)transMsg->getMsgNr();
-				mLogger.QuadLog(severity_level::warning, ss.str());
-			}
-			else
-			{
-				mOngoing.release(); 
-				mRetries = 0;
-				mLogger.QuadLog(severity_level::error, "Transmission failed, droping package.");
-			}
-
-		}
 	}
 	// Respond transmission OK and forward the message.
 	else
@@ -291,15 +291,14 @@ void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 		transmission->setMsgNr(msg->getMsgNr());
 
 		sendMsg(std::move(transmission));
-
-		// If we get a broadcast message, we should only handle it internally.
-		if(msg->getDestination() == msgAddr_t::Broadcast_e)
-		{
-			msg->setDestination(msgAddr_t::GS_Broadcast_e); // TODO make this dynamic based on name...
-		}
-		// then send to the router.
-		sendExternalMsg(std::move(msg));
 	}
+	// If we get a broadcast message, we should only handle it internally.
+	if(msg->getDestination() == msgAddr_t::Broadcast_e)
+	{
+		msg->setDestination(msgAddr_t::GS_Broadcast_e); // TODO make this dynamic based on name...
+	}
+	// then send to the router.
+	sendExternalMsg(std::move(msg));
 }
 void Serial_Manager::doWrite()
 {
