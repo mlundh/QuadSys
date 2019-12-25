@@ -132,26 +132,6 @@ private:
 };
 
 
-class QGS_PortModule: public virtual QGS_ReactiveModule
-{
-
-public:
-	QGS_PortModule();
-
-	virtual ~QGS_PortModule();
-
-
-	WriteFcn getPortFcn();
-
-protected:
-	void setPortFcn(WriteFcn fcn);
-
-private:
-	WriteFcn mPortFcn;
-};
-
-
-
 /**
  * @class QGS_ThreadedModule
  * @brief Base class for all active modules connected to a QGS_Router.
@@ -213,6 +193,26 @@ private:
 	processingFcn mProcessingFcn;
 
 };
+
+
+class QGS_PortModule: public virtual QGS_ThreadedModule
+{
+
+public:
+	QGS_PortModule();
+
+	virtual ~QGS_PortModule();
+
+
+	WriteFcn getPortFcn();
+
+protected:
+	void setPortFcn(WriteFcn fcn);
+
+private:
+	WriteFcn mPortFcn;
+};
+
 
 } /* namespace QuadGS */
 

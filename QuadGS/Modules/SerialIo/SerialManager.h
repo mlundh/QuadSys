@@ -34,6 +34,7 @@
 
 #include "SerialPort.h"
 #include "ThreadSafeFifo.hpp"
+#include "Semaphore.h"
 
 #include "QGS_Module.h"
 #include "Msg_GetUiCommands.h"
@@ -74,6 +75,13 @@ public:
     virtual void initialize();
 
     /**
+     * @brief Processing function for the threaded module. Handles incoming messages from the router.
+     * 
+     * Module thread scope. 
+     */
+    void processingFcn();
+
+    /**
      * Start the read operation. Can be used as soon as the serial
      * port has been opened.
      */
@@ -97,11 +105,24 @@ public:
     std::string startReadCmd(std::string);
     std::string testSerial(std::string path);
 
+    /**
+     * @brief Processing functions. Processes all messages.
+     * 
+     * Module thread scope.
+     *  
+     */
 	virtual void process(Msg_GetUiCommands* message);
 	virtual void process(Msg_FireUiCommand* message);
 	virtual void process(Msg_TestTransmission* message);
     virtual void process(Msg_Transmission* message);
 
+    /**
+     * @brief Port function. Receives the messages from the Router. Re-entrant.
+     * 
+     * @param message 
+     * 
+     * Router thread scope.
+     */
 	void ReceivingFcnIo(std::unique_ptr<QGS_ModuleMsgBase> message);
 
 private:
@@ -115,11 +136,16 @@ private:
     /**
      * Handler for timeouts. Will get called when there is no response from
      * the remote. Will resend the current message up to three times.
+     * 
+     * io service thread scope.
      */
     void timeoutHandler();
 
     /**
-     * The serial port will call this  TODO!!!
+     * The serial port will call this.
+     * 
+     * IO service thread scope.
+     * 
      * @param msg   The received message.
      */
     void messageHandler(QGS_ModuleMsgBase::ptr msg);
@@ -127,12 +153,15 @@ private:
     /**
      * Internal write message. This is the only function allowed to write to the
      * serial port. Also handles logging of messages.
+     * 
+     * mThread_Writer thread scope.
      */
     void doWrite();
 
     /**
-     * @brief Callback function for write.
+     * @brief Callback function for write. 
      * 
+     * IO service thread scope.
      */
     void writeCallback();
 
@@ -140,27 +169,36 @@ private:
     /**
      * Start the read timer. If timeout occurs then the read will be considered failed.
      * @param timeout
+     * 
+     * 
      */
    void startReadTimer(int timeout = 1000);
 
 
    /**
-    * @brief read timeout timer callback.
+    * @brief read timeout timer callback. 
+    * 
+    * IO service thread scope.
+    * 
     * @param error
     */
    void timerReadCallback( const boost::system::error_code& error );
 
 	std::vector<UiCommand> mCommands;
     QuadGS::SerialPort::ptr mPort;
+    Semaphore mPortReady;
     boost::asio::io_service mIo_service;
     std::unique_ptr<boost::asio::io_service::work> mWork;
     boost::asio::deadline_timer mTimeoutRead;
     std::thread *mThread_io;
+    std::thread *mThreadWriter;
     ThreadSafeFifo<QGS_ModuleMsgBase::ptr> mOutgoingFifo;
-    int mRetries;
-    QGS_ModuleMsgBase::ptr mOngoing;
     uint8_t mMsgNrTx = 0;
     msgAddr_t mTransmissionAddr;
+    Semaphore mTransmittDone;
+    std::atomic<bool> mTxSuccess;
+    int mRetries;
+    bool mStop = false;
 
 };
 

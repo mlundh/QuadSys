@@ -173,7 +173,7 @@ void QGS_ThreadedModule::stopProcessing()
 {
 	QGS_ModuleMsgBase::ptr ptr  = std::make_unique<Msg_Stop>(getName());
 	mFifo.push(std::move(ptr)); // send stop to own fifo.
-
+	mFifo.stop();
 	if(mThread.joinable())
 	{
 		mThread.join();
@@ -203,9 +203,10 @@ void QGS_ThreadedModule::handleMessages(bool blocking)
 	}
 
 	QGS_ModuleMsgBase::ptr msg = mFifo.dequeue();
-	if(msg->getType() == messageTypes_t::Msg_Stop_e)
+	if(!msg || msg->getType() == messageTypes_t::Msg_Stop_e )
 	{
 		mStop = true;
+		mFifo.stop();
 	}
 	else
 	{

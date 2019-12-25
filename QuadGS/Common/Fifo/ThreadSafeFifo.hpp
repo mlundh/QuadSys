@@ -26,6 +26,7 @@
 
 #include <queue>
 #include <mutex>
+#include <atomic>
 #include <condition_variable>
 namespace QuadGS
 {
@@ -77,10 +78,14 @@ public:
 	T& front()
 	{
 		std::unique_lock<std::mutex> lock(mMutex);
-		while(mQueue.empty())
+		while(mQueue.empty() && !mStop)
 		{
 			// release lock, wait and then reaquire it.
 			mCv.wait(lock);
+		}
+		if(mStop)
+		{
+			return NULL;
 		}
 		return mQueue.front();
 	}
@@ -89,21 +94,28 @@ public:
 	{
 
 		std::unique_lock<std::mutex> lock(mMutex);
-		while(mQueue.empty())
+		while(mQueue.empty() && !mStop)
 		{
 			// release lock, wait and then reaquire it.
 			mCv.wait(lock);
 		}
-		mQueue.pop();
+		if(!mStop)
+		{
+			mQueue.pop();
+		}
 	}
 
 	T dequeue()
 	{
 		std::unique_lock<std::mutex> lock(mMutex);
-		while(mQueue.empty())
+		while(mQueue.empty() && !mStop)
 		{
 			// release lock, wait and then reaquire it.
 			mCv.wait(lock);
+		}
+		if(mStop)
+		{
+			return NULL;
 		}
 		T result = std::move(mQueue.front());
 		mQueue.pop();
@@ -115,11 +127,25 @@ public:
 		return mQueue.empty();
 
 	}
+
+
+	void stop()
+	{
+		mStop = true;
+		mCv.notify_all();
+	}
+
+	bool isStopped()
+	{
+		return mStop;
+	}
 private:
 	std::queue<T> mQueue;
 	std::mutex mMutex;
 	std::condition_variable mCv;
 	unsigned int mSize;
+    std::atomic_bool mStop = {false};
+
 };
 
 }

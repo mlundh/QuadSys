@@ -10,6 +10,7 @@ list(APPEND dep "SerialPort"
                 "AppLog"
                 "Parameters"
                 "QGS_Module"
-                "GS_Ui_Command")
+                "GS_Ui_Command"
+                "Semaphore")
 
 qgs_make_shared_lib( serial_io src dep)
