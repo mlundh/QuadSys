@@ -331,8 +331,13 @@ uint8_t Event_SendInternal(eventHandler_t* obj, moduleMsg_t* msg)
                 if(!xQueueSendToBack(obj->handlers[i]->eventQueue, &msg, EVENT_BLOCK_TIME))
                 {
                     result = 0;
+                    
+                    if(msg->mDestination != FC_SerialIOtx_e) // We should not spam FC_SerialIOtx_e, if that is what failed.
+                    {
+                        LOG_ENTRY(FC_SerialIOtx_e, obj, "Event: Error. Failed sendToBack SendInternal.");
+                    }
                     Msg_Delete(&msg);
-                    LOG_ENTRY(FC_SerialIOtx_e, obj, "Event: Error. Failed sendToBack SendInternal.");
+                    
                 }
                 else
                 {

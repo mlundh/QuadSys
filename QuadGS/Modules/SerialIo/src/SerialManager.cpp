@@ -100,7 +100,16 @@ void Serial_Manager::initialize()
 
 void Serial_Manager::processingFcn()
 {
-	handleMessages(true);
+	try
+	{
+		handleMessages(true);
+	}
+	catch(const std::exception& e)
+	{
+		mLogger.QuadLog(QuadGS::error, e.what());
+	}
+	
+	
 }
 
 void Serial_Manager::startRead()

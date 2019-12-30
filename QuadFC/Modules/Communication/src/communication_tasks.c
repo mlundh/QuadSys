@@ -153,9 +153,6 @@ TxCom_t* Com_InitTx(eventHandler_t* eventHandler)
 
     Event_RegisterCallback(taskParam->evHandler, Msg_Transmission_e, Com_TxTransmission, taskParam);
 
-    Event_RegisterCallback(taskParam->evHandler, Msg_TestTransmission_e, Com_TxSend, taskParam);
-
-
     return taskParam;
 }
 
@@ -190,7 +187,7 @@ RxCom_t* Com_InitRx(eventHandler_t* eventHandler)
 
 
 
-    // Subscribe to the events that the task is interested in. None right now.
+    // Subscribe to the events that the task is interested in.
     Event_RegisterCallback(taskParam->evHandler, Msg_TestTransmission_e, Com_TestTransmission, taskParam);
     Event_RegisterCallback(taskParam->evHandler, Msg_Log_e, Com_HandleLog, taskParam);
 
@@ -328,11 +325,11 @@ uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
         {
             if(Msg_Transmission_e == Msg_GetType(msg))
             {
-                LOG_ENTRY(FC_SerialIOtx_e, obj, "COM: Sending OK/NOK nr: %lu", Msg_GetMsgNr(msg));
+                LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "COM TX: Sending OK/NOK nr: %lu", Msg_GetMsgNr(msg));
             }
             else
             {
-                LOG_ENTRY(FC_SerialIOtx_e, obj, "COM: Sending message nr: %lu", Msg_GetMsgNr(msg));
+                LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "COM TX: Sending message nr: %lu", Msg_GetMsgNr(msg));
             }
             /* TX is blocking */
             QuadFC_Serial_t serialData;
@@ -353,17 +350,17 @@ uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
             if(!Event_WaitForEvent(TxObj->evHandler, Msg_Transmission_e, 1, 0, 1000)) // wait for the transmission event.
             {
                 reTransmittNr ++;
-                LOG_ENTRY(FC_SerialIOtx_e, obj, "COM: Error: Transfer failed, retransmitt. Message nr: %lu", Msg_GetMsgNr(msg));
+                LOG_ENTRY(FC_SerialIOtx_e, obj, "COM TX: Error: Transfer failed, retransmitt. Message nr: %lu", Msg_GetMsgNr(msg));
             }
             else if(TxObj->transmission == transmission_NOK) // We got a transmission message. Check if it was a NOK message.
             {
-                LOG_ENTRY(FC_SerialIOtx_e, obj, "COM: Timeout or NOK, retransmitt. Message nr: %lu", Msg_GetMsgNr(msg));
+                LOG_ENTRY(FC_SerialIOtx_e, obj, "COM TX: Timeout or NOK, retransmitt. Message nr: %lu", Msg_GetMsgNr(msg));
                 reTransmittNr++; // If we got a tranmission_NOK message we should also re-transmitt.
             }
             
             if(reTransmittNr >= NR_RETRANSMITT)
             {
-                LOG_ENTRY(FC_SerialIOtx_e, obj, "COM: Transmission failed, dropping package. Message nr: %lu", Msg_GetMsgNr(msg));
+                LOG_ENTRY(FC_SerialIOtx_e, obj, "COM TX: Transmission failed, dropping package. Message nr: %lu", Msg_GetMsgNr(msg));
             	TxObj->transmission = transmission_OK; // We failed, and have notified this. Prepare for next message.
                 TxObj->msgNr = (TxObj->msgNr+1) % 255; // wrap at 255...
                 break; // Retransmit failed.
@@ -421,8 +418,6 @@ void Com_RxTask( void *pvParameters )
             uint32_t payloadLength = Slip_DePacketize(obj->messageBuffer, COM_PACKET_LENGTH_MAX, obj->SLIP);
             if(payloadLength == 0)
             {
-                LOG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "COM: RX - Creating NOK message, payloadLength = 0");
-
                 moduleMsg_t* reply = Msg_TransmissionCreate(GS_SerialIO_e, 0, transmission_NOK);
                 Event_Send(obj->evHandler, reply);
                 break;
@@ -444,18 +439,17 @@ void Com_RxTask( void *pvParameters )
 
             if(Msg_GetType(msg) != Msg_Transmission_e) // we ack all messages except for transmission messages.
             {
-                LOG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "COM: RX - Creating OK/NOK nr: %lu", Msg_GetMsgNr(msg));
                 uint8_t msgNr = Msg_GetMsgNr(msg);
                 moduleMsg_t* reply = Msg_TransmissionCreate(GS_SerialIO_e, msgNr, transmission_OK);
                 Event_Send(obj->evHandler, reply);
             }
             if(Msg_Transmission_e == Msg_GetType(msg))
             {
-                LOG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "COM: Received OK/NOK nr: %lu", Msg_GetMsgNr(msg));
+                LOG_DBG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "COM RX: Received OK/NOK nr: %lu", Msg_GetMsgNr(msg));
             }
             else
             {
-                LOG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "COM: Received message nr: %lu", Msg_GetMsgNr(msg));
+                LOG_DBG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "COM RX: Received message nr: %lu", Msg_GetMsgNr(msg));
             }
             
             Event_SendGeneric(obj->evHandler, msg);
@@ -463,7 +457,7 @@ void Com_RxTask( void *pvParameters )
         break;
         case SLIP_StatusNok:
         {
-            LOG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "COM: RX Creating NOK message, SLIP NOK");
+            LOG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "COM RX: Error - SLIP NOK");
             moduleMsg_t* reply = Msg_TransmissionCreate(GS_SerialIO_e, 0, transmission_NOK);
             Event_Send(obj->evHandler, reply);
         }

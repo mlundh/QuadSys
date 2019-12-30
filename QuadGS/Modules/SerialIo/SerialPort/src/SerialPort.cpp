@@ -256,6 +256,7 @@ void SerialPort::readCallback( const boost::system::error_code& error,
 		{
 			QuadLog(severity_level::error,  " Read_callback called with an error: " + error.message());
 			doClose( error );
+			return;
 		}
 
 		std::string data{
@@ -273,6 +274,12 @@ void SerialPort::readCallback( const boost::system::error_code& error,
 		SlipPacket tmpSlip((const uint8_t*)mReceivedData.c_str(), mReceivedData.length(), false);
 		mReceivedData.erase();
 		QGS_ModuleMsgBase::ptr msg = mParser.parse(std::vector<unsigned char>(tmpSlip.GetPayload()));
+		if(!msg)
+		{
+			QuadLog(severity_level::error,  " Read_callback failed to parse the message.");
+			read();
+			return;
+		}
 		if(msg->getType() == messageTypes_t::Msg_Transmission_e)
 		{
 			std::stringstream ss;
@@ -301,6 +308,7 @@ void SerialPort::readCallback( const boost::system::error_code& error,
 	catch (const std::runtime_error& e)
 	{
 		QuadLog(severity_level::error, e.what() );
+		return;
 	}
 	read();
 }

@@ -60,7 +60,7 @@
 typedef struct eventHandler eventHandler_t;
 
 #define NR_QUEUES_MAX (8)
-#define EVENT_QUEUE_LENGTH (16)
+#define EVENT_QUEUE_LENGTH (32)
 #define EVENT_QUEUE_ITEM_SIZE ((sizeof(moduleMsg_t*)))
 
 #define EVENT_BLOCK_TIME (0)

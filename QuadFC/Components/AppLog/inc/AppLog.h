@@ -34,3 +34,16 @@
     Msg_AppLogSetPayloadlength(msgAppLog, buffSize);\
     Event_Send(evHandler, msgAppLog);\
     }
+
+#ifdef DEBUG
+#define LOG_DBG_LENGTH_MAX (300)
+#define LOG_DBG_ENTRY(addr, evHandler,  format, ...) {  \
+    moduleMsg_t* msgAppLog = Msg_AppLogCreate(addr,0,writeAppLog,LOG_DBG_LENGTH_MAX); \
+    snprintf((char*)Msg_AppLogGetPayload(msgAppLog), LOG_DBG_LENGTH_MAX, "%8lu: DBG "format"\n" ,xTaskGetTickCount(), ##__VA_ARGS__);\
+    uint32_t buffSize = strlen((char*)Msg_AppLogGetPayload(msgAppLog))+1;\
+    Msg_AppLogSetPayloadlength(msgAppLog, buffSize);\
+    Event_Send(evHandler, msgAppLog);\
+    }
+#else
+#define LOG_DBG_ENTRY(addr, evHandler, format, ...)
+#endif

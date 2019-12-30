@@ -181,7 +181,7 @@ SLIP_Status_t SLIP_Parser(uint8_t *inputBuffer, int InputBufferLength,
         SLIP_packet->payload[*index] = inputBuffer[i];
         if ( SLIP_packet->payload[*index] == frame_boundary_octet )
         {
-            if ( *index > 4 ) // Last boundary of frame. Frame minimum length = 4
+            if ( (*index) >= 4 ) // Last boundary of frame. Frame minimum length = 4
             {
                 SLIP_packet->packetSize = *index + 1;
                 *index = 0;
