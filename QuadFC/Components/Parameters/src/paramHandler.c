@@ -588,7 +588,7 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
 
             Msg_Delete(&msgReply); // need to delete the message ourself since we created but did not send.
             
-            moduleMsg_t* msgParam = Msg_ParamFcCreate(handlerObj->handlers[(handlerObj->currentlySavinging + 1)],
+            moduleMsg_t* msgParam = Msg_ParamFcCreate(handlerObj->handlers[(handlerObj->currentlySavinging)],
                     0,control,0,0,0);
             Event_Send(obj, msgParam);
         }
