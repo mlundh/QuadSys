@@ -33,8 +33,7 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
-
-#define DEBUG 
+//#define DEBUG
 
 #include "Components/AppLog/inc/AppLog.h"
 
@@ -42,6 +41,13 @@
 #define MAX_PARAM_HANDLERS (8)
 #define PARAM_BUFFER_LEN (200)
 #define SLIP_PACKET_LEN (PARAM_BUFFER_LEN + 60)
+
+typedef enum
+{
+    paramReady,
+    paramActionOngoing,
+} paramAction_t;
+
 struct paramHander
 {
     eventHandler_t*       evHandler;
@@ -58,8 +64,10 @@ struct paramHander
     uint8_t               sequenceGet;
     uint8_t               sequenceSet;
     uint32_t              setAddress;
-
+    paramAction_t         actionOngoing;
 };
+
+
 
 void printPacket(eventHandler_t* obj, SLIP_t* packet)
 {// TODO!!
@@ -140,6 +148,7 @@ paramHander_t* ParamHandler_CreateObj(uint8_t num_children, eventHandler_t* evHa
     obj->getter = Unassigned_e;
     obj->saver = Unassigned_e;
     obj->setAddress = 0;
+    obj->actionOngoing = paramReady;
     if(!obj->rootParam)
     {
         return NULL;
@@ -308,6 +317,16 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
     uint8_t result = 0;
     paramHander_t* handlerObj = (paramHander_t*)data; // The data should always be the handler object when a Msg_param is received.
 
+    //If we are busy and the message is not from ourselfs, we must block the call.
+    if(handlerObj->actionOngoing != paramReady && Msg_GetSource(msg) != obj->handlerId)
+    {
+        moduleMsg_t* msgParam = Msg_ParamCreate(Msg_GetSource(msg), 0, param_error ,0 ,0 ,0);
+        Event_Send(obj, msgParam);
+        LOG_ENTRY(FC_SerialIOtx_e, obj, "Param: Action ongoing, discarding message.");
+        return 1;
+    }
+    handlerObj->actionOngoing = paramActionOngoing; // Start action. 
+
     uint8_t control = Msg_ParamGetControl(msg);
 
     switch (control)
@@ -330,6 +349,8 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
             if(!result)
             {
                 LOG_ENTRY(FC_SerialIOtx_e, obj, "Param Set: Error - Error setting parameters.");
+                handlerObj->actionOngoing = paramReady; // Reset.
+                break;
             }
         }
 
@@ -346,7 +367,9 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
             moduleMsg_t* msgParam = Msg_ParamFcCreate(handlerObj->handlers[i],0,param_set,0,0,payloadLength);
             if(!msgParam)
             {
-                return 0;
+                LOG_ENTRY(FC_SerialIOtx_e, obj, "Param Set: Error - Not able to create a paramFC message.");
+                handlerObj->actionOngoing = paramReady; // Reset.
+                break;
             }
             Msg_ParamFcSetPayloadlength(msgParam, payloadLength);
 
@@ -355,6 +378,7 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
 
             Event_Send(obj, msgParam);
         }
+        handlerObj->actionOngoing = paramReady; // Set is ready once we have handled the message.
     }
     break;
     case param_load:
@@ -386,6 +410,7 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
                     result = 0;
                     Slip_Delete(packet); // Cleanup...
                     LOG_ENTRY(FC_SerialIOtx_e, obj, "Param Load: Packet could not fit in buffer.");
+                    handlerObj->actionOngoing = paramReady; // Reset.
                     break;
                 }
                 address++;
@@ -402,6 +427,7 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
                 {
                     result = 0;
                     LOG_ENTRY(FC_SerialIOtx_e, obj, "Param Load: Error. Could not depacketize SLIP.");
+                    handlerObj->actionOngoing = paramReady; // Reset.
                     break;
                 }
             }
@@ -419,6 +445,8 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
             else
             {
                 LOG_ENTRY(FC_SerialIOtx_e, obj, "Param Load: Error. Deserialize failed.");
+                handlerObj->actionOngoing = paramReady; // Reset.
+                break;
             }
             
 
@@ -431,11 +459,13 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
                 Msg_Delete(&loadedMsg);
                 Slip_Delete(packet);
                 LOG_ENTRY(FC_SerialIOtx_e, obj, "Param Load: Error. Failed to read param.");
-
+                handlerObj->actionOngoing = paramReady; // Reset.
                 break;
             }
             Slip_Delete(packet);
         }
+        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "Param Load: Finished.");
+        handlerObj->actionOngoing = paramReady; // Load is ready when all messages has been sent.
     }
     break;
     case param_get:
@@ -443,7 +473,7 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
         handlerObj->getter = Msg_GetSource(msg); // save who is currently getting the tree.
         if(handlerObj->currentlyGetting == 0)
         {
-            LOG_DBG_ENTRY(FC_SerialIOrx_e, obj, "ParamFC Master: Getting from master.");
+            LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "ParamFC Master: Getting from master.");
 
             uint32_t bufferLength = PARAM_BUFFER_LEN;
             // Create the message here to use the memory.
@@ -496,6 +526,7 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
 
             Event_Send(handlerObj->evHandler, msgReply);
             result = 1;
+            handlerObj->actionOngoing = paramReady; // We get a new request for every message, so we do not need to block any futher.
         }
         else if((handlerObj->currentlyGetting)-1 < handlerObj->nrRegisteredHandlers) // -1 since we are counted as "0".
         {
@@ -539,11 +570,13 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
 
                  if(lastInSequence)
                  {
-                     (handlerObj->currentlySavinging) = 0;
+                    (handlerObj->currentlySavinging) = 0;
+                    handlerObj->actionOngoing = paramReady; // Reset, ready.
+                    LOG_ENTRY(FC_SerialIOtx_e, obj, "------------------------Param Master: Save done");
                  }
                  else
                  {
-                     (handlerObj->currentlySavinging)++;
+                    (handlerObj->currentlySavinging)++;
                  }
             } // else dump is not finished, keep helper till next time.
             else
@@ -608,7 +641,7 @@ uint8_t ParamHandler_HandleParamFcMsgMaster(eventHandler_t* obj, void* data, mod
     paramHander_t* handlerObj = (paramHander_t*)data; // The data should always be the handler object when a Msg_param is received.
 
     uint8_t control = Msg_ParamFcGetControl(msg);
-    LOG_DBG_ENTRY(FC_SerialIOrx_e, obj, "ParamFC Master: Received from %lu.", Msg_GetSource(msg));
+    LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "ParamFC Master: Received from %lu.", Msg_GetSource(msg));
 
     // Parameter messages uses string payload, and they have persistent storage, and has to
     // be manually allocated and freed. This means we can re-use the buffer provided in this
@@ -624,7 +657,7 @@ uint8_t ParamHandler_HandleParamFcMsgMaster(eventHandler_t* obj, void* data, mod
     break;
     case param_get:
        {
-        LOG_DBG_ENTRY(FC_SerialIOrx_e, obj, "ParamFC Master: Received Get from %lu.", Msg_GetSource(msg));
+        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "ParamFC Master: Received Get from %lu.", Msg_GetSource(msg));
         uint8_t lastInSequence = 0;
         if(Msg_ParamFcGetLastinsequence(msg))
         {
@@ -633,6 +666,7 @@ uint8_t ParamHandler_HandleParamFcMsgMaster(eventHandler_t* obj, void* data, mod
             {
                 lastInSequence = 1;
                 handlerObj->currentlyGetting = 0;
+                
             }
         }
         handlerObj->sequenceGet++;
@@ -645,6 +679,7 @@ uint8_t ParamHandler_HandleParamFcMsgMaster(eventHandler_t* obj, void* data, mod
         Msg_ParamSetPayloadlength(paramMsg, payloadLength);
         Event_Send(handlerObj->evHandler,paramMsg);
         result = 1;
+        handlerObj->actionOngoing = paramReady; // Reset, ready. We get a new request for each message, so we do not need to block any longer.
     }
     break;
     case param_save:
@@ -657,6 +692,8 @@ uint8_t ParamHandler_HandleParamFcMsgMaster(eventHandler_t* obj, void* data, mod
             {
                 lastInSequence = 1;
                 (handlerObj->currentlySavinging) = 0;
+                handlerObj->actionOngoing = paramReady; // Reset, ready.
+                LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "ParamFC Master: Save done");
             }
         }
         (handlerObj->sequenceSet)++;

@@ -48,7 +48,7 @@ Serial_Manager::Serial_Manager(msgAddr_t name, msgAddr_t transmissionAddr)
 ,mTimeoutRead(mIo_service)
 ,mThread_io(NULL)
 ,mThreadWriter(NULL)
-,mOutgoingFifo(10)
+,mOutgoingFifo(40)
 ,mTransmissionAddr(transmissionAddr)
 ,mTransmittDone()
 ,mTxSuccess(false)
@@ -252,7 +252,14 @@ void Serial_Manager::process(Msg_Transmission* transMsg)
 
 void Serial_Manager::ReceivingFcnIo(std::unique_ptr<QGS_ModuleMsgBase> message)
 {
-	mOutgoingFifo.push(std::move(message));
+	try
+	{
+		mOutgoingFifo.push(std::move(message));
+	}
+	catch(const std::exception& e)
+	{
+		mLogger.QuadLog(QuadGS::error, e.what());
+	}
 }
 
 void Serial_Manager::runThread()
