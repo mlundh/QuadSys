@@ -29,6 +29,7 @@
 #include "Modules/Messages/inc/Msg_Parser.h"
 #include "Modules/Messages/inc/Msg_Transmission.h"
 #include "Modules/Messages/inc/Msg_TestTransmission.h"
+#include "Modules/Messages/inc/Msg_Debug.h"
 
 #include "Modules/Messages/inc/Msg_Log.h"
 
@@ -118,6 +119,8 @@ static void Com_RxTask( void *pvParameters );
 
 uint8_t Com_TxTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg);
 
+uint8_t Com_HandleDebug(eventHandler_t* obj, void* data, moduleMsg_t* msg);
+
 uint8_t Com_HandleLog(eventHandler_t* obj, void* data, moduleMsg_t* msg);
 
 uint8_t Com_TestTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg);
@@ -189,6 +192,7 @@ RxCom_t* Com_InitRx(eventHandler_t* eventHandler)
 
     // Subscribe to the events that the task is interested in.
     Event_RegisterCallback(taskParam->evHandler, Msg_TestTransmission_e, Com_TestTransmission, taskParam);
+    Event_RegisterCallback(taskParam->evHandler, Msg_Debug_e, Com_HandleDebug, taskParam);
     Event_RegisterCallback(taskParam->evHandler, Msg_Log_e, Com_HandleLog, taskParam);
 
 
@@ -493,7 +497,8 @@ uint8_t Com_TxTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg)
     return 1;
 }
 
-/*
+#define DBG_MSG_REPLY_LENGTH (255)
+
 uint8_t Com_HandleDebug(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 {
     if(!obj || ! data || !msg)
@@ -501,16 +506,20 @@ uint8_t Com_HandleDebug(eventHandler_t* obj, void* data, moduleMsg_t* msg)
         return 0;
     }
     uint8_t result = 0;
-    switch ( QSP_GetControl(obj->messageBuffer) )
+
+    switch ( Msg_DebugGetControl(msg) )
     {
     case QSP_DebugGetRuntimeStats:
-        QuadFC_RuntimeStats(QSP_GetPayloadPtr(obj->QspRespPacket) , QSP_GetAvailibleSize(obj->QspRespPacket) - QSP_GetHeaderdSize());
+        {   
+        moduleMsg_t* reply = Msg_DebugCreate(Msg_GetSource(msg), 0, QSP_DebugSetRuntimeStats, DBG_MSG_REPLY_LENGTH);
+
+        QuadFC_RuntimeStats(Msg_DebugGetPayload(reply) , Msg_DebugGetPayloadbufferlength(reply));
         //vTaskList((char *)(QSP_GetPayloadPtr(obj->QspRespPacket)));
-        uint16_t len =  strlen((char *)QSP_GetPayloadPtr(obj->QspRespPacket));
-        QSP_SetPayloadSize(obj->QspRespPacket, len);
+        uint16_t len =  strlen((char *)Msg_DebugGetPayload(reply));
+        Msg_DebugSetPayloadlength(reply, len);
+        Event_Send(obj, reply);
         result = 1;
-        QSP_SetAddress(obj->QspRespPacket, QSP_Debug);
-        QSP_SetControl(obj->QspRespPacket, QSP_DebugSetRuntimeStats);
+        }
         break;
     default:
         break;
@@ -518,7 +527,7 @@ uint8_t Com_HandleDebug(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 
     return result;
 }
- */
+ 
 #define LOG_MSG_REPLY_LENGTH (255)
 uint8_t Com_HandleLog(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 {

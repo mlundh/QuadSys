@@ -231,7 +231,7 @@ void SerialPort::writeCallback( const boost::system::error_code& error,
 	{
 		if( error )
 		{
-			QuadLog(severity_level::error, "Read_callback called with an error: " + error.message() );
+			QuadLog(severity_level::error, "Write_callback called with an error: " + error.message() );
 			doClose( error );
 		}
 		mTimeoutWrite.cancel();

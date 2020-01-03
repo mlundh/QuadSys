@@ -94,7 +94,7 @@ int main(int ac, char* av[])
 	CLI mCli(msgAddr_t::GS_GUI_e);
 	LogHandler mLogHandler(msgAddr_t::GS_Log_e, msgAddr_t::FC_SerialIOrx_e);
 	Serial_Manager serialIo(msgAddr_t::GS_SerialIO_e, msgAddr_t::FC_SerialIOtx_e);
-	dbgModule dbgModule(msgAddr_t::GS_Dbg_e, msgAddr_t::FC_Dbg_e);
+	dbgModule dbgModule(msgAddr_t::GS_Dbg_e, msgAddr_t::FC_SerialIOrx_e);
 
 	//Instantiate the router.
 	QGS_Router mRouter(msgAddr_t::GS_Router_e);
