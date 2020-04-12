@@ -32,46 +32,63 @@
 # <nameOfExec>_DEPS. Add all dependencies to this variable.
 #
 
-EXECUTABLES := QuadFC Test_Modules1 Test_Modules2 Test_Board Test_Utilities Test_Components1
+EXECUTABLES := QuadFC Test_Modules1 Test_Modules2 Test_Utilities Test_Components1
+
+ifeq ($(PLATFORM),Due)
+	EXECUTABLES += Test_Board
+else ifeq ($(PLATFORM),Titan)
+	EXECUTABLES +=
+else
+	$(info Unsupported Platform.)
+endif
 
 QuadFC_DEPS:= Top/QuadFC HAL/QuadFC
-QuadFC_DEPS+= $(addprefix Modules/, Communication FlightController HMI  EventHandler Messages MsgBase)
-QuadFC_DEPS+= $(addprefix Modules/, StateEstimator Utilities SetpointHandler FlightModeHandler)
-QuadFC_DEPS+= $(addprefix Components/, AppLog AppLogSerialBackend Log LogMemBackend PidController Parameters SLIP)
-QuadFC_DEPS+= $(addprefix PortLayer/, ArduinoDueBoard SpectrumSatellite HMI CY15B104Q_SX_spi_fram)
-QuadFC_DEPS+= $(addprefix PortLayer/, MB85RC_i2c_fram Sensors)
-QuadFC_DEPS+= $(addprefix ThirdParty/, asf freertos asf_freertos)
+QuadFC_DEPS+= $(addprefix Modules/, Communication FlightController HMI FlightModeHandler)
+QuadFC_DEPS+= $(addprefix Components/, AppLog AppLogSerialBackend Log LogMemBackend PidController StateEstimator)
+QuadFC_DEPS+= $(addprefix Components/, Utilities SetpointHandler Parameters SLIP EventHandler Messages MsgBase)
+QuadFC_DEPS+= $(addprefix HwComponents/, SpectrumSatellite CY15B104Q_SX_spi_fram)
+QuadFC_DEPS+= $(addprefix HwComponents/, MB85RC_i2c_fram Sensors)
+QuadFC_DEPS+= $(addprefix OS/, freertos)
+QuadFC_DEPS+= $(addprefix Boards/, $(PLATFORM)Board)
+QuadFC_DEPS+= $(addprefix Drivers/, $(PLATFORM))
 
-Test_Utilities_DEPS:= Top/Test_Utilities PortLayer/TestArduinoDue
+
+Test_Utilities_DEPS:= Top/Test_Utilities
 Test_Utilities_DEPS+= $(addprefix Test/,TestFW Math Utilities)
-Test_Utilities_DEPS+= $(addprefix Modules/, Utilities )
-Test_Utilities_DEPS+= $(addprefix ThirdParty/, asf freertos)
+Test_Utilities_DEPS+= $(addprefix Components/, Utilities )
+Test_Utilities_DEPS+= $(addprefix OS/, freertos)
+Test_Utilities_DEPS+= $(addprefix Boards/, $(PLATFORM)Board $(PLATFORM)Test)
+Test_Utilities_DEPS+= $(addprefix Drivers/, $(PLATFORM))
 
 Test_Modules1_DEPS:= Top/Test_Modules1 HAL/QuadFC 
 Test_Modules1_DEPS+= $(addprefix Test/,TestFW DummyI2C SignalProcessing EventHandler)
-Test_Modules1_DEPS+= $(addprefix Components/, Parameters)
-Test_Modules1_DEPS+= $(addprefix Modules/, Utilities  EventHandler StateEstimator)
-Test_Modules1_DEPS+= $(addprefix Modules/, FlightController Messages MsgBase)
-Test_Modules1_DEPS+= $(addprefix PortLayer/, HMI TestArduinoDue SpectrumSatellite Sensors)
-Test_Modules1_DEPS+= $(addprefix ThirdParty/, asf freertos)
+Test_Modules1_DEPS+= $(addprefix Components/, Parameters EventHandler Messages MsgBase)
+Test_Modules1_DEPS+= $(addprefix Components/, Utilities StateEstimator)
+Test_Modules1_DEPS+= $(addprefix Modules/, FlightController)
+Test_Modules1_DEPS+= $(addprefix HwComponents/, SpectrumSatellite Sensors)
+Test_Modules1_DEPS+= $(addprefix OS/, freertos)
+Test_Modules1_DEPS+= $(addprefix Boards/, $(PLATFORM)Board $(PLATFORM)Test)
+Test_Modules1_DEPS+= $(addprefix Drivers/, $(PLATFORM))
 
 Test_Modules2_DEPS:= Top/Test_Modules2 HAL/QuadFC 
 Test_Modules2_DEPS+= $(addprefix Test/,TestFW  FakeMemory Messages)
-Test_Modules2_DEPS+= $(addprefix Components/, SLIP)
-Test_Modules2_DEPS+= $(addprefix Modules/, Utilities Messages MsgBase)
-Test_Modules2_DEPS+= $(addprefix PortLayer/, TestArduinoDue)
-Test_Modules2_DEPS+= $(addprefix ThirdParty/, asf freertos)
+Test_Modules2_DEPS+= $(addprefix Components/, SLIP Messages MsgBase Utilities)
+Test_Modules2_DEPS+= $(addprefix OS/, freertos)
+Test_Modules2_DEPS+= $(addprefix Boards/, $(PLATFORM)Board $(PLATFORM)Test)
+Test_Modules2_DEPS+= $(addprefix Drivers/, $(PLATFORM))
 
 Test_Board_DEPS:= Top/Test_Board HAL/QuadFC
-Test_Board_DEPS+= $(addprefix Test/, ArduinoDueBoard TestFW )
-Test_Board_DEPS+= $(addprefix Modules/, Utilities )
-Test_Board_DEPS+= $(addprefix Components/, Log LogMemBackend)
-Test_Board_DEPS+= $(addprefix PortLayer/, TestArduinoDue ArduinoDueBoard CY15B104Q_SX_spi_fram MB85RC_i2c_fram)
-Test_Board_DEPS+= $(addprefix ThirdParty/, asf freertos asf_freertos)
+Test_Board_DEPS+= $(addprefix Test/, ArduinoDueBoard TestFW)
+Test_Board_DEPS+= $(addprefix Components/, Log LogMemBackend Utilities)
+Test_Board_DEPS+= $(addprefix HwComponents/, CY15B104Q_SX_spi_fram MB85RC_i2c_fram)
+Test_Board_DEPS+= $(addprefix OS/, freertos)
+Test_Board_DEPS+= $(addprefix Boards/, DueBoard DueTest)
+Test_Board_DEPS+= $(addprefix Drivers/, Due)
 
 Test_Components1_DEPS:= Top/Test_Components1 HAL/QuadFC
-Test_Components1_DEPS+= $(addprefix ThirdParty/, asf freertos asf_freertos)
-Test_Components1_DEPS+= $(addprefix PortLayer/, TestArduinoDue )
-Test_Components1_DEPS+= $(addprefix Components/, Log Parameters SLIP AppLog )
+Test_Components1_DEPS+= $(addprefix Components/, Log Parameters SLIP AppLog EventHandler Messages MsgBase Utilities)
 Test_Components1_DEPS+= $(addprefix Test/,TestFW Parameters FakeMemory Log AppLog LogTestBackend AppLogMemBackend)
-Test_Components1_DEPS+= $(addprefix Modules/, Messages MsgBase EventHandler Utilities)
+Test_Components1_DEPS+= $(addprefix OS/, freertos)
+Test_Components1_DEPS+= $(addprefix Boards/, $(PLATFORM)Board $(PLATFORM)Test)
+Test_Components1_DEPS+= $(addprefix Drivers/, $(PLATFORM))
+

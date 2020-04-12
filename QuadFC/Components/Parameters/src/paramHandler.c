@@ -24,10 +24,10 @@
 
 
 #include "../inc/paramHandler.h"
-#include "Modules/Messages/inc/Msg_ParamFc.h"
-#include "Modules/Messages/inc/Msg_Param.h"
+#include "Messages/inc/Msg_ParamFc.h"
+#include "Messages/inc/Msg_Param.h"
 #include <string.h>
-#include "Modules/Utilities/inc/string_utils.h"
+#include "Utilities/inc/string_utils.h"
 #include "Components/SLIP/inc/slip_packet.h"
 #include "HAL/QuadFC/QuadFC_Memory.h"
 

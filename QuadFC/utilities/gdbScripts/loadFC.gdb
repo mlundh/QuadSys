@@ -1,5 +1,5 @@
 #Read symbols and load the FC again.
-file ../../out/QuadFC.elf
+file ../../out/Due/QuadFC.elf
 monitor reset
 load
 continue

@@ -23,6 +23,7 @@
  */
 #include "FreeRTOS.h"
 #include "task.h"
+#include <stdio.h>
 
 #include "Log/src/logHandler_private.h"
 #include "Log/src/log_private.h"

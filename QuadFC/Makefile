@@ -26,9 +26,24 @@
 
 # ---------------------------- Warning!---------------------------
 # .c files are not allowed to have the same name anywhere in the 
-# directory structure. This is due to the vact that make does not
+# directory structure. This is due to the fact that make does not
 # seem to allow target-specific VPATH.
 #------------------------------------------------------------------
+
+
+PLATFORMS:= Titan Due
+
+ifndef PLATFORM
+        $(error PLATFORM is not set)
+endif
+
+ifneq ($(filter $(PLATFORM),$(PLATFORMS)),)
+    $(info Building $(PLATFORM))
+else
+    $(error $(PLATFORM) is not supported, only values in the following list are supported: "$(PLATFORMS)")
+endif
+
+
 .SUFFIXES:
 
 # Make does not offer a recursive wildcard function, so here's one:
@@ -37,16 +52,32 @@ rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 #Clear CFLAGS and VPATH
 CFLAGS := 
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-BUILD_DIR := out
+BUILD_DIR := out/$(PLATFORM)
 VPATH:=
-# Add include path for header files. Third party is special, the files expects all
+
+# Add categories here if needed.
+CATEGORIES := Modules HwComponents Top Test HAL Components 
+CATEGORIES += Boards
+CATEGORIES_R := OS
+CATEGORIES_R += Drivers
+ALL_CATEGORIES := $(CATEGORIES) $(CATEGORIES_R)
+
+# Add include path for header files. Third party code is special, the files expects all
 # dirs to be in include path.
-INCLUDE_ThirdParty := $(sort $(dir $(call rwildcard,ThirdParty/,*.h)))
-CFLAGS+= -I Modules -I HAL -I Top -I Components -I $(ROOT_DIR) $(addprefix -I, $(INCLUDE_ThirdParty))
+
+I_ThirdParty := $(sort $(dir $(call rwildcard,Drivers/$(PLATFORM),*.h)))
+I_ThirdParty += $(sort $(dir $(call rwildcard,OS/,*.h)))
+INCLUDE_ThirdParty := $(addprefix -I, $(I_ThirdParty))
+
+INCLUDE_PATH := $(addprefix -I, $(CATEGORIES))
+
+CFLAGS+= $(INCLUDE_PATH) -I $(ROOT_DIR) $(INCLUDE_ThirdParty)
 
 include $(ROOT_DIR)/executables.mk
 
+#Create all targets
 all: $(EXECUTABLES)
+
 
 # Include the makefiles that has the defined rules and flags.
 INCLUDE_MAKEFILES := $(ROOT_DIR)/rules.mk $(ROOT_DIR)/flags.mk 
@@ -55,10 +86,7 @@ include $(INCLUDE_MAKEFILES)
 # Second expansion allows us to use $@ and such variables in the prerequisit list.
 .SECONDEXPANSION:
 
-# Add categories here if needed.
-CATEGORIES := Modules PortLayer Top Test HAL Components
-CATEGORIES_R := ThirdParty
-ALL_CATEGORIES := $(CATEGORIES) $(CATEGORIES_R)
+
 
 
 #*************************************************************************
@@ -75,8 +103,6 @@ ALL_CATEGORIES := $(CATEGORIES) $(CATEGORIES_R)
 #*************************************************************************
 $(foreach category,$(ALL_CATEGORIES),$(eval $(call VARIABLES,$(category))))
 #$(foreach category,$(ALL_CATEGORIES),$(info $(call VARIABLES,$(category))))
-
-
 
 #*************************************************************************
 # Set up all the variables used by each recursive category. 
@@ -125,7 +151,6 @@ $(foreach category,$(CATEGORIES),\
   $(foreach sub_category,$($(category)_LIST),\
   $(info $(call O_RULE, $(BUILD_DIR),$(sub_category)))))
 
-
 #*************************************************************************
 #
 # Creates the rule for building .o file from each source file in the 
@@ -144,6 +169,7 @@ $(foreach category,$(CATEGORIES_R), $(eval $(call O_RULE_recursive, $(BUILD_DIR)
 #*************************************************************************
 $(foreach exec,$(EXECUTABLES),$(eval $(call ELF_RULE,$(exec), $(BUILD_DIR))))
 #$(foreach exec,$(EXECUTABLES),$(info $(call ELF_RULE,$(exec))))
+
 
 #*************************************************************************
 #
@@ -170,8 +196,7 @@ clean:
 	rm -rf ${BUILD_DIR}
 
 print:
-	@echo "_SOURCE_DIR:" $(ThirdParty_SOURCE_DIR)
-	@echo "VPATH = $(VPATH)"
+	@echo "BUILD_DIR:" $(ThirdParty_BUILD_DIR)
 	
 .PHONY : flash
 flash:

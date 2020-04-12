@@ -174,6 +174,6 @@ ${BUILD_DIR}/$(1).elf: $$$$(addsuffix .a,$$$$(addprefix $(2)/,$$$$(subst /,/lib,
 	 else                            \
 	     echo "  LD    $${@}";       \
 	 fi;                             \
-	$${CC} -o $$(@) -Wl,--start-group $$(^)  -Wl,--end-group out/ThirdParty/syscalls.o $$(LDFLAGS); \
+	$${CC} -o $$(@) -Wl,--start-group $$(^)  -Wl,--end-group out/Due/Drivers/syscalls.o $$(LDFLAGS); \
 	$${OBJCOPY} -O binary $${@} $$(BIN)
 endef

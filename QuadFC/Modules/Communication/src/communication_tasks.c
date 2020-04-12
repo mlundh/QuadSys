@@ -24,14 +24,14 @@
 #include "string.h"
 
 #include "Communication/inc/communication_tasks.h"
-#include "Components/Parameters/inc/paramHandler.h"
+#include "Parameters/inc/paramHandler.h"
 
-#include "Modules/Messages/inc/Msg_Parser.h"
-#include "Modules/Messages/inc/Msg_Transmission.h"
-#include "Modules/Messages/inc/Msg_TestTransmission.h"
-#include "Modules/Messages/inc/Msg_Debug.h"
+#include "Messages/inc/Msg_Parser.h"
+#include "Messages/inc/Msg_Transmission.h"
+#include "Messages/inc/Msg_TestTransmission.h"
+#include "Messages/inc/Msg_Debug.h"
 
-#include "Modules/Messages/inc/Msg_Log.h"
+#include "Messages/inc/Msg_Log.h"
 
 #include "FlightModeHandler/inc/flight_mode_handler.h"
 #include "Components/SLIP/inc/slip_packet.h"

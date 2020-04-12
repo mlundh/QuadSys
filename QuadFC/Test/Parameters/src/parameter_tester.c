@@ -22,10 +22,10 @@
  * THE SOFTWARE.
  */
 #include "../parameter_tester.h"
-#include "Components/Parameters/inc/parameters.h"
-#include "Modules/EventHandler/inc/event_handler.h"
+#include "Parameters/inc/parameters.h"
+#include "EventHandler/inc/event_handler.h"
 #include "Components/Parameters/inc/paramHandler.h"
-#include "Modules/Messages/inc/Msg_Param.h"
+#include "Messages/inc/Msg_Param.h"
 #include <string.h>
 
 typedef struct

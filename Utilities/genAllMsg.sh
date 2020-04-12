@@ -4,7 +4,7 @@ pythonDIR="$DIR/pythonGenerator"
 filename="$DIR/messages.txt"
 addresses="$DIR/addresses.txt"
 outputDIRcpp="$DIR/../QuadGS/Common/Messages"
-outputDIRc="$DIR/../QuadFC/Modules/Messages"
+outputDIRc="$DIR/../QuadFC/Components/Messages"
 
 echo "Generating messages."
 echo ""

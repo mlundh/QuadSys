@@ -24,8 +24,8 @@
 
 #ifndef MAIN_CONTROL_TASK_H_
 #define MAIN_CONTROL_TASK_H_
-#include "Modules/Messages/inc/common_types.h"
-#include "Modules/EventHandler/inc/event_handler.h"
+#include "Components/Messages/inc/common_types.h"
+#include "Components/EventHandler/inc/event_handler.h"
 
 void create_main_control_task(eventHandler_t* evHandler);
 

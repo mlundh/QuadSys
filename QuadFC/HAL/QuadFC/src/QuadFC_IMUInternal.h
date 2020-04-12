@@ -33,8 +33,8 @@
 
 
 #include <stdint.h>
-#include "Modules/Messages/inc/common_types.h"
-#include "Components/Parameters/inc/parameters.h"
+#include "Messages/inc/common_types.h"
+#include "Parameters/inc/parameters.h"
 /**
  * Create the IMU unit. This function should be called before the
  * scheduler is started.

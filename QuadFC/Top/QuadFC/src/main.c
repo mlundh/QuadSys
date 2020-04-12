@@ -33,10 +33,10 @@
 #include "FlightController/inc/main_control_task.h"
 #include "Communication/inc/communication_tasks.h"
 #include "HMI/inc/led_control_task.h"
-#include "PortLayer/SpectrumSatellite/inc/satellite_receiver_public.h"
+#include "SpectrumSatellite/inc/satellite_receiver_public.h"
 
 /*include utilities*/
-#include "Modules/Messages/inc/common_types.h"
+#include "Components/Messages/inc/common_types.h"
 
 /*Include task communication modules*/
 #include "FlightController/inc/control_mode_handler.h"

@@ -12,8 +12,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
-#include "Components/Parameters/inc/parameters_internal.h"
-#include "Modules/Utilities/inc/string_utils.h"
+#include "Parameters/inc/parameters_internal.h"
+#include "Utilities/inc/string_utils.h"
 
 #include <gpio.h>
 #include <pio.h>

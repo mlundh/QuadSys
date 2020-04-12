@@ -23,6 +23,7 @@
  * THE SOFTWARE.
  */
 #include <string.h>
+#include <stdio.h>
 #include "Messages/inc/Msg_AppLog.h"
 #include "FreeRTOS.h"
 

@@ -23,8 +23,8 @@
  */
 #ifndef MODULES_FLIGHTCONTROLLER_INC_CONTROL_SYSTEM_H_
 #define MODULES_FLIGHTCONTROLLER_INC_CONTROL_SYSTEM_H_
-#include "Modules/Messages/inc/common_types.h"
-#include "Modules/Messages/inc/msg_enums.h"
+#include "Messages/inc/common_types.h"
+#include "Messages/inc/msg_enums.h"
 #include "Parameters/inc/parameters.h"
 
 typedef struct CtrlObj CtrlObj_t;

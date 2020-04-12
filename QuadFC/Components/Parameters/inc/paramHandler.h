@@ -28,8 +28,8 @@
 
 typedef struct paramHander paramHander_t;
 
-#include "Modules/EventHandler/inc/event_handler.h"
-#include "Components/Parameters/inc/parameters_internal.h"
+#include "EventHandler/inc/event_handler.h"
+#include "Parameters/inc/parameters_internal.h"
 
 
 paramHander_t* ParamHandler_CreateObj(uint8_t num_children, eventHandler_t* evHandler,const char *obj_name, uint8_t master);

@@ -39,11 +39,25 @@ OBJCOPY=arm-none-eabi-objcopy
 #
 AR=arm-none-eabi-ar
 
+
+
+ifeq ($(PLATFORM),Due)
+	CPU := -mcpu=cortex-m3
+    MCU := $(CPU) -mthumb 
+else ifeq ($(PLATFORM),Titan)
+	CPU := -mcpu=cortex-m4
+	FPU := -mfpu=fpv4-sp-d16
+	FLOAT-ABI := -mfloat-abi=hard
+	MCU := $(CPU) -mthumb $(FPU) $(FLOAT-ABI)
+else
+	$(info Unsupported Platform.)
+endif
+
+
 #
 # Entry function etc.
 #
-
-SCATTER_QuadFC:=ThirdParty/asf/sam/utils/linker_scripts/sam3x/sam3x8/gcc/flash.ld
+SCATTER_QuadFC:=Drivers/Due/asf/sam/utils/linker_scripts/sam3x/sam3x8/gcc/flash.ld
 ENTRY_QuadFC:=Reset_Handler
 
 
@@ -54,7 +68,7 @@ ENTRY_QuadFC:=Reset_Handler
 #
 #******************************************************************************
 ifdef DEBUG
-CFLAGS += -g -O0
+CFLAGS += -g -O0 -gdwarf-2
 else
 # optimization breaks the application. Investigate why! 
 CFLAGS += -O2
@@ -73,7 +87,7 @@ endif
 # create multiple targets. Here we add the dependency file as a target.
 # -Wmissing-prototypes -Wstrict-prototypes
 
-CFLAGS+= -mthumb -mcpu=cortex-m3 -MMD -MP -MT "$$(patsubst %.o, %.d, $$(notdir $$(@)))" -MT "$$(@)"
+CFLAGS+= $(MCU) $(C_DEFS) -MMD -MP -MT "$$(patsubst %.o, %.d, $$(notdir $$(@)))" -MT "$$(@)"
 CFLAGS+= -fdata-sections -ffunction-sections -mlong-calls -Wall -c -std=gnu99 -Wshadow
 CFLAGS+= -DBOARD=ARDUINO_DUE_X -DUDD_ENABLE -D__SAM3X8E__
 
@@ -82,4 +96,4 @@ CFLAGS+= -DBOARD=ARDUINO_DUE_X -DUDD_ENABLE -D__SAM3X8E__
 #
 LDFLAGS= -mthumb -Wl,-Map,"$(@).map" -Wl,--start-group -lm  -Wl,--end-group 
 LDFLAGS+= -Wl,--gc-sections -mcpu=cortex-m3 -T $(SCATTER_QuadFC) -Wl,--cref 
-LDFLAGS+= -Wl,--entry=$(ENTRY_QuadFC) -mthumb  -specs=nano.specs
+LDFLAGS+= -Wl,--entry=$(ENTRY_QuadFC) -mthumb  -specs=nano.specs 
