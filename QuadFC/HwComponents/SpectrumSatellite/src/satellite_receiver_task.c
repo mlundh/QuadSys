@@ -106,7 +106,7 @@ Satellite_t* Satellite_Init(eventHandler_t* eventHandler)
  * Spectrum satellite receiver task. Initialize the USART instance
  * and create the task.
  */ 
-void Satellite_CreateReceiverTask(  QueueHandle_t eventHandler)
+void Satellite_CreateReceiverTask(  eventHandler_t* eventHandler)
 {
     uint8_t* receiver_buffer_driver = pvPortMalloc(
             sizeof(uint8_t) * SATELLITE_MESSAGE_LENGTH*2 );

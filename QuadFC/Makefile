@@ -57,8 +57,8 @@ VPATH:=
 
 # Add categories here if needed.
 CATEGORIES := Modules HwComponents Top Test HAL BaseComponents Components Boards
-CATEGORIES_R_PLF := Drivers
-CATEGORIES_R := OS 
+CATEGORIES_R_PLF := Drivers OS
+CATEGORIES_R :=  
 
 #Combine categories to ensure coorrect targets and vpath.
 CATEGORIES_R_PLATFORM := $(addsuffix /$(PLATFORM),$(CATEGORIES_R_PLF)) $(CATEGORIES_R)

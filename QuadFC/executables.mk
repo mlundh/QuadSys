@@ -49,7 +49,7 @@ QuadFC_DEPS+= $(addprefix Components/, AppLog AppLogSerialBackend Log LogMemBack
 QuadFC_DEPS+= $(addprefix Components/, Utilities SetpointHandler Parameters SLIP)
 QuadFC_DEPS+= $(addprefix HwComponents/, SpectrumSatellite CY15B104Q_SX_spi_fram)
 QuadFC_DEPS+= $(addprefix HwComponents/, MB85RC_i2c_fram Sensors)
-QuadFC_DEPS+= $(addprefix OS/, freertos)
+QuadFC_DEPS+= $(addprefix OS/, $(PLATFORM))
 QuadFC_DEPS+= $(addprefix Boards/, $(PLATFORM)Board)
 QuadFC_DEPS+= $(addprefix Drivers/, $(PLATFORM))
 
@@ -57,7 +57,7 @@ QuadFC_DEPS+= $(addprefix Drivers/, $(PLATFORM))
 Test_Utilities_DEPS:= Top/Test_Utilities
 Test_Utilities_DEPS+= $(addprefix Test/,TestFW Math Utilities)
 Test_Utilities_DEPS+= $(addprefix Components/, Utilities )
-Test_Utilities_DEPS+= $(addprefix OS/, freertos)
+Test_Utilities_DEPS+= $(addprefix OS/, $(PLATFORM))
 Test_Utilities_DEPS+= $(addprefix Boards/, $(PLATFORM)Board $(PLATFORM)Test)
 Test_Utilities_DEPS+= $(addprefix Drivers/, $(PLATFORM))
 
@@ -67,7 +67,7 @@ Test_Modules1_DEPS+= $(addprefix BaseComponents/, EventHandler Messages MsgBase)
 Test_Modules1_DEPS+= $(addprefix Components/, Utilities StateEstimator Parameters)
 Test_Modules1_DEPS+= $(addprefix Modules/, FlightController)
 Test_Modules1_DEPS+= $(addprefix HwComponents/, SpectrumSatellite Sensors)
-Test_Modules1_DEPS+= $(addprefix OS/, freertos)
+Test_Modules1_DEPS+= $(addprefix OS/, $(PLATFORM))
 Test_Modules1_DEPS+= $(addprefix Boards/, $(PLATFORM)Board $(PLATFORM)Test)
 Test_Modules1_DEPS+= $(addprefix Drivers/, $(PLATFORM))
 
@@ -75,7 +75,7 @@ Test_Modules2_DEPS:= Top/Test_Modules2 HAL/QuadFC
 Test_Modules2_DEPS+= $(addprefix Test/,TestFW  FakeMemory Messages)
 Test_Modules2_DEPS+= $(addprefix BaseComponents/, Messages MsgBase)
 Test_Modules2_DEPS+= $(addprefix Components/, SLIP Utilities)
-Test_Modules2_DEPS+= $(addprefix OS/, freertos)
+Test_Modules2_DEPS+= $(addprefix OS/, $(PLATFORM))
 Test_Modules2_DEPS+= $(addprefix Boards/, $(PLATFORM)Board $(PLATFORM)Test)
 Test_Modules2_DEPS+= $(addprefix Drivers/, $(PLATFORM))
 
@@ -83,7 +83,7 @@ Test_Board_DEPS:= Top/Test_Board HAL/QuadFC
 Test_Board_DEPS+= $(addprefix Test/, ArduinoDueBoard TestFW)
 Test_Board_DEPS+= $(addprefix Components/, Log LogMemBackend Utilities)
 Test_Board_DEPS+= $(addprefix HwComponents/, CY15B104Q_SX_spi_fram MB85RC_i2c_fram)
-Test_Board_DEPS+= $(addprefix OS/, freertos)
+Test_Board_DEPS+= $(addprefix OS/, $(PLATFORM))
 Test_Board_DEPS+= $(addprefix Boards/, DueBoard DueTest)
 Test_Board_DEPS+= $(addprefix Drivers/, Due)
 
@@ -91,7 +91,7 @@ Test_Components1_DEPS:= Top/Test_Components1 HAL/QuadFC
 Test_Components1_DEPS+= $(addprefix BaseComponents/, EventHandler Messages MsgBase)
 Test_Components1_DEPS+= $(addprefix Components/, Log Parameters SLIP AppLog Utilities)
 Test_Components1_DEPS+= $(addprefix Test/,TestFW Parameters FakeMemory Log AppLog LogTestBackend AppLogMemBackend)
-Test_Components1_DEPS+= $(addprefix OS/, freertos)
+Test_Components1_DEPS+= $(addprefix OS/, $(PLATFORM))
 Test_Components1_DEPS+= $(addprefix Boards/, $(PLATFORM)Board $(PLATFORM)Test)
 Test_Components1_DEPS+= $(addprefix Drivers/, $(PLATFORM))
 

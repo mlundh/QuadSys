@@ -29,6 +29,6 @@
 /**
  * Public interface for the satellite receiver task.
  */
-void Satellite_CreateReceiverTask( QueueHandle_t eventHandler);
+void Satellite_CreateReceiverTask( eventHandler_t* eventHandler);
 
 #endif /* PORTLAYER_COMMUNICATION_INC_SATELLITE_RECEIVER_PUBLIC_H_ */

@@ -58,7 +58,7 @@
 
 // From module: FreeRTOS - Kernel 7.3.0
 #include <FreeRTOS.h>
-#include <StackMacros.h>
+#include <stack_macros.h>
 #include <croutine.h>
 #include <list.h>
 #include <mpu_wrappers.h>
