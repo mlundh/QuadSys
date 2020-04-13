@@ -31,7 +31,7 @@
 #include "MsgBase/inc/message_base.h"
 #include "Messages/inc/msgAddr.h"
 #include "Messages/inc/messageTypes.h"
-#include "Components/EventHandler/inc/event_circular_buffer.h"
+#include "EventHandler/inc/event_circular_buffer.h"
 
 /**
  * @file event_handler.h

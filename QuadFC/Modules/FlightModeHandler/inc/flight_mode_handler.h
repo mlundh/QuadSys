@@ -27,7 +27,7 @@
 
 #include "stdint.h"
 #include "Messages/inc/common_types.h"
-#include "Components/EventHandler/inc/event_handler.h"
+#include "EventHandler/inc/event_handler.h"
 
 #include "Messages/inc/Msg_FlightMode.h"
 #include "Messages/inc/Msg_FlightModeReq.h"

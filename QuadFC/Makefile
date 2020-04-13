@@ -56,12 +56,17 @@ BUILD_DIR := out/$(PLATFORM)
 VPATH:=
 
 # Add categories here if needed.
-CATEGORIES := Modules HwComponents Top Test HAL Components 
-CATEGORIES += Boards
-CATEGORIES_R := OS
-CATEGORIES_R += Drivers
-ALL_CATEGORIES := $(CATEGORIES) $(CATEGORIES_R)
+CATEGORIES := Modules HwComponents Top Test HAL BaseComponents Components Boards
+CATEGORIES_R_PLF := Drivers
+CATEGORIES_R := OS 
 
+#Combine categories to ensure coorrect targets and vpath.
+CATEGORIES_R_PLATFORM := $(addsuffix /$(PLATFORM),$(CATEGORIES_R_PLF)) $(CATEGORIES_R)
+ALL_CATEGORIES := $(CATEGORIES) $(CATEGORIES_R_PLF) $(CATEGORIES_R) 
+CATEGORIES_R += $(CATEGORIES_R_PLF)
+
+
+#$(error CATEGORIES_R $(CATEGORIES_R_PLATFORM))
 # Add include path for header files. Third party code is special, the files expects all
 # dirs to be in include path.
 
@@ -111,9 +116,8 @@ $(foreach category,$(ALL_CATEGORIES),$(eval $(call VARIABLES,$(category))))
 # $(Category)_SOURCE_DIR
 # and adds the source dir to VPATH
 #*************************************************************************
-$(foreach category,$(CATEGORIES_R),$(eval $(call VARIABLES_R,$(category))))
-#$(foreach category,$(CATEGORIES_R),$(info $(call VARIABLES_R,$(category))))
-
+$(foreach category,$(CATEGORIES_R_PLATFORM),$(eval $(call VARIABLES_R,$(category))))
+#$(foreach category,$(CATEGORIES_R_PLATFORM),$(info $(call VARIABLES_R,$(category))))
 
 #*************************************************************************
 #
