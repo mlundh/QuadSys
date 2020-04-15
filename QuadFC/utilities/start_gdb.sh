@@ -11,6 +11,9 @@ else
 fi
 
 gnome-terminal  --window-with-profile=StartEnv -e "JLinkGDBServer -device $device -if SWD -rtos GDBServer/RTOSPlugin_FreeRTOS"&
-gdb-multiarch -command=./gdbScripts/gdbFC.init
+cd gdbScripts/$PLATFORM
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+echo $DIR
+gdb-multiarch -command=./gdbFC.init
 
 

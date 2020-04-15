@@ -1,5 +1,5 @@
 #Read symbols and load the FC again.
-file ../../out/Test_Board.elf
+file ../../../out/Due/Test_Board.elf
 monitor reset
 load
 continue

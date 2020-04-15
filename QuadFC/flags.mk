@@ -44,11 +44,17 @@ AR=arm-none-eabi-ar
 ifeq ($(PLATFORM),Due)
 	CPU := -mcpu=cortex-m3
     MCU := $(CPU) -mthumb 
+	DEFINES := -DBOARD=ARDUINO_DUE_X -DUDD_ENABLE -D__SAM3X8E__
+	SCATTER_QuadFC:=Drivers/Due/asf/sam/utils/linker_scripts/sam3x/sam3x8/gcc/flash.ld
+	ENTRY_QuadFC:=Reset_Handler
 else ifeq ($(PLATFORM),Titan)
 	CPU := -mcpu=cortex-m4
 	FPU := -mfpu=fpv4-sp-d16
 	FLOAT-ABI := -mfloat-abi=hard
 	MCU := $(CPU) -mthumb $(FPU) $(FLOAT-ABI)
+	DEFINES := 
+	SCATTER_QuadFC:=Drivers/Titan/STM32F413VGTx_FLASH.ld
+	ENTRY_QuadFC:=Reset_Handler
 else
 	$(info Unsupported Platform.)
 endif
@@ -57,8 +63,7 @@ endif
 #
 # Entry function etc.
 #
-SCATTER_QuadFC:=Drivers/Due/asf/sam/utils/linker_scripts/sam3x/sam3x8/gcc/flash.ld
-ENTRY_QuadFC:=Reset_Handler
+
 
 
 #******************************************************************************
@@ -68,7 +73,7 @@ ENTRY_QuadFC:=Reset_Handler
 #
 #******************************************************************************
 ifdef DEBUG
-CFLAGS += -g -O0 -gdwarf-2
+CFLAGS += -g3 -O0 -gdwarf-2
 else
 # optimization breaks the application. Investigate why! 
 CFLAGS += -O2
@@ -89,7 +94,7 @@ endif
 
 CFLAGS+= $(MCU) $(C_DEFS) -MMD -MP -MT "$$(patsubst %.o, %.d, $$(notdir $$(@)))" -MT "$$(@)"
 CFLAGS+= -fdata-sections -ffunction-sections -mlong-calls -Wall -c -std=gnu99 -Wshadow
-CFLAGS+= -DBOARD=ARDUINO_DUE_X -DUDD_ENABLE -D__SAM3X8E__
+CFLAGS+= $(DEFINES)
 
 #
 # The flags passed to the linker.

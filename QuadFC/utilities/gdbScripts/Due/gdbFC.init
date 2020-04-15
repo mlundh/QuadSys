@@ -4,5 +4,4 @@ set verbose off
 
 target remote localhost:2331
 
-cd gdbScripts
 source loadFC.gdb

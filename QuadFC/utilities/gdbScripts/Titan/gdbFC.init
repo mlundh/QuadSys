@@ -1,0 +1,6 @@
+set width 0
+set height 0
+set verbose off
+
+target remote localhost:2331
+source loadFC.gdb

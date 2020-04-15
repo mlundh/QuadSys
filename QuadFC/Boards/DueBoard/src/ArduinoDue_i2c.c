@@ -48,7 +48,7 @@ uint8_t Init_Twi(int index)
       0,
       (configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY + 1),
       TWI_I2C_MASTER,
-      (USE_TX_ACCESS_MUTEX | USE_RX_ACCESS_MUTEX | WAIT_TX_COMPLETE | WAIT_RX_COMPLETE),
+      (WAIT_TX_COMPLETE | WAIT_RX_COMPLETE),
   };
 
   /*Initialize twi bus.*/
