@@ -144,7 +144,7 @@ uint8_t SpiMaster_Init(int SpiIndex)
 		return 0;
 	}
 
-	Spi_accessMutex[SpiIndex] = xSemaphoreCreateMutex();
+	Spi_accessMutex[SpiIndex] = xSemaphoreCreateBinary();
 	/* Configure DMAC. */
 	configure_dmac();
 

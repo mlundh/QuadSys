@@ -21,15 +21,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#include <sysclk.h>
-#include <board.h>
-#include "FlightModeHandler/inc/flight_mode_handler.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
 #include "timers.h"
 
-/*Include tasks*/
+/*Include board*/
+#include "Boards/Board.h"
+
+/*Include tasks to start*/
 #include "FlightController/inc/main_control_task.h"
 #include "Communication/inc/communication_tasks.h"
 #include "HMI/inc/led_control_task.h"
@@ -50,11 +50,6 @@ void vApplicationIdleHook( void );
 void vApplicationStackOverflowHook( TaskHandle_t pxTask,
     signed char *pcTaskName );
 void vApplicationTickHook( void );
-
-/*
- * Set up the hardware to run QuadFC.
- */
-static void prvSetupHardware( void );
 
 int main( void )
 {
@@ -101,20 +96,6 @@ int main( void )
   return 0;
 }
 
-/*-----------------------------------------------------------*/
-
-static void prvSetupHardware( void )
-{
-  /* ASF function to setup clocking. */
-  sysclk_init();
-
-  /* Ensure all priority bits are assigned as preemption priority bits. */
-  NVIC_SetPriorityGrouping( 0 );
-
-  /* Atmel library function to setup for the evaluation kit being used. */
-  board_init();
-
-}
 
 /*-----------------------------------------------------------*/
 
