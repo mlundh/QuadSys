@@ -9,10 +9,10 @@
   * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software component is licensed by ST under BSD 3-Clause license,
+  * the "License"; You may not use this file except in compliance with the
+  * License. You may obtain a copy of the License at:
+  *                        opensource.org/licenses/BSD-3-Clause
   *
   ******************************************************************************
   */
@@ -160,7 +160,7 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
     __HAL_LINKDMA(spiHandle,hdmatx,hdma_spi1_tx);
 
     /* SPI1 interrupt Init */
-    HAL_NVIC_SetPriority(SPI1_IRQn, 5, 0);
+    HAL_NVIC_SetPriority(SPI1_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(SPI1_IRQn);
   /* USER CODE BEGIN SPI1_MspInit 1 */
 
@@ -197,7 +197,7 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
     /* SPI2 interrupt Init */
-    HAL_NVIC_SetPriority(SPI2_IRQn, 5, 0);
+    HAL_NVIC_SetPriority(SPI2_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(SPI2_IRQn);
   /* USER CODE BEGIN SPI2_MspInit 1 */
 
@@ -226,7 +226,7 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
     HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
     /* SPI4 interrupt Init */
-    HAL_NVIC_SetPriority(SPI4_IRQn, 5, 0);
+    HAL_NVIC_SetPriority(SPI4_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(SPI4_IRQn);
   /* USER CODE BEGIN SPI4_MspInit 1 */
 
