@@ -25,7 +25,7 @@
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
+#include "cubeInit.h"
 
 /* DMA memory to memory transfer handles -------------------------------------*/
 

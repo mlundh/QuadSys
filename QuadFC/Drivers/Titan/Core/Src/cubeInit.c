@@ -19,7 +19,7 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
+#include "cubeInit.h"
 #include "adc.h"
 #include "crc.h"
 #include "dma.h"

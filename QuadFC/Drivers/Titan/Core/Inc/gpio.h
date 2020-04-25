@@ -25,7 +25,7 @@
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
+#include "cubeInit.h"
 
 /* USER CODE BEGIN Includes */
 
