@@ -30,6 +30,10 @@
 CC=arm-none-eabi-gcc
 
 #
+# The linker used.
+#
+LD=arm-none-eabi-gcc
+#
 # The command for extracting images from the linked executables.
 #
 OBJCOPY=arm-none-eabi-objcopy
@@ -39,6 +43,8 @@ OBJCOPY=arm-none-eabi-objcopy
 #
 AR=arm-none-eabi-ar
 
+AS = $(CC)-x assembler-with-cpp
+
 
 
 ifeq ($(PLATFORM),Due)
@@ -47,14 +53,16 @@ ifeq ($(PLATFORM),Due)
 	DEFINES := -DBOARD=ARDUINO_DUE_X -DUDD_ENABLE -D__SAM3X8E__
 	SCATTER_QuadFC:=Drivers/Due/asf/sam/utils/linker_scripts/sam3x/sam3x8/gcc/flash.ld
 	ENTRY_QuadFC:=Reset_Handler
+	SYSCALLS:=out/Due/Drivers/syscalls.o
 else ifeq ($(PLATFORM),Titan)
 	CPU := -mcpu=cortex-m4
 	FPU := -mfpu=fpv4-sp-d16
 	FLOAT-ABI := -mfloat-abi=hard
 	MCU := $(CPU) -mthumb $(FPU) $(FLOAT-ABI)
-	DEFINES := 
+	DEFINES := -DUSE_HAL_DRIVER -DSTM32F413xx -DUSE_HAL_DRIVER
 	SCATTER_QuadFC:=Drivers/Titan/STM32F413VGTx_FLASH.ld
 	ENTRY_QuadFC:=Reset_Handler
+
 else
 	$(info Unsupported Platform.)
 endif
@@ -99,6 +107,6 @@ CFLAGS+= $(DEFINES)
 #
 # The flags passed to the linker.
 #
-LDFLAGS= -mthumb -Wl,-Map,"$(@).map" -Wl,--start-group -lm  -Wl,--end-group 
-LDFLAGS+= -Wl,--gc-sections -mcpu=cortex-m3 -T $(SCATTER_QuadFC) -Wl,--cref 
-LDFLAGS+= -Wl,--entry=$(ENTRY_QuadFC) -mthumb  -specs=nano.specs 
+LDFLAGS= $(MCU) -specs=nano.specs -Wl,-Map,"$(@).map",--cref -lm -lc -lm -lnosys 
+LDFLAGS+= -Wl,--gc-sections -T$(SCATTER_QuadFC) 
+LDFLAGS+= -Wl,--entry=$(ENTRY_QuadFC)  

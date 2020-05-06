@@ -27,7 +27,7 @@
 /*
  * Set up the hardware to run QuadFC.
  */
-static void SetupHardware( void );
+void Board_SetupHardware( void );
 
 
 #endif /* _BOARDS_BOARD_H_ */

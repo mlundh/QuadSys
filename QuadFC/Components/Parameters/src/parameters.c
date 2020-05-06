@@ -15,9 +15,6 @@
 #include "Parameters/inc/parameters_internal.h"
 #include "Utilities/inc/string_utils.h"
 
-#include <gpio.h>
-#include <pio.h>
-
 
 void Param_SetChild(param_obj_t *current, param_obj_t *child)
 {

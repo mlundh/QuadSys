@@ -75,7 +75,7 @@ typedef struct quad_pwm_parameters
 typedef struct pwm_internals
 {
     quad_pwm_parameters_t *pwm_parameters;
-    pwm_channel_t pwm_channels;
+//    pwm_channel_t pwm_channels;
     int32_t arming_duty_value;
     int32_t armed_duty_value;
     SemaphoreHandle_t xMutex;

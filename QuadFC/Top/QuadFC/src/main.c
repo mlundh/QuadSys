@@ -27,7 +27,7 @@
 #include "timers.h"
 
 /*Include board*/
-#include "Boards/Board.h"
+#include "HAL/QuadFC/QuadFC_Board.h"
 
 /*Include tasks to start*/
 #include "FlightController/inc/main_control_task.h"
@@ -55,7 +55,7 @@ int main( void )
 {
 
   /* Prepare the hardware to run QuadFC. */
-  prvSetupHardware();
+  Board_SetupHardware();
 
 
   /* Create all tasks used in the application.*/

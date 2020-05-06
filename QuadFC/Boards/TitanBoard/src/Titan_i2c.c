@@ -26,10 +26,6 @@
 #include <string.h>
 
 
-static  Twi    *        twi_instances[] = {TWI0, TWI1};
-static  uint32_t        twi_Init[]      = {0, 0};
-
-
 uint8_t Init_Twi(int index)
 {
   return 0;

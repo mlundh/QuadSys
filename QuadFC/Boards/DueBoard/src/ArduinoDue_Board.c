@@ -28,7 +28,7 @@
 
 
 
-static void SetupHardware( void )
+void Board_SetupHardware( void )
 {
   /* ASF function to setup clocking. */
   sysclk_init();
@@ -40,3 +40,4 @@ static void SetupHardware( void )
   board_init();
 
 }
+

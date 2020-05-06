@@ -37,8 +37,6 @@
 #ifndef MPU6050_H_
 #define MPU6050_H_
 
-#include "freertos_twi_master.h"
-#include "portmacro.h"
 #include "Messages/inc/common_types.h"
 #include "HAL/QuadFC/QuadFC_IMU.h"
 #define BLOCK_TIME_IMU (2UL / portTICK_PERIOD_MS)

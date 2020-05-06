@@ -56,7 +56,7 @@ BUILD_DIR := out/$(PLATFORM)
 VPATH:=
 
 # Add categories here if needed.
-CATEGORIES := Modules HwComponents Top Test HAL BaseComponents Components Boards
+CATEGORIES := Modules HwComponents Top Test HAL BaseComponents Boards Components 
 CATEGORIES_R_PLF := Drivers OS
 CATEGORIES_R :=  
 
@@ -71,7 +71,7 @@ CATEGORIES_R += $(CATEGORIES_R_PLF)
 # dirs to be in include path.
 
 I_ThirdParty := $(sort $(dir $(call rwildcard,Drivers/$(PLATFORM),*.h)))
-I_ThirdParty += $(sort $(dir $(call rwildcard,OS/,*.h)))
+I_ThirdParty += $(sort $(dir $(call rwildcard,OS/$(PLATFORM),*.h)))
 INCLUDE_ThirdParty := $(addprefix -I, $(I_ThirdParty))
 
 INCLUDE_PATH := $(addprefix -I, $(CATEGORIES))
@@ -110,37 +110,30 @@ $(foreach category,$(ALL_CATEGORIES),$(eval $(call VARIABLES,$(category))))
 #$(foreach category,$(ALL_CATEGORIES),$(info $(call VARIABLES,$(category))))
 
 #*************************************************************************
+#
+# Sets up the list of all obj files for each module.
+#
+# Variables set:
+# $(sub_category)_OBJS 
+#*************************************************************************
+$(foreach category,$(CATEGORIES),\
+  $(foreach sub_category,$($(category)_LIST),\
+  $(eval $(call OBJFILES, $(BUILD_DIR),$(sub_category)))))
+#$(foreach category,$(CATEGORIES),\
+  $(foreach sub_category,$($(category)_LIST),\
+  $(info $(call OBJFILES, $(BUILD_DIR),$(sub_category)))))
+
+
+#*************************************************************************
 # Set up all the variables used by each recursive category. 
 #
 # Variables set:
 # $(Category)_SOURCE_DIR
+# $(Category)_OBJS 
 # and adds the source dir to VPATH
 #*************************************************************************
 $(foreach category,$(CATEGORIES_R_PLATFORM),$(eval $(call VARIABLES_R,$(category))))
 #$(foreach category,$(CATEGORIES_R_PLATFORM),$(info $(call VARIABLES_R,$(category))))
-
-#*************************************************************************
-#
-# Creates the rule for building the archive library for each sub module
-# to each category. This rule looks for source prerequisits in the 
-# "src" folder of the sub module.
-#
-#*************************************************************************
-$(foreach category,$(CATEGORIES),\
-  $(eval $(call LIB_RULE,$$($(category)_LIB_LIST),$$($(category)_BUILD_DIR))))
-#$(foreach category,$(CATEGORIES),\
-  $(info $(call LIB_RULE,$$($(category)_LIB_LIST),$$($(category)_BUILD_DIR))))
-
-#*************************************************************************
-#
-# Creates the rule for building the archive library for each sub module
-# to each category. This rule looks for source files recusively in the folder
-#
-#*************************************************************************
-$(foreach category,$(CATEGORIES_R),\
-  $(eval $(call LIB_RULE_RECURSIVE,$$($(category)_LIB_LIST),$$($(category)_BUILD_DIR))))
-#$(foreach category,$(CATEGORIES_R),\
-  $(info $(call LIB_RULE_RECURSIVE,$$($(category)_LIB_LIST),$$($(category)_BUILD_DIR))))
 
 #*************************************************************************
 #
@@ -158,12 +151,23 @@ $(foreach category,$(CATEGORIES),\
 #*************************************************************************
 #
 # Creates the rule for building .o file from each source file in the 
-# sub modules of each category. This rule is used for recursively
-# found sources. 
+# sub modules of each recursive category. \
 #
 #*************************************************************************
-$(foreach category,$(CATEGORIES_R), $(eval $(call O_RULE_recursive, $(BUILD_DIR),$(category))))
+$(foreach category,$(CATEGORIES_R_PLATFORM), $(eval $(call O_RULE_recursive, $(BUILD_DIR),$(category))))
 #$(foreach category,$(CATEGORIES_R), $(info $(call O_RULE_recursive, $(BUILD_DIR),$(category))))
+
+#*************************************************************************
+#
+# Creates the rule for creating the list of all objects an excecutable  needs. 
+#
+#*************************************************************************
+$(foreach excecutable, $(EXECUTABLES),\
+  $(foreach dep, $($(excecutable)_DEPS),\
+  $(eval $(call EXECOBJ, $(excecutable),$(dep)))))
+#$(foreach excecutable, $(EXECUTABLES),\
+  $(foreach dep, $($(excecutable)_DEPS),\
+  $(eval $(call EXECOBJ, $(excecutable),$(dep)))))
 
 #*************************************************************************
 #
@@ -172,7 +176,7 @@ $(foreach category,$(CATEGORIES_R), $(eval $(call O_RULE_recursive, $(BUILD_DIR)
 #
 #*************************************************************************
 $(foreach exec,$(EXECUTABLES),$(eval $(call ELF_RULE,$(exec), $(BUILD_DIR))))
-#$(foreach exec,$(EXECUTABLES),$(info $(call ELF_RULE,$(exec))))
+#$(foreach exec,$(EXECUTABLES),$(info $(call ELF_RULE,$(exec), $(BUILD_DIR))))
 
 
 #*************************************************************************
@@ -201,10 +205,6 @@ clean:
 
 print:
 	@echo "BUILD_DIR:" $(ThirdParty_BUILD_DIR)
-	
-.PHONY : flash
-flash:
-	python connect1200.py
-	bossac -p, --port=ttyACM0 -e -w -v -b "$(ROOT_DIR)/${BUILD_DIR}/QuadFC.bin" -R
+
 
 
