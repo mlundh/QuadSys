@@ -51,9 +51,8 @@ ifeq ($(PLATFORM),Due)
 	CPU := -mcpu=cortex-m3
     MCU := $(CPU) -mthumb 
 	DEFINES := -DBOARD=ARDUINO_DUE_X -DUDD_ENABLE -D__SAM3X8E__
-	SCATTER_QuadFC:=Drivers/Due/asf/sam/utils/linker_scripts/sam3x/sam3x8/gcc/flash.ld
-	ENTRY_QuadFC:=Reset_Handler
-	SYSCALLS:=out/Due/Drivers/syscalls.o
+	SCATTER_QuadFC:= Drivers/Due/asf/sam/utils/linker_scripts/sam3x/sam3x8/gcc/flash.ld
+	ENTRY_QuadFC:=-Wl,--entry=Reset_Handler
 else ifeq ($(PLATFORM),Titan)
 	CPU := -mcpu=cortex-m4
 	FPU := -mfpu=fpv4-sp-d16
@@ -61,7 +60,6 @@ else ifeq ($(PLATFORM),Titan)
 	MCU := $(CPU) -mthumb $(FPU) $(FLOAT-ABI)
 	DEFINES := -DUSE_HAL_DRIVER -DSTM32F413xx -DUSE_HAL_DRIVER
 	SCATTER_QuadFC:=Drivers/Titan/STM32F413VGTx_FLASH.ld
-	ENTRY_QuadFC:=Reset_Handler
 
 else
 	$(info Unsupported Platform.)
@@ -80,8 +78,9 @@ endif
 # variable is set.
 #
 #******************************************************************************
+
 ifdef DEBUG
-CFLAGS += -g3 -O0 -gdwarf-2
+DBGFLAGS := -g3 -O0 
 else
 # optimization breaks the application. Investigate why! 
 CFLAGS += -O2
@@ -100,13 +99,13 @@ endif
 # create multiple targets. Here we add the dependency file as a target.
 # -Wmissing-prototypes -Wstrict-prototypes
 
-CFLAGS+= $(MCU) $(C_DEFS) -MMD -MP -MT "$$(patsubst %.o, %.d, $$(notdir $$(@)))" -MT "$$(@)"
+CFLAGS+= $(MCU) $(DBGFLAGS) $(C_DEFS) -MMD -MP -MT "$$(patsubst %.o, %.d, $$(notdir $$(@)))" -MT "$$(@)"
 CFLAGS+= -fdata-sections -ffunction-sections -mlong-calls -Wall -c -std=gnu99 -Wshadow
-CFLAGS+= $(DEFINES)
+CFLAGS+= $(DEFINES) 
 
 #
 # The flags passed to the linker.
 #
 LDFLAGS= $(MCU) -specs=nano.specs -Wl,-Map,"$(@).map",--cref -lm -lc -lm -lnosys 
-LDFLAGS+= -Wl,--gc-sections -T$(SCATTER_QuadFC) 
-LDFLAGS+= -Wl,--entry=$(ENTRY_QuadFC)  
+LDFLAGS+= -Wl,--gc-sections -T $(SCATTER_QuadFC) 
+LDFLAGS+= $(ENTRY_QuadFC) 

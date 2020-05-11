@@ -65,6 +65,7 @@ define VARIABLES_R
 $(1)_SOURCE_DIR := $$(patsubst %/,%, $$(sort $$(dir $$(call rwildcard,$(1)/,*.c))))
 $(1)_SOURCE_DIR += $$(patsubst %/,%, $$(sort $$(dir $$(call rwildcard,$(1)/,*.s))))
 $(1)_OBJS := $$(addprefix $(BUILD_DIR)/$(1)/, $$(patsubst %.c, %.o, $$(notdir $$(call rwildcard,$(1)/,*.c))))
+$(1)_OBJS += $$(addprefix $(BUILD_DIR)/$(1)/, $$(patsubst %.s, %.o, $$(notdir $$(call rwildcard,$(1)/,*.s))))
 
 # Add source to vpath.
 VPATH += $$($(1)_SOURCE_DIR)
@@ -168,8 +169,7 @@ ${BUILD_DIR}/$(1).elf: $($(1)_OBJS)| $${BUILD_DIR}
 	 else                            \
 	     echo "  LD    $${@}";       \
 	 fi;                             \
-	@set -x;\
-	$${CC} -o $$(@) -Wl,--start-group $$(^)  -Wl,--end-group $$(SYSCALLS) $$(LDFLAGS); \
+	$${CC} -o $$(@) $$(^) $$(LDFLAGS); \
 	$${OBJCOPY} -O binary $${@} $$(BIN)
 endef
 
