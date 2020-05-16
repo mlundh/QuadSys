@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+replacefile=$3
 target=$2
 path=$1
 if [[ -n "$path" ]] && [[ -n "$target" ]] ; then
@@ -12,7 +12,8 @@ if [[ -n "$path" ]] && [[ -n "$target" ]] ; then
 
     mv $target/Core/Inc/main.h $target/Core/Inc/cubeInit.h
     mv $target/Core/Src/main.c $target/Core/Src/cubeInit.c
-
+    
+    ./cubeMXoverride.sh cubeMXoverride.txt $target
 else
     echo "Requres both source and target."
 fi
