@@ -30,12 +30,12 @@ namespace QuadGS {
 
 typedef enum GpioName
 {
-  ledGreen1,
-  ledGreen2,
-  ledYellow1,
-  ledYellow2,
-  ledRed1,
-  ledRed2,
+  ledHeartBeat,
+  ledSetPoint,
+  ledStatus,
+  ledmode,
+  ledError,
+  ledFatal,
   ledNrGpio,
 }GpioName_t;
 

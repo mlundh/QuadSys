@@ -21,10 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#include <sysclk.h>
-#include <board.h>
-#include <gpio.h>
-#include <pio.h>
+
 /* Kernel includes. */
 #include "FreeRTOS.h"
 #include "task.h"
@@ -52,19 +49,13 @@ void mainTester(void *pvParameters);
  * FreeRTOS hook (or callback) functions that are defined in this file.
  */
 void vApplicationMallocFailedHook( void );
-void vApplicationStackOverflowHook( TaskHandle_t pxTask,
-    signed char *pcTaskName );
-
-/*
- * Set up the hardware to run QuadFC.
- */
-static void prvSetupHardware( void );
+void vApplicationStackOverflowHook( TaskHandle_t pxTask, signed char *pcTaskName );
 
 int main( void )
 {
 
   /* Prepare the hardware to run QuadFC. */
-  prvSetupHardware();
+  Board_SetupHardware();
   TestFW_CreateMainTestTask(mainTester);
   /* Start the RTOS scheduler. */
   vTaskStartScheduler();
@@ -102,20 +93,6 @@ void mainTester(void *pvParameters)
   taskEXIT_CRITICAL();
 
 }
-
-static void prvSetupHardware( void )
-{
-  /* ASF function to setup clocking. */
-  sysclk_init();
-
-  /* Ensure all priority bits are assigned as preemption priority bits. */
-  NVIC_SetPriorityGrouping( 0 );
-
-  /* Atmel library function to setup for the evaluation kit being used. */
-  board_init();
-
-}
-
 
 void vApplicationMallocFailedHook( void )
 {

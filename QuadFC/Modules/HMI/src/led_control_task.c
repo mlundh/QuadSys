@@ -145,7 +145,7 @@ void Led_ControlTask( void *pvParameters )
     {}
     for(int i = 0; i < NR_LEDS; i++)
     {
-      if(i != ledGreen1) // ledGreen1 is heart beat, controlled by main task.
+      if(i != ledHeartBeat) // ledHeartBeat is heart beat, controlled by main task.
       {
         Led_update(&param->ledState[i], i);
       }
@@ -252,29 +252,29 @@ uint8_t Led_HandleFlightMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* 
   switch(flightMode)
   {
   case fmode_init:
-    param->ledState[ledYellow1].mode = led_blink_fast;
+    param->ledState[ledStatus].mode = led_blink_fast;
     break;
   case fmode_disarmed:
-    param->ledState[ledRed1].mode    = led_off;
-    param->ledState[ledRed2].mode    = led_off;
-    param->ledState[ledYellow1].mode = led_blink_slow;
+    param->ledState[ledError].mode    = led_off;
+    param->ledState[ledFatal].mode    = led_off;
+    param->ledState[ledStatus].mode = led_blink_slow;
     break;
   case fmode_config:
-    param->ledState[ledYellow1].mode = led_const_on;
+    param->ledState[ledStatus].mode = led_const_on;
     break;
   case fmode_arming:
-    param->ledState[ledYellow1].mode = led_blink_fast;
+    param->ledState[ledStatus].mode = led_blink_fast;
     break;
   case fmode_armed:
-    param->ledState[ledYellow1].mode = led_double_blink;
+    param->ledState[ledStatus].mode = led_double_blink;
     break;
   case fmode_disarming:
-    param->ledState[ledYellow1].mode = led_blink_fast;
+    param->ledState[ledStatus].mode = led_blink_fast;
     break;
   case fmode_fault:
-    param->ledState[ledRed1].mode    = led_const_on;
-    param->ledState[ledRed2].mode    = led_const_on;
-    param->ledState[ledYellow1].mode = led_const_on;
+    param->ledState[ledError].mode    = led_const_on;
+    param->ledState[ledFatal].mode    = led_const_on;
+    param->ledState[ledStatus].mode = led_const_on;
 
     break;
   case fmode_not_available:
@@ -291,13 +291,13 @@ uint8_t Led_HandleCtrltMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* d
   switch(flightState)
   {
   case Control_mode_not_available:
-    param->ledState[ledYellow2].mode = led_off;
+    param->ledState[ledmode].mode = led_off;
     break;
   case Control_mode_rate:
-    param->ledState[ledYellow2].mode = led_blink_fast;
+    param->ledState[ledmode].mode = led_blink_fast;
     break;
   case Control_mode_attitude:
-    param->ledState[ledYellow2].mode = led_blink_slow;
+    param->ledState[ledmode].mode = led_blink_slow;
     break;
   default:
     break;
@@ -308,16 +308,16 @@ uint8_t Led_HandleCtrltMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* d
 uint8_t Led_HandlePeripheralError(eventHandler_t* obj, void* taskParam, moduleMsg_t* data)
 {
   ledTaskParams * param = (ledTaskParams*)(taskParam);
-  param->ledState[ledRed2].mode    = led_const_on;
+  param->ledState[ledFatal].mode    = led_const_on;
   return 0;
 }
 
 void Led_resetLeds(ledTaskParams * param)
 {
-  param->ledState[ledRed1].mode    = led_off;
-  param->ledState[ledRed2].mode    = led_off;
-  param->ledState[ledYellow1].mode = led_off;
-  param->ledState[ledYellow2].mode = led_off;
-  param->ledState[ledGreen1].mode  = led_off;
-  param->ledState[ledGreen2].mode  = led_off;
+  param->ledState[ledError].mode    = led_off;
+  param->ledState[ledFatal].mode    = led_off;
+  param->ledState[ledStatus].mode = led_off;
+  param->ledState[ledmode].mode = led_off;
+  param->ledState[ledHeartBeat].mode  = led_off;
+  param->ledState[ledSetPoint].mode  = led_off;
 }
