@@ -23,22 +23,45 @@
  */
 
 #include "HAL/QuadFC/QuadFC_Gpio.h"
+#include "cubeInit.h"
 
 #define NR_PINS (6)
 
-uint8_t pins[] = {
-
+uint16_t pins[] = {
+    HEARTBEAT_Pin,
+    LED_SETPOINT_Pin,
+    LED_STATUS_Pin,
+    LED_CTRL_MODE_Pin,
+    LED_ERROR_Pin,
+    LED_FATAL_Pin
 };
 
+GPIO_TypeDef* pinPorts[] = {
+    HEARTBEAT_GPIO_Port,
+    LED_SETPOINT_GPIO_Port,
+    LED_STATUS_GPIO_Port,
+    LED_CTRL_MODE_GPIO_Port,
+    LED_ERROR_GPIO_Port,
+    LED_FATAL_GPIO_Port
+};
 void Gpio_SetPinLow(GpioName_t pin)
 {
-
+  if(pin < NR_PINS)
+  {
+    HAL_GPIO_WritePin( pinPorts[pin], pins[pin], GPIO_PIN_RESET);
+  }
 }
 void Gpio_SetPinHigh(GpioName_t pin)
 {
-
+  if(pin < NR_PINS)
+  {
+    HAL_GPIO_WritePin( pinPorts[pin], pins[pin], GPIO_PIN_SET);
+  }
 }
 void Gpio_TogglePin(GpioName_t pin)
 {
-
+  if(pin < NR_PINS)
+  {
+    HAL_GPIO_TogglePin( pinPorts[pin], pins[pin] );
+  }
 }
