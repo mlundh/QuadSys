@@ -26,7 +26,6 @@
 #include "freertos_uart_serial.h"
 #include "string.h"
 #include "QuadFC/QuadFC_Peripherals.h"
-#include "HMI/inc/led_control_task.h"
 #include "uart_serial.h"
 
 
