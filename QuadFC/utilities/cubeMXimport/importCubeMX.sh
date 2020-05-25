@@ -11,7 +11,7 @@ if [[ -n "$path" ]] && [[ -n "$target" ]] ; then
     find $target -type f -name "Makefile" | xargs sed -i "s/main.c/cubeInit.c/g"
 
     mv $target/Core/Inc/main.h $target/Core/Inc/cubeInit.h
-    mv $target/Core/Src/main.c $target/Core/Src/cubeInit.c
+    rm $target/Core/Src/main.c 
     
     ./cubeMXoverride.sh cubeMXoverride.txt $target
 else

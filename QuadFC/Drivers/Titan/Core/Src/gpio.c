@@ -56,18 +56,24 @@ void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, IO_12_Pin|IO_13_Pin|IO_14_Pin|IO_15_Pin 
-                          |IO_10_Pin|HEARTBEAT_Pin, GPIO_PIN_RESET);
+                          |IO_10_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, NC1_Pin|IO_11_Pin|NC_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, IO_5_Pin|IO_6_Pin|IO_7_Pin|IO_8_Pin 
-                          |LED_SETPOINT_Pin|LED_CTRL_MODE_Pin|LED_STATUS_Pin|LED_ERROR_Pin 
-                          |LED_FATAL_Pin|RC_2_PWR_CTRL_Pin, GPIO_PIN_RESET);
+                          |RC_2_PWR_CTRL_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(IO_9_GPIO_Port, IO_9_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(HEARTBEAT_GPIO_Port, HEARTBEAT_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOD, LED_SETPOINT_Pin|LED_CTRL_MODE_Pin|LED_STATUS_Pin|LED_ERROR_Pin 
+                          |LED_FATAL_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pins : PEPin PEPin PEPin PEPin 
                            PEPin */
