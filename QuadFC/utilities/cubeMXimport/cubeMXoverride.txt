@@ -2,3 +2,10 @@ HardFault_Handler
 TIM2_IRQHandler
 SVC_Handler
 PendSV_Handler
+USART1_IRQHandler
+USART2_IRQHandler
+USART3_IRQHandler
+USART6_IRQHandler
+UART8_IRQHandler
+UART9_IRQHandler
+UART10_IRQHandler

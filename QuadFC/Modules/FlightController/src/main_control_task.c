@@ -109,7 +109,7 @@ void create_main_control_task(eventHandler_t* evHandler)
     taskParam->SetpointTimeoutCounter = 0;
     /*Ensure that all mallocs returned valid pointers*/
     if (   !taskParam                    || !taskParam->ctrl             || !taskParam->setpoint
-            || !taskParam->state             || !taskParam->control_signal   || !taskParam->motorControl
+            || !taskParam->state             || !taskParam->control_signal   // TODO!!|| !taskParam->motorControl
             || !taskParam->flightModeHandler || !taskParam->stateEst         || !taskParam->setPointHandler
             || !taskParam->logHandler        || !taskParam->paramHandler)
     {
@@ -347,6 +347,8 @@ void main_control_task( void *pvParameters )
             //LOG_ENTRY(FC_SerialIOtx_e, param->evHandler, "%s", "Heartbeat!");
             Gpio_TogglePin( ledHeartBeat );
             heartbeat_counter = 0;
+            LOG_ENTRY(FC_SerialIOtx_e, param->evHandler, "Main: Tick!");
+
         }
     }
     /* The task should never escape the for-loop and therefore never return.*/

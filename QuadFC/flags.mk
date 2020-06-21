@@ -58,7 +58,7 @@ else ifeq ($(PLATFORM),Titan)
 	FPU := -mfpu=fpv4-sp-d16
 	FLOAT-ABI := -mfloat-abi=hard
 	MCU := $(CPU) -mthumb $(FPU) $(FLOAT-ABI)
-	DEFINES := -DUSE_HAL_DRIVER -DSTM32F413xx -DUSE_HAL_DRIVER
+	DEFINES := -DSTM32F413xx -DUSE_HAL_DRIVER -DUSE_HAL_UART_REGISTER_CALLBACKS=1
 	SCATTER_QuadFC:=Drivers/Titan/STM32F413VGTx_FLASH.ld
 
 else

@@ -1,0 +1,271 @@
+ARM GAS  /tmp/ccfgcyaK.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.eabi_attribute 27, 1
+   3              		.eabi_attribute 28, 1
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"crc.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.text.MX_CRC_Init,"ax",%progbits
+  18              		.align	1
+  19              		.global	MX_CRC_Init
+  20              		.syntax unified
+  21              		.thumb
+  22              		.thumb_func
+  23              		.fpu fpv4-sp-d16
+  25              	MX_CRC_Init:
+  26              	.LFB766:
+  27              		.file 1 "Core/Src/crc.c"
+   1:Core/Src/crc.c **** /**
+   2:Core/Src/crc.c ****   ******************************************************************************
+   3:Core/Src/crc.c ****   * File Name          : CRC.c
+   4:Core/Src/crc.c ****   * Description        : This file provides code for the configuration
+   5:Core/Src/crc.c ****   *                      of the CRC instances.
+   6:Core/Src/crc.c ****   ******************************************************************************
+   7:Core/Src/crc.c ****   * @attention
+   8:Core/Src/crc.c ****   *
+   9:Core/Src/crc.c ****   * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
+  10:Core/Src/crc.c ****   * All rights reserved.</center></h2>
+  11:Core/Src/crc.c ****   *
+  12:Core/Src/crc.c ****   * This software component is licensed by ST under BSD 3-Clause license,
+  13:Core/Src/crc.c ****   * the "License"; You may not use this file except in compliance with the
+  14:Core/Src/crc.c ****   * License. You may obtain a copy of the License at:
+  15:Core/Src/crc.c ****   *                        opensource.org/licenses/BSD-3-Clause
+  16:Core/Src/crc.c ****   *
+  17:Core/Src/crc.c ****   ******************************************************************************
+  18:Core/Src/crc.c ****   */
+  19:Core/Src/crc.c **** 
+  20:Core/Src/crc.c **** /* Includes ------------------------------------------------------------------*/
+  21:Core/Src/crc.c **** #include "crc.h"
+  22:Core/Src/crc.c **** 
+  23:Core/Src/crc.c **** /* USER CODE BEGIN 0 */
+  24:Core/Src/crc.c **** 
+  25:Core/Src/crc.c **** /* USER CODE END 0 */
+  26:Core/Src/crc.c **** 
+  27:Core/Src/crc.c **** CRC_HandleTypeDef hcrc;
+  28:Core/Src/crc.c **** 
+  29:Core/Src/crc.c **** /* CRC init function */
+  30:Core/Src/crc.c **** void MX_CRC_Init(void)
+  31:Core/Src/crc.c **** {
+ARM GAS  /tmp/ccfgcyaK.s 			page 2
+
+
+  28              		.loc 1 31 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32 0000 08B5     		push	{r3, lr}
+  33              	.LCFI0:
+  34              		.cfi_def_cfa_offset 8
+  35              		.cfi_offset 3, -8
+  36              		.cfi_offset 14, -4
+  32:Core/Src/crc.c **** 
+  33:Core/Src/crc.c ****   hcrc.Instance = CRC;
+  37              		.loc 1 33 0
+  38 0002 0548     		ldr	r0, .L5
+  39 0004 054B     		ldr	r3, .L5+4
+  40 0006 0360     		str	r3, [r0]
+  34:Core/Src/crc.c ****   if (HAL_CRC_Init(&hcrc) != HAL_OK)
+  41              		.loc 1 34 0
+  42 0008 FFF7FEFF 		bl	HAL_CRC_Init
+  43              	.LVL0:
+  44 000c 00B9     		cbnz	r0, .L4
+  45              	.L1:
+  35:Core/Src/crc.c ****   {
+  36:Core/Src/crc.c ****     Error_Handler();
+  37:Core/Src/crc.c ****   }
+  38:Core/Src/crc.c **** 
+  39:Core/Src/crc.c **** }
+  46              		.loc 1 39 0
+  47 000e 08BD     		pop	{r3, pc}
+  48              	.L4:
+  36:Core/Src/crc.c ****   }
+  49              		.loc 1 36 0
+  50 0010 FFF7FEFF 		bl	Error_Handler
+  51              	.LVL1:
+  52              		.loc 1 39 0
+  53 0014 FBE7     		b	.L1
+  54              	.L6:
+  55 0016 00BF     		.align	2
+  56              	.L5:
+  57 0018 00000000 		.word	hcrc
+  58 001c 00300240 		.word	1073885184
+  59              		.cfi_endproc
+  60              	.LFE766:
+  62              		.section	.text.HAL_CRC_MspInit,"ax",%progbits
+  63              		.align	1
+  64              		.global	HAL_CRC_MspInit
+  65              		.syntax unified
+  66              		.thumb
+  67              		.thumb_func
+  68              		.fpu fpv4-sp-d16
+  70              	HAL_CRC_MspInit:
+  71              	.LFB767:
+  40:Core/Src/crc.c **** 
+  41:Core/Src/crc.c **** void HAL_CRC_MspInit(CRC_HandleTypeDef* crcHandle)
+  42:Core/Src/crc.c **** {
+  72              		.loc 1 42 0
+  73              		.cfi_startproc
+  74              		@ args = 0, pretend = 0, frame = 8
+ARM GAS  /tmp/ccfgcyaK.s 			page 3
+
+
+  75              		@ frame_needed = 0, uses_anonymous_args = 0
+  76              		@ link register save eliminated.
+  77              	.LVL2:
+  43:Core/Src/crc.c **** 
+  44:Core/Src/crc.c ****   if(crcHandle->Instance==CRC)
+  78              		.loc 1 44 0
+  79 0000 0268     		ldr	r2, [r0]
+  80 0002 094B     		ldr	r3, .L14
+  81 0004 9A42     		cmp	r2, r3
+  82 0006 00D0     		beq	.L13
+  83 0008 7047     		bx	lr
+  84              	.L13:
+  42:Core/Src/crc.c **** 
+  85              		.loc 1 42 0
+  86 000a 82B0     		sub	sp, sp, #8
+  87              	.LCFI1:
+  88              		.cfi_def_cfa_offset 8
+  89              	.LBB2:
+  45:Core/Src/crc.c ****   {
+  46:Core/Src/crc.c ****   /* USER CODE BEGIN CRC_MspInit 0 */
+  47:Core/Src/crc.c **** 
+  48:Core/Src/crc.c ****   /* USER CODE END CRC_MspInit 0 */
+  49:Core/Src/crc.c ****     /* CRC clock enable */
+  50:Core/Src/crc.c ****     __HAL_RCC_CRC_CLK_ENABLE();
+  90              		.loc 1 50 0
+  91 000c 0023     		movs	r3, #0
+  92 000e 0193     		str	r3, [sp, #4]
+  93 0010 064B     		ldr	r3, .L14+4
+  94 0012 1A6B     		ldr	r2, [r3, #48]
+  95 0014 42F48052 		orr	r2, r2, #4096
+  96 0018 1A63     		str	r2, [r3, #48]
+  97 001a 1B6B     		ldr	r3, [r3, #48]
+  98 001c 03F48053 		and	r3, r3, #4096
+  99 0020 0193     		str	r3, [sp, #4]
+ 100 0022 019B     		ldr	r3, [sp, #4]
+ 101              	.LBE2:
+  51:Core/Src/crc.c ****   /* USER CODE BEGIN CRC_MspInit 1 */
+  52:Core/Src/crc.c **** 
+  53:Core/Src/crc.c ****   /* USER CODE END CRC_MspInit 1 */
+  54:Core/Src/crc.c ****   }
+  55:Core/Src/crc.c **** }
+ 102              		.loc 1 55 0
+ 103 0024 02B0     		add	sp, sp, #8
+ 104              	.LCFI2:
+ 105              		.cfi_def_cfa_offset 0
+ 106              		@ sp needed
+ 107 0026 7047     		bx	lr
+ 108              	.L15:
+ 109              		.align	2
+ 110              	.L14:
+ 111 0028 00300240 		.word	1073885184
+ 112 002c 00380240 		.word	1073887232
+ 113              		.cfi_endproc
+ 114              	.LFE767:
+ 116              		.section	.text.HAL_CRC_MspDeInit,"ax",%progbits
+ 117              		.align	1
+ 118              		.global	HAL_CRC_MspDeInit
+ARM GAS  /tmp/ccfgcyaK.s 			page 4
+
+
+ 119              		.syntax unified
+ 120              		.thumb
+ 121              		.thumb_func
+ 122              		.fpu fpv4-sp-d16
+ 124              	HAL_CRC_MspDeInit:
+ 125              	.LFB768:
+  56:Core/Src/crc.c **** 
+  57:Core/Src/crc.c **** void HAL_CRC_MspDeInit(CRC_HandleTypeDef* crcHandle)
+  58:Core/Src/crc.c **** {
+ 126              		.loc 1 58 0
+ 127              		.cfi_startproc
+ 128              		@ args = 0, pretend = 0, frame = 0
+ 129              		@ frame_needed = 0, uses_anonymous_args = 0
+ 130              		@ link register save eliminated.
+ 131              	.LVL3:
+  59:Core/Src/crc.c **** 
+  60:Core/Src/crc.c ****   if(crcHandle->Instance==CRC)
+ 132              		.loc 1 60 0
+ 133 0000 0268     		ldr	r2, [r0]
+ 134 0002 054B     		ldr	r3, .L19
+ 135 0004 9A42     		cmp	r2, r3
+ 136 0006 00D0     		beq	.L18
+ 137              	.L16:
+  61:Core/Src/crc.c ****   {
+  62:Core/Src/crc.c ****   /* USER CODE BEGIN CRC_MspDeInit 0 */
+  63:Core/Src/crc.c **** 
+  64:Core/Src/crc.c ****   /* USER CODE END CRC_MspDeInit 0 */
+  65:Core/Src/crc.c ****     /* Peripheral clock disable */
+  66:Core/Src/crc.c ****     __HAL_RCC_CRC_CLK_DISABLE();
+  67:Core/Src/crc.c ****   /* USER CODE BEGIN CRC_MspDeInit 1 */
+  68:Core/Src/crc.c **** 
+  69:Core/Src/crc.c ****   /* USER CODE END CRC_MspDeInit 1 */
+  70:Core/Src/crc.c ****   }
+  71:Core/Src/crc.c **** } 
+ 138              		.loc 1 71 0
+ 139 0008 7047     		bx	lr
+ 140              	.L18:
+  66:Core/Src/crc.c ****   /* USER CODE BEGIN CRC_MspDeInit 1 */
+ 141              		.loc 1 66 0
+ 142 000a 044A     		ldr	r2, .L19+4
+ 143 000c 136B     		ldr	r3, [r2, #48]
+ 144 000e 23F48053 		bic	r3, r3, #4096
+ 145 0012 1363     		str	r3, [r2, #48]
+ 146              		.loc 1 71 0
+ 147 0014 F8E7     		b	.L16
+ 148              	.L20:
+ 149 0016 00BF     		.align	2
+ 150              	.L19:
+ 151 0018 00300240 		.word	1073885184
+ 152 001c 00380240 		.word	1073887232
+ 153              		.cfi_endproc
+ 154              	.LFE768:
+ 156              		.comm	hcrc,8,4
+ 157              		.text
+ 158              	.Letext0:
+ 159              		.file 2 "/usr/include/newlib/machine/_default_types.h"
+ 160              		.file 3 "/usr/include/newlib/sys/_stdint.h"
+ARM GAS  /tmp/ccfgcyaK.s 			page 5
+
+
+ 161              		.file 4 "Drivers/CMSIS/Include/core_cm4.h"
+ 162              		.file 5 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/system_stm32f4xx.h"
+ 163              		.file 6 "Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f413xx.h"
+ 164              		.file 7 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h"
+ 165              		.file 8 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_crc.h"
+ 166              		.file 9 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h"
+ 167              		.file 10 "Core/Inc/crc.h"
+ 168              		.file 11 "Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_dma.h"
+ 169              		.file 12 "Core/Inc/main.h"
+ARM GAS  /tmp/ccfgcyaK.s 			page 6
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 crc.c
+     /tmp/ccfgcyaK.s:18     .text.MX_CRC_Init:0000000000000000 $t
+     /tmp/ccfgcyaK.s:25     .text.MX_CRC_Init:0000000000000000 MX_CRC_Init
+     /tmp/ccfgcyaK.s:57     .text.MX_CRC_Init:0000000000000018 $d
+                            *COM*:0000000000000008 hcrc
+     /tmp/ccfgcyaK.s:63     .text.HAL_CRC_MspInit:0000000000000000 $t
+     /tmp/ccfgcyaK.s:70     .text.HAL_CRC_MspInit:0000000000000000 HAL_CRC_MspInit
+     /tmp/ccfgcyaK.s:111    .text.HAL_CRC_MspInit:0000000000000028 $d
+     /tmp/ccfgcyaK.s:117    .text.HAL_CRC_MspDeInit:0000000000000000 $t
+     /tmp/ccfgcyaK.s:124    .text.HAL_CRC_MspDeInit:0000000000000000 HAL_CRC_MspDeInit
+     /tmp/ccfgcyaK.s:151    .text.HAL_CRC_MspDeInit:0000000000000018 $d
+
+UNDEFINED SYMBOLS
+HAL_CRC_Init
+Error_Handler
