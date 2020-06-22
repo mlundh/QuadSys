@@ -32,6 +32,8 @@
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include "Titan_Board.h"
+
 void SystemClock_Config(void);
 
 

@@ -64,13 +64,6 @@ extern DMA_HandleTypeDef hdma_spi1_tx;
 extern SPI_HandleTypeDef hspi1;
 extern SPI_HandleTypeDef hspi2;
 extern SPI_HandleTypeDef hspi4;
-extern UART_HandleTypeDef huart8;
-extern UART_HandleTypeDef huart9;
-extern UART_HandleTypeDef huart10;
-extern UART_HandleTypeDef huart1;
-extern UART_HandleTypeDef huart2;
-extern UART_HandleTypeDef huart3;
-extern UART_HandleTypeDef huart6;
 extern TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN EV */
@@ -319,7 +312,6 @@ void USART1_IRQHandler(void)
   /* USER CODE BEGIN USART1_IRQn 0 */
 
   /* USER CODE END USART1_IRQn 0 */
-  HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */
 
   /* USER CODE END USART1_IRQn 1 */
@@ -333,7 +325,6 @@ void USART2_IRQHandler(void)
   /* USER CODE BEGIN USART2_IRQn 0 */
 
   /* USER CODE END USART2_IRQn 0 */
-  HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */
 
   /* USER CODE END USART2_IRQn 1 */
@@ -347,7 +338,6 @@ void USART3_IRQHandler(void)
   /* USER CODE BEGIN USART3_IRQn 0 */
 
   /* USER CODE END USART3_IRQn 0 */
-  HAL_UART_IRQHandler(&huart3);
   /* USER CODE BEGIN USART3_IRQn 1 */
 
   /* USER CODE END USART3_IRQn 1 */
@@ -389,7 +379,6 @@ void USART6_IRQHandler(void)
   /* USER CODE BEGIN USART6_IRQn 0 */
 
   /* USER CODE END USART6_IRQn 0 */
-  HAL_UART_IRQHandler(&huart6);
   /* USER CODE BEGIN USART6_IRQn 1 */
 
   /* USER CODE END USART6_IRQn 1 */
@@ -403,7 +392,6 @@ void UART8_IRQHandler(void)
   /* USER CODE BEGIN UART8_IRQn 0 */
 
   /* USER CODE END UART8_IRQn 0 */
-  HAL_UART_IRQHandler(&huart8);
   /* USER CODE BEGIN UART8_IRQn 1 */
 
   /* USER CODE END UART8_IRQn 1 */
@@ -431,7 +419,6 @@ void UART9_IRQHandler(void)
   /* USER CODE BEGIN UART9_IRQn 0 */
 
   /* USER CODE END UART9_IRQn 0 */
-  HAL_UART_IRQHandler(&huart9);
   /* USER CODE BEGIN UART9_IRQn 1 */
 
   /* USER CODE END UART9_IRQn 1 */
@@ -445,7 +432,6 @@ void UART10_IRQHandler(void)
   /* USER CODE BEGIN UART10_IRQn 0 */
 
   /* USER CODE END UART10_IRQn 0 */
-  HAL_UART_IRQHandler(&huart10);
   /* USER CODE BEGIN UART10_IRQn 1 */
 
   /* USER CODE END UART10_IRQn 1 */
