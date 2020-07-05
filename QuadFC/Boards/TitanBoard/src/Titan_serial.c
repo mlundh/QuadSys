@@ -30,6 +30,7 @@
 #include "stm32f413xx.h"
 #include "stm32f4xx_ll_usart.h"
 #include "stm32f4xx_ll_gpio.h"
+#include "Components/Utilities/inc/Utilities_CharCircularBuffer.h"
 
 
 typedef struct titan_uart_control {
@@ -39,18 +40,19 @@ typedef struct titan_uart_control {
   SemaphoreHandle_t     tx_trans_comp_sem;
   uint8_t*              TxBuffPtr;
   uint32_t              TxCount;
+  CharCircBuffer_t*     RxBuff;
 } titan_uart_control_t;
 
 const static uint8_t num_uart = 7;
 
 static  titan_uart_control_t   uart[] = {
-  {UART10, 0, NULL, NULL, NULL, 0}, // RC 1
-  {USART1, 0, NULL, NULL, NULL, 0}, // Com serial USB
-  {USART2, 0, NULL, NULL, NULL, 0},
-  {UART9,  0, NULL, NULL, NULL, 0}, // Applog serial backend
-  {USART3, 0, NULL, NULL, NULL, 0},
-  {USART6, 0, NULL, NULL, NULL, 0},
-  {UART8,  0, NULL, NULL, NULL, 0},
+  {UART10, 0, NULL, NULL, NULL, 0, NULL}, // RC 1
+  {USART1, 0, NULL, NULL, NULL, 0, NULL}, // Com serial USB
+  {USART2, 0, NULL, NULL, NULL, 0, NULL},
+  {UART9,  0, NULL, NULL, NULL, 0, NULL}, // Applog serial backend
+  {USART3, 0, NULL, NULL, NULL, 0, NULL},
+  {USART6, 0, NULL, NULL, NULL, 0, NULL},
+  {UART8,  0, NULL, NULL, NULL, 0, NULL},
 
 };
 
@@ -85,16 +87,6 @@ static uint32_t WordLength[] =
     LL_USART_DATAWIDTH_9B
 };
 
-
-
-void TitanSerial_TxCompHandler(int32_t busIndex);
-void TitanSerial_RxCompHandler(int32_t busIndex);
-void TitanSerial_AbortTxCpltHandler(int32_t busIndex);
-void TitanSerial_AbortRxCpltHandler(int32_t busIndex);
-
-void TitanSerial_TransmitIt(QuadFC_Serial_t *serial_data, uint8_t busIndex);
-void TitanSerial_ReceiveIt(QuadFC_Serial_t *serial_data, uint8_t busIndex);
-
 void TitanSerial_IRQHandler(uint32_t busIndex);
 
 void TitanUART_GPIOInit(USART_TypeDef* usart);
@@ -106,7 +98,8 @@ uint8_t QuadFC_SerialInit(int busIndex, QuadFC_SerialOptions_t* opt)
   {
     return 0;
   }
-
+  uart[busIndex].RxBuff = Utilities_CBuffCreate(opt->bufferLength);
+  
   TitanUART_GPIOInit(uart[busIndex].usart);
 
   LL_USART_InitTypeDef  init = {0};
@@ -125,7 +118,7 @@ uint8_t QuadFC_SerialInit(int busIndex, QuadFC_SerialOptions_t* opt)
   {
     init.HardwareFlowControl = LL_USART_HWCONTROL_RTS_CTS;
   }
-  else
+ // else
   {
     init.HardwareFlowControl = LL_USART_HWCONTROL_NONE;
   }
@@ -133,6 +126,12 @@ uint8_t QuadFC_SerialInit(int busIndex, QuadFC_SerialOptions_t* opt)
   LL_USART_Init(uart[busIndex].usart, &init);
   LL_USART_ConfigAsyncMode(uart[busIndex].usart);
   LL_USART_Enable(uart[busIndex].usart);
+
+  // RX is enabled from the start, and will always read to the circular buffer.
+  
+  LL_USART_EnableIT_PE(uart[busIndex].usart); 
+  LL_USART_EnableIT_ERROR(uart[busIndex].usart); 
+  LL_USART_EnableIT_RXNE(uart[busIndex].usart); 
 
   uart[busIndex].initialized = 1;
   return 1;
@@ -183,39 +182,17 @@ uint32_t QuadFC_SerialRead(QuadFC_Serial_t *serial_data, uint8_t busIndex, TickT
   {
     blockTimeTicks= (blockTimeMs / portTICK_PERIOD_MS);
   }
-  //HAL_UART_Receive_IT();
-  vTaskDelay(1);
-  return 0;
-}
 
-
-void TitanSerial_TxCompHandler(int32_t busIndex)
-{
-  if(busIndex < 0)
+  // TODO copy all avalible data.
+  if( xSemaphoreTake( uart[busIndex].tx_trans_comp_sem, ( TickType_t ) blockTimeTicks ) == pdTRUE )
   {
-    return;
+    Utilities_CBuffPop(uart[busIndex].RxBuff, serial_data->buffer, serial_data->bufferLength) ;
   }
-
-  portBASE_TYPE higher_priority_task_woken = pdFALSE;
-	xSemaphoreGiveFromISR(uart[busIndex].tx_trans_comp_sem, &higher_priority_task_woken);
-  /* If giving the semaphore triggered a higher-priority task to be unblocked
-  then this call will ensure that the isr returns to the task with higer priority.
-  
-  Usually this should be placed at the very end of an ISR, but for a cortex M4 port this is ok.*/
-	portEND_SWITCHING_ISR(higher_priority_task_woken);
-}
-
-void TitanSerial_RxCompHandler(int32_t busIndex)
-{
-
-}
-void TitanSerial_AbortTxCpltHandler(int32_t busIndex)
-{
-
-}
-void TitanSerial_AbortRxCpltHandler(int32_t busIndex)
-{
-
+  else
+  {
+    return 0;
+  }
+  return 0;
 }
 
 void USART1_IRQHandler(void)
@@ -253,13 +230,9 @@ void UART10_IRQHandler(void)
   TitanSerial_IRQHandler(0);
 }
 
-void TitanSerial_ReceiveIt(QuadFC_Serial_t *serial_data, uint8_t busIndex)
-{
-  
-}
-
 void TitanSerial_IRQHandler(uint32_t busIndex)
 { 
+  portBASE_TYPE higherPriorityTaskHasWoken = pdFALSE;
   uint32_t isrflags   = READ_REG(uart[busIndex].usart->SR);
   uint32_t errorflags = 0x00U;
 
@@ -270,8 +243,19 @@ void TitanSerial_IRQHandler(uint32_t busIndex)
     /* UART in mode Receiver -------------------------------------------------*/
     if (LL_USART_IsActiveFlag_RXNE(uart[busIndex].usart) && LL_USART_IsEnabledIT_RXNE(uart[busIndex].usart) )
     {
-      //UART_Receive_IT(huart);
-      return;
+      uint8_t result = 1;
+      if (LL_USART_GetParity(uart[busIndex].usart) == LL_USART_PARITY_NONE)
+      {
+        result = Utilities_CBuffPush(uart[busIndex].RxBuff, (uint8_t)(uart[busIndex].usart->DR & (uint8_t)0x00FF));
+      }
+      else
+      {
+        result = Utilities_CBuffPush(uart[busIndex].RxBuff, (uint8_t)(uart[busIndex].usart->DR & (uint8_t)0x007F));
+      }
+      if(result) // Only signal new data if we have increased the count. 
+      {
+        xSemaphoreGiveFromISR(uart[busIndex].rx_trans_comp_sem, &higherPriorityTaskHasWoken);
+      }
     }
   }
   else
@@ -311,7 +295,15 @@ void TitanSerial_IRQHandler(uint32_t busIndex)
   if (LL_USART_IsActiveFlag_TC(uart[busIndex].usart) && LL_USART_IsEnabledIT_TC(uart[busIndex].usart) )
   {
       LL_USART_DisableIT_TC(uart[busIndex].usart);
-      TitanSerial_TxCompHandler(busIndex);
+
+      xSemaphoreGiveFromISR(uart[busIndex].tx_trans_comp_sem, &higherPriorityTaskHasWoken);
+      /* If giving the semaphore triggered a higher-priority task to be unblocked
+      then this call will ensure that the isr returns to the task with higer priority.*/
+  
+  }
+  if(higherPriorityTaskHasWoken == pdTRUE)
+  {
+    portEND_SWITCHING_ISR(higherPriorityTaskHasWoken);
   }
 }
 

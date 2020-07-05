@@ -1,4 +1,4 @@
-file ../../../out/Due/Test_Utilities.elf
+file ../../../out/Titan/Test_Utilities.elf
 monitor reset
 load
 continue

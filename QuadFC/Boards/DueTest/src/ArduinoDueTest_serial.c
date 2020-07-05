@@ -45,7 +45,7 @@ uint8_t Test_SerialInit()
   }
 
   static usart_serial_options_t usart_options = {
-      .baudrate = 57600,
+      .baudrate = 115200,
       .charlength = US_MR_CHRL_8_BIT,
       .paritytype = US_MR_PAR_NO,
       .stopbits = false

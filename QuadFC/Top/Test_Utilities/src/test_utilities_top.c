@@ -21,19 +21,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#include <sysclk.h>
-#include <board.h>
-#include <gpio.h>
-#include <pio.h>
-/* Kernel includes. */
-#include "FreeRTOS.h"
-#include "task.h"
-#include "queue.h"
-#include "timers.h"
+/*Include board*/
+#include "HAL/QuadFC/QuadFC_Board.h"
+#include "HAL/QuadFC/QuadFC_Gpio.h"
 //Include testers
 #include "Test/TestFW/test_framework.h"
 #include "Test/Math/math_tester.h"
 #include "Test/Utilities/utilities_tester.h"
+
+
+#include "FreeRTOS.h"
+#include "task.h"
+#include "queue.h"
+#include "timers.h"
 
 /**
  * @file Top used for regression testing. This top does not include any
@@ -46,16 +46,15 @@
  * communication over the port will use QSP frames.
  */
 
-/*
- * Set up the hardware to run QuadFC.
- */
-static void prvSetupHardware( void );
+void vApplicationStackOverflowHook( TaskHandle_t pxTask,
+    signed char *pcTaskName );
 
 int main( void )
 {
 
   /* Prepare the hardware to run QuadFC. */
-  prvSetupHardware();
+  Board_SetupHardware();
+
 
   TestFw_t* testFW = TestFW_Create("Math and Util");
   /**************Add test module instantiation here***************/
@@ -65,48 +64,31 @@ int main( void )
 
   uint8_t result = TestFW_ExecuteTests(testFW);
   uint32_t heartbeat_counter = 0;
-  uint32_t pin = (result ? PIN_31_GPIO : PIN_41_GPIO);
+  uint32_t pin = (result ? ledHeartBeat : ledFatal);
   while ( 1 )
   {
     heartbeat_counter++;
     if ( heartbeat_counter >= 1000000 )
     {
-      gpio_toggle_pin( pin );
+      Gpio_TogglePin( pin );
       heartbeat_counter = 0;
     }
 
   }
 }
 
-static void prvSetupHardware( void )
-{
-  /* ASF function to setup clocking. */
-  sysclk_init();
-
-  /* Ensure all priority bits are assigned as preemption priority bits. */
-  NVIC_SetPriorityGrouping( 0 );
-
-  /* Atmel library function to setup for the evaluation kit being used. */
-  board_init();
-
-}
-
-void vApplicationMallocFailedHook( void )
-{
-    taskDISABLE_INTERRUPTS();
-    for ( ;; )
-    {
-    }
-}
 
 void vApplicationStackOverflowHook( TaskHandle_t pxTask,
-        signed char *pcTaskName )
+    signed char *pcTaskName )
 {
-    (void) pcTaskName;
-    (void) pxTask;
+  (void) pcTaskName;
+  (void) pxTask;
 
-    taskDISABLE_INTERRUPTS();
-    for ( ;; )
-    {
-    }
+  /* Run time stack overflow checking is performed if
+   configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2.  This hook
+   function is called if a stack overflow is detected. */
+  taskDISABLE_INTERRUPTS();
+  for ( ;; )
+  {
+  }
 }

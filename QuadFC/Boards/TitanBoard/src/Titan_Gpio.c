@@ -24,7 +24,6 @@
 
 #include "HAL/QuadFC/QuadFC_Gpio.h"
 #include "cubeInit.h"
-#include "Titan_Board.h"
 
 #define NR_PINS (6)
 

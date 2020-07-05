@@ -27,9 +27,8 @@
 #include <math.h>
 #include <stdio.h>
 
-#include <board.h>
-#include <gpio.h>
-#include <pio.h>
+#include "HAL/QuadFC/QuadFC_Gpio.h"
+
 
 #define TMP_STRING_LENGTH (100)
 
@@ -142,21 +141,21 @@ uint8_t MathTest_TestSqrtPerformance(TestFw_t* obj)
   }
     //Calculate reference value
     double result_ref;
-    pio_set_pin_high( PIN_39_GPIO );
+    Gpio_TogglePin( ledmode );
     for(int j = 0; j < 100000; j++)
     {
       result_ref = sqrt (testVector[j%testVectorLength]);
       (void)result_ref;
     }
-    pio_set_pin_low( PIN_39_GPIO );
-    pio_set_pin_high( PIN_37_GPIO );
+    Gpio_TogglePin( ledmode );
+    Gpio_TogglePin( ledStatus );
     int32_t result_dut;
     for(int j = 0; j < 100000; j++)
     {
       result_dut =  my_square_root ( testVectorInt[j%testVectorLength], 16);
       (void)result_dut;
     }
-    pio_set_pin_low( PIN_37_GPIO );
+    Gpio_TogglePin( ledStatus );
 
 
   return 1;
