@@ -27,6 +27,7 @@
 #include "Components/Parameters/inc/paramHandler.h"
 #include "Messages/inc/Msg_Param.h"
 #include <string.h>
+#include <stdio.h>
 
 typedef struct
 {

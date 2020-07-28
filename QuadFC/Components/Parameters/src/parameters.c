@@ -570,7 +570,7 @@ uint8_t Param_SetFromHere(param_obj_t *current, uint8_t *Buffer, uint32_t Buffer
         workingOnObj = Param_FindNext(workingOnObj, bufferModule, MAX_PARAM_NODE_LENGTH);
         if(!workingOnObj)
         {
-            return 0;
+            return 0; // Module not found.
         }
         // Update the module.
         if(!Param_UpdateCurrent(workingOnObj, bufferModule, MAX_PARAM_NODE_LENGTH))

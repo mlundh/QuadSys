@@ -29,6 +29,8 @@
 #include "queue.h"
 #include "timers.h"
 
+#include <stdio.h>
+
 #include "Test/Log/log_tester.h"
 #include "Log/inc/logHandler.h"
 #include "Log/src/log_private.h"

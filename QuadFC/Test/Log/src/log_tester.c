@@ -26,6 +26,7 @@
 #include "Log/src/logHandler_private.h"
 #include "Utilities/inc/string_utils.h"
 #include <string.h>
+#include <stdio.h>
 #include "FreeRTOS.h"
 #include "task.h"
 #define SHORT_MSG (50)

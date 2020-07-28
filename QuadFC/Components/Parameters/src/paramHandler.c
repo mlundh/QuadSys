@@ -346,17 +346,6 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
 
             //First, set locally.
             result = Param_SetFromHere(handlerObj->rootParam, root, remainingLength);
-            if(!result)
-            {
-                LOG_ENTRY(FC_SerialIOtx_e, obj, "Param Set: Error - Error setting parameters.");
-                handlerObj->actionOngoing = paramReady; // Reset.
-                break;
-            }
-        }
-
-        if(!result)
-        {
-
         }
         //Then send to every other paramHandler. We copy the message payload.
         LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "Param Set: Sending to all other handlers.");

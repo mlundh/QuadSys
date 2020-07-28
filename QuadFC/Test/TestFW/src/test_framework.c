@@ -40,8 +40,9 @@
 #define MAX_NR_TEST_FUNCTIONS (64)
 #define MAX_NR_INTERNALS (16)
 #define REPORT_SIZE (0x4000)
-#define TC_Name_LENGTH (16)
+#define TC_Name_LENGTH (32)
 #define REPORT_ENTRY_MAX (64)
+
 typedef struct TestCase
 {
     TestFW_TestFunction_t testFcn;
