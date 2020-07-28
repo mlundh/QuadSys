@@ -10,10 +10,11 @@ else
    exit 1
 fi
 
-gnome-terminal  --window-with-profile=StartEnv -e "JLinkGDBServer -device $device -if SWD -rtos GDBServer/RTOSPlugin_FreeRTOS"&
+gnome-terminal  --title="GDB Server" --window-with-profile=StartEnv -e "JLinkGDBServer -device $device -if SWD -rtos GDBServer/RTOSPlugin_FreeRTOS"&
 cd gdbScripts/$PLATFORM
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 echo $DIR
+echo -ne "\033]0;GDB\007"
 gdb-multiarch -command=./gdbFC.init
 
 
