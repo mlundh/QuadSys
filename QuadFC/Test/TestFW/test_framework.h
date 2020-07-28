@@ -103,4 +103,11 @@ uint8_t TestFW_Report(TestFw_t* obj, const char* string);
 uint8_t TestFW_ExecuteTests(TestFw_t* obj);
 
 
+#define REPORT_LENGTH_MAX (200)
+#define TEST_REPORT_ENTRY(obj,  format, ...) {  \
+    char tmpstr[REPORT_LENGTH_MAX] = {0}; \
+    snprintf(tmpstr, REPORT_LENGTH_MAX, format"\n" , ##__VA_ARGS__); \
+    TestFW_Report(obj, tmpstr); \
+    }
+
 #endif /* TEST_TESTFW_TEST_FRAMEWORK_H_ */
