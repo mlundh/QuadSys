@@ -36,7 +36,31 @@ typedef enum GpioName
   ledmode,
   ledError,
   ledFatal,
-  ledNrGpio,
+
+  IO_1,
+  IO_2,
+  IO_3,
+  IO_4,
+  IO_5,
+  IO_6,
+  IO_7,
+  IO_8,
+  IO_9,
+  IO_10,
+  IO_11,
+  IO_12,
+  IO_13,
+  IO_14,
+  IO_15,
+  //IO_16,
+
+  RC_1_PWR_CTRL,
+  RC_2_PWR_CTRL,
+
+  ADC_BAT,
+  ADC_1,
+  ADC_2,
+  ADC_3,
 }GpioName_t;
 
 
