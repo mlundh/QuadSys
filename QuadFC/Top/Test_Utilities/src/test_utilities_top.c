@@ -48,6 +48,7 @@
 
 void vApplicationStackOverflowHook( TaskHandle_t pxTask,
     signed char *pcTaskName );
+void vApplicationMallocFailedHook( void );
 
 int main( void )
 {
@@ -73,7 +74,6 @@ int main( void )
       Gpio_TogglePin( pin );
       heartbeat_counter = 0;
     }
-
   }
 }
 
@@ -92,3 +92,79 @@ void vApplicationStackOverflowHook( TaskHandle_t pxTask,
   {
   }
 }
+
+
+void vApplicationMallocFailedHook( void )
+{
+  /* vApplicationMallocFailedHook() will only be called if
+   configUSE_MALLOC_FAILED_HOOK is set to 1 in FreeRTOSConfig.h.  It is a hook
+   function that will get called if a call to pvPortMalloc() fails.
+   pvPortMalloc() is called internally by the kernel whenever a task, queue,
+   timer or semaphore is created.  It is also called by various parts of the
+   demo application.  If heap_1.c or heap_2.c are used, then the size of the
+   heap available to pvPortMalloc() is defined by configTOTAL_HEAP_SIZE in
+   FreeRTOSConfig.h, and the xPortGetFreeHeapSize() API function can be used
+   to query the size of free heap space that remains (although it does not
+   provide information on how the remaining heap might be fragmented). */
+  taskDISABLE_INTERRUPTS();
+  for ( ;; )
+  {
+  }
+}
+
+
+/* The fault handler implementation calls a function called
+prvGetRegistersFromStack(). */
+void HardFault_Handler(void)
+{
+    __asm volatile
+    (
+            " tst lr, #4                                                \n"
+            " ite eq                                                    \n"
+            " mrseq r0, msp                                             \n"
+            " mrsne r0, psp                                             \n"
+            " ldr r1, [r0, #24]                                         \n"
+            " ldr r2, handler2_address_const                            \n"
+            " bx r2                                                     \n"
+            " handler2_address_const: .word prvGetRegistersFromStack    \n"
+    );
+}
+
+void prvGetRegistersFromStack( uint32_t *pulFaultStackAddress )
+{
+    /* These are volatile to try and prevent the compiler/linker optimising them
+away as the variables never actually get used.  If the debugger won't show the
+values of the variables, make them global my moving their declaration outside
+of this function. */
+    volatile uint32_t r0 = 0;
+    volatile uint32_t r1 = 0;
+    volatile uint32_t r2 = 0;
+    volatile uint32_t r3 = 0;
+    volatile uint32_t r12 = 0;
+    volatile uint32_t lr = 0; /* Link register. */
+    volatile uint32_t pc = 0; /* Program counter. */
+    volatile uint32_t psr = 0;/* Program status register. */
+
+    (void)r0;
+    (void)r1;
+    (void)r2;
+    (void)r3;
+    (void)r12;
+    (void)lr;
+    (void)pc;
+    (void)psr;
+
+    r0 = pulFaultStackAddress[ 0 ];
+    r1 = pulFaultStackAddress[ 1 ];
+    r2 = pulFaultStackAddress[ 2 ];
+    r3 = pulFaultStackAddress[ 3 ];
+
+    r12 = pulFaultStackAddress[ 4 ];
+    lr = pulFaultStackAddress[ 5 ];
+    pc = pulFaultStackAddress[ 6 ];
+    psr = pulFaultStackAddress[ 7 ];
+
+    /* When the following line is hit, the variables contain the register values. */
+    for( ;; );
+}
+
