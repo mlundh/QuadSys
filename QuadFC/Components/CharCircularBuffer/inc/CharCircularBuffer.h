@@ -1,5 +1,5 @@
 /*
- * Utilities_CharCircularBuffer.h
+ * CharCircularBuffer.h
  *
  * Copyright (C) 2020 Martin Lundh
  *
@@ -22,8 +22,8 @@
  * THE SOFTWARE.
  */
 
-#ifndef _UTILITIES_CHARCIRCULARBUFFER_H_
-#define _UTILITIES_CHARCIRCULARBUFFER_H_
+#ifndef _CHARCIRCULARBUFFER_H_
+#define _CHARCIRCULARBUFFER_H_
 
 
 #include <stdint.h>
@@ -35,20 +35,20 @@ typedef struct CharCircBuffer CharCircBuffer_t;
  * and pop in application code. 
  * @return  Pointer to the initialized buffer.
  */
-CharCircBuffer_t* Utilities_CBuffCreate(uint32_t size);
+CharCircBuffer_t* CharCircBuff_Create(uint32_t size);
 
 /**
  * Delete the event buffer.
  * @param obj
  */
-void Utilities_CBuffDelete(CharCircBuffer_t* obj);
+void CharCircBuff_Delete(CharCircBuffer_t* obj);
 
 /**
  * Get the number of buffered events.
  * @param obj     Current buffer.
  * @return        Number of events in the buffer.
  */
-uint8_t Utilities_CBuffNrElemets(CharCircBuffer_t* obj);
+uint32_t CharCircBuff_NrElemets(CharCircBuffer_t* obj);
 
 /**
  * Push onto the buffer. Will return 0 if there is no room
@@ -57,7 +57,7 @@ uint8_t Utilities_CBuffNrElemets(CharCircBuffer_t* obj);
  * @param item    item to push back.
  * @return        1 if ok, 0 if the buffer is full.
  */
-uint8_t Utilities_CBuffPush(CharCircBuffer_t* obj, uint8_t item);
+uint8_t CharCircBuff_Push(CharCircBuffer_t* obj, uint8_t item);
 
 /**
  * Pop the oldest element of the buffer. Returns false if there is no
@@ -66,6 +66,6 @@ uint8_t Utilities_CBuffPush(CharCircBuffer_t* obj, uint8_t item);
  * @param msg     Pointer to destination.
  * @return        number of bytes copied from the buffer.
  */
-uint32_t Utilities_CBuffPop(CharCircBuffer_t* obj, uint8_t *buffer, uint32_t size);
+uint32_t CharCircBuff_Pop(CharCircBuffer_t* obj, uint8_t *buffer, int32_t size);
 
-#endif // _UTILITIES_CHARCIRCULARBUFFER_H_
+#endif // _CHARCIRCULARBUFFER_H_

@@ -1,5 +1,5 @@
 /*
- * Utilities_CharCircularBuffer.c
+ * CharCircularBuffer.c
  *
  * Copyright (C) 2020 Martin Lundh
  *
@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#include "../inc/Utilities_CharCircularBuffer.h"
+#include "../inc/CharCircularBuffer.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include <string.h>
@@ -29,13 +29,13 @@
 struct CharCircBuffer
 {
   uint8_t*        Buffer;
-  size_t          capacity;  // maximum number of items in the buffer
-  size_t          count;     // number of items in the buffer
-  uint8_t         head;       // pointer to head
-  uint8_t         tail;       // pointer to tail
+  uint32_t        capacity;  // maximum number of items in the buffer
+  uint32_t        count;     // number of items in the buffer
+  uint32_t        head;       // pointer to head
+  uint32_t        tail;       // pointer to tail
 };
 
-CharCircBuffer_t* Utilities_CBuffCreate(uint32_t size)
+CharCircBuffer_t* CharCircBuff_Create(uint32_t size)
 {
   CharCircBuffer_t* obj = pvPortMalloc(sizeof(CharCircBuffer_t));
   if(!obj)
@@ -43,18 +43,29 @@ CharCircBuffer_t* Utilities_CBuffCreate(uint32_t size)
     return NULL;
   }
   obj->Buffer = pvPortMalloc(sizeof(uint8_t)*size);
+  if(!obj->Buffer)
+  {
+    return NULL;
+  }
   obj->capacity = size;
   obj->count = 0;
   obj->head = 0;
   obj->tail = 0;
   return obj;
 }
-void Utilities_CBuffDelete(CharCircBuffer_t* obj)
+void CharCircBuff_Delete(CharCircBuffer_t* obj)
 {
+  if(obj && obj->Buffer)
+  {
+    vPortFree(obj->Buffer);
+  }
+  if(obj)
+  {
     vPortFree(obj);
+  }
 }
 
-uint8_t Utilities_CBuffNrElemets(CharCircBuffer_t* obj)
+uint32_t CharCircBuff_NrElemets(CharCircBuffer_t* obj)
 {
   if(!obj)
   {
@@ -63,13 +74,9 @@ uint8_t Utilities_CBuffNrElemets(CharCircBuffer_t* obj)
   return obj->count;
 }
 
-uint8_t Utilities_CBuffPush(CharCircBuffer_t* obj, uint8_t item)
+uint8_t CharCircBuff_Push(CharCircBuffer_t* obj, uint8_t item)
 {
-  taskENTER_CRITICAL();
-  int32_t count = obj->count;
-  taskEXIT_CRITICAL();
-
-  if(count == obj->capacity)
+  if(obj->count == obj->capacity)
   {
     return 0;
   }
@@ -77,13 +84,11 @@ uint8_t Utilities_CBuffPush(CharCircBuffer_t* obj, uint8_t item)
   obj->head++;
   obj->head%=obj->capacity;
   
-  taskENTER_CRITICAL();
   obj->count++;
-  taskEXIT_CRITICAL();
   return 1;
 }
 
-uint32_t Utilities_CBuffPop(CharCircBuffer_t* obj, uint8_t *buffer, uint32_t size)
+uint32_t CharCircBuff_Pop(CharCircBuffer_t* obj, uint8_t *buffer, int32_t size)
 {
   taskENTER_CRITICAL();
   int32_t count = obj->count;
@@ -97,16 +102,21 @@ uint32_t Utilities_CBuffPop(CharCircBuffer_t* obj, uint8_t *buffer, uint32_t siz
   }
   int32_t returnValue = 0;
 
-  if(head < tail)
+  if(head <= tail)
   {
-    int32_t cpySize = size <= (obj->capacity - tail) ? size : (obj->capacity - tail);
+    int32_t cpySize = (size <= (obj->capacity - tail)) ? size : (obj->capacity - tail);
     returnValue += cpySize;
 
     memcpy(buffer, &(obj->Buffer[tail]), cpySize);
-    tail  += cpySize;
+    buffer += cpySize; // Update the buffer pointer so that we can continue to copy if needed.
+    tail  += cpySize;  
     tail  %= obj->capacity;
     count -= cpySize;
     size  -= cpySize;
+    if(count < 0 || count > obj->capacity) 
+    {
+      obj->count = 0;
+    }
   }
   if(head > tail && size > 0) // we can copy everything in one go.
   {
@@ -117,7 +127,12 @@ uint32_t Utilities_CBuffPop(CharCircBuffer_t* obj, uint8_t *buffer, uint32_t siz
     tail  += cpySize;
     tail  %= obj->capacity;
     count -= cpySize;
+    if(count < 0 || count > obj->capacity)
+    {
+      obj->count = 0;
+    }
   }
+
   taskENTER_CRITICAL();
   obj->tail = tail;
   obj->count = count;
