@@ -74,69 +74,81 @@ uint32_t CharCircBuff_NrElemets(CharCircBuffer_t* obj)
   return obj->count;
 }
 
-uint8_t CharCircBuff_Push(CharCircBuffer_t* obj, uint8_t item)
+uint32_t CharCircBuff_Push(CharCircBuffer_t *obj, uint8_t *buffer, int32_t size)
 {
   if(obj->count == obj->capacity)
   {
     return 0;
   }
-  obj->Buffer[obj->head] = item;
-  obj->head++;
-  obj->head%=obj->capacity;
-  
-  obj->count++;
-  return 1;
+  int32_t returnValue = 0;
+
+  if (obj->tail <= obj->head)
+  {
+    int32_t cpySize = (size <= (obj->capacity - obj->head)) ? size : (obj->capacity - obj->head);
+    returnValue += cpySize;
+
+    memcpy(&(obj->Buffer[obj->head]), buffer, cpySize);
+    buffer += cpySize; // Update the buffer pointer so that we can continue to copy if needed.
+    obj->head += cpySize;
+    obj->head %= obj->capacity;
+    obj->count += cpySize;
+    size -= cpySize;
+  }
+  if (obj->tail > obj->head && size > 0) // we can copy everything in one go.
+  {
+    int32_t cpySize = size <= obj->tail - obj->head ? size : obj->tail - obj->head;
+    returnValue += cpySize;
+
+    memcpy(&(obj->Buffer[obj->head]), buffer, cpySize);
+    obj->head += cpySize;
+    obj->head %= obj->capacity;
+    obj->count += cpySize;
+    if (obj->count < 0 || obj->count > obj->capacity)
+    {
+      obj->count = 0;
+    }
+  }
+  return returnValue;
 }
 
 uint32_t CharCircBuff_Pop(CharCircBuffer_t* obj, uint8_t *buffer, int32_t size)
 {
-  taskENTER_CRITICAL();
-  int32_t count = obj->count;
-  int32_t head = obj->head;
-  int32_t tail = obj->tail;
-  taskEXIT_CRITICAL();
-
-  if(count == 0)
+  if (obj->count == 0)
   {
     return 0;
   }
   int32_t returnValue = 0;
 
-  if(head <= tail)
+  if (obj->head <= obj->tail)
   {
-    int32_t cpySize = (size <= (obj->capacity - tail)) ? size : (obj->capacity - tail);
+    int32_t cpySize = (size <= (obj->capacity - obj->tail)) ? size : (obj->capacity - obj->tail);
     returnValue += cpySize;
 
-    memcpy(buffer, &(obj->Buffer[tail]), cpySize);
+    memcpy(buffer, &(obj->Buffer[obj->tail]), cpySize);
     buffer += cpySize; // Update the buffer pointer so that we can continue to copy if needed.
-    tail  += cpySize;  
-    tail  %= obj->capacity;
-    count -= cpySize;
+    obj->tail += cpySize;
+    obj->tail %= obj->capacity;
+    obj->count -= cpySize;
     size  -= cpySize;
-    if(count < 0 || count > obj->capacity) 
+    if (obj->count < 0 || obj->count > obj->capacity)
     {
       obj->count = 0;
     }
   }
-  if(head > tail && size > 0) // we can copy everything in one go.
+  if (obj->head > obj->tail && size > 0) // we can copy everything in one go.
   {
-    int32_t cpySize = size <= count ? size : count;
+    int32_t cpySize = size <= obj->count ? size : obj->count;
     returnValue += cpySize;
 
-    memcpy(buffer, &(obj->Buffer[tail]), cpySize);
-    tail  += cpySize;
-    tail  %= obj->capacity;
-    count -= cpySize;
-    if(count < 0 || count > obj->capacity)
+    memcpy(buffer, &(obj->Buffer[obj->tail]), cpySize);
+    obj->tail += cpySize;
+    obj->tail %= obj->capacity;
+    obj->count -= cpySize;
+    if (obj->count < 0 || obj->count > obj->capacity)
     {
       obj->count = 0;
     }
   }
-
-  taskENTER_CRITICAL();
-  obj->tail = tail;
-  obj->count = count;
-  taskEXIT_CRITICAL();
   return returnValue;
 }
 

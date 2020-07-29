@@ -31,40 +31,40 @@
 typedef struct CharCircBuffer CharCircBuffer_t;
 
 /**
- * Create the circular buffer. This buffer is designed to push data in an ISR
- * and pop in application code. 
+ * Create the circular buffer. 
  * @return  Pointer to the initialized buffer.
  */
 CharCircBuffer_t* CharCircBuff_Create(uint32_t size);
 
 /**
- * Delete the event buffer.
+ * Delete the buffer.
  * @param obj
  */
 void CharCircBuff_Delete(CharCircBuffer_t* obj);
 
 /**
- * Get the number of buffered events.
+ * Get the number of buffered items.
  * @param obj     Current buffer.
- * @return        Number of events in the buffer.
+ * @return        Number of items in the buffer.
  */
 uint32_t CharCircBuff_NrElemets(CharCircBuffer_t* obj);
 
 /**
- * Push onto the buffer. Will return 0 if there is no room
- * in the buffer.
+ * Push onto the buffer. Will return the number of items pushed.
  * @param obj     Current buffer.
- * @param item    item to push back.
- * @return        1 if ok, 0 if the buffer is full.
+ * @param buffer  Buffer that holds the data that should be written.
+ * @param size    Size of the buffer.
+ * @return        number of bytes copied to the buffer.
  */
-uint8_t CharCircBuff_Push(CharCircBuffer_t* obj, uint8_t item);
+uint32_t CharCircBuff_Push(CharCircBuffer_t *obj, uint8_t *buffer, int32_t size);
 
 /**
  * Pop the oldest element of the buffer. Returns false if there is no
  * elements in the buffer.
  * @param obj     Current buffer.
- * @param msg     Pointer to destination.
- * @return        number of bytes copied from the buffer.
+ * @param buffer  Buffer the data should be written to.
+ * @param size    Size of the buffer.
+ * @return        number of bytes copied to the buffer.
  */
 uint32_t CharCircBuff_Pop(CharCircBuffer_t* obj, uint8_t *buffer, int32_t size);
 

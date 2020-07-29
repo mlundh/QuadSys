@@ -104,10 +104,17 @@ uint8_t TestFW_ExecuteTests(TestFw_t* obj);
 
 
 #define REPORT_LENGTH_MAX (200)
-#define TEST_REPORT_ENTRY(obj,  format, ...) {  \
-    char tmpstr[REPORT_LENGTH_MAX] = {0}; \
-    snprintf(tmpstr, REPORT_LENGTH_MAX, format"\n" , ##__VA_ARGS__); \
-    TestFW_Report(obj, tmpstr); \
+#define TEST_REPORT_ERROR(obj, format, ...)                                                                               \
+    {                                                                                                                     \
+        char tmpstr[REPORT_LENGTH_MAX] = {0};                                                                             \
+        snprintf(tmpstr, REPORT_LENGTH_MAX, "\e[31mERROR\e[0m at %s:%d: " format "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
+        TestFW_Report(obj, tmpstr);                                                                                       \
+    }
+#define TEST_REPORT_INFO(obj, format, ...)                                                   \
+    {                                                                                        \
+        char tmpstr[REPORT_LENGTH_MAX] = {0};                                                \
+        snprintf(tmpstr, REPORT_LENGTH_MAX, "\e[37mINFO: " format "\e[0m\n", ##__VA_ARGS__); \
+        TestFW_Report(obj, tmpstr);                                                          \
     }
 
 #endif /* TEST_TESTFW_TEST_FRAMEWORK_H_ */
