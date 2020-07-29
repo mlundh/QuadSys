@@ -30,33 +30,39 @@
 #include "stm32f413xx.h"
 #include "stm32f4xx_ll_usart.h"
 #include "stm32f4xx_ll_gpio.h"
-#include "Components/Utilities/inc/Utilities_CharCircularBuffer.h"
+
+#include "FreeRTOS.h"
+#include "task.h"
+#include "stream_buffer.h"
+
+#include "HAL/QuadFC/QuadFC_Gpio.h"
 
 
 typedef struct titan_uart_control {
   USART_TypeDef*        usart;
   uint32_t              initialized;
-  SemaphoreHandle_t     rx_trans_comp_sem;
   SemaphoreHandle_t     tx_trans_comp_sem;
   uint8_t*              TxBuffPtr;
   uint32_t              TxCount;
-  CharCircBuffer_t*     RxBuff;
+  StreamBufferHandle_t  RxBuff;
+  uint32_t              RxErrorCount;
+
 } titan_uart_control_t;
 
 const static uint8_t num_uart = 7;
 
 static  titan_uart_control_t   uart[] = {
-  {UART10, 0, NULL, NULL, NULL, 0, NULL}, // RC 1
-  {USART1, 0, NULL, NULL, NULL, 0, NULL}, // Com serial USB
-  {USART2, 0, NULL, NULL, NULL, 0, NULL},
-  {UART9,  0, NULL, NULL, NULL, 0, NULL}, // Applog serial backend
-  {USART3, 0, NULL, NULL, NULL, 0, NULL},
-  {USART6, 0, NULL, NULL, NULL, 0, NULL},
-  {UART8,  0, NULL, NULL, NULL, 0, NULL},
+  {UART10, 0, NULL, NULL, 0, NULL, 0}, // RC 1
+  {USART1, 0, NULL, NULL, 0, NULL, 0}, // Com serial USB
+  {USART2, 0, NULL, NULL, 0, NULL, 0},
+  {UART9,  0, NULL, NULL, 0, NULL, 0}, // Applog serial backend
+  {USART3, 0, NULL, NULL, 0, NULL, 0},
+  {USART6, 0, NULL, NULL, 0, NULL, 0},
+  {UART8,  0, NULL, NULL, 0, NULL, 0},
 
 };
 
-#define RECEIVE_BUFFER_LENGTH (512)
+#define RECEIVE_BUFFER_LENGTH (256)
 
 /**
  * @brief Local uart handler, called by all uart peripherals.
@@ -98,8 +104,8 @@ uint8_t QuadFC_SerialInit(int busIndex, QuadFC_SerialOptions_t* opt)
   {
     return 0;
   }
-  uart[busIndex].RxBuff = Utilities_CBuffCreate(opt->bufferLength);
-  
+  uart[busIndex].RxBuff = xStreamBufferCreate(RECEIVE_BUFFER_LENGTH, 1);
+
   TitanUART_GPIOInit(uart[busIndex].usart);
 
   LL_USART_InitTypeDef  init = {0};
@@ -110,8 +116,12 @@ uint8_t QuadFC_SerialInit(int busIndex, QuadFC_SerialOptions_t* opt)
   init.Parity = Parity[opt->parityType];
   init.TransferDirection = LL_USART_DIRECTION_TX_RX;
   init.OverSampling = LL_USART_OVERSAMPLING_16;
-  uart[busIndex].rx_trans_comp_sem = xSemaphoreCreateCounting(portMAX_DELAY, 0);
-  uart[busIndex].tx_trans_comp_sem = xSemaphoreCreateCounting(portMAX_DELAY, 0);
+  uart[busIndex].tx_trans_comp_sem = xSemaphoreCreateBinary();
+
+  if(!uart[busIndex].tx_trans_comp_sem)
+  {
+    return 0;
+  }
 
   if((uart[busIndex].usart == USART1) ||
      (uart[busIndex].usart == USART2))
@@ -130,7 +140,7 @@ uint8_t QuadFC_SerialInit(int busIndex, QuadFC_SerialOptions_t* opt)
   // RX is enabled from the start, and will always read to the circular buffer.
   
   LL_USART_EnableIT_PE(uart[busIndex].usart); 
-  LL_USART_EnableIT_ERROR(uart[busIndex].usart); 
+  //LL_USART_EnableIT_ERROR(uart[busIndex].usart); 
   LL_USART_EnableIT_RXNE(uart[busIndex].usart); 
 
   uart[busIndex].initialized = 1;
@@ -152,9 +162,9 @@ uint8_t QuadFC_SerialWrite(QuadFC_Serial_t *serial_data, uint8_t busIndex, TickT
 
   uart[busIndex].TxBuffPtr = serial_data->buffer;
   uart[busIndex].TxCount = serial_data->bufferLength;
-  
+
   LL_USART_EnableIT_TXE(uart[busIndex].usart); // This causes an interrupt that starts the transmission.
-  
+
   if( xSemaphoreTake( uart[busIndex].tx_trans_comp_sem, ( TickType_t ) blockTimeTicks ) == pdTRUE )
   {
     return 1;
@@ -183,16 +193,15 @@ uint32_t QuadFC_SerialRead(QuadFC_Serial_t *serial_data, uint8_t busIndex, TickT
     blockTimeTicks= (blockTimeMs / portTICK_PERIOD_MS);
   }
 
-  // TODO copy all avalible data.
-  if( xSemaphoreTake( uart[busIndex].tx_trans_comp_sem, ( TickType_t ) blockTimeTicks ) == pdTRUE )
+  uint32_t bytes_read = xStreamBufferReceive(uart[busIndex].RxBuff, serial_data->buffer, serial_data->bufferLength, blockTimeTicks);
+
+  if(bytes_read)
   {
-    Utilities_CBuffPop(uart[busIndex].RxBuff, serial_data->buffer, serial_data->bufferLength) ;
+    int i = 5;
+    (void)i;
   }
-  else
-  {
-    return 0;
-  }
-  return 0;
+
+  return bytes_read;
 }
 
 void USART1_IRQHandler(void)
@@ -239,27 +248,25 @@ void TitanSerial_IRQHandler(uint32_t busIndex)
   /* If no error occurs */
   errorflags = (isrflags & (uint32_t)(USART_SR_PE | USART_SR_FE | USART_SR_ORE | USART_SR_NE));
   if (errorflags == RESET)
-  {
+  { 
     /* UART in mode Receiver -------------------------------------------------*/
-    if (LL_USART_IsActiveFlag_RXNE(uart[busIndex].usart) && LL_USART_IsEnabledIT_RXNE(uart[busIndex].usart) )
+    if (LL_USART_IsActiveFlag_RXNE(uart[busIndex].usart) && LL_USART_IsEnabledIT_RXNE(uart[busIndex].usart))
     {
-      uint8_t result = 1;
+      uint8_t data = (uart[busIndex].usart->DR & (uint8_t)0x00FF);
       if (LL_USART_GetParity(uart[busIndex].usart) == LL_USART_PARITY_NONE)
       {
-        result = Utilities_CBuffPush(uart[busIndex].RxBuff, (uint8_t)(uart[busIndex].usart->DR & (uint8_t)0x00FF));
+        xStreamBufferSendFromISR(uart[busIndex].RxBuff, (void *)&data, 1, &higherPriorityTaskHasWoken);
       }
       else
       {
-        result = Utilities_CBuffPush(uart[busIndex].RxBuff, (uint8_t)(uart[busIndex].usart->DR & (uint8_t)0x007F));
-      }
-      if(result) // Only signal new data if we have increased the count. 
-      {
-        xSemaphoreGiveFromISR(uart[busIndex].rx_trans_comp_sem, &higherPriorityTaskHasWoken);
+        xStreamBufferSendFromISR(uart[busIndex].RxBuff, (void *)&data, 1, &higherPriorityTaskHasWoken);
       }
     }
   }
   else
   {
+    uart[busIndex].RxErrorCount++;
+
     // Just clear errors for now.
     if(LL_USART_IsActiveFlag_FE(uart[busIndex].usart) && LL_USART_IsEnabledIT_RXNE(uart[busIndex].usart))
     {

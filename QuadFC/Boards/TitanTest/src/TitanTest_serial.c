@@ -29,7 +29,6 @@
 #include "stm32f413xx.h"
 #include "stm32f4xx_ll_usart.h"
 #include "stm32f4xx_ll_gpio.h"
-#include "Components/Utilities/inc/Utilities_CharCircularBuffer.h"
 
 
 typedef struct titan_test_uart_control {
