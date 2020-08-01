@@ -25,6 +25,7 @@
 #define SLIP_PACKET_H_
 
 #include <stdint.h>
+#include "Components/CharCircularBuffer/inc/CharCircularBuffer.h"
 
 enum Slip_Control_Octets
 {
@@ -49,6 +50,14 @@ typedef struct SLIP
   uint16_t allocatedSize;
 } SLIP_t;
 
+typedef struct SLIP_Parser
+{
+  CharCircBuffer_t *cBuffer;
+  uint32_t startFound;
+  uint32_t index;
+  uint8_t  controlEscapeFound;
+} SLIP_Parser_t;
+
 /**
  * Create a new SLIP packet. Function will allocate "size" memory and return a initialized package.
  *
@@ -62,7 +71,6 @@ SLIP_t* Slip_Create(uint16_t size);
  * @param obj
  */
 void Slip_Delete(SLIP_t* obj);
-
 
 /**
  * Packetize buffer into a SLIP format, copy content of buffer to
@@ -79,19 +87,19 @@ void Slip_Delete(SLIP_t* obj);
  */
 uint16_t Slip_Packetize(uint8_t* buffer, uint16_t dataLength, uint16_t bufferLength, SLIP_t *packet);
 
+/**
+ * @brief Generate the slip parser.
+ * 
+ * @param internaBuffSize size of the internal buffer.
+ * @return SLIP_Parser_t* 
+ */
+SLIP_Parser_t *SlipParser_Create(uint32_t internaBuffSize);
 
 /**
- * Unpack the data in packet, and copy it to buffer. Will also verify crc.
- *
- * Will return number of bytes copied into buffer, 0 if fail.
- *
- * @param buffer        Buffer that will be populated with data from the packet.
- * @param dataLength    Length of the buffer, used for boundary check.
- * @param packet        SLIP packet containing the data.
- * @return              Number of bytes copied from packet to buffer. 0 if fail.
+ * Delete the SLIP parser.
+ * @param obj
  */
-uint16_t Slip_DePacketize(uint8_t* buffer, uint16_t bufferLength, SLIP_t *packet);
-
+void SlipParser_Delete(SLIP_Parser_t* obj);
 
 /**
  * Parser that builds a SLIP package via multiple calls. The
@@ -106,10 +114,9 @@ uint16_t Slip_DePacketize(uint8_t* buffer, uint16_t bufferLength, SLIP_t *packet
  * @param buffer          Buffer containing > 1 bytes of data.
  * @param buffer_length   number of bytes in buffer.
  * @param SLIP_packet     Slip packet used internally.
- * @param index           User should initialize to zero and then not update.
  * @return                1 when done, 0 if not done.
  */
-SLIP_Status_t SLIP_Parser(uint8_t *inputBuffer, int InputBufferLength,
-    SLIP_t *SLIP_packet, int *index);
+SLIP_Status_t SlipParser_Parse(SLIP_Parser_t* obj, uint8_t *inputBuffer, int InputBufferLength,
+                          SLIP_t *SLIP_packet);
 
 #endif /* SLIP_PACKET_H_ */

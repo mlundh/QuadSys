@@ -21,6 +21,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
+#define DEBUG
+
 #include "string.h"
 
 #include "Communication/inc/communication_tasks.h"
@@ -32,6 +35,8 @@
 #include "Messages/inc/Msg_Debug.h"
 
 #include "Messages/inc/Msg_Log.h"
+
+
 
 #include "FlightModeHandler/inc/flight_mode_handler.h"
 #include "Components/SLIP/inc/slip_packet.h"
@@ -50,7 +55,7 @@
 
 /* Use USART1 (labeled RX2 17 and TX2 16)*/
 #define COM_SERIAL (1)
-#define COM_RECEIVE_BUFFER_LENGTH       (2)
+#define COM_RECEIVE_BUFFER_LENGTH       (512)
 
 #define COM_PACKET_LENGTH_MAX       512
 #define NR_RETRANSMITT (3)
@@ -63,6 +68,7 @@ typedef struct RxCom
     QuadFC_Serial_t * serialBuffer;
     uint8_t messageBuffer[COM_PACKET_LENGTH_MAX];
     SLIP_t *SLIP;                   //!< RxTask owns SLIP package.
+    SLIP_Parser_t* parser;
     uint8_t receive_buffer[COM_RECEIVE_BUFFER_LENGTH];
     param_helper_t *helper;
     param_helper_t *saveHelper;
@@ -174,8 +180,10 @@ RxCom_t* Com_InitRx(eventHandler_t* eventHandler)
     taskParam->evHandler = eventHandler;
     taskParam->logHandler = LogHandler_CreateObj(0,taskParam->evHandler,NULL,"LogM",1);
     taskParam->paramHandler = ParamHandler_CreateObj(1,eventHandler, "Com_RX", 1); // Master handles all communication, we are master!
-    if( !taskParam->helper || !taskParam->saveHelper
-            || !taskParam->SLIP || !taskParam->evHandler  || !taskParam->logHandler)
+    taskParam->parser = SlipParser_Create(COM_PACKET_LENGTH_MAX);
+    if(    !taskParam->helper || !taskParam->saveHelper
+        || !taskParam->SLIP || !taskParam->evHandler  
+        || !taskParam->logHandler || !taskParam->parser)
     {
         return NULL;
     }
@@ -217,7 +225,7 @@ void Com_CreateTasks(eventHandler_t* eventHandlerRx, eventHandler_t* eventHandle
     }
 
     QuadFC_SerialOptions_t opt = {
-            57600,
+            115200,
             EightDataBits,
             NoParity,
             OneStopBit,
@@ -289,7 +297,6 @@ void Com_TxTask( void *pvParameters )
     }
 
 }
-
 uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 {
     if(!obj || ! data || !msg)
@@ -383,8 +390,6 @@ uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 
 void Com_RxTask( void *pvParameters )
 {
-    int ParserIndex = 0; //!< Variable containing static information for the parser.
-
     /*The already allocated data is passed to the task.*/
     RxCom_t * obj = (RxCom_t *) pvParameters;
 
@@ -404,14 +409,19 @@ void Com_RxTask( void *pvParameters )
         QuadFC_Serial_t serialData;
         obj->receive_buffer[0] = 0;
         serialData.buffer = obj->receive_buffer;
-        serialData.bufferLength = 1;
+        serialData.bufferLength = 1;//COM_RECEIVE_BUFFER_LENGTH;
 
         uint32_t nr_bytes_received = QuadFC_SerialRead(&serialData, COM_SERIAL, 1);
+        if(!nr_bytes_received)
+        {
+            continue;
+        }
+
+        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "Received 0x%02x", *serialData.buffer);
 
         SLIP_Status_t result;
-        result = SLIP_Parser(obj->receive_buffer, nr_bytes_received,
-                obj->SLIP, &ParserIndex);
-
+        result = SlipParser_Parse(obj->parser, serialData.buffer, serialData.bufferLength, obj->SLIP);
+        /// TODO!!! take care of the un-used part of the receive buffer! 
         switch ( result )
         {
         case SLIP_StatusCont:
@@ -419,16 +429,8 @@ void Com_RxTask( void *pvParameters )
             break;
         case SLIP_StatusOK:
         {
-            uint32_t payloadLength = Slip_DePacketize(obj->messageBuffer, COM_PACKET_LENGTH_MAX, obj->SLIP);
-            if(payloadLength == 0)
-            {
-                moduleMsg_t* reply = Msg_TransmissionCreate(GS_SerialIO_e, 0, transmission_NOK);
-                Event_Send(obj->evHandler, reply);
-                break;
-            }
-
             // Parse the message and send to the interested parties!
-            moduleMsg_t* msg = Msg_Parse(obj->messageBuffer, payloadLength);
+            moduleMsg_t* msg = Msg_Parse(obj->SLIP->payload,obj->SLIP->packetSize);
             if(!msg)
             {
                 //TODO error

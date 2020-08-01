@@ -73,6 +73,7 @@ void Slip_Delete(SLIP_t* obj)
     vPortFree(obj->payload);
     vPortFree(obj);
 }
+
 uint16_t Slip_Packetize(uint8_t* buffer, uint16_t dataLength, uint16_t BufferLength, SLIP_t *packet)
 {
     if((dataLength + 4) > packet->allocatedSize) // packet must be at least as long as buffer + start and stop bytes and crc.
@@ -116,58 +117,61 @@ uint16_t Slip_Packetize(uint8_t* buffer, uint16_t dataLength, uint16_t BufferLen
 }
 
 
-uint16_t Slip_DePacketize(uint8_t* buffer, uint16_t bufferLength, SLIP_t *packet)
+uint8_t SLIP_AddCRC(uint8_t *buffer, uint16_t *dataLength, uint16_t bufferLength)
 {
-    if(!buffer || !packet)
+    if (bufferLength < (*dataLength + 2))
     {
         return 0;
     }
-    uint16_t k;
-    uint16_t i;
-    if((packet->payload[0] != frame_boundary_octet) ||
-            (bufferLength < packet->packetSize - 2))
-    {
-        return 0;
-    }
-    for ( i = 0, k = 1; k < (packet->packetSize - 1); i++, k++ )
-    {
-        if ( packet->payload[k] == control_escape_octet )
-        {
-            k++;
-            if ( packet->payload[k] == control_escape_octet_replacement )
-            {
-                buffer[i] = control_escape_octet;
-            }
-            else if ( packet->payload[k] == frame_boundary_octet_replacement )
-            {
-                buffer[i] = frame_boundary_octet;
-            }
-            else
-            {
-                return 0;
-            }
-        }
-        else
-        {
-            buffer[i] = packet->payload[k];
-        }
-    }
-    if(!SLIP_CheckCRC(buffer, &i))
-    {
-        return 0;
-    }
-    return i;
+    //Calculate and append CRC16 checksum.
+    uint16_t crcCalc = crcFast(buffer, *dataLength);
+    buffer[*dataLength] = (uint8_t)((crcCalc >> 8) & 0Xff);
+    buffer[*dataLength + 1] = (uint8_t)((crcCalc)&0Xff);
+    *dataLength += 2;
+    return 1;
 }
 
+uint8_t SLIP_CheckCRC(uint8_t *buffer, uint16_t *dataLength)
+{
+    //Calculate and compare CRC16 checksum.
+    uint16_t crcCalc = 0;
+    uint16_t crcMsg = 0;
+    crcCalc = crcFast(buffer, *dataLength - 2);
 
-SLIP_Status_t SLIP_Parser(uint8_t *inputBuffer, int InputBufferLength,
-        SLIP_t *SLIP_packet, int *index)
+    crcMsg |= (uint16_t)(buffer[*dataLength - 2]) << 8;
+    crcMsg |= (uint16_t)(buffer[*dataLength - 1]);
+    *dataLength -= 2;
+    if (crcCalc != crcMsg)
+    {
+        return 0;
+    }
+    return 1;
+}
+
+SLIP_Parser_t *SlipParser_Create(uint32_t internaBuffSize)
+{
+    SLIP_Parser_t *parser = pvPortMalloc(sizeof(SLIP_Parser_t));
+    parser->cBuffer = CharCircBuff_Create(internaBuffSize);
+    parser->index = 0; 
+    parser->startFound = 0;
+    parser->controlEscapeFound = 0;
+    return parser;
+}
+
+void SlipParser_Delete(SLIP_Parser_t *obj)
+{
+    CharCircBuff_Delete(obj->cBuffer);
+    vPortFree(obj);
+}
+
+SLIP_Status_t SlipParser_Parse(SLIP_Parser_t* obj, uint8_t *inputBuffer, int InputBufferLength,
+                          SLIP_t *SLIP_packet)
 {
     if(!inputBuffer || !SLIP_packet)
     {
         return 0;
     }
-    if ( (InputBufferLength > (SLIP_packet->allocatedSize - *index)))
+    if ((InputBufferLength > (SLIP_packet->allocatedSize - obj->index)))
     {
         return SLIP_StatusNok;
     }
@@ -176,56 +180,54 @@ SLIP_Status_t SLIP_Parser(uint8_t *inputBuffer, int InputBufferLength,
         return SLIP_StatusCont;
     }
     SLIP_Status_t result = SLIP_StatusCont;
-    for ( int i = 0; i < InputBufferLength; i++, (*index)++ )
+    for (int i = 0; i < InputBufferLength; i++)
     {
-        SLIP_packet->payload[*index] = inputBuffer[i];
-        if ( SLIP_packet->payload[*index] == frame_boundary_octet )
+        if(obj->controlEscapeFound) 
         {
-            if ( (*index) >= 4 ) // Last boundary of frame. Frame minimum length = 4
+            if ( inputBuffer[i] == control_escape_octet_replacement )
             {
-                SLIP_packet->packetSize = *index + 1;
-                *index = 0;
+                SLIP_packet->payload[obj->index++] = control_escape_octet;
+            }
+            else if ( inputBuffer[i] == frame_boundary_octet_replacement )
+            {
+                SLIP_packet->payload[obj->index++] = frame_boundary_octet;
+            }
+            else
+            {
+                return SLIP_StatusNok;
+            }
+        }
+        else if (inputBuffer[i] == frame_boundary_octet)
+        {
+            if (obj->startFound && obj->index > 4) // Last boundary of frame. A frame should have more than 4 bytes. This ensures we are not miss-aligned. 
+            {
+                SLIP_packet->packetSize = obj->index;
+                obj->index = 0;
                 result = SLIP_StatusOK;
+                obj->startFound = 0;
+                if(!SLIP_CheckCRC(SLIP_packet->payload, &SLIP_packet->packetSize))
+                {
+                    return SLIP_StatusNok;
+                }
                 break;
                 //Finished packet! return.
             }
             else // First boundary of frame.
             {
-                *index = 0;
-                SLIP_packet->payload[*index] = inputBuffer[i];
+                obj->index = 0;
+                obj->startFound = 1;
             }
         }// Frame boundary
+        else if (inputBuffer[i] == control_escape_octet ) // Escape char
+        {
+            obj->controlEscapeFound = 1;
+        }
+        else
+        {
+            SLIP_packet->payload[obj->index++] = inputBuffer[i];
+        }
+        
     }//for()
     return result;
 }
 
-uint8_t SLIP_AddCRC(uint8_t* buffer, uint16_t *dataLength, uint16_t bufferLength)
-{
-    if(bufferLength < (*dataLength + 2))
-    {
-        return 0;
-    }
-    //Calculate and append CRC16 checksum.
-    uint16_t crcCalc = crcFast(buffer, *dataLength);
-    buffer[*dataLength ] = (uint8_t) ((crcCalc >> 8) & 0Xff);
-    buffer[*dataLength + 1] = (uint8_t) ((crcCalc) & 0Xff);
-    *dataLength += 2;
-    return 1;
-}
-
-uint8_t SLIP_CheckCRC(uint8_t* buffer, uint16_t *dataLength)
-{
-    //Calculate and compare CRC16 checksum.
-    uint16_t crcCalc = 0;
-    uint16_t crcMsg = 0;
-    crcCalc = crcFast( buffer, *dataLength - 2);
-
-    crcMsg |=  (uint16_t)(buffer[*dataLength - 2]) << 8;
-    crcMsg |=  (uint16_t)(buffer[*dataLength - 1]);
-    *dataLength -= 2;
-    if ( crcCalc != crcMsg )
-    {
-        return 0;
-    }
-    return 1;
-}

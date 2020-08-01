@@ -65,6 +65,7 @@ struct paramHander
     uint8_t               sequenceSet;
     uint32_t              setAddress;
     paramAction_t         actionOngoing;
+    SLIP_Parser_t*        parser;
 };
 
 
@@ -149,7 +150,8 @@ paramHander_t* ParamHandler_CreateObj(uint8_t num_children, eventHandler_t* evHa
     obj->saver = Unassigned_e;
     obj->setAddress = 0;
     obj->actionOngoing = paramReady;
-    if(!obj->rootParam)
+    obj->parser = SlipParser_Create(SLIP_PACKET_LEN);
+    if(!obj->rootParam || !obj->parser)
     {
         return NULL;
     }
@@ -193,6 +195,10 @@ void ParamHandler_DeleteHandler(paramHander_t *obj)
     if(obj->handlers)
     {
         vPortFree(obj->handlers);
+    }
+    if(obj->parser)
+    {
+        SlipParser_Delete(obj->parser);
     }
     vPortFree(obj);
 }
@@ -379,12 +385,10 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
 
         while(!lastInSequence)
         {
-            int k = 0;
             uint8_t buffer[2];
             SLIP_Status_t read_status = SLIP_StatusCont;
             uint32_t startAddress = address;
             SLIP_t* packet = Slip_Create(SLIP_PACKET_LEN);
-            uint8_t unpacked_buffer[SLIP_PACKET_LEN] = {0};
 
             // Read from memory and add to the parser.
             while(SLIP_StatusCont == read_status)
@@ -392,7 +396,7 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
                 result = Mem_Read(address, 1, buffer, 2);
                 if(result && ((address - startAddress) <= SLIP_PACKET_LEN))
                 {
-                    read_status = SLIP_Parser(buffer, 1, packet, &k);
+                    read_status = SlipParser_Parse(handlerObj->parser, buffer, 1, packet);
                 }
                 else
                 {
@@ -404,27 +408,20 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
                 }
                 address++;
             }
+            if(read_status == SLIP_StatusNok)
+            {
+                LOG_ENTRY(FC_SerialIOtx_e, obj, "Param Load: Error. Parser failed.");
+            }
             LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "Param Load: Read %d at %d", (int)(address - startAddress), (int)startAddress);
             printPacket(obj, packet);
             // Whole package or error...
-            uint32_t payloadLength = 0;
             result &= (read_status == SLIP_StatusOK);
-            if(result)
-            {
-                payloadLength = Slip_DePacketize(unpacked_buffer, SLIP_PACKET_LEN, packet);
-                if(payloadLength == 0)
-                {
-                    result = 0;
-                    LOG_ENTRY(FC_SerialIOtx_e, obj, "Param Load: Error. Could not depacketize SLIP.");
-                    handlerObj->actionOngoing = paramReady; // Reset.
-                    break;
-                }
-            }
+
             moduleMsg_t* loadedMsg = NULL;
 
             if(result)
             {
-                loadedMsg = Msg_ParamDeserialize(unpacked_buffer, payloadLength);
+                loadedMsg = Msg_ParamDeserialize(packet->payload, packet->packetSize);
 
                 uint8_t sequenceNo = Msg_ParamGetSequencenr(loadedMsg);
                 lastInSequence = Msg_ParamGetLastinsequence(loadedMsg);

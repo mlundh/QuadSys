@@ -36,8 +36,9 @@ uint8_t Cbuff_TestPushPopCirc(TestFw_t *obj);
 uint8_t Cbuff_TestFull(TestFw_t *obj);
 uint8_t Cbuff_TestPushPopString(TestFw_t *obj);
 uint8_t Cbuff_TestPushPopStringBoundary(TestFw_t *obj);
+uint8_t Cbuff_TestReadMore(TestFw_t *obj);
 
-    void Cbuff_GetTCs(TestFw_t *obj)
+void Cbuff_GetTCs(TestFw_t *obj)
 {
   TestFW_RegisterTest(obj, "Cbuff Create Delete", Cbuff_TestCreateDelete);
   TestFW_RegisterTest(obj, "Cbuff Push Pop", Cbuff_TestPushPop);
@@ -46,6 +47,7 @@ uint8_t Cbuff_TestPushPopStringBoundary(TestFw_t *obj);
   TestFW_RegisterTest(obj, "Cbuff Full", Cbuff_TestFull);
   TestFW_RegisterTest(obj, "Cbuff Push Pop String", Cbuff_TestPushPopString);
   TestFW_RegisterTest(obj, "Cbuff Push Pop String boundary", Cbuff_TestPushPopStringBoundary);
+  TestFW_RegisterTest(obj, "Cbuff Read more than is availible", Cbuff_TestReadMore);
 }
 
 uint8_t Cbuff_TestCreateDelete(TestFw_t *obj)
@@ -72,13 +74,13 @@ uint8_t Cbuff_TestPushPop(TestFw_t *obj)
   if (size != BUFFERSIZE)
   {
     result = 0;
-    TEST_REPORT_ERROR(obj, "Expected to pop %d got %ld.\n", BUFFERSIZE, size);
+    TEST_REPORT_ERROR(obj, "Expected to pop %d got %ld.", BUFFERSIZE, size);
   }
   for (uint32_t i = 0; i < BUFFERSIZE; i++)
   {
     if (buffer[i] != i)
     {
-      TEST_REPORT_ERROR(obj, "Expected: %ld Got: %d\n", i, buffer[i]);
+      TEST_REPORT_ERROR(obj, "Expected: %ld Got: %d", i, buffer[i]);
       result = 0;
     }
   }
@@ -103,7 +105,7 @@ uint8_t Cbuff_TestCircular(TestFw_t *obj)
     TEST_REPORT_ERROR(obj, "Unexpected number of elements.");
   }
   {
-    TEST_REPORT_INFO(obj, "Read half of the buffer.\n");
+    TEST_REPORT_INFO(obj, "Read half of the buffer.");
     // Read and verify half
     uint8_t buffer[BUFFERSIZE / 2] = {0};
     uint32_t size = CharCircBuff_Pop(cbuff, buffer, BUFFERSIZE / 2);
@@ -129,7 +131,7 @@ uint8_t Cbuff_TestCircular(TestFw_t *obj)
       }
     }
   }
-  TEST_REPORT_INFO(obj, "Re-fill the buffer.\n");
+  TEST_REPORT_INFO(obj, "Re-fill the buffer.");
   // re-fill
   for (uint8_t i = 0; i < BUFFERSIZE / 2; i++)
   {
@@ -165,7 +167,7 @@ uint8_t Cbuff_TestCircular(TestFw_t *obj)
         result = 0;
       }
     }
-    TEST_REPORT_INFO(obj, "Verify second half.\n");
+    TEST_REPORT_INFO(obj, "Verify second half.");
     for (uint8_t i = 0; i < BUFFERSIZE / 2 - 1; i++)
     {
       if (buffer[i + (BUFFERSIZE / 2)] != i)
@@ -199,7 +201,7 @@ uint8_t Cbuff_TestPushPopCirc(TestFw_t *obj)
     if (buffer != data)
     {
       result = 0;
-      TEST_REPORT_ERROR(obj, "Expected: %d Got: %d\n", data, buffer);
+      TEST_REPORT_ERROR(obj, "Expected: %d Got: %d", data, buffer);
     }
     nrElements = CharCircBuff_NrElemets(cbuff);
     if (nrElements != 0)
@@ -371,6 +373,43 @@ uint8_t Cbuff_TestPushPopStringBoundary(TestFw_t *obj)
     }
   }
 
+  CharCircBuff_Delete(cbuff);
+  return result;
+}
+
+uint8_t Cbuff_TestReadMore(TestFw_t *obj)
+{
+  uint32_t result = 1;
+  CharCircBuffer_t *cbuff = CharCircBuff_Create(BUFFERSIZE);
+  // fill all elements.
+  uint8_t data[BUFFERSIZE];
+  for (uint32_t i = 0; i < BUFFERSIZE/2; i++)
+  {
+    data[i] = i;
+  }
+  uint32_t size = CharCircBuff_Push(cbuff, data, BUFFERSIZE);
+  if (size != BUFFERSIZE)
+  {
+    result = 0;
+    TEST_REPORT_ERROR(obj, "Expected to push %d got %ld.", BUFFERSIZE, size);
+  }
+
+  uint8_t buffer[BUFFERSIZE] = {0};
+  size = CharCircBuff_Pop(cbuff, buffer, BUFFERSIZE/2);
+
+  if (size != BUFFERSIZE/2)
+  {
+    result = 0;
+    TEST_REPORT_ERROR(obj, "Expected to pop %d got %ld.", BUFFERSIZE/2, size);
+  }
+  for (uint32_t i = 0; i < BUFFERSIZE/2; i++)
+  {
+    if (buffer[i] != data[i])
+    {
+      TEST_REPORT_ERROR(obj, "Expected: %d Got: %d", data[i], buffer[i]);
+      result = 0;
+    }
+  }
   CharCircBuff_Delete(cbuff);
   return result;
 }
