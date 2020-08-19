@@ -176,24 +176,14 @@ uint8_t QuadFC_SerialWrite(QuadFC_Serial_t *serial_data, uint8_t busIndex, TickT
   
   return 1;
 }
+
 uint32_t QuadFC_SerialRead(QuadFC_Serial_t *serial_data, uint8_t busIndex, TickType_t blockTimeMs)
 {
   if(busIndex > (num_uart) || !uart[busIndex].initialized)
   {
     return 0;
   }
-
-  TickType_t blockTimeTicks;
-  if(blockTimeMs == portMAX_DELAY)
-  {
-    blockTimeTicks = portMAX_DELAY;
-  }
-  else
-  {
-    blockTimeTicks= (blockTimeMs / portTICK_PERIOD_MS);
-  }
-
-  uint32_t bytes_read = xStreamBufferReceive(uart[busIndex].RxBuff, serial_data->buffer, serial_data->bufferLength, blockTimeTicks);
+  uint32_t bytes_read = xStreamBufferReceive(uart[busIndex].RxBuff, serial_data->buffer, serial_data->bufferLength, pdMS_TO_TICKS(blockTimeMs));
 
   if(bytes_read)
   {

@@ -21,11 +21,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#include <sysclk.h>
-#include <board.h>
-#include <gpio.h>
-#include <pio.h>
 
+#include "HAL/QuadFC/QuadFC_Board.h"
+#include "HAL/QuadFC/QuadFC_Gpio.h"
 /* Kernel includes. */
 #include "FreeRTOS.h"
 #include "task.h"
@@ -37,6 +35,8 @@
 #include "Test/Log/log_tester.h"
 #include "Test/Log/logEventTester.h"
 #include "Test/AppLog/AppLogTest.h"
+#include "Test/CharCircularBuffer/cbuff_tester.h"
+
 /**
  * @file Top used for regression testing. This top uses freeRTOS and
  * all of its features.
@@ -62,16 +62,11 @@ void vApplicationMallocFailedHook( void );
 void vApplicationStackOverflowHook( TaskHandle_t pxTask,
         signed char *pcTaskName );
 
-/*
- * Set up the hardware to run QuadFC.
- */
-static void prvSetupHardware( void );
-
 int main( void )
 {
 
     /* Prepare the hardware to run QuadFC. */
-    prvSetupHardware();
+    Board_SetupHardware();
     TestFW_CreateMainTestTask(mainTester);
     /* Start the RTOS scheduler. */
     vTaskStartScheduler();
@@ -90,34 +85,18 @@ void mainTester(void *pvParameters)
     Log_GetTCs(testFW);
     LogEv_GetTCs(testFW);
     AppLog_GetTCs(testFW);
+    Cbuff_GetTCs(testFW);
     /***************************************************************/
 
     uint8_t result = TestFW_ExecuteTests(testFW);
 
-    uint32_t pin = (result ? PIN_31_GPIO : PIN_41_GPIO);
-
-
+    uint32_t pin = (result ? ledHeartBeat : ledFatal);
     while ( 1 )
     {
+        Gpio_TogglePin( pin );
         vTaskDelay(1000 / portTICK_PERIOD_MS );
-        gpio_toggle_pin( pin );
     }
-
 }
-
-static void prvSetupHardware( void )
-{
-    /* ASF function to setup clocking. */
-    sysclk_init();
-
-    /* Ensure all priority bits are assigned as preemption priority bits. */
-    NVIC_SetPriorityGrouping( 0 );
-
-    /* Atmel library function to setup for the evaluation kit being used. */
-    board_init();
-
-}
-
 
 void vApplicationMallocFailedHook( void )
 {
@@ -138,10 +117,6 @@ void vApplicationStackOverflowHook( TaskHandle_t pxTask,
     {
     }
 }
-
-
-
-
 
 /* The fault handler implementation calls a function called
 prvGetRegistersFromStack(). */

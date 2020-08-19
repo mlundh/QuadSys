@@ -103,10 +103,6 @@ uint32_t CharCircBuff_Push(CharCircBuffer_t *obj, uint8_t *buffer, int32_t size)
     obj->head += cpySize;
     obj->head %= obj->capacity;
     obj->count += cpySize;
-    if (obj->count < 0 || obj->count > obj->capacity)
-    {
-      obj->count = 0;
-    }
   }
   return returnValue;
 }
@@ -130,10 +126,6 @@ uint32_t CharCircBuff_Pop(CharCircBuffer_t* obj, uint8_t *buffer, int32_t size)
     obj->tail %= obj->capacity;
     obj->count -= cpySize;
     size  -= cpySize;
-    if (obj->count < 0 || obj->count > obj->capacity)
-    {
-      obj->count = 0;
-    }
   }
   if (obj->head > obj->tail && size > 0) // we can copy everything in one go.
   {
@@ -144,11 +136,8 @@ uint32_t CharCircBuff_Pop(CharCircBuffer_t* obj, uint8_t *buffer, int32_t size)
     obj->tail += cpySize;
     obj->tail %= obj->capacity;
     obj->count -= cpySize;
-    if (obj->count < 0 || obj->count > obj->capacity)
-    {
-      obj->count = 0;
-    }
   }
   return returnValue;
 }
+
 
