@@ -116,7 +116,7 @@ void SlipParser_Delete(SLIP_Parser_t* obj);
  * @param SLIP_packet     Slip packet used internally.
  * @return                1 when done, 0 if not done.
  */
-SLIP_Status_t SlipParser_Parse(SLIP_Parser_t* obj, uint8_t *inputBuffer, int InputBufferLength,
+SLIP_Status_t SlipParser_Parse(SLIP_Parser_t* obj, uint8_t *inputBuffer, uint32_t InputBufferLength,
                           SLIP_t *SLIP_packet);
 
 #endif /* SLIP_PACKET_H_ */

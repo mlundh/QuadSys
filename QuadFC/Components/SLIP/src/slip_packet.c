@@ -164,70 +164,103 @@ void SlipParser_Delete(SLIP_Parser_t *obj)
     vPortFree(obj);
 }
 
-SLIP_Status_t SlipParser_Parse(SLIP_Parser_t* obj, uint8_t *inputBuffer, int InputBufferLength,
+SLIP_Status_t SlipParser_Parse(SLIP_Parser_t* obj, uint8_t *inputBuffer, uint32_t InputBufferLength,
                           SLIP_t *SLIP_packet)
 {
-    if(!inputBuffer || !SLIP_packet)
-    {
-        return 0;
-    }
-    if ((InputBufferLength > (SLIP_packet->allocatedSize - obj->index)))
+    uint32_t packetComplete = 0;
+    if(!SLIP_packet || !obj)
     {
         return SLIP_StatusNok;
     }
-    if( (InputBufferLength < 1))
-    {
-        return SLIP_StatusCont;
-    }
+    uint32_t nrBuffered = CharCircBuff_NrElemets(obj->cBuffer);
     SLIP_Status_t result = SLIP_StatusCont;
-    for (int i = 0; i < InputBufferLength; i++)
+    while(InputBufferLength || nrBuffered)
     {
-        if(obj->controlEscapeFound) 
+        uint8_t dataFromFifo = 0;
+        uint8_t* buffer = NULL;
+        uint32_t bufferLength = 0;
+
+        if(nrBuffered) // First handle the buffered chars. 
         {
-            if ( inputBuffer[i] == control_escape_octet_replacement )
+            CharCircBuff_Pop(obj->cBuffer,&dataFromFifo,1);
+            buffer = &dataFromFifo;
+            bufferLength = 1;
+            nrBuffered--;
+        }
+        else if (InputBufferLength) // Then the new chars.
+        {
+            buffer = inputBuffer;
+            bufferLength = InputBufferLength;
+            InputBufferLength = 0; // We will handle all of the input buffer. If there is an excess it will be pushed to the cbuff.
+        }
+        else // Continue.
+        {
+            return SLIP_StatusCont;
+        }
+
+        if ((bufferLength > (SLIP_packet->allocatedSize - obj->index)))
+        {
+            obj->controlEscapeFound = 0;
+            return SLIP_StatusNok;
+        }
+
+        for (int i = 0; i < bufferLength; i++)
+        {
+            if(obj->controlEscapeFound) 
             {
-                SLIP_packet->payload[obj->index++] = control_escape_octet;
+                if ( buffer[i] == control_escape_octet_replacement )
+                {
+                    SLIP_packet->payload[obj->index++] = control_escape_octet;
+                }
+                else if ( buffer[i] == frame_boundary_octet_replacement )
+                {
+                    SLIP_packet->payload[obj->index++] = frame_boundary_octet;
+                }
+                else
+                {
+                    obj->controlEscapeFound = 0;
+                    return SLIP_StatusNok;
+                }
             }
-            else if ( inputBuffer[i] == frame_boundary_octet_replacement )
+            else if (buffer[i] == frame_boundary_octet)
             {
-                SLIP_packet->payload[obj->index++] = frame_boundary_octet;
+                if (obj->startFound && obj->index > 4) // Last boundary of frame. A frame should have more than 4 bytes. This ensures we are not miss-aligned. 
+                {
+                    SLIP_packet->packetSize = obj->index;
+                    obj->index = 0;
+                    result = SLIP_StatusOK;
+                    obj->startFound = 0;
+                    obj->controlEscapeFound = 0;
+                    if(!SLIP_CheckCRC(SLIP_packet->payload, &SLIP_packet->packetSize))
+                    {
+                        return SLIP_StatusNok;
+                    }
+                    packetComplete = 1;
+                    
+                    //Finished packet! return.
+                }
+                else // First boundary of frame.
+                {
+                    obj->index = 0;
+                    obj->startFound = 1;
+                }
+            }// Frame boundary
+            else if (buffer[i] == control_escape_octet ) // Escape char
+            {
+                obj->controlEscapeFound = 1;
             }
             else
             {
-                return SLIP_StatusNok;
+                SLIP_packet->payload[obj->index++] = buffer[i];
             }
-        }
-        else if (inputBuffer[i] == frame_boundary_octet)
-        {
-            if (obj->startFound && obj->index > 4) // Last boundary of frame. A frame should have more than 4 bytes. This ensures we are not miss-aligned. 
+            if(packetComplete) // if the packet is complete, then we must store the rest of the data in the circular buffer.
             {
-                SLIP_packet->packetSize = obj->index;
-                obj->index = 0;
-                result = SLIP_StatusOK;
-                obj->startFound = 0;
-                if(!SLIP_CheckCRC(SLIP_packet->payload, &SLIP_packet->packetSize))
-                {
-                    return SLIP_StatusNok;
-                }
+                CharCircBuff_Push(obj->cBuffer, &buffer[i], (bufferLength - i));
                 break;
-                //Finished packet! return.
             }
-            else // First boundary of frame.
-            {
-                obj->index = 0;
-                obj->startFound = 1;
-            }
-        }// Frame boundary
-        else if (inputBuffer[i] == control_escape_octet ) // Escape char
-        {
-            obj->controlEscapeFound = 1;
-        }
-        else
-        {
-            SLIP_packet->payload[obj->index++] = inputBuffer[i];
-        }
-        
-    }//for()
+        }//for()
+    }
+    
     return result;
 }
 

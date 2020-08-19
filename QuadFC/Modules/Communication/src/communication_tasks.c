@@ -409,23 +409,21 @@ void Com_RxTask( void *pvParameters )
         QuadFC_Serial_t serialData;
         obj->receive_buffer[0] = 0;
         serialData.buffer = obj->receive_buffer;
-        serialData.bufferLength = 1;//COM_RECEIVE_BUFFER_LENGTH;
+        serialData.bufferLength = COM_RECEIVE_BUFFER_LENGTH;
 
         uint32_t nr_bytes_received = QuadFC_SerialRead(&serialData, COM_SERIAL, 1);
-        if(!nr_bytes_received)
+        if(nr_bytes_received)
         {
-            continue;
+            LOG_DBG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "Received %ld", nr_bytes_received);
         }
 
-        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "Received 0x%02x", *serialData.buffer);
-
         SLIP_Status_t result;
-        result = SlipParser_Parse(obj->parser, serialData.buffer, serialData.bufferLength, obj->SLIP);
-        /// TODO!!! take care of the un-used part of the receive buffer! 
+        result = SlipParser_Parse(obj->parser, serialData.buffer, nr_bytes_received, obj->SLIP);
         switch ( result )
         {
         case SLIP_StatusCont:
             // Package is not finished, continue.
+            vTaskDelay(100);
             break;
         case SLIP_StatusOK:
         {
