@@ -37,7 +37,7 @@ namespace QuadGS {
 SerialPort::SerialPort(  boost::asio::io_service &io_service ) :
                 		  AppLog("Serial_Port")
 , mName( "unnamed" )
-, mBaudRate( 57600 )
+, mBaudRate( 115200 )
 , mFlowControl( b_a_sp::flow_control::none )
 , mParity( b_a_sp::parity::none )
 , mStopBits( b_a_sp::stop_bits::one )
@@ -188,7 +188,8 @@ QGS_ModuleMsgBase::ptr SerialPort::write(QGS_ModuleMsgBase::ptr msg)
 	}
 
 	SlipPacket tmpSlip = SlipPacket(os.get_internal_vec(), true);
-
+	std::size_t packetSize = tmpSlip.GetPacket().size();
+	QuadLog(severity_level::message_trace, "Writing" + packetSize);
 	mTimeoutWrite.expires_from_now( boost::posix_time::milliseconds( 1000 ) );
 	mTimeoutWrite.async_wait(
 			boost::bind( & SerialPort::timerWriteCallback,
@@ -231,7 +232,7 @@ void SerialPort::writeCallback( const boost::system::error_code& error,
 	{
 		if( error )
 		{
-			QuadLog(severity_level::error, "Write_callback called with an error: " + error.message() );
+			//QuadLog(severity_level::error, "Write_callback called with an error: " + error.message() );
 			doClose( error );
 		}
 		mTimeoutWrite.cancel();
@@ -290,7 +291,6 @@ void SerialPort::readCallback( const boost::system::error_code& error,
 		{
 			if(mMessageHandler)
 			{
-
 				mMessageHandler(std::move(msg));
 			}
 		}

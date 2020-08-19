@@ -41,7 +41,7 @@ class ParamTest : public ::testing::Test {
 protected:
 	ParamTest():mParameters(msgAddr_t::GS_Param_e, msgAddr_t::FC_Dbg_e), mFake(msgAddr_t::GS_Dbg_e), router(msgAddr_t::GS_Router_e) {
 
-		QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error, false);
+		QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error);
 
 		std::string payload_str = "/root/tmp<5>[8]/test[3]";
 		mParameters.SetAndRegister(payload_str);
@@ -63,7 +63,7 @@ protected:
 
 TEST(Parameters, TestRegisterAndDump)
 {
-	QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error, false);
+	QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error);
 	Parameters mParameters(msgAddr_t::GS_Dbg_e, msgAddr_t::FC_Dbg_e);
 	std::string payload_str = "/root/tmp<5>[8]/test[3]";
 
@@ -79,7 +79,7 @@ TEST(Parameters, TestRegisterAndDump)
 
 TEST(Parameters, TestRegisterSecondMsg)
 {
-	QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error, false);
+	QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error);
 
 	// Create and register the first message.
 	std::string payload_str = "/root/tmp<5>[8]/test[3]";
@@ -103,7 +103,7 @@ TEST(Parameters, TestRegisterSecondMsg)
 
 TEST(Parameters, TestSetAndRegister)
 {
-	QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error, false);
+	QuadGS::AppLog::Init("app_log", "msg_log", std::clog, severity_level::error);
 	std::string payload_str = "/root/tmp<5>[8]/test[3]";
 	Parameters mParameters(msgAddr_t::GS_Dbg_e, msgAddr_t::FC_Dbg_e);
 

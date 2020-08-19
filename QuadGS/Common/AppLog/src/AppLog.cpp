@@ -81,7 +81,7 @@ std::ostream& operator<< (std::ostream& strm, QuadGS::severity_level level)
 }
 
 
-void AppLog::Init( std::string FilenameAppLog, std::string FilenameMsgLog, std::ostream& outstream, severity_level svl , bool msg)
+void AppLog::Init( std::string FilenameAppLog, std::string FilenameMsgLog, std::ostream& outstream, severity_level svl)
 {
 	if(boost::filesystem::exists(FilenameAppLog)) // foce libboost_filesystem.so to be an explicit dependency so that RUNPATH works as expeced.
 	{
@@ -91,7 +91,7 @@ void AppLog::Init( std::string FilenameAppLog, std::string FilenameMsgLog, std::
 	// Create the formatter for all file sinks.
 	logging::formatter fmt = expr::stream
 			<< "[" << expr::attr< unsigned int >("RecordID") // First an attribute "RecordID" is written to the log
-			<< "] [" << expr::format_date_time< boost::posix_time::ptime >("TimeStamp", "%H:%M:%S.%f")
+			<< "] [" << expr::format_date_time< boost::posix_time::ptime >("TimeStamp", "%H:%M:%S.%f ")
 			<< expr::if_(expr::has_attr("Severity"))
 	[
 	 expr::stream << "] ["
@@ -132,19 +132,6 @@ void AppLog::Init( std::string FilenameAppLog, std::string FilenameMsgLog, std::
 	pSink->set_filter(expr::attr< severity_level >("Severity") <= svl );
 	pSink->locked_backend()->auto_flush(true);
 	logging::core::get()->add_sink(pSink);
-
-	if(msg)
-	{
-		// Create the sink for message traces.
-		pSink = boost::make_shared< text_sink >();
-		pSink->locked_backend()->add_stream(
-				boost::make_shared< std::ofstream >(FilenameMsgLog + ".log"));
-		pSink->set_formatter(fmt);
-		// The message trase sink should only log messages of type message_trace.
-		pSink->set_filter(expr::attr< severity_level >("Severity") == message_trace );
-		pSink->locked_backend()->auto_flush(true);
-		logging::core::get()->add_sink(pSink);
-	}
 
 	pSink = boost::make_shared< text_sink >();
 	boost::shared_ptr< std::ostream > stream(&outstream, boost::null_deleter());

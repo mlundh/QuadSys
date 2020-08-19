@@ -119,7 +119,7 @@ public:
 		}
 		T result = std::move(mQueue.front());
 		mQueue.pop();
-		return std::move(result);
+		return result;
 	}
 	bool empty()
 	{

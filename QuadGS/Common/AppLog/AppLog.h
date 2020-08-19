@@ -74,7 +74,7 @@ public:
     AppLog();
     AppLog(const std::string tag);
     virtual ~AppLog();
-    static void Init( std::string FilenameAppLog, std::string FilenameMsgLog, std::ostream& outstream, severity_level svl, bool msg);
+    static void Init( std::string FilenameAppLog, std::string FilenameMsgLog, std::ostream& outstream, severity_level svl);
     void QuadLog(QuadGS::severity_level svl, std::string msg);
     static QuadGS::severity_level logLevelFromStr(std::string level);
     static std::string setLogLevelFromStr(std::string level);

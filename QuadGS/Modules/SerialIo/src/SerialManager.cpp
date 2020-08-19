@@ -246,6 +246,7 @@ void Serial_Manager::process(Msg_Transmission* transMsg)
 	else
 	{
 		mTxSuccess = false;
+		mRetries++;
 		mTransmittDone.notify();
 	}
 }
@@ -360,8 +361,8 @@ void Serial_Manager::doWrite()
 
 				std::stringstream ss;
 				ss << "Transmission failed, resending msg nr: " << (int)msg->getMsgNr();
-				mLogger.QuadLog(severity_level::warning, ss.str());	
-
+				mLogger.QuadLog(severity_level::warning, ss.str());
+				mTransmittDone.wait();
 			}
 			if(!mTxSuccess)
 			{
@@ -385,7 +386,6 @@ void Serial_Manager::doWrite()
 
 void Serial_Manager::writeCallback()
 {
-	mLogger.QuadLog(severity_level::message_trace, "Write callback.");
 	mPortReady.notify();
 }
 

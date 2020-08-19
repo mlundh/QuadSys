@@ -37,7 +37,7 @@ class ModuleTest : public ::testing::Test {
 protected:
 	ModuleTest(): module_1(msgAddr_t::GS_SetpointGen_e),module_2(msgAddr_t::GS_Log_e),router(msgAddr_t::GS_Router_e)
 {
-		QuadGS::AppLog::Init("app_log", "msg_log", std::cout, QuadGS::severity_level::warning, false);
+		QuadGS::AppLog::Init("app_log", "msg_log", std::cout, QuadGS::severity_level::warning);
 
 		router.bind(&module_1);
 		router.bind(&module_2);
@@ -88,7 +88,7 @@ class ThreadedModuleTest : public ::testing::Test {
 protected:
 	ThreadedModuleTest(): module_1(msgAddr_t::GS_SetpointGen_e),module_2(msgAddr_t::GS_Log_e),module_3(msgAddr_t::GS_Param_e),router(msgAddr_t::GS_Router_e)
 {
-		QuadGS::AppLog::Init("app_log", "msg_log", std::cout, QuadGS::severity_level::warning, false);
+		QuadGS::AppLog::Init("app_log", "msg_log", std::cout, QuadGS::severity_level::warning);
 
 		router.bind(&module_1);
 		router.bind(&module_2);
@@ -175,7 +175,7 @@ protected:
 	tmodule_3(msgAddr_t::GS_Param_e),rmodule_1(msgAddr_t::GS_SetpointGen_e),rmodule_2(msgAddr_t::GS_GUI_e),
 	router(msgAddr_t::GS_Router_e)
 {
-		QuadGS::AppLog::Init("app_log", "msg_log", std::cout, QuadGS::severity_level::warning, false);
+		QuadGS::AppLog::Init("app_log", "msg_log", std::cout, QuadGS::severity_level::warning);
 
 		router.bind(&tmodule_1);
 		router.bind(&tmodule_2);

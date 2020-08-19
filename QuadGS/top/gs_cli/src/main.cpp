@@ -67,7 +67,6 @@ struct program_args
   {}
     string logLevel;
     severity_level lvl;
-    bool msgTrace;
 };
 }
 using namespace QuadGS;
@@ -87,7 +86,9 @@ int main(int ac, char* av[])
         return 1;
     }
     //Initialize the app log.
-    QuadGS::AppLog::Init("app_log", "msg_log", std::clog, args.lvl, args.msgTrace);
+    QuadGS::AppLog::Init("app_log", "msg_log", std::clog, args.lvl);
+
+  	std::cout << "\033]0;" << "QuadGS" << "\007";
 
 	//Instantiate modules.
 	Parameters mParameters(msgAddr_t::GS_Param_e, msgAddr_t::FC_SerialIOrx_e);
@@ -121,8 +122,7 @@ void handle_program_args(int ac, char* av[], QuadGS::program_args& args)
                     ("help,h", "produce help message")
                     ("version,v", "print version string")
                     ("LogLevel,l", po::value< std::string >(&args.logLevel)->default_value("error"),
-                            "Log level for outputing to screen.")
-					("msgTrace,t",po::value< bool >(&args.msgTrace)->default_value(false), "Trace all messages in the system to file.");
+                            "Log level for outputing to screen.");
     po::variables_map opts;
     po::store(po::parse_command_line(ac, av, generic), opts);
     po::notify(opts);
