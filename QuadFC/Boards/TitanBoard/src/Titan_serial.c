@@ -104,7 +104,7 @@ uint8_t QuadFC_SerialInit(int busIndex, QuadFC_SerialOptions_t* opt)
   {
     return 0;
   }
-  uart[busIndex].RxBuff = xStreamBufferCreate(RECEIVE_BUFFER_LENGTH, 1);
+  uart[busIndex].RxBuff = xStreamBufferCreate(opt->bufferLength, 1);
 
   TitanUART_GPIOInit(uart[busIndex].usart);
 
@@ -183,6 +183,7 @@ uint32_t QuadFC_SerialRead(QuadFC_Serial_t *serial_data, uint8_t busIndex, TickT
   {
     return 0;
   }
+  xStreamBufferSetTriggerLevel(uart[busIndex].RxBuff, serial_data->triggerLevel);
   uint32_t bytes_read = xStreamBufferReceive(uart[busIndex].RxBuff, serial_data->buffer, serial_data->bufferLength, pdMS_TO_TICKS(blockTimeMs));
 
   if(bytes_read)

@@ -26,9 +26,8 @@
 #include <gpio.h>
 #include <pio.h>
 #include <board.h>
-#define NR_PINS (6)
 
-uint8_t pins[] = {
+uint8_t leds[] = {
     PIN_31_GPIO,
     PIN_33_GPIO,
     PIN_35_GPIO,
@@ -36,25 +35,51 @@ uint8_t pins[] = {
     PIN_39_GPIO,
     PIN_41_GPIO
 };
+uint8_t pins[] = {
+};
+const static int nrPins = sizeof(pins)/sizeof(pins[0]);
+const static int nrLeds = sizeof(leds)/sizeof(leds[0]);
 
 void Gpio_SetPinLow(GpioName_t pin)
 {
-  if(pin < NR_PINS)
+  if(pin < nrPins)
   {
     gpio_set_pin_low( pins[pin] );
   }
 }
 void Gpio_SetPinHigh(GpioName_t pin)
 {
-  if(pin < NR_PINS)
+  if(pin < nrPins)
   {
     gpio_set_pin_high( pins[pin] );
   }
 }
 void Gpio_TogglePin(GpioName_t pin)
 {
-  if(pin < NR_PINS)
+  if(pin < nrPins)
   {
     gpio_toggle_pin( pins[pin] );
+  }
+}
+
+void Led_On(LedName_t led)
+{
+  if(led < nrLeds)
+  {
+    gpio_set_pin_high( leds[led] );
+  }
+}
+void Led_Off(LedName_t led)
+{
+  if(led < nrLeds)
+  {
+    gpio_set_pin_low( leds[led] );
+  }
+}
+void Led_Toggle(LedName_t led)
+{
+  if(led < nrLeds)
+  {
+    gpio_toggle_pin( leds[led] );
   }
 }

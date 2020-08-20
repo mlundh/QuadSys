@@ -30,13 +30,6 @@
 
 typedef enum GpioName
 {
-  ledHeartBeat,
-  ledSetPoint,
-  ledStatus,
-  ledmode,
-  ledError,
-  ledFatal,
-
   IO_1,
   IO_2,
   IO_3,
@@ -63,6 +56,15 @@ typedef enum GpioName
   ADC_3,
 }GpioName_t;
 
+typedef enum LedName
+{
+  ledHeartBeat,
+  ledSetPoint,
+  ledStatus,
+  ledmode,
+  ledError,
+  ledFatal,
+}LedName_t;
 
 #define TIME_SHIFT_FACTOR (14)
 #define ONE_MS_FP (16)

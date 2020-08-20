@@ -25,16 +25,7 @@
 #include "HAL/QuadFC/QuadFC_Gpio.h"
 #include "cubeInit.h"
 
-#define NR_PINS (26)
-
 uint16_t pins[] = {
-    HEARTBEAT_Pin,
-    LED_SETPOINT_Pin,
-    LED_STATUS_Pin,
-    LED_CTRL_MODE_Pin,
-    LED_ERROR_Pin,
-    LED_FATAL_Pin,
-
     IO_1_Pin,
     IO_2_Pin,
     IO_3_Pin,
@@ -61,15 +52,9 @@ uint16_t pins[] = {
     ADC_3_Pin,
 
 };
+const static int nrPins = sizeof(pins)/sizeof(pins[0]);
 
 GPIO_TypeDef* pinPorts[] = {
-    HEARTBEAT_GPIO_Port,
-    LED_SETPOINT_GPIO_Port,
-    LED_STATUS_GPIO_Port,
-    LED_CTRL_MODE_GPIO_Port,
-    LED_ERROR_GPIO_Port,
-    LED_FATAL_GPIO_Port,
-
     IO_1_GPIO_Port,
     IO_2_GPIO_Port,
     IO_3_GPIO_Port,
@@ -94,27 +79,67 @@ GPIO_TypeDef* pinPorts[] = {
     ADC_1_GPIO_Port,
     ADC_2_GPIO_Port,
     ADC_3_GPIO_Port,
-    
-
 };
+
+uint16_t leds[] = {
+    HEARTBEAT_Pin,
+    LED_SETPOINT_Pin,
+    LED_STATUS_Pin,
+    LED_CTRL_MODE_Pin,
+    LED_ERROR_Pin,
+    LED_FATAL_Pin,
+};
+const static int nrLeds = sizeof(leds)/sizeof(leds[0]);
+
+GPIO_TypeDef* ledPorts[] = {
+    HEARTBEAT_GPIO_Port,
+    LED_SETPOINT_GPIO_Port,
+    LED_STATUS_GPIO_Port,
+    LED_CTRL_MODE_GPIO_Port,
+    LED_ERROR_GPIO_Port,
+    LED_FATAL_GPIO_Port,  
+};
+
 void Gpio_SetPinLow(GpioName_t pin)
 {
-  if(pin < NR_PINS)
+  if(pin < nrPins)
   {
     HAL_GPIO_WritePin( pinPorts[pin], pins[pin], GPIO_PIN_RESET);
   }
 }
 void Gpio_SetPinHigh(GpioName_t pin)
 {
-  if(pin < NR_PINS)
+  if(pin < nrPins)
   {
     HAL_GPIO_WritePin( pinPorts[pin], pins[pin], GPIO_PIN_SET);
   }
 }
 void Gpio_TogglePin(GpioName_t pin)
 {
-  if(pin < NR_PINS)
+  if(pin < nrPins)
   {
     HAL_GPIO_TogglePin( pinPorts[pin], pins[pin] );
+  }
+}
+
+void Led_On(LedName_t led)
+{
+  if(led < nrLeds)
+  {
+    HAL_GPIO_WritePin( ledPorts[led], leds[led], GPIO_PIN_RESET);
+  }
+}
+void Led_Off(LedName_t led)
+{
+  if(led < nrLeds)
+  {
+    HAL_GPIO_WritePin( ledPorts[led], leds[led], GPIO_PIN_SET);
+  }
+}
+void Led_Toggle(LedName_t led)
+{
+  if(led < nrLeds)
+  {
+    HAL_GPIO_TogglePin( ledPorts[led], leds[led]);
   }
 }

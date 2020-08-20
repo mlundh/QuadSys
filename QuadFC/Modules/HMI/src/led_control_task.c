@@ -39,7 +39,7 @@
 
 typedef enum led_mode
 {
-  led_off,
+  led_Off,
   led_blink_fast,
   led_blink_slow,
   led_double_blink,
@@ -159,13 +159,13 @@ void Led_update( ledState_t* ledState, GpioName_t pin)
   ledState->counter++;
   switch ( ledState->mode )
   {
-  case led_off:
-    Gpio_SetPinLow( pin );
+  case led_Off:
+    Led_Off( pin );
     ledState->counter = 0;
     break;
 
   case led_const_on:
-    Gpio_SetPinHigh( pin );
+    Led_On( pin );
     ledState->counter = 0;
     break;
 
@@ -190,7 +190,7 @@ void Led_update( ledState_t* ledState, GpioName_t pin)
     {
       if ( ledState->counter >= 20 )
       {
-        Gpio_SetPinHigh( pin );
+        Led_On( pin );
         ledState->counter = 0;
         ledState->currentState = second;
       }
@@ -199,7 +199,7 @@ void Led_update( ledState_t* ledState, GpioName_t pin)
     {
       if ( ledState->counter >= 4 )
       {
-        Gpio_SetPinLow( pin );
+        Led_Off( pin );
         ledState->counter = 0;
         ledState->currentState = third;
       }
@@ -208,7 +208,7 @@ void Led_update( ledState_t* ledState, GpioName_t pin)
     {
       if ( ledState->counter >= 2 )
       {
-        Gpio_SetPinHigh( pin );
+        Led_On( pin );
         ledState->counter = 0;
         ledState->currentState = fourth;
       }
@@ -217,7 +217,7 @@ void Led_update( ledState_t* ledState, GpioName_t pin)
     {
       if ( ledState->counter >= fourth )
       {
-        Gpio_SetPinLow( pin );
+        Led_Off( pin );
         ledState->counter = 0;
         ledState->currentState = first;
       }
@@ -234,12 +234,12 @@ void Led_toggleLed(ledState_t* ledState, GpioName_t pin )
 
   if ( ledState->currentState != first )
   {
-    Gpio_SetPinHigh( pin );
+    Led_On( pin );
     ledState->currentState = first;
   }
   else
   {
-    Gpio_SetPinLow( pin );
+    Led_Off( pin );
     ledState->currentState = second;
   }
 }
@@ -255,8 +255,8 @@ uint8_t Led_HandleFlightMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* 
     param->ledState[ledStatus].mode = led_blink_fast;
     break;
   case fmode_disarmed:
-    param->ledState[ledError].mode    = led_off;
-    param->ledState[ledFatal].mode    = led_off;
+    param->ledState[ledError].mode    = led_Off;
+    param->ledState[ledFatal].mode    = led_Off;
     param->ledState[ledStatus].mode = led_blink_slow;
     break;
   case fmode_config:
@@ -291,7 +291,7 @@ uint8_t Led_HandleCtrltMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* d
   switch(flightState)
   {
   case Control_mode_not_available:
-    param->ledState[ledmode].mode = led_off;
+    param->ledState[ledmode].mode = led_Off;
     break;
   case Control_mode_rate:
     param->ledState[ledmode].mode = led_blink_fast;
@@ -314,10 +314,10 @@ uint8_t Led_HandlePeripheralError(eventHandler_t* obj, void* taskParam, moduleMs
 
 void Led_resetLeds(ledTaskParams * param)
 {
-  param->ledState[ledError].mode    = led_off;
-  param->ledState[ledFatal].mode    = led_off;
-  param->ledState[ledStatus].mode = led_off;
-  param->ledState[ledmode].mode = led_off;
-  param->ledState[ledHeartBeat].mode  = led_off;
-  param->ledState[ledSetPoint].mode  = led_off;
+  param->ledState[ledError].mode    = led_Off;
+  param->ledState[ledFatal].mode    = led_Off;
+  param->ledState[ledStatus].mode = led_Off;
+  param->ledState[ledmode].mode = led_Off;
+  param->ledState[ledHeartBeat].mode  = led_Off;
+  param->ledState[ledSetPoint].mode  = led_Off;
 }

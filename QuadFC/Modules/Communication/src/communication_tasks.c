@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-#define DEBUG
+//#define DEBUG // uncomment this line to enable debug prints.
 
 #include "string.h"
 

@@ -49,6 +49,7 @@ typedef struct{
 typedef struct{
   uint8_t*  buffer;               //!< Buffer containing the data to transfer.
   uint32_t  bufferLength;         //!< Number of bytes to transfer.
+  uint32_t  triggerLevel;
 }QuadFC_Serial_t;
 
 /**
@@ -105,8 +106,8 @@ typedef struct peripheral_serial_options
   QuadFC_SerialParity_t parityType;
   QuadFC_SerialStopBits_t stopBits;
   QuadFC_SerialFlowControl_t flowControl;
-  uint8_t *receiveBuffer;
-  uint32_t bufferLength;
+  uint8_t *receiveBuffer;                   // Only used if the port needs it. 
+  uint32_t bufferLength;                    //Used either to determine the length of receive buffer, or the trigger level. 
 }QuadFC_SerialOptions_t;
 
 typedef struct SpiMaster_SlaveDevice SpiMaster_SlaveDevice_t;

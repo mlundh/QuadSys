@@ -29,5 +29,9 @@ void Gpio_SetPinLow(GpioName_t pin);
 void Gpio_SetPinHigh(GpioName_t pin);
 void Gpio_TogglePin(GpioName_t pin);
 
+void Led_On(LedName_t led);
+void Led_Off(LedName_t led);
+void Led_Toggle(LedName_t led);
+
 
 #endif /* HAL_QUADFC_QUADFC_GPIO_H_ */

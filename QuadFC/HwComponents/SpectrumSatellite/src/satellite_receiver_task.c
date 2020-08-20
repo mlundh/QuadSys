@@ -46,7 +46,7 @@
 #include "Messages/inc/common_types.h"
 #include "Messages/inc/Msg_FlightMode.h"
 #include "Messages/inc/Msg_CtrlMode.h"
-
+#include "HAL/QuadFC/QuadFC_Gpio.h"
 
 /*Include utilities*/
 #include "Utilities/inc/my_math.h"
@@ -97,6 +97,9 @@ Satellite_t* Satellite_Init(eventHandler_t* eventHandler)
         state_data_t tmpSetpoint = {{0}};
         *taskParam->setpoint = tmpSetpoint;
     }
+
+    // Turn on the power to the module.
+    Gpio_SetPinLow(RC_1_PWR_CTRL);
 
     return taskParam;
 }
@@ -186,9 +189,10 @@ void Satellite_ReceiverTask(void *pvParameters)
 
         /*Read data from the satellite receiver, wait longer than the period of the frames.*/
 
-        QuadFC_Serial_t serialData;
+        QuadFC_Serial_t serialData = {0};
         serialData.buffer = satellite_receive_buffer;
         serialData.bufferLength = SATELLITE_MESSAGE_LENGTH;
+        serialData.triggerLevel = SATELLITE_MESSAGE_LENGTH;
         bytes_read = QuadFC_SerialRead(&serialData, SATELITE_USART, satellite_block_time);
 
         /*If 16 bytes are read then all is ok, otherwise skip. */

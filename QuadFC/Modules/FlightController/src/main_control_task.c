@@ -345,9 +345,8 @@ void main_control_task( void *pvParameters )
         if ( heartbeat_counter >= 500 )
         {
             //LOG_ENTRY(FC_SerialIOtx_e, param->evHandler, "%s", "Heartbeat!");
-            Gpio_TogglePin( ledHeartBeat );
+            Led_Toggle( ledHeartBeat );
             heartbeat_counter = 0;
-            LOG_ENTRY(FC_SerialIOtx_e, param->evHandler, "Main: Tick!");
 
         }
     }
