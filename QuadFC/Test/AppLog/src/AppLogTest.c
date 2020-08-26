@@ -46,6 +46,8 @@ void AppLog_GetTCs(TestFw_t* obj)
 
 }
 #define SHORT_MSG (200)
+#define LONG_MSG (500)
+
 uint8_t AppLogHandler_TestCreate(TestFw_t* obj)
 {
     AppLogHandler_t* logobj = AppLogHandler_Create(NULL);
@@ -112,8 +114,8 @@ uint8_t AppLogHandler_TestReport(TestFw_t* obj)
     }
     else
     {
-        char tmpstr[SHORT_MSG] = {0};
-        snprintf (tmpstr, SHORT_MSG,"expected: \"%s\" \ngot: \"%s\"!.\n", (char*)bufferOrig, (char*)buffer);
+        char tmpstr[LONG_MSG] = {0};
+        snprintf (tmpstr, LONG_MSG,"expected: \"%s\" \ngot: \"%s\"!.\n", (char*)bufferOrig, (char*)buffer);
         TestFW_Report(obj, tmpstr);
         result = 0;
     }
@@ -162,8 +164,8 @@ uint8_t AppLogHandler_TestReportMacro(TestFw_t* obj)
     }
     else
     {
-        char tmpstr[SHORT_MSG] = {0};
-        snprintf (tmpstr, SHORT_MSG,"expected: \"%s\" \ngot: \"%s\"!.\n", expected, (char*)buffer);
+        char tmpstr[LONG_MSG] = {0};
+        snprintf (tmpstr, LONG_MSG,"expected: \"%s\" \ngot: \"%s\"!.\n", expected, (char*)buffer);
         TestFW_Report(obj, tmpstr);
         result = 0;
     }

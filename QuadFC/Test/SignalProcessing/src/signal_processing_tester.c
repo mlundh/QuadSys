@@ -538,8 +538,8 @@ uint8_t SigProsses_TestImuToAngle(TestFw_t* obj)
 
   state_data_t state = {{0}};
   // Add data describing the IMU response to a read.
-  QuadFC_I2C_t* i2c_data = malloc(sizeof(QuadFC_I2C_t));
-  uint8_t* dataptr = malloc(14);
+  QuadFC_I2C_t* i2c_data = pvPortMalloc(sizeof(QuadFC_I2C_t));
+  uint8_t* dataptr = pvPortMalloc(14);
   i2c_data->internalAddr[0] = 0x3B;//MPU6050_RA_ACCEL_XOUT_H;
   i2c_data->internalAddrLength = 1;
   i2c_data->buffer = dataptr;

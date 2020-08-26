@@ -141,21 +141,21 @@ uint8_t MathTest_TestSqrtPerformance(TestFw_t* obj)
   }
     //Calculate reference value
     double result_ref;
-    Gpio_TogglePin( ledmode );
+    Led_Toggle( ledmode );
     for(int j = 0; j < 100000; j++)
     {
       result_ref = sqrt (testVector[j%testVectorLength]);
       (void)result_ref;
     }
-    Gpio_TogglePin( ledmode );
-    Gpio_TogglePin( ledStatus );
+    Led_Toggle( ledmode );
+    Led_Toggle( ledStatus );
     int32_t result_dut;
     for(int j = 0; j < 100000; j++)
     {
       result_dut =  my_square_root ( testVectorInt[j%testVectorLength], 16);
       (void)result_dut;
     }
-    Gpio_TogglePin( ledStatus );
+    Led_Toggle( ledStatus );
 
 
   return 1;

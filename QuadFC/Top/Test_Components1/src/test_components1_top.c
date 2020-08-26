@@ -93,7 +93,7 @@ void mainTester(void *pvParameters)
     uint32_t pin = (result ? ledHeartBeat : ledFatal);
     while ( 1 )
     {
-        Gpio_TogglePin( pin );
+        Led_Toggle( pin );
         vTaskDelay(1000 / portTICK_PERIOD_MS );
     }
 }

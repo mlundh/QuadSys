@@ -116,11 +116,11 @@ uint8_t DummyI2C_ReadWrite(QuadFC_I2C_t *i2c_data, uint8_t busIndex, uint8_t isR
     usedNr = 0;
     if(dataExpected[read_idx] != NULL)
     {
-      free(dataExpected[read_idx]);
+      //free(dataExpected[read_idx]);
     }
     if(dataResponse[read_idx] != NULL)
     {
-      free(dataResponse[read_idx]);
+      //free(dataResponse[read_idx]);
     }
     read_idx++;
   }

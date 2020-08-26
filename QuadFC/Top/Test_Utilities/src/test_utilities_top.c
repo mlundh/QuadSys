@@ -71,7 +71,7 @@ int main( void )
     heartbeat_counter++;
     if ( heartbeat_counter >= 1000000 )
     {
-      Gpio_TogglePin( pin );
+      Led_Toggle( pin );
       heartbeat_counter = 0;
     }
   }
