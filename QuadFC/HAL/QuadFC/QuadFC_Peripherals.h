@@ -28,6 +28,20 @@
 #include "FreeRTOS.h"
 
 /**
+ * @brief Enum describing the state of the pin configuration for a peripheral.
+ * 
+ */
+typedef enum{
+  pinConfigStandard,  //!< peripheral standard configuration.
+  pinConfigOutput,    //!< output configuration.
+} QuadFC_PinConfig_t;
+
+typedef enum{
+  stateReset,  //!< peripheral standard configuration.
+  stateSet,    //!< output configuration.
+} QuadFC_PinState_t;
+
+/**
  * @struct periperal_i2c
  * Internal address is non-standard for the i2c bus, but
  * most chip support/demand a message format with it, so
@@ -41,6 +55,11 @@ typedef struct{
   uint8_t   slaveAddress;         //!< 7 bit chip address of slave node.
 }QuadFC_I2C_t;
 
+typedef enum{
+  scl,    //!< Data pin.
+  sda,    //!< Clock pin.
+} QuadFC_i2cPins_t;
+
 /**
  * @struct QuadFC_Serial_t
  * Container for information needed by the read/write functionality of
@@ -51,6 +70,7 @@ typedef struct{
   uint32_t  bufferLength;         //!< Number of bytes to transfer.
   uint32_t  triggerLevel;
 }QuadFC_Serial_t;
+
 
 /**
  * @enum
@@ -110,6 +130,11 @@ typedef struct peripheral_serial_options
   uint32_t bufferLength;                    //Used either to determine the length of receive buffer, or the trigger level. 
 }QuadFC_SerialOptions_t;
 
+typedef enum{
+  rx,    //!< receive pin.
+  tx,    //!< transmitt pin.
+} QuadFC_SerialPins_t;
+
 typedef struct SpiMaster_SlaveDevice SpiMaster_SlaveDevice_t;
 
 typedef enum Spi_BitsPerTransfer
@@ -162,6 +187,26 @@ uint8_t QuadFC_i2cWrite(QuadFC_I2C_t *i2c_data, uint8_t busIndex, TickType_t blo
 uint8_t QuadFC_i2cRead(QuadFC_I2C_t *i2c_data, uint8_t busIndex, TickType_t blockTimeMs);
 
 /**
+ * @brief Reconfigure the pins used by busIndex to take sw control of the output state of them. Used
+ * for special cases, for example when we need to clock the bus to un-stuck a slave.
+ * 
+ * @param busIndex i2c bus index on the board.
+ * @param config   configuration the pins should be set to.
+ * @return int     0 if fail, 1 otherwise.
+ */
+int QuadFC_i2cReconfigPin(int busIndex, QuadFC_PinConfig_t config);
+
+/**
+ * @brief Set the pin to the desired state.
+ * 
+ * @param busIndex  i2c bus index on the board.
+ * @param state     1 if high, 0 if low.
+ * @param pin       Pin to set.
+ * @return int 
+ */
+int QuadFC_i2cSetPin(int busIndex, QuadFC_PinState_t state, QuadFC_i2cPins_t pin);
+
+/**
  * Serial interface used by the test framework. Implementation should not rely on FreeRTOS.
  * @return
  */
@@ -182,6 +227,27 @@ uint8_t Test_SerialWrite(QuadFC_Serial_t *serial_data);
  * @return            1 if success, 0 otherwise.
  */
 uint8_t QuadFC_SerialInit(int busIndex, QuadFC_SerialOptions_t* opt);
+
+/**
+ * @brief Reconfigure the pins used by the serial bus identified by busIndex.
+ * 
+ * @param busIndex    Index of the serial port the device is connected to.
+ * @param config      Config of the pin.
+ * @return int 
+ */
+int QuadFC_SerialReconfigPin(int busIndex, QuadFC_PinConfig_t config);
+
+/**
+ * @brief Set the pin state of the desired pin. 
+ * 
+ * the serial port pins must first have been configured to output.
+ * 
+ * @param busIndex  Index of the serial port the device is connected to.
+ * @param state     State to set on the pin.  
+ * @param pin       rx or tx.
+ * @return int 
+ */
+int QuadFC_SerialSetPin(int busIndex, QuadFC_PinState_t state, QuadFC_SerialPins_t pin);
 
 /**
  * Write data to the serial interface.

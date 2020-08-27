@@ -26,6 +26,13 @@
 #include "cubeInit.h"
 
 uint16_t pins[] = {
+    RC_1_PWR_CTRL_Pin,
+    RC_2_PWR_CTRL_Pin,
+    ADC_BAT_Pin,
+    ADC_1_Pin,
+    ADC_2_Pin,
+    ADC_3_Pin,
+
     IO_1_Pin,
     IO_2_Pin,
     IO_3_Pin,
@@ -42,19 +49,17 @@ uint16_t pins[] = {
     IO_14_Pin,
     IO_15_Pin,
     //IO_16_Pin,
-
-    RC_1_PWR_CTRL_Pin,
-    RC_2_PWR_CTRL_Pin,
-
-    ADC_BAT_Pin,
-    ADC_1_Pin,
-    ADC_2_Pin,
-    ADC_3_Pin,
-
 };
 const static int nrPins = sizeof(pins)/sizeof(pins[0]);
 
 GPIO_TypeDef* pinPorts[] = {
+    RC_1_PWR_CTRL_GPIO_Port,
+    RC_2_PWR_CTRL_GPIO_Port,
+    ADC_BAT_GPIO_Port,
+    ADC_1_GPIO_Port,
+    ADC_2_GPIO_Port,
+    ADC_3_GPIO_Port,
+
     IO_1_GPIO_Port,
     IO_2_GPIO_Port,
     IO_3_GPIO_Port,
@@ -72,13 +77,7 @@ GPIO_TypeDef* pinPorts[] = {
     IO_15_GPIO_Port,
     //IO_16_GPIO_Port,
 
-    RC_1_PWR_CTRL_GPIO_Port,
-    RC_2_PWR_CTRL_GPIO_Port,
 
-    ADC_BAT_GPIO_Port,
-    ADC_1_GPIO_Port,
-    ADC_2_GPIO_Port,
-    ADC_3_GPIO_Port,
 };
 
 uint16_t leds[] = {

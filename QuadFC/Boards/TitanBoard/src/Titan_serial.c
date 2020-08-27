@@ -54,7 +54,7 @@ const static uint8_t num_uart = 7;
 static  titan_uart_control_t   uart[] = {
   {UART10, 0, NULL, NULL, 0, NULL, 0}, // RC 1
   {USART1, 0, NULL, NULL, 0, NULL, 0}, // Com serial USB
-  {USART2, 0, NULL, NULL, 0, NULL, 0},
+  {USART2, 0, NULL, NULL, 0, NULL, 0}, // RC 2
   {UART9,  0, NULL, NULL, 0, NULL, 0}, // Applog serial backend
   {USART3, 0, NULL, NULL, 0, NULL, 0},
   {USART6, 0, NULL, NULL, 0, NULL, 0},
@@ -96,6 +96,7 @@ static uint32_t WordLength[] =
 void TitanSerial_IRQHandler(uint32_t busIndex);
 
 void TitanUART_GPIOInit(USART_TypeDef* usart);
+uint8_t TitanUART_GPIOinitOutput(USART_TypeDef* usart);
 
 
 uint8_t QuadFC_SerialInit(int busIndex, QuadFC_SerialOptions_t* opt)
@@ -194,6 +195,72 @@ uint32_t QuadFC_SerialRead(QuadFC_Serial_t *serial_data, uint8_t busIndex, TickT
 
   return bytes_read;
 }
+
+int QuadFC_SerialReconfigPin(int busIndex, QuadFC_PinConfig_t config)
+{
+  if(busIndex > (num_uart) || !uart[busIndex].initialized)
+  {
+    return 0;
+  }
+  int result = 1;
+  if(config == pinConfigStandard)
+  {
+    result = 1;
+    TitanUART_GPIOInit(uart[busIndex].usart);
+  }
+  else if(config == pinConfigOutput)
+  {
+    result &= TitanUART_GPIOinitOutput(uart[busIndex].usart);
+  }
+  else
+  {
+    result = 0;
+  }
+  return result;
+} 
+
+int QuadFC_SerialSetPin(int busIndex, QuadFC_PinState_t state, QuadFC_SerialPins_t pin)
+{
+
+  GPIO_PinState stmPinState;
+  if(state == stateReset)
+  {
+    stmPinState = GPIO_PIN_RESET;
+  }
+  else if(state == stateSet)
+  {
+    stmPinState = GPIO_PIN_SET;
+  }
+  int result = 1;
+  if(uart[busIndex].usart==UART10)
+  {
+    if(pin == rx)
+    {
+      HAL_GPIO_WritePin( UART_RC_1_RX_GPIO_Port, UART_RC_1_RX_Pin, stmPinState);
+    }
+    else
+    {
+      HAL_GPIO_WritePin( UART_RC_1_TX_GPIO_Port, UART_RC_1_TX_Pin, stmPinState);
+    }
+  }
+  else if(uart[busIndex].usart==USART2)
+  {
+    if(pin == rx)
+    {
+      HAL_GPIO_WritePin( UART_RC_2_RX_GPIO_Port, UART_RC_2_RX_Pin, stmPinState);
+    }
+    else
+    {
+      HAL_GPIO_WritePin( UART_RC_2_TX_GPIO_Port, UART_RC_2_TX_Pin, stmPinState);
+    }
+  }
+  else
+  {
+    result = 0;
+  }
+  return result;
+}
+
 
 void USART1_IRQHandler(void)
 {
@@ -509,4 +576,50 @@ void TitanUART_GPIOInit(USART_TypeDef* usart)
     NVIC_SetPriority(USART6_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
     NVIC_EnableIRQ(USART6_IRQn);
   }
+}
+
+uint8_t TitanUART_GPIOinitOutput(USART_TypeDef* usart)
+{
+  
+  if(usart==UART10)
+  {
+    /* UART interrupt disable */
+    NVIC_DisableIRQ(UART10_IRQn);
+    LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
+    /* Peripheral clock enable */
+    LL_APB2_GRP1_DisableClock(LL_APB2_GRP1_PERIPH_UART10);
+    
+    /**UART10 GPIO Configuration  
+    PE2   ------> UART10_RX
+    PE3   ------> UART10_TX 
+    */
+    GPIO_InitStruct.Pin = LL_GPIO_PIN_2|LL_GPIO_PIN_3;
+    GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+    GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+    LL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+    return 1;
+  }
+  else if(usart==USART2)
+  {
+    /* UART interrupt disable */
+    NVIC_DisableIRQ(USART2_IRQn);
+    LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
+    /* Peripheral clock enable */
+    LL_APB1_GRP1_DisableClock(LL_APB1_GRP1_PERIPH_USART2);
+    
+    /**USART2 GPIO Configuration  
+    PD5   ------> USART2_TX
+    PD6   ------> USART2_RX 
+    */
+    GPIO_InitStruct.Pin = LL_GPIO_PIN_5|LL_GPIO_PIN_6;
+    GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+    GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+    LL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+    return 1;
+  }
+  return 0;
 }

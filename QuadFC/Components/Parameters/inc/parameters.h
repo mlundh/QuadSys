@@ -64,7 +64,7 @@
 /**
  * Definitions used by the module.
  */
-#define MAX_PARAM_NAME_LENGTH (9) // 8 bytes for name, 1 for null.
+#define MAX_PARAM_NAME_LENGTH (17) // 16 bytes for name, 1 for null.
 #define MAX_EXTRA (5)
 #define MAX_DIGITS_INT32 (11)
 #define MAX_VALUE_TYPE_LENGTH (4)

@@ -77,13 +77,13 @@ typedef struct ledTaskParams
 void Led_ControlTask( void *pvParameters );
 
 
-void Led_update( ledState_t* ledState, GpioName_t pin);
+void Led_update( ledState_t* ledState, LedName_t pin);
 
 uint8_t Led_HandleFlightMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
 uint8_t Led_HandleCtrltMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
 uint8_t Led_HandlePeripheralError(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
 
-void Led_toggleLed(ledState_t* ledState, GpioName_t pin);
+void Led_toggleLed(ledState_t* ledState, LedName_t pin);
 
 void Led_resetLeds(ledTaskParams * param);
 
@@ -154,7 +154,7 @@ void Led_ControlTask( void *pvParameters )
 
 }
 
-void Led_update( ledState_t* ledState, GpioName_t pin)
+void Led_update( ledState_t* ledState, LedName_t pin)
 {
   ledState->counter++;
   switch ( ledState->mode )
@@ -229,7 +229,7 @@ void Led_update( ledState_t* ledState, GpioName_t pin)
   }
 }
 
-void Led_toggleLed(ledState_t* ledState, GpioName_t pin )
+void Led_toggleLed(ledState_t* ledState, LedName_t pin )
 {
 
   if ( ledState->currentState != first )

@@ -150,6 +150,7 @@ typedef struct Satellite
   CtrlMode_t current_control_mode;
   eventHandler_t* evHandler;
   paramHander_t* paramHandler;
+  uint32_t bindMode;
 }Satellite_t;
 
 /**
