@@ -36,7 +36,7 @@
 #include "Test/Log/logEventTester.h"
 #include "Test/AppLog/AppLogTest.h"
 #include "Test/CharCircularBuffer/cbuff_tester.h"
-
+#include "Test/SlipPacket/SlipPacketTester.h"
 /**
  * @file Top used for regression testing. This top uses freeRTOS and
  * all of its features.
@@ -86,6 +86,7 @@ void mainTester(void *pvParameters)
     LogEv_GetTCs(testFW);
     AppLog_GetTCs(testFW);
     Cbuff_GetTCs(testFW);
+    Slip_GetTCs(testFW);
     /***************************************************************/
 
     uint8_t result = TestFW_ExecuteTests(testFW);

@@ -37,9 +37,12 @@ enum Slip_Control_Octets
 
 enum SLIP_Status
 {
-  SLIP_StatusNok = 0,
-  SLIP_StatusOK = 1,
-  SLIP_StatusCont = 2,
+  SLIP_StatusNok,
+  SLIP_StatusOK,
+  SLIP_StatusCont,
+  SLIP_StatusCrcError, 
+  SLIP_StatusLengthError, 
+  SLIP_StatusEscapeError, 
 };
 typedef enum SLIP_Status SLIP_Status_t;
 

@@ -24,6 +24,7 @@
 #ifndef TEST_TESTFW_TEST_FRAMEWORK_H_
 #define TEST_TESTFW_TEST_FRAMEWORK_H_
 #include <stdint.h>
+#include <stdio.h>
 
 /**
  * Internal structure of TestFW is private. Use this type as a handle.

@@ -459,9 +459,21 @@ void Com_RxTask( void *pvParameters )
             Event_SendGeneric(obj->evHandler, msg);
         }
         break;
+        case SLIP_StatusCrcError:
+        {
+            LOG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "COM RX: Error - SLIP CRC error.");
+        }
+        case SLIP_StatusEscapeError:
+        {
+            LOG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "COM RX: Error - SLIP escape error.");
+        }
+        case SLIP_StatusLengthError:
+        {
+            LOG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "COM RX: Error - SLIP length error.");
+        }
         case SLIP_StatusNok:
         {
-            LOG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "COM RX: Error - SLIP NOK");
+            
             moduleMsg_t* reply = Msg_TransmissionCreate(GS_SerialIO_e, 0, transmission_NOK);
             Event_Send(obj->evHandler, reply);
         }

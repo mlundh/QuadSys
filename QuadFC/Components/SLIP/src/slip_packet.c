@@ -201,13 +201,14 @@ SLIP_Status_t SlipParser_Parse(SLIP_Parser_t* obj, uint8_t *inputBuffer, uint32_
         if ((bufferLength > (SLIP_packet->allocatedSize - obj->index)))
         {
             obj->controlEscapeFound = 0;
-            return SLIP_StatusNok;
+            return SLIP_StatusLengthError;
         }
 
         for (int i = 0; i < bufferLength; i++)
         {
             if(obj->controlEscapeFound) 
             {
+                obj->controlEscapeFound = 0;
                 if ( buffer[i] == control_escape_octet_replacement )
                 {
                     SLIP_packet->payload[obj->index++] = control_escape_octet;
@@ -218,8 +219,8 @@ SLIP_Status_t SlipParser_Parse(SLIP_Parser_t* obj, uint8_t *inputBuffer, uint32_
                 }
                 else
                 {
-                    obj->controlEscapeFound = 0;
-                    return SLIP_StatusNok;
+                    
+                    return SLIP_StatusEscapeError;
                 }
             }
             else if (buffer[i] == frame_boundary_octet)
@@ -233,7 +234,7 @@ SLIP_Status_t SlipParser_Parse(SLIP_Parser_t* obj, uint8_t *inputBuffer, uint32_
                     obj->controlEscapeFound = 0;
                     if(!SLIP_CheckCRC(SLIP_packet->payload, &SLIP_packet->packetSize))
                     {
-                        return SLIP_StatusNok;
+                        return SLIP_StatusCrcError;
                     }
                     packetComplete = 1;
                     
