@@ -40,6 +40,8 @@ Msg_FlightMode --member uint8_t mode
 Msg_CtrlMode --member uint8_t mode
 Msg_FcFault
 Msg_Error --member std::string error
+Msg_BindRc1
+Msg_BindRc2
 *
 
 *GS_FC_Control
@@ -52,7 +54,7 @@ Msg_NewSetpoint --member state_data_t setpoint --member uint8_t priority --membe
 
 *FC_System
 Msg_RegisterHandler --member QueueHandle_t data --include FreeRTOS.h --include queue.h  --include task.h --internal
-Msg_Subscriptions --internal --member uint32_t subscriptions
+Msg_Subscriptions --internal --member std::string subscriptions
 Msg_FcLog --member QueueHandle_t data --include FreeRTOS.h --include queue.h  --include task.h --internal
 Msg_LogNameReq --member QueueHandle_t data --include FreeRTOS.h --include queue.h --include task.h --internal
 LogStop --internal

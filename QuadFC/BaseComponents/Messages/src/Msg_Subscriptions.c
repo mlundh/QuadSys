@@ -29,15 +29,17 @@
 
  typedef struct
 {
-    uint32_t mSubscriptions;
+    uint8_t* mSubscriptions;
+	uint32_t mSubscriptionslength;
+	uint32_t mSubscriptionsbufferlength;
 	
 }Msg_Subscriptions_t;
 
 
 moduleMsg_t* Msg_SubscriptionsCreate(uint32_t destination, uint8_t msgNr
-    , uint32_t subscriptions)
+    , uint32_t Subscriptionsbufferlength)
 {
-    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_Subscriptions_t) ;
+    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_Subscriptions_t)  + (Subscriptionsbufferlength);
     moduleMsg_t* msg = pvPortMalloc(size);
 
     if(msg)
@@ -50,15 +52,17 @@ moduleMsg_t* Msg_SubscriptionsCreate(uint32_t destination, uint8_t msgNr
 
         Msg_Subscriptions_t* internal_data = (Msg_Subscriptions_t*)(msg + 1);
         
-        internal_data->mSubscriptions = subscriptions;
+        internal_data->mSubscriptions = (uint8_t*)(internal_data+1);
+        internal_data->mSubscriptionslength = 0;
+        internal_data->mSubscriptionsbufferlength = Subscriptionsbufferlength;
 
     }
     return msg;
 }
 
-uint32_t Msg_SubscriptionsGetSubscriptions(moduleMsg_t* msg)
+uint8_t* Msg_SubscriptionsGetSubscriptions(moduleMsg_t* msg)
 {
-    uint32_t value = {0};
+    uint8_t* value = {0};
     if(msg && (msg->type == Msg_Subscriptions_e))
     {
         Msg_Subscriptions_t* internal_data = (Msg_Subscriptions_t*)(msg + 1);
@@ -74,7 +78,7 @@ uint32_t Msg_SubscriptionsGetSubscriptions(moduleMsg_t* msg)
     return value;
 }
 
-void Msg_SubscriptionsSetSubscriptions(moduleMsg_t* msg, uint32_t subscriptions)
+void Msg_SubscriptionsSetSubscriptions(moduleMsg_t* msg, uint8_t* subscriptions)
 {
     if(msg && (msg->type == Msg_Subscriptions_e))
     {
@@ -82,6 +86,72 @@ void Msg_SubscriptionsSetSubscriptions(moduleMsg_t* msg, uint32_t subscriptions)
         if(internal_data)
         {
             internal_data->mSubscriptions  = subscriptions;
+        }
+    }
+    else
+    {
+       configASSERT(0);
+    }
+}
+uint32_t Msg_SubscriptionsGetSubscriptionslength(moduleMsg_t* msg)
+{
+    uint32_t value = {0};
+    if(msg && (msg->type == Msg_Subscriptions_e))
+    {
+        Msg_Subscriptions_t* internal_data = (Msg_Subscriptions_t*)(msg + 1);
+        if(internal_data)
+        {
+            value = internal_data->mSubscriptionslength;
+        }
+    }
+    else
+    {
+       configASSERT(0);
+    }
+    return value;
+}
+
+void Msg_SubscriptionsSetSubscriptionslength(moduleMsg_t* msg, uint32_t Subscriptionslength)
+{
+    if(msg && (msg->type == Msg_Subscriptions_e))
+    {
+        Msg_Subscriptions_t* internal_data = (Msg_Subscriptions_t*)(msg + 1);
+        if(internal_data)
+        {
+            internal_data->mSubscriptionslength  = Subscriptionslength;
+        }
+    }
+    else
+    {
+       configASSERT(0);
+    }
+}
+uint32_t Msg_SubscriptionsGetSubscriptionsbufferlength(moduleMsg_t* msg)
+{
+    uint32_t value = {0};
+    if(msg && (msg->type == Msg_Subscriptions_e))
+    {
+        Msg_Subscriptions_t* internal_data = (Msg_Subscriptions_t*)(msg + 1);
+        if(internal_data)
+        {
+            value = internal_data->mSubscriptionsbufferlength;
+        }
+    }
+    else
+    {
+       configASSERT(0);
+    }
+    return value;
+}
+
+void Msg_SubscriptionsSetSubscriptionsbufferlength(moduleMsg_t* msg, uint32_t Subscriptionsbufferlength)
+{
+    if(msg && (msg->type == Msg_Subscriptions_e))
+    {
+        Msg_Subscriptions_t* internal_data = (Msg_Subscriptions_t*)(msg + 1);
+        if(internal_data)
+        {
+            internal_data->mSubscriptionsbufferlength  = Subscriptionsbufferlength;
         }
     }
     else
@@ -106,7 +176,7 @@ uint8_t* Msg_SubscriptionsSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t 
 
 moduleMsg_t* Msg_SubscriptionsDeserialize(uint8_t* buffer, uint32_t buffer_size)
 {
-    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_Subscriptions_t) ;
+    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_Subscriptions_t)  + (buffer_size);
     moduleMsg_t* msg = pvPortMalloc(size);
     if(msg)
     {

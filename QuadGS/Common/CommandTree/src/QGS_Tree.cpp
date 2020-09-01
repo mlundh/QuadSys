@@ -35,7 +35,7 @@ namespace QuadGS {
   std::string const QGS_Tree::mValueTypeDelimiterBack(">");
   std::string const QGS_Tree::mValueDelimiterFront("[");
   std::string const QGS_Tree::mValueDelimiterBack("]");
-  const unsigned int QGS_Tree::mMaxNameLength(8);
+  const unsigned int QGS_Tree::mMaxNameLength(16);
   const unsigned int QGS_Tree::mMaxDepth(8);
   const unsigned int QGS_Tree::mMaxExtra(5);
   const unsigned int QGS_Tree::mValueTypeLength(2);

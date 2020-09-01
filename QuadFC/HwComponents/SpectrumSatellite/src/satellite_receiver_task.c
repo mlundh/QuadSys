@@ -87,7 +87,7 @@ Satellite_t* Satellite_Init(eventHandler_t* eventHandler)
     // Enable receiver sensitivity adjustment.
     Param_CreateObj(0, variable_type_fp_16_16, readWrite, &taskParam->multiplier, "mult", ReceiverRoot);
     Param_CreateObj(0, variable_type_fp_16_16, readWrite, &taskParam->throMult, "TMult", ReceiverRoot);
-    Param_CreateObj(0, variable_type_fp_16_16, readWrite, &taskParam->bindMode, "BindMode", ReceiverRoot);
+    Param_CreateObj(0, variable_type_uint32, readWrite, &taskParam->bindMode, "BindMode", ReceiverRoot);
 
 
     if( !taskParam || !taskParam->decoded_data || !taskParam->configuration || !taskParam->setpoint
@@ -524,30 +524,38 @@ uint8_t Satellite_Bind1CB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
     Satellite_t* satelite = (Satellite_t*)data; // data should always be the current handler.
     if(satelite->current_flight_mode_state == fmode_disarmed || satelite->current_flight_mode_state == fmode_fault)
     {
-        if(satelite->bindMode == 9 || satelite->bindMode == 10)
-        // Reconfigure uart rx to gpio.
-        if(QuadFC_SerialReconfigPin(SATELITE_USART, pinConfigOutput))
+        if((satelite->bindMode == 9) || (satelite->bindMode == 10))
         {
-            QuadFC_SerialSetPin(SATELITE_USART, stateSet, rx);
-            Gpio_SetPinHigh(rc1PwrCtrl);
-            vTaskDelay(pdMS_TO_TICKS(500));
-            Gpio_SetPinLow(rc1PwrCtrl);
-            vTaskDelay(pdMS_TO_TICKS(200));
-
-            for (size_t i = 0; i < satelite->bindMode; i++)
+            // Reconfigure uart rx to gpio.
+            if(QuadFC_SerialReconfigPin(SATELITE_USART, pinConfigOutput))
             {
-                QuadFC_SerialSetPin(SATELITE_USART, stateReset, rx);
-                vTaskDelay(pdMS_TO_TICKS(2));
-
                 QuadFC_SerialSetPin(SATELITE_USART, stateSet, rx);
-                vTaskDelay(pdMS_TO_TICKS(2));
+                Gpio_SetPinHigh(rc1PwrCtrl);
+                vTaskDelay(pdMS_TO_TICKS(500));
+                Gpio_SetPinLow(rc1PwrCtrl);
+                vTaskDelay(pdMS_TO_TICKS(200));
+
+                for (size_t i = 0; i < satelite->bindMode; i++)
+                {
+                    QuadFC_SerialSetPin(SATELITE_USART, stateReset, rx);
+                    vTaskDelay(pdMS_TO_TICKS(2));
+
+                    QuadFC_SerialSetPin(SATELITE_USART, stateSet, rx);
+                    vTaskDelay(pdMS_TO_TICKS(2));
+                }
+                // Reconfigure gpio back to rx.
+                QuadFC_SerialReconfigPin(SATELITE_USART, pinConfigStandard);
             }
-            // Reconfigure gpio back to rx.
-            QuadFC_SerialReconfigPin(SATELITE_USART, pinConfigStandard);
+            else
+            {
+                LOG_ENTRY(FC_SerialIOtx_e,satelite->evHandler, "Not able to re-configure pin.");
+                //TODO return not supported message.
+            }
+            
         }
         else
         {
-            LOG_ENTRY(FC_SerialIOtx_e,satelite->evHandler, "Not able to re-configure pin.");
+            LOG_ENTRY(FC_SerialIOtx_e,satelite->evHandler, "Unsupported bind mode. Please configure a different bind mode.");
             //TODO return not supported message.
         }
         

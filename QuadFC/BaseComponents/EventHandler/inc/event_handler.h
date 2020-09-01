@@ -60,6 +60,7 @@
 typedef struct eventHandler eventHandler_t;
 
 #define NR_QUEUES_MAX (8)
+#define NR_SUBSCRIPTIONS_MAX (16)
 #define EVENT_QUEUE_LENGTH (32)
 #define EVENT_QUEUE_ITEM_SIZE ((sizeof(moduleMsg_t*)))
 
@@ -92,15 +93,16 @@ struct eventHandler
 	eventHandlerFcn   portFcn;
 	void*             portDataBinding;
 	msgAddr_t         handlerId;
-	uint32_t          subscriptions;
+	uint32_t          subscriptions[NR_SUBSCRIPTIONS_MAX];
 	eventHandler_t*   handlers[NR_QUEUES_MAX];                    //Registered handlers. Only use queue after the scheduler has been started.
     msgAddr_t         handlerIds[NR_QUEUES_MAX];
-	uint64_t          handlerSubscriptions[NR_QUEUES_MAX];        // Bit access for each handler.
+	uint32_t          handlerSubscriptions[NR_QUEUES_MAX][NR_SUBSCRIPTIONS_MAX];        // Bit access for each handler.
 	eventHandlerFcn   eventFcns[Msg_LastType_e];                 // Registered event handlers.
 	void*             eventDataBinding[Msg_LastType_e];          // Registered data to be used for specific events.
 	uint8_t           registeredHandlers;
 	uint8_t           master;
 	eventCircBuffer_t* cBuffer;
+	uint8_t 		  initialized;
 };
 
 /**

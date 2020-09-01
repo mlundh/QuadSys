@@ -57,11 +57,45 @@ uint8_t Event_SendExternal(eventHandler_t* obj, moduleMsg_t* msg);
 /**
  * Internal function to distribute the new subscription to all nodes in the system.
  * @param obj           Current event handler object.
- * @param subscription  Full list of subscriptions of the current object.
  * @return
  */
-uint8_t Event_SendSubscription(eventHandler_t* obj, uint32_t subscription);
+uint8_t Event_SendSubscription(eventHandler_t* obj);
 
+/**
+ * @brief Internal function for copying the subscription from one handler to the other. 
+ * 
+ * This function will copy the length defined in the macro NR_SUBSCRIPTIONS_MAX.
+ * 
+ * @param copyTo    Copy to this subscription array. 
+ * @param copyFrom  Copy subscriptions from this subscription array. 
+ */
+void Event_CopySubscription(uint32_t* copyTo, uint32_t* copyFrom);
+
+/**
+ * @brief Insert the subscription into the objects subscription array.
+ * 
+ * @param obj   Event handler to insert a subscription into.
+ * @param type  The message type to subscribe to.
+ * @return      1 if success, 0 if no slots are free for new subscriptions.
+ */
+uint8_t Event_InsertSubscription(eventHandler_t* obj, messageTypes_t type);
+
+/**
+ * @brief Remove the subscription specified.
+ * 
+ * @param obj   Event handler to remove subscription from.
+ * @param type  The message type to stop subscription of.
+ */
+void Event_RemoveSubscription(eventHandler_t* obj, messageTypes_t type);
+
+/**
+ * @brief Function to determine if the current event handler is subscribed to the message type. 
+ *      
+ * @param obj   Current event handler object.  
+ * @param type  Message type to check.
+ * @return uint8_t  1 if subscribed, 0 if not subscribed. 
+ */
+uint8_t Event_IsSubscribed(uint32_t* subscriptions, messageTypes_t type);
 
 /**
  * Internal function. Will fire the event in event_data if it matches event, or if bufferEvents is set to 0. If
@@ -109,6 +143,7 @@ eventHandler_t* Event_CreateHandler(msgAddr_t id, uint8_t master)
             EVENT_QUEUE_ITEM_SIZE );
     obj->cBuffer = Event_CreateCBuff();
     obj->registeredHandlers = 0;
+    obj->initialized = 0;
     for(int i = 0; i < Msg_LastType_e; i++)
     {
         obj->eventDataBinding[i] = NULL;
@@ -125,7 +160,7 @@ eventHandler_t* Event_CreateHandler(msgAddr_t id, uint8_t master)
         obj->master = 1;
         obj->handlers[obj->registeredHandlers] = obj;
         obj->handlerIds[obj->registeredHandlers] = obj->handlerId;
-        obj->handlerSubscriptions[obj->registeredHandlers] = obj->subscriptions;
+        Event_CopySubscription(obj->handlerSubscriptions[obj->registeredHandlers], obj->subscriptions);
         obj->registeredHandlers++;
     }
     return obj;
@@ -167,13 +202,12 @@ uint8_t Event_InitHandler(eventHandler_t* master, eventHandler_t* obj)
             return 0;
         }
     }
-
-    master->handlerSubscriptions[0] = master->subscriptions; // master is always in place 0.
+    Event_CopySubscription(master->handlerSubscriptions[0], master->subscriptions);// master is always in place 0.
 
     // We have not seen this handler before, increase the
     // number of registered handlers.
     // And register the handler.
-    master->handlerSubscriptions[master->registeredHandlers] = obj->subscriptions;
+    Event_CopySubscription(master->handlerSubscriptions[master->registeredHandlers], obj->subscriptions);
     master->handlers[master->registeredHandlers] = obj;
     master->handlerIds[master->registeredHandlers] = obj->handlerId;
     master->registeredHandlers++;
@@ -199,10 +233,12 @@ uint8_t Event_InitHandler(eventHandler_t* master, eventHandler_t* obj)
         {
             master->handlers[i]->handlers[j] = master->handlers[j];
             master->handlers[i]->handlerIds[j] = master->handlerIds[j];
-            master->handlers[i]->handlerSubscriptions[j] = master->handlerSubscriptions[j];
+            Event_CopySubscription(master->handlers[i]->handlerSubscriptions[j], master->handlerSubscriptions[j]);
         }
         master->handlers[i]->registeredHandlers = master->registeredHandlers;
     }
+    master->initialized = 1;
+    obj->initialized = 1;
     return 1;
 }
 
@@ -229,11 +265,10 @@ uint8_t Event_Subscribe(eventHandler_t* obj, messageTypes_t event)
     {
         return 0;
     }
-    obj->subscriptions &= (1 << event);
-    obj->handlerSubscriptions[obj->handlerId] = obj->subscriptions;
+    Event_InsertSubscription(obj, event);
 
     // subscribe is a broadcast message.
-    return Event_SendSubscription(obj, obj->subscriptions);
+    return Event_SendSubscription(obj);
 }
 
 
@@ -251,13 +286,9 @@ uint8_t Event_Unsubscribe(eventHandler_t* obj, messageTypes_t event)
     {
         return 0;
     }
-    // Clear bits in subscription.
-    uint32_t eventMask = ~ (1 << event);
-    obj->subscriptions &= eventMask;
-    obj->handlerSubscriptions[obj->handlerId] = obj->subscriptions;
-
+    Event_RemoveSubscription(obj, event);
     // subscribe is a broadcast message.
-    return Event_SendSubscription(obj, obj->subscriptions);
+    return Event_SendSubscription(obj);
 }
 
 uint8_t Event_Send(eventHandler_t* obj, moduleMsg_t* msg)
@@ -324,8 +355,7 @@ uint8_t Event_SendInternal(eventHandler_t* obj, moduleMsg_t* msg)
     {
         if(obj->handlerIds[i] == msg->mDestination)
         {
-            uint32_t eventMask = (1 << msg->type);
-            uint32_t subscribed = obj->handlerSubscriptions[i] & eventMask;
+            uint8_t subscribed = Event_IsSubscribed(obj->handlerSubscriptions[i], msg->type);
             if(subscribed)
             {
                 if(!xQueueSendToBack(obj->handlers[i]->eventQueue, &msg, EVENT_BLOCK_TIME))
@@ -366,8 +396,7 @@ uint8_t Event_SendBCInternal(eventHandler_t* obj, moduleMsg_t* msg, uint8_t dele
     {
         if(obj->handlerIds[i] != obj->handlerId) // do not send to self.
         {
-            uint32_t eventMask = (1 << msg->type);
-            uint32_t subscribed = obj->handlerSubscriptions[i] & eventMask;
+            uint8_t subscribed = Event_IsSubscribed(obj->handlerSubscriptions[i], msg->type);
             if(subscribed) // only send if the receiver has subscribed to this message.
             {
                 // clone the message so that all subscribers gets a unique message.
@@ -406,19 +435,21 @@ uint8_t Event_SendExternal(eventHandler_t* obj, moduleMsg_t* msg)
     return result;
 }
 
-uint8_t Event_SendSubscription(eventHandler_t* obj, uint32_t subscription)
+uint8_t Event_SendSubscription(eventHandler_t* obj)
 {
     uint8_t result = 1;
+    moduleMsg_t* msg = Msg_SubscriptionsCreate(FC_Broadcast_e, 0, NR_SUBSCRIPTIONS_MAX*sizeof(uint32_t));
 
-    moduleMsg_t* msg = Msg_SubscriptionsCreate(FC_Broadcast_e, 0, subscription);
+    uint8_t* payload = Msg_SubscriptionsGetSubscriptions(msg);
+    Event_CopySubscription((uint32_t*)payload, obj->subscriptions);
+
     Msg_SetSource(msg, obj->handlerId);
     // Send to everyone except self.
     for(int i = 0; i < obj->registeredHandlers; i++)
     {
         if(obj->handlers[i] != obj)
         {
-            uint32_t eventMask = (1 << Msg_Subscriptions_e);
-            uint32_t subscribed = obj->handlerSubscriptions[i] & eventMask;
+            uint8_t subscribed = Event_IsSubscribed(obj->handlerSubscriptions[i], Msg_Subscriptions_e);
             if(subscribed)
             {
                 if(!xQueueSendToBack(obj->handlers[i]->eventQueue, &msg, EVENT_BLOCK_TIME))
@@ -537,6 +568,92 @@ uint8_t Event_WaitForEvent(eventHandler_t* obj, messageTypes_t event, uint8_t wa
     return 1;
 }
 
+void Event_CopySubscription(uint32_t* copyTo, uint32_t* copyFrom)
+{
+    if(!copyTo || !copyFrom)
+    {
+        return;
+    }
+    memcpy(copyTo, copyFrom, NR_SUBSCRIPTIONS_MAX * sizeof(uint32_t));
+}
+
+
+uint8_t Event_InsertSubscription(eventHandler_t* obj, messageTypes_t type)
+{
+    if(!obj)
+    {
+        return 0;
+    }
+    if(Event_IsSubscribed(obj->subscriptions, type))
+    {
+        return 1;
+    }
+
+    uint8_t result = 0;
+    for (size_t i = 0; i < NR_SUBSCRIPTIONS_MAX; i++)
+    {
+        if(obj->subscriptions[i] == Msg_NoType_e)
+        {
+            obj->subscriptions[i] = type;
+            result = 1;
+            break;
+        }
+    }
+    if(!result)
+    {
+        if(obj->initialized)
+        {
+            LOG_ENTRY(FC_SerialIOtx_e, obj, "%d Failed to subscribe to message: %d", obj->handlerId, type);
+        }
+        else
+        {
+            // Failed to insert subscription, and the handlers have not yet been initialized, meaning we can not
+            // expect logging to work properly.
+            configASSERT(0); 
+        }
+        
+        
+    }
+    return result;
+}
+
+
+void Event_RemoveSubscription(eventHandler_t* obj, messageTypes_t type)
+{
+    if(!obj)
+    {
+        return;
+    }
+    for (size_t i = 0; i < NR_SUBSCRIPTIONS_MAX; i++)
+    {
+        if(obj->subscriptions[i] == type)
+        {
+            obj->subscriptions[i] = Msg_NoType_e;
+            break;
+        }
+    }
+}
+
+
+uint8_t Event_IsSubscribed(uint32_t* subscriptions, messageTypes_t type)
+{
+    if(!subscriptions)
+    {
+        return 0;
+    }
+    uint8_t result = 0;
+    for (size_t i = 0; i < NR_SUBSCRIPTIONS_MAX; i++)
+    {
+        if(subscriptions[i] == type)
+        {
+            result = 1;
+            break;
+        }
+    }
+    return result;
+}
+
+
 uint8_t Event_FireOrBufferEvent(eventHandler_t* obj, messageTypes_t event, uint8_t* nr_found, moduleMsg_t* event_data, uint8_t bufferEvents)
 {
     // handle the expected event.
@@ -606,8 +723,7 @@ uint8_t Event_RegisterCallback(eventHandler_t* obj, messageTypes_t type, eventHa
     }
     obj->eventDataBinding[type] = data;
     obj->eventFcns[type] = fcn;
-    obj->subscriptions |= (1 << type); // Subscriptions are default on.
-
+    Event_Subscribe(obj, type); // Subscriptions are default on.
     return 1;
 }
 
@@ -617,7 +733,6 @@ uint8_t Event_SubscriptionReq(eventHandler_t* obj, void* data, moduleMsg_t* eDat
     {
         return 0;
     }
-
-    obj->handlerSubscriptions[Msg_GetSource(eData)] = Msg_SubscriptionsGetSubscriptions(eData);
+    Event_CopySubscription(&(obj->handlerSubscriptions[Msg_GetSource(eData)][0]), (uint32_t*)Msg_SubscriptionsGetSubscriptions(eData));
     return 1;
 }

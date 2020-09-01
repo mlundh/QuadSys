@@ -33,11 +33,19 @@
 
 
 moduleMsg_t* Msg_SubscriptionsCreate(uint32_t destination, uint8_t msgNr
-    , uint32_t subscriptions);
+    , uint32_t Subscriptionsbufferlength);
 
-uint32_t Msg_SubscriptionsGetSubscriptions(moduleMsg_t* msg);
+uint8_t* Msg_SubscriptionsGetSubscriptions(moduleMsg_t* msg);
 
-void Msg_SubscriptionsSetSubscriptions(moduleMsg_t* msg, uint32_t subscriptions);
+void Msg_SubscriptionsSetSubscriptions(moduleMsg_t* msg, uint8_t* subscriptions);
+
+uint32_t Msg_SubscriptionsGetSubscriptionslength(moduleMsg_t* msg);
+
+void Msg_SubscriptionsSetSubscriptionslength(moduleMsg_t* msg, uint32_t Subscriptionslength);
+
+uint32_t Msg_SubscriptionsGetSubscriptionsbufferlength(moduleMsg_t* msg);
+
+void Msg_SubscriptionsSetSubscriptionsbufferlength(moduleMsg_t* msg, uint32_t Subscriptionsbufferlength);
 
 
 uint8_t* Msg_SubscriptionsSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
