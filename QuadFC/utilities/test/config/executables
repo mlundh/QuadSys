@@ -1,0 +1,7 @@
+# Add all test cases that should run. If a test case should not be run for a specific platform, 
+# use the flag notPLATFORM e.g.
+# Test_Example notTitan
+Test_Modules1
+Test_Modules2
+Test_Utilities
+Test_Components1
