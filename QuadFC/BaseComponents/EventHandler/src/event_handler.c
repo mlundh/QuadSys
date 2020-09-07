@@ -182,6 +182,10 @@ void Event_RegisterPortFunction(eventHandler_t* obj, eventHandlerFcn fcn, void* 
 void Event_DeleteHandler(eventHandler_t* obj)
 {
     vQueueDelete(obj->eventQueue);
+    if(obj->portQueue)
+    {  
+        vQueueDelete(obj->portQueue);
+    }
     Event_DeleteCBuff(obj->cBuffer);
     vPortFree(obj);
 }
@@ -437,7 +441,7 @@ uint8_t Event_SendExternal(eventHandler_t* obj, moduleMsg_t* msg)
 
 uint8_t Event_SendSubscription(eventHandler_t* obj)
 {
-    uint8_t result = 1;
+    uint8_t result = 0;
     moduleMsg_t* msg = Msg_SubscriptionsCreate(FC_Broadcast_e, 0, NR_SUBSCRIPTIONS_MAX*sizeof(uint32_t));
 
     uint8_t* payload = Msg_SubscriptionsGetSubscriptions(msg);
@@ -445,21 +449,9 @@ uint8_t Event_SendSubscription(eventHandler_t* obj)
 
     Msg_SetSource(msg, obj->handlerId);
     // Send to everyone except self.
-    for(int i = 0; i < obj->registeredHandlers; i++)
-    {
-        if(obj->handlers[i] != obj)
-        {
-            uint8_t subscribed = Event_IsSubscribed(obj->handlerSubscriptions[i], Msg_Subscriptions_e);
-            if(subscribed)
-            {
-                if(!xQueueSendToBack(obj->handlers[i]->eventQueue, &msg, EVENT_BLOCK_TIME))
-                {
-                    result = 0;
-                    Msg_Delete(&msg);
-                }
-            }
-        }
-    }
+
+    Event_SendBCInternal(obj, msg, 1);
+    
     return result;
 }
 

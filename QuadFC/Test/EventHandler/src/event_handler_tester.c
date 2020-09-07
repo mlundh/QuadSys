@@ -80,6 +80,10 @@ void EventHandler_deleteTestTasks(eventTester_t* obj);
 void event_test_task( void *pvParameters );
 void stimuli_test_task( void *pvParameters );
 
+uint8_t EventHandler_TestCreateDelete(TestFw_t* obj);
+uint8_t EventHandler_TestCreateDeleteCbuff(TestFw_t* obj);
+
+
 /**
  * Callback functions for the event handlers in this test case. The
  * functions will send a message to the response queue of the main test
@@ -97,14 +101,40 @@ uint8_t setpointCb(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
 
 void EventHandler_GetTCs(TestFw_t* obj)
 {
-    TestFW_RegisterTest(obj, "CBR/W", EventHandler_TestCBReadWrite);
-    TestFW_RegisterTest(obj, "BCFullEmpty", EventHandler_TestCBFullEmpty);
+    TestFW_RegisterTest(obj, "Event CreateDelete", EventHandler_TestCreateDelete);
+    TestFW_RegisterTest(obj, "Event CreateDeleteCbuff", EventHandler_TestCreateDeleteCbuff);
+    TestFW_RegisterTest(obj, "Event CBR/W", EventHandler_TestCBReadWrite);
+    TestFW_RegisterTest(obj, "Event BCFullEmpty", EventHandler_TestCBFullEmpty);
     TestFW_RegisterTest(obj, "Event", EventHandler_TestEvents);
 }
 
 
 
 #define SHORT_MSG (50)
+
+uint8_t EventHandler_TestCreateDelete(TestFw_t* obj)
+{
+        eventHandler_t* evHandlerM = Event_CreateHandler(GS_SerialIO_e, 1);
+        eventHandler_t* evHandlerS = Event_CreateHandler(GS_Param_e, 0);
+
+
+        Event_DeleteHandler(evHandlerM);
+        Event_DeleteHandler(evHandlerS);
+        return 1;
+}
+
+uint8_t EventHandler_TestCreateDeleteCbuff(TestFw_t* obj)
+{
+    eventCircBuffer_t* eventBuffer = Event_CreateCBuff();
+    eventCircBuffer_t* eventBuffer1 = Event_CreateCBuff();
+
+
+        Event_DeleteCBuff(eventBuffer);
+        Event_DeleteCBuff(eventBuffer1);
+        return 1;
+}
+
+
 
 uint8_t EventHandler_TestCBReadWrite(TestFw_t* obj)
 {

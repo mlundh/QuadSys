@@ -104,7 +104,7 @@ uint8_t TestFW_Report(TestFw_t* obj, const char* string);
 uint8_t TestFW_ExecuteTests(TestFw_t* obj);
 
 
-#define REPORT_LENGTH_MAX (200)
+#define REPORT_LENGTH_MAX (500)
 #define TEST_REPORT_ERROR(obj, format, ...)                                                                               \
     {                                                                                                                     \
         char tmpstr[REPORT_LENGTH_MAX] = {0};                                                                             \

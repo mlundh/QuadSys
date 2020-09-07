@@ -55,18 +55,14 @@ uint8_t AppLogHandler_TestCreate(TestFw_t* obj)
     uint8_t result = 1;
     if(!logobj)
     {
-        char tmpstr[SHORT_MSG] = {0};
-        snprintf (tmpstr, SHORT_MSG,"Could not create a AppLogHandler object.\n");
-        TestFW_Report(obj, tmpstr);
+        TEST_REPORT_ERROR(obj,"Could not create a AppLogHandler object." )
         result = 0;
     }
     if(!result ||
             logobj->evHandler || //Initialized to null...
             !logobj->backend )
     {
-        char tmpstr[SHORT_MSG] = {0};
-        snprintf (tmpstr, SHORT_MSG,"AppLogHandler object not correctly initiated.\n");
-        TestFW_Report(obj, tmpstr);
+        TEST_REPORT_ERROR(obj,"AppLogHandler object not correctly initiated." )
         result = 0;
     }
     AppLogHandler_Delete(logobj);
@@ -85,9 +81,7 @@ uint8_t AppLogHandler_TestReport(TestFw_t* obj)
     uint8_t result = 1;
     if(!logobj || !evHandlerAppLog || !evHandlerTester)
     {
-        char tmpstr[SHORT_MSG] = {0};
-        snprintf (tmpstr, SHORT_MSG,"Could not create a AppLogHandler or eventHandler object(s).\n");
-        TestFW_Report(obj, tmpstr);
+        TEST_REPORT_ERROR(obj,"Could not create a AppLogHandler or eventHandler object(s)." )
         result = 0;
     }
     // TODO the desitnation address should not be known by the module.
@@ -114,9 +108,7 @@ uint8_t AppLogHandler_TestReport(TestFw_t* obj)
     }
     else
     {
-        char tmpstr[LONG_MSG] = {0};
-        snprintf (tmpstr, LONG_MSG,"expected: \"%s\" \ngot: \"%s\"!.\n", (char*)bufferOrig, (char*)buffer);
-        TestFW_Report(obj, tmpstr);
+        TEST_REPORT_ERROR(obj, "expected: \"%s\" \ngot: \"%s\"!.", (char*)bufferOrig, (char*)buffer)
         result = 0;
     }
 
@@ -139,9 +131,7 @@ uint8_t AppLogHandler_TestReportMacro(TestFw_t* obj)
     uint8_t result = 1;
     if(!logobj || !evHandlerAppLog || !evHandlerTester)
     {
-        char tmpstr[SHORT_MSG] = {0};
-        snprintf (tmpstr, SHORT_MSG,"Could not create a AppLogHandler or eventHandler object(s).\n");
-        TestFW_Report(obj, tmpstr);
+        TEST_REPORT_ERROR(obj, "Could not create a AppLogHandler or eventHandler object(s).");
         result = 0;
     }
     portENTER_CRITICAL();
@@ -164,9 +154,7 @@ uint8_t AppLogHandler_TestReportMacro(TestFw_t* obj)
     }
     else
     {
-        char tmpstr[LONG_MSG] = {0};
-        snprintf (tmpstr, LONG_MSG,"expected: \"%s\" \ngot: \"%s\"!.\n", expected, (char*)buffer);
-        TestFW_Report(obj, tmpstr);
+        TEST_REPORT_ERROR(obj, "expected: \"%s\" \ngot: \"%s\"!.", expected, (char*)buffer);
         result = 0;
     }
     portEXIT_CRITICAL();

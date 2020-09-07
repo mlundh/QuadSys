@@ -443,7 +443,7 @@ uint8_t SigProsses_TestEulerAngleAccl(TestFw_t* obj)
   imuData.imu_data[accl_z] = INT_TO_FIXED(1, FP_16_16_SHIFT);
 
   state_data_t state = {{0}};
-  state_data_t stateReset = {{0}};
+  state_data_t state_reset = {{0}};
   Signal_getEulerAnglesAccel( &state, &imuData);
 
   char tmpstr[50] = {0};
@@ -468,7 +468,7 @@ uint8_t SigProsses_TestEulerAngleAccl(TestFw_t* obj)
   imuData.imu_data[accl_y] = DOUBLE_TO_FIXED(0.0, MAX16f);
   imuData.imu_data[accl_z] = DOUBLE_TO_FIXED(0.707, MAX16f);
 
-  state = stateReset;
+  state = state_reset;
   state.state_bf[roll_bf] = 0;
   state.state_bf[pitch_bf] = 0;
   state.state_bf[yaw_bf] = 0;
@@ -499,7 +499,7 @@ uint8_t SigProsses_TestEulerAngleAccl(TestFw_t* obj)
   imuData.imu_data[accl_y] = DOUBLE_TO_FIXED(0.707, MAX16f);;
   imuData.imu_data[accl_z] = DOUBLE_TO_FIXED(0.707, MAX16f);
 
-  state = stateReset;
+  state = state_reset;
   Signal_getEulerAnglesAccel( &state, &imuData);
 
   // 45 deg in state scale = 0,785rad => 0.25piRad
