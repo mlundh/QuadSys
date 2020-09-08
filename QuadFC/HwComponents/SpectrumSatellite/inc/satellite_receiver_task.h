@@ -18,8 +18,6 @@
  */
 
 
-
-
 #include "FreeRTOS.h"
 #include "task.h"
 #include "Messages/inc/common_types.h"
@@ -34,7 +32,6 @@
 #define SATELLITE_CHANNEL_MASK 0x7800        /*Channel number contained in the 4 bits above data.*/
 
 #define BAUD_SATELLITE 115200
-#define SATELITE_USART (0)
 
 #define SATELLITE_MESSAGE_LENGTH 16
 
@@ -151,6 +148,8 @@ typedef struct Satellite
   eventHandler_t* evHandler;
   paramHander_t* paramHandler;
   uint32_t bindMode;
+  uint32_t uartNr;
+  GpioName_t pwrCtrl;
 }Satellite_t;
 
 /**
@@ -159,7 +158,7 @@ typedef struct Satellite
  * @param setpointHandler
  * @return Null if fail, pointer to a struct instance otherwise.
  */
-Satellite_t* Satellite_Init(eventHandler_t* eventMaster);
+Satellite_t* Satellite_Init(eventHandler_t* eventMaster, uint32_t uartNr, GpioName_t pwrCtrl, char index);
 
 /**
  * @brief The receiver task. Reads serial data and decodes it. Then transmits the decoded setpoint to

@@ -56,6 +56,8 @@ public:
 
 	std::string getRuntimeStats(std::string);
 
+	std::string BindRc(std::string);
+
 	virtual void process(Msg_GetUiCommands* message);
 	virtual void process(Msg_FireUiCommand* message);
 	virtual void process(Msg_Debug* message);

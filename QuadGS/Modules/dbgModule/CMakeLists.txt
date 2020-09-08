@@ -3,7 +3,8 @@ set(dep "CommandTree"
         "GS_FC_Param"
         "GS_Ui_Command"
         "QGS_Module"
-        "GS_FC_Debug")
+        "GS_FC_Debug"
+        "GS_FC_Status")
 
 qgs_make_shared_lib( dbgModule src dep)
 

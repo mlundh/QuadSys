@@ -29,6 +29,6 @@
 /**
  * Public interface for the satellite receiver task.
  */
-void Satellite_CreateReceiverTask( eventHandler_t* eventHandler);
+void Satellite_CreateReceiverTask( eventHandler_t* eventHandler, uint32_t uartNr, GpioName_t pwrCtrl, char index);
 
 #endif /* PORTLAYER_COMMUNICATION_INC_SATELLITE_RECEIVER_PUBLIC_H_ */

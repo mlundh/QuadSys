@@ -40,8 +40,7 @@ Msg_FlightMode --member uint8_t mode
 Msg_CtrlMode --member uint8_t mode
 Msg_FcFault
 Msg_Error --member std::string error
-Msg_BindRc1
-Msg_BindRc2
+Msg_BindRc --member uint8_t quit
 *
 
 *GS_FC_Control

@@ -1,5 +1,5 @@
 /*
- * Msg_BindRc2.h
+ * Msg_BindRc.h
  *
  * Copyright (C) 2019 Martin Lundh
  *
@@ -23,20 +23,21 @@
  */
 
 
-#include "../inc/Msg_BindRc2.h"
+#include "../inc/Msg_BindRc.h"
 #include "FreeRTOS.h"
 #include "task.h"
 
  typedef struct
 {
-    
-}Msg_BindRc2_t;
+    uint8_t mQuit;
+	
+}Msg_BindRc_t;
 
 
-moduleMsg_t* Msg_BindRc2Create(uint32_t destination, uint8_t msgNr
-    )
+moduleMsg_t* Msg_BindRcCreate(uint32_t destination, uint8_t msgNr
+    , uint8_t quit)
 {
-    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_BindRc2_t) ;
+    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_BindRc_t) ;
     moduleMsg_t* msg = pvPortMalloc(size);
 
     if(msg)
@@ -44,44 +45,80 @@ moduleMsg_t* Msg_BindRc2Create(uint32_t destination, uint8_t msgNr
         msg->mDestination = destination;
         msg->mSource = Unassigned_e;
         msg->mMsgNr = msgNr;
-        msg->type = Msg_BindRc2_e;
+        msg->type = Msg_BindRc_e;
         msg->mAllocatedSize = size;
 
-        Msg_BindRc2_t* internal_data = (Msg_BindRc2_t*)(msg + 1);
+        Msg_BindRc_t* internal_data = (Msg_BindRc_t*)(msg + 1);
         
+        internal_data->mQuit = quit;
 
     }
     return msg;
 }
 
-
-uint8_t* Msg_BindRc2Serialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size)
+uint8_t Msg_BindRcGetQuit(moduleMsg_t* msg)
 {
-    if(msg && (msg->type == Msg_BindRc2_e))
+    uint8_t value = {0};
+    if(msg && (msg->type == Msg_BindRc_e))
+    {
+        Msg_BindRc_t* internal_data = (Msg_BindRc_t*)(msg + 1);
+        if(internal_data)
+        {
+            value = internal_data->mQuit;
+        }
+    }
+    else
+    {
+       configASSERT(0);
+    }
+    return value;
+}
+
+void Msg_BindRcSetQuit(moduleMsg_t* msg, uint8_t quit)
+{
+    if(msg && (msg->type == Msg_BindRc_e))
+    {
+        Msg_BindRc_t* internal_data = (Msg_BindRc_t*)(msg + 1);
+        if(internal_data)
+        {
+            internal_data->mQuit  = quit;
+        }
+    }
+    else
+    {
+       configASSERT(0);
+    }
+}
+
+uint8_t* Msg_BindRcSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size)
+{
+    if(msg && (msg->type == Msg_BindRc_e))
     {
         buffer = Msg_Serialize(msg, buffer, buffer_size);
-        Msg_BindRc2_t* data = (Msg_BindRc2_t*)(msg + 1);
+        Msg_BindRc_t* data = (Msg_BindRc_t*)(msg + 1);
         if(data)
         {
+            buffer = serialize_uint8_t(buffer, &buffer_size, &data->mQuit);
 
         }
     }
     return buffer;
 }
 
-moduleMsg_t* Msg_BindRc2Deserialize(uint8_t* buffer, uint32_t buffer_size)
+moduleMsg_t* Msg_BindRcDeserialize(uint8_t* buffer, uint32_t buffer_size)
 {
-    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_BindRc2_t) ;
+    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_BindRc_t) ;
     moduleMsg_t* msg = pvPortMalloc(size);
     if(msg)
     {
-        msg->mAllocatedSize = buffer_size;
+        msg->mAllocatedSize = size;
         uint8_t* bufferOrig = buffer;
         buffer = Msg_DeSerialize(msg, buffer, buffer_size);
         buffer_size -= buffer - bufferOrig;
-        Msg_BindRc2_t* data = (Msg_BindRc2_t*)(msg + 1);
+        Msg_BindRc_t* data = (Msg_BindRc_t*)(msg + 1);
         if(data)
         {
+            buffer = deserialize_uint8_t(buffer, &buffer_size, &data->mQuit);
 
         }
     }

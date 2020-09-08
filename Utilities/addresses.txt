@@ -25,5 +25,6 @@ FC_SerialIOtx
 FC_Ctrl
 FC_Led
 RC_SetpointGen
+RC_SetpointGen2
 FC_eventSys
 *

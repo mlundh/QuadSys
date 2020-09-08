@@ -46,8 +46,7 @@
 #include "Messages/inc/common_types.h"
 #include "Messages/inc/Msg_FlightMode.h"
 #include "Messages/inc/Msg_CtrlMode.h"
-#include "Messages/inc/Msg_BindRc1.h"
-#include "Messages/inc/Msg_BindRc2.h"
+#include "Messages/inc/Msg_BindRc.h"
 #include "HAL/QuadFC/QuadFC_Gpio.h"
 #include "Components/AppLog/inc/AppLog.h"
 
@@ -56,10 +55,9 @@
 
 uint8_t Satellite_FModeCB(eventHandler_t* obj, void* data, moduleMsg_t* eData);
 uint8_t Satellite_CtrlModeCB(eventHandler_t* obj, void* data, moduleMsg_t* eData);
-uint8_t Satellite_Bind1CB(eventHandler_t* obj, void* data, moduleMsg_t* eData);
-uint8_t Satellite_Bind2CB(eventHandler_t* obj, void* data, moduleMsg_t* eData);
+uint8_t Satellite_BindCB(eventHandler_t* obj, void* data, moduleMsg_t* eData);
 
-Satellite_t* Satellite_Init(eventHandler_t* eventHandler)
+Satellite_t* Satellite_Init(eventHandler_t* eventHandler, uint32_t uartNr, GpioName_t pwrCtrl, char index)
 {
     /* Create the queue used to pass things to the display task*/
     Satellite_t* taskParam = pvPortMalloc(sizeof(Satellite_t));
@@ -70,24 +68,25 @@ Satellite_t* Satellite_Init(eventHandler_t* eventHandler)
     taskParam->multiplier = INT_TO_FIXED(1, FP_16_16_SHIFT);
     taskParam->throMult = INT_TO_FIXED(1, FP_16_16_SHIFT);
     taskParam->bindMode = 9;
+    taskParam->uartNr = uartNr;
+    taskParam->pwrCtrl = pwrCtrl;
     taskParam->current_flight_mode_state = fmode_not_available;
     taskParam->current_control_mode = Control_mode_not_available;
     taskParam->evHandler = eventHandler;
-    taskParam->paramHandler = ParamHandler_CreateObj(1,eventHandler, "Spectrum", 0); // Master handles all communication, we do not want to be master!
+    char name[] = {"Spectrum_X"};
+    name[9]=index;
+    taskParam->paramHandler = ParamHandler_CreateObj(3,eventHandler, name, 0); // Master handles all communication, we do not want to be master!
 
 
     Event_RegisterCallback(taskParam->evHandler, Msg_FlightMode_e, Satellite_FModeCB, taskParam);
     Event_RegisterCallback(taskParam->evHandler, Msg_CtrlMode_e, Satellite_CtrlModeCB, taskParam);
 
-    Event_RegisterCallback(taskParam->evHandler, Msg_BindRc1_e, Satellite_Bind1CB, taskParam);
-    Event_RegisterCallback(taskParam->evHandler, Msg_BindRc2_e, Satellite_Bind2CB, taskParam);
-
-    param_obj_t * ReceiverRoot = Param_CreateObj(3, variable_type_NoType, readOnly, NULL, "Rcver", ParamHandler_GetParam(taskParam->paramHandler));
+    Event_RegisterCallback(taskParam->evHandler, Msg_BindRc_e, Satellite_BindCB, taskParam);
 
     // Enable receiver sensitivity adjustment.
-    Param_CreateObj(0, variable_type_fp_16_16, readWrite, &taskParam->multiplier, "mult", ReceiverRoot);
-    Param_CreateObj(0, variable_type_fp_16_16, readWrite, &taskParam->throMult, "TMult", ReceiverRoot);
-    Param_CreateObj(0, variable_type_uint32, readWrite, &taskParam->bindMode, "BindMode", ReceiverRoot);
+    Param_CreateObj(0, variable_type_fp_16_16, readWrite, &taskParam->multiplier, "mult", ParamHandler_GetParam(taskParam->paramHandler));
+    Param_CreateObj(0, variable_type_fp_16_16, readWrite, &taskParam->throMult, "ThrottleMult", ParamHandler_GetParam(taskParam->paramHandler));
+    Param_CreateObj(0, variable_type_uint32, readWrite, &taskParam->bindMode, "BindMode", ParamHandler_GetParam(taskParam->paramHandler));
 
 
     if( !taskParam || !taskParam->decoded_data || !taskParam->configuration || !taskParam->setpoint
@@ -108,7 +107,7 @@ Satellite_t* Satellite_Init(eventHandler_t* eventHandler)
     }
 
     // Turn on the power to the module.
-    Gpio_SetPinLow(rc1PwrCtrl);
+    Gpio_SetPinLow(taskParam->pwrCtrl);
 
     return taskParam;
 }
@@ -118,12 +117,12 @@ Satellite_t* Satellite_Init(eventHandler_t* eventHandler)
  * Spectrum satellite receiver task. Initialize the USART instance
  * and create the task.
  */ 
-void Satellite_CreateReceiverTask(  eventHandler_t* eventHandler)
+void Satellite_CreateReceiverTask(  eventHandler_t* eventHandler, uint32_t uartNr, GpioName_t pwrCtrl, char index)
 {
     uint8_t* receiver_buffer_driver = pvPortMalloc(
             sizeof(uint8_t) * SATELLITE_MESSAGE_LENGTH*2 );
 
-    Satellite_t *SatelliteParam = Satellite_Init(eventHandler);
+    Satellite_t *SatelliteParam = Satellite_Init(eventHandler, uartNr, pwrCtrl, index);
 
 
     if(!SatelliteParam || !receiver_buffer_driver)
@@ -141,7 +140,7 @@ void Satellite_CreateReceiverTask(  eventHandler_t* eventHandler)
             SATELLITE_MESSAGE_LENGTH*2
     };
 
-    uint8_t rsp = QuadFC_SerialInit(SATELITE_USART, &opt);
+    uint8_t rsp = QuadFC_SerialInit(SatelliteParam->uartNr, &opt);
     if(!rsp)
     {
         /*Error - Could not create serial interface.*/
@@ -202,7 +201,7 @@ void Satellite_ReceiverTask(void *pvParameters)
         serialData.buffer = satellite_receive_buffer;
         serialData.bufferLength = SATELLITE_MESSAGE_LENGTH;
         serialData.triggerLevel = SATELLITE_MESSAGE_LENGTH;
-        bytes_read = QuadFC_SerialRead(&serialData, SATELITE_USART, satellite_block_time);
+        bytes_read = QuadFC_SerialRead(&serialData, param->uartNr, satellite_block_time);
 
         /*If 16 bytes are read then all is ok, otherwise skip. */
         if ((bytes_read == SATELLITE_MESSAGE_LENGTH))
@@ -217,7 +216,7 @@ void Satellite_ReceiverTask(void *pvParameters)
                 {
                     // We have a complete set of channels.
                     Satellite_MapToSetpoint(param, decoded_data, setpoint);
-                    moduleMsg_t* msg = Msg_NewSetpointCreate(FC_Ctrl_e, 0, *setpoint, 1, MESSAGE_VALID_FOR_MS);
+                    moduleMsg_t* msg = Msg_NewSetpointCreate(FC_Broadcast_e, 0, *setpoint, 1, MESSAGE_VALID_FOR_MS);
                     Event_Send(param->evHandler, msg);
 
                     Satellite_UpdateState(param, decoded_data);
@@ -232,7 +231,7 @@ void Satellite_ReceiverTask(void *pvParameters)
         QuadFC_Serial_t serialDataSync;
         serialDataSync.buffer = satellite_receive_buffer;
         serialDataSync.bufferLength = SATELLITE_MESSAGE_LENGTH*2;
-        uint32_t nr_bytes_received = QuadFC_SerialRead(&serialDataSync, SATELITE_USART, satellite_block_time_sync);
+        uint32_t nr_bytes_received = QuadFC_SerialRead(&serialDataSync, param->uartNr, satellite_block_time_sync);
 
         if (nr_bytes_received >=SATELLITE_MESSAGE_LENGTH)
         {
@@ -500,8 +499,8 @@ uint8_t Satellite_FModeCB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
     {
         return 0;
     }
-    Satellite_t* satelite = (Satellite_t*)data; // data should always be the current handler.
-    satelite->current_flight_mode_state =  Msg_FlightModeGetMode(eData);
+    Satellite_t* satellite = (Satellite_t*)data; // data should always be the current handler.
+    satellite->current_flight_mode_state =  Msg_FlightModeGetMode(eData);
     return 1;
 }
 uint8_t Satellite_CtrlModeCB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
@@ -510,52 +509,62 @@ uint8_t Satellite_CtrlModeCB(eventHandler_t* obj, void* data, moduleMsg_t* eData
     {
         return 0;
     }
-    Satellite_t* satelite = (Satellite_t*)data; // data should always be the current handler.
-    satelite->current_control_mode = Msg_CtrlModeGetMode(eData);
+    Satellite_t* satellite = (Satellite_t*)data; // data should always be the current handler.
+    satellite->current_control_mode = Msg_CtrlModeGetMode(eData);
     return 1;
 }
 
-uint8_t Satellite_Bind1CB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
+uint8_t Satellite_BindCB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
 {
     if(!obj || !data || !eData)
     {
         return 0;
     }
-    Satellite_t* satelite = (Satellite_t*)data; // data should always be the current handler.
-    if(satelite->current_flight_mode_state == fmode_disarmed || satelite->current_flight_mode_state == fmode_fault)
+    uint8_t quitBind = Msg_BindRcGetQuit(eData);
+    Satellite_t* satellite = (Satellite_t*)data; // data should always be the current handler.
+    if(satellite->current_flight_mode_state == fmode_disarmed || satellite->current_flight_mode_state == fmode_fault)
     {
-        if((satelite->bindMode == 9) || (satelite->bindMode == 10))
+        if((satellite->bindMode == 9) || (satellite->bindMode == 10))
         {
             // Reconfigure uart rx to gpio.
-            if(QuadFC_SerialReconfigPin(SATELITE_USART, pinConfigOutput))
+            if(QuadFC_SerialReconfigPin(satellite->uartNr, pinConfigOutput))
             {
-                QuadFC_SerialSetPin(SATELITE_USART, stateSet, rx);
-                Gpio_SetPinHigh(rc1PwrCtrl);
+                QuadFC_SerialSetPin(satellite->uartNr, stateSet, rx);
+                Gpio_SetPinHigh(satellite->pwrCtrl);
                 vTaskDelay(pdMS_TO_TICKS(500));
-                Gpio_SetPinLow(rc1PwrCtrl);
+                Gpio_SetPinLow(satellite->pwrCtrl);
                 vTaskDelay(pdMS_TO_TICKS(200));
 
-                for (size_t i = 0; i < satelite->bindMode; i++)
+                if(quitBind != 1)
                 {
-                    QuadFC_SerialSetPin(SATELITE_USART, stateReset, rx);
-                    vTaskDelay(pdMS_TO_TICKS(2));
+                    LOG_ENTRY(FC_SerialIOtx_e,satellite->evHandler, "Binding RC.");
+                    for (size_t i = 0; i < satellite->bindMode; i++)
+                    {
+                        QuadFC_SerialSetPin(satellite->uartNr, stateReset, rx);
+                        vTaskDelay(pdMS_TO_TICKS(2));
 
-                    QuadFC_SerialSetPin(SATELITE_USART, stateSet, rx);
-                    vTaskDelay(pdMS_TO_TICKS(2));
+                        QuadFC_SerialSetPin(satellite->uartNr, stateSet, rx);
+                        vTaskDelay(pdMS_TO_TICKS(2));
+                    }
                 }
+                else
+                {
+                    LOG_ENTRY(FC_SerialIOtx_e,satellite->evHandler, "Quitting binding process.");
+                }
+                
                 // Reconfigure gpio back to rx.
-                QuadFC_SerialReconfigPin(SATELITE_USART, pinConfigStandard);
+                QuadFC_SerialReconfigPin(satellite->uartNr, pinConfigStandard);
             }
             else
             {
-                LOG_ENTRY(FC_SerialIOtx_e,satelite->evHandler, "Not able to re-configure pin.");
+                LOG_ENTRY(FC_SerialIOtx_e,satellite->evHandler, "Not able to re-configure pin.");
                 //TODO return not supported message.
             }
             
         }
         else
         {
-            LOG_ENTRY(FC_SerialIOtx_e,satelite->evHandler, "Unsupported bind mode. Please configure a different bind mode.");
+            LOG_ENTRY(FC_SerialIOtx_e,satellite->evHandler, "Unsupported bind mode. Please configure a different bind mode.");
             //TODO return not supported message.
         }
         
@@ -563,12 +572,7 @@ uint8_t Satellite_Bind1CB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
     }
     else
     {
-        LOG_ENTRY(FC_SerialIOtx_e,satelite->evHandler, "Only allowed to enter bind in disarmed mode.");
+        LOG_ENTRY(FC_SerialIOtx_e,satellite->evHandler, "Only allowed to enter bind in disarmed mode.");
     }
     return 1;
-}
-
-uint8_t Satellite_Bind2CB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
-{
-    return 0;
 }

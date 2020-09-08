@@ -1,5 +1,5 @@
 /*
- * Msg_BindRc2.c
+ * Msg_BindRc.c
  *
  * Copyright (C) 2019 Martin Lundh
  *
@@ -22,8 +22,8 @@
  * THE SOFTWARE.
  */
 
-#ifndef MODULES_MESSAGES_INC_MSG_BINDRC2_H_
-#define MODULES_MESSAGES_INC_MSG_BINDRC2_H_
+#ifndef MODULES_MESSAGES_INC_MSG_BINDRC_H_
+#define MODULES_MESSAGES_INC_MSG_BINDRC_H_
 
 #include "MsgBase/inc/message_base.h"
 #include "Messages/inc/common_types.h"
@@ -32,13 +32,17 @@
 
 
 
-moduleMsg_t* Msg_BindRc2Create(uint32_t destination, uint8_t msgNr
-    );
+moduleMsg_t* Msg_BindRcCreate(uint32_t destination, uint8_t msgNr
+    , uint8_t quit);
+
+uint8_t Msg_BindRcGetQuit(moduleMsg_t* msg);
+
+void Msg_BindRcSetQuit(moduleMsg_t* msg, uint8_t quit);
 
 
-uint8_t* Msg_BindRc2Serialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
+uint8_t* Msg_BindRcSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
-moduleMsg_t* Msg_BindRc2Deserialize(uint8_t* buffer, uint32_t buffer_size);
+moduleMsg_t* Msg_BindRcDeserialize(uint8_t* buffer, uint32_t buffer_size);
 
-#endif /* MODULES_MESSAGES_INC_MSG_BINDRC2_H_ */
+#endif /* MODULES_MESSAGES_INC_MSG_BINDRC_H_ */
 

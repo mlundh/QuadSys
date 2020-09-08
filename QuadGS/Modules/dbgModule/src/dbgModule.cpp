@@ -28,6 +28,7 @@
 #include "Msg_RegUiCommand.h"
 #include "Msg_UiCommandResult.h"
 #include "Msg_Display.h"
+#include "Msg_BindRc.h"
 #include <sstream>
 
 namespace QuadGS {
@@ -36,6 +37,7 @@ dbgModule::dbgModule(msgAddr_t name, msgAddr_t dbgAddr):QGS_MessageHandlerBase(n
 {
 	mCommands.push_back(UiCommand("dbgModuleSend","Send a message from the dbg module to any other module.",std::bind(&dbgModule::sendUiMsg, this, std::placeholders::_1)));
 	mCommands.push_back(UiCommand("dbgGetRuntimeStats","Get runtime stats from the FC.",std::bind(&dbgModule::getRuntimeStats, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("rcBind","Bind the spectrum receiver.",std::bind(&dbgModule::BindRc, this, std::placeholders::_1)));
 
 }
 
@@ -128,6 +130,32 @@ std::string dbgModule::sendUiMsg(std::string msg)
 std::string dbgModule::getRuntimeStats(std::string)
 {
 	Msg_Debug::ptr ptr = std::make_unique<Msg_Debug>(mDbgAddr, DbgCtrl_t::QSP_DebugGetRuntimeStats, "");
+	sendMsg(std::move(ptr));
+
+	return "";
+}
+
+
+std::string dbgModule::BindRc(std::string param)
+{
+	uint8_t quitBind = 0;
+	if(!param.empty())
+	{
+		try
+		{
+			quitBind = std::stoi(param);
+		}
+		catch(const std::invalid_argument& e)
+		{
+			return "Argument not valid.";
+		}
+		
+		if(quitBind != 0 && quitBind != 1)
+		{
+			return "Argument not valid.";
+		}
+	}
+	Msg_BindRc::ptr ptr = std::make_unique<Msg_BindRc>(FC_Broadcast_e, quitBind);
 	sendMsg(std::move(ptr));
 
 	return "";

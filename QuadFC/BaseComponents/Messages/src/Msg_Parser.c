@@ -32,8 +32,7 @@
 #include "../../Messages/inc/Msg_CtrlMode.h"
 #include "../../Messages/inc/Msg_FcFault.h"
 #include "../../Messages/inc/Msg_Error.h"
-#include "../../Messages/inc/Msg_BindRc1.h"
-#include "../../Messages/inc/Msg_BindRc2.h"
+#include "../../Messages/inc/Msg_BindRc.h"
 #include "../../Messages/inc/Msg_FlightModeReq.h"
 #include "../../Messages/inc/Msg_CtrlModeReq.h"
 #include "../../Messages/inc/Msg_NewSetpoint.h"
@@ -120,15 +119,9 @@ moduleMsg_t* Msg_Parse(uint8_t* buffer, uint32_t bufferLength)
         break;
     }
     
-    case Msg_BindRc1_e:
+    case Msg_BindRc_e:
     {
-        msgResult = Msg_BindRc1Deserialize(buffer, bufferLength);
-        break;
-    }
-    
-    case Msg_BindRc2_e:
-    {
-        msgResult = Msg_BindRc2Deserialize(buffer, bufferLength);
+        msgResult = Msg_BindRcDeserialize(buffer, bufferLength);
         break;
     }
     
@@ -269,14 +262,9 @@ uint8_t* Msg_Serializer(moduleMsg_t* msg, uint8_t* buffer, uint32_t bufferLength
         result = Msg_ErrorSerialize(msg, buffer, bufferLength);
         break;
     }
-        case Msg_BindRc1_e:
+        case Msg_BindRc_e:
     {
-        result = Msg_BindRc1Serialize(msg, buffer, bufferLength);
-        break;
-    }
-        case Msg_BindRc2_e:
-    {
-        result = Msg_BindRc2Serialize(msg, buffer, bufferLength);
+        result = Msg_BindRcSerialize(msg, buffer, bufferLength);
         break;
     }
         case Msg_FlightModeReq_e:

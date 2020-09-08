@@ -42,6 +42,10 @@
 #include "FlightController/inc/control_mode_handler.h"
 #include "EventHandler/inc/event_handler.h"
 
+
+#define SATELITE1_USART (0)
+#define SATELITE2_USART (2)
+
 /*
  * FreeRTOS hook (or callback) functions that are defined in this file.
  */
@@ -60,13 +64,15 @@ int main( void )
 
   /* Create all tasks used in the application.*/
   eventHandler_t* evHandlerM = Event_CreateHandler(FC_Ctrl_e,1);
-  eventHandler_t* evHandlerSatellite = Event_CreateHandler(RC_SetpointGen_e,0);
+  eventHandler_t* evHandlerSatelliteInternal = Event_CreateHandler(RC_SetpointGen_e,0);
+  eventHandler_t* evHandlerSatelliteExternal = Event_CreateHandler(RC_SetpointGen2_e,0);
+
   eventHandler_t* evHandlerComRx = Event_CreateHandler(FC_SerialIOrx_e,0);
   eventHandler_t* evHandlerComTx = Event_CreateHandler(FC_SerialIOtx_e,0);
 
   eventHandler_t* evHandlerLed = Event_CreateHandler(FC_Led_e,0);
 
-  if(!evHandlerM || !evHandlerComRx || !evHandlerLed || !evHandlerSatellite)
+  if(!evHandlerM || !evHandlerComRx || !evHandlerLed || !evHandlerSatelliteInternal || !evHandlerSatelliteExternal)
   {
     for(;;); //Error!
   }
@@ -74,14 +80,17 @@ int main( void )
 
 
   create_main_control_task(evHandlerM);
-  Satellite_CreateReceiverTask(evHandlerSatellite);
+  Satellite_CreateReceiverTask(evHandlerSatelliteInternal, SATELITE1_USART, rc1PwrCtrl, '1');
+  Satellite_CreateReceiverTask(evHandlerSatelliteExternal, SATELITE2_USART, rc2PwrCtrl, '2');
+
   Led_CreateLedControlTask(evHandlerLed);
   Com_CreateTasks(evHandlerComRx, evHandlerComTx); // Creates two tasks, RX and TX.
 
   Event_InitHandler(evHandlerM, evHandlerComRx);
   Event_InitHandler(evHandlerM, evHandlerComTx);
   Event_InitHandler(evHandlerM, evHandlerLed);
-  Event_InitHandler(evHandlerM, evHandlerSatellite);
+  Event_InitHandler(evHandlerM, evHandlerSatelliteInternal);
+  Event_InitHandler(evHandlerM, evHandlerSatelliteExternal);
 
   /* Start the RTOS scheduler. */
   vTaskStartScheduler();
