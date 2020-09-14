@@ -33,7 +33,8 @@
 #include "Test/DummyI2C/Dummy_i2c.h"
 #include "Test/SignalProcessing/signal_processing_tester.h"
 #include "StateEstimator/inc/state_estimator.h"
-#include "SpectrumSatellite/inc/satellite_receiver_task.h"
+#include "SpectrumSatellite/inc/satellite_receiver_public.h"
+#include "SpectrumSatellite/inc/Satellite_SetpointHandler.h"
 #include "StateEstimator/inc/signal_processing.h"
 #include "FlightController/inc/control_mode_handler.h"
 
@@ -677,7 +678,7 @@ uint8_t SigProcess_TestSpectrumToState(TestFw_t* obj)
   // Warning! Do not do this in real code. Use the Satellite_init function.
   // Here we only use the divisor and multiplier fields, so we populate them
   // Separately.
-  Satellite_t satelite_obj = {0};
+  spectrumSpHandler_t satelite_obj = {0};
   satelite_obj.multiplier = INT_TO_FIXED(1, FP_16_16_SHIFT);
   satelite_obj.throMult = 1;
   //Populate the receiver_data with known data.
@@ -689,7 +690,7 @@ uint8_t SigProcess_TestSpectrumToState(TestFw_t* obj)
   receiver_data.ch[3].value = (uint16_t)(-512 + SATELLITE_CH_CENTER); // YAW tests a negative value.
 
 
-  Satellite_MapToSetpoint(&satelite_obj, &receiver_data, &state_data);
+  SatSpHandler_MapToSetpoint(&satelite_obj, &receiver_data, &state_data);
   uint8_t result = 0;
   //Compare with expected state. Expected state is 1<<16. Add some
   // head room for rounding errors.

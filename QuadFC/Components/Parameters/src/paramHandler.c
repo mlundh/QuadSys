@@ -830,6 +830,10 @@ uint8_t ParamHandler_HandleHasParamMsg(eventHandler_t* obj, void* data, moduleMs
             return 0; // master does not answer to broadcasts of this type.
         }
         // Save the address of the sender, this address has a paramHandler.
+        if(handlerObj->nrRegisteredHandlers >= MAX_PARAM_HANDLERS)
+        {
+            configASSERT(0);
+        }
         handlerObj->handlers[handlerObj->nrRegisteredHandlers++] = Msg_GetSource(msg);
     }
     else

@@ -45,6 +45,7 @@
 #include "../../Messages/inc/Msg_NewState.h"
 #include "../../Messages/inc/Msg_HasParam.h"
 #include "../../Messages/inc/Msg_ParamFc.h"
+#include "../../Messages/inc/Msg_SpectrumData.h"
 
 
 moduleMsg_t* Msg_Parse(uint8_t* buffer, uint32_t bufferLength)
@@ -197,6 +198,12 @@ moduleMsg_t* Msg_Parse(uint8_t* buffer, uint32_t bufferLength)
         break;
     }
     
+    case Msg_SpectrumData_e:
+    {
+        msgResult = Msg_SpectrumDataDeserialize(buffer, bufferLength);
+        break;
+    }
+    
     default:
     {
     }
@@ -325,6 +332,11 @@ uint8_t* Msg_Serializer(moduleMsg_t* msg, uint8_t* buffer, uint32_t bufferLength
         case Msg_ParamFc_e:
     {
         result = Msg_ParamFcSerialize(msg, buffer, bufferLength);
+        break;
+    }
+        case Msg_SpectrumData_e:
+    {
+        result = Msg_SpectrumDataSerialize(msg, buffer, bufferLength);
         break;
     }
     

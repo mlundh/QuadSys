@@ -398,24 +398,22 @@ uint8_t Event_SendBCInternal(eventHandler_t* obj, moduleMsg_t* msg, uint8_t dele
     uint8_t result = 1;
     for(int i = 0; i < obj->registeredHandlers; i++)
     {
-        if(obj->handlerIds[i] != obj->handlerId) // do not send to self.
+        //Send to all, including self.
+        uint8_t subscribed = Event_IsSubscribed(obj->handlerSubscriptions[i], msg->type);
+        if(subscribed) // only send if the receiver has subscribed to this message.
         {
-            uint8_t subscribed = Event_IsSubscribed(obj->handlerSubscriptions[i], msg->type);
-            if(subscribed) // only send if the receiver has subscribed to this message.
+            // clone the message so that all subscribers gets a unique message.
+            // TODO save number of subscribers so we can send the initial message.
+            moduleMsg_t* clone = Msg_Clone(msg);
+            if(!xQueueSendToBack(obj->handlers[i]->eventQueue, &clone, EVENT_BLOCK_TIME))
             {
-                // clone the message so that all subscribers gets a unique message.
-                // TODO save number of subscribers so we can send the initial message.
-                moduleMsg_t* clone = Msg_Clone(msg);
-                if(!xQueueSendToBack(obj->handlers[i]->eventQueue, &clone, EVENT_BLOCK_TIME))
-                {
-                    LOG_ENTRY(FC_SerialIOtx_e, obj, "Event: Error. Failed sendToBack BC internal.");
-                    result = 0;
-                    Msg_Delete(&msg);
-                    Msg_Delete(&clone);
-                }
+                LOG_ENTRY(FC_SerialIOtx_e, obj, "Event: Error. Failed sendToBack BC internal.");
+                result = 0;
+                Msg_Delete(&msg);
+                Msg_Delete(&clone);
             }
         }
-    }
+          }
     if(delete)
     {
         Msg_Delete(&msg); // original message is deleted.

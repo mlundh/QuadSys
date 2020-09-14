@@ -38,58 +38,162 @@
  * 
  *
  */ 
-#include "SpectrumSatellite/inc/satellite_receiver_task.h"
+
+#include "FreeRTOS.h"
+#include "task.h"
+#include "Messages/inc/common_types.h"
+#include "Components/Parameters/inc/paramHandler.h"
+
 #include "SpectrumSatellite/inc/satellite_receiver_public.h"
 #include "QuadFC/QuadFC_Peripherals.h"
-#include "SetpointHandler/inc/setpoint_handler.h"
 #include "EventHandler/inc/event_handler.h"
 #include "Messages/inc/common_types.h"
+#include "Messages/inc/Msg_BindRc.h"
+#include "Messages/inc/Msg_SpectrumData.h"
 #include "Messages/inc/Msg_FlightMode.h"
 #include "Messages/inc/Msg_CtrlMode.h"
-#include "Messages/inc/Msg_BindRc.h"
 #include "HAL/QuadFC/QuadFC_Gpio.h"
 #include "Components/AppLog/inc/AppLog.h"
 
 /*Include utilities*/
 #include "Utilities/inc/my_math.h"
 
-uint8_t Satellite_FModeCB(eventHandler_t* obj, void* data, moduleMsg_t* eData);
-uint8_t Satellite_CtrlModeCB(eventHandler_t* obj, void* data, moduleMsg_t* eData);
+
+/**
+ * @brief Handles a satellite receiver.
+ *
+ * The module that handles a satellite receiver. It will first build confidence in the
+ * configuration since multiple configurations are supported. The transmitter-receiver
+ * combination determines the frame configuration.
+ *
+ */
+
+/// Defines used by the module.
+#define SATELLITE_DATA_MASK 0x7ff            /*Data contained in the 11 least significant bits*/
+#define SATELLITE_CHANNEL_MASK 0x7800        /*Channel number contained in the 4 bits above data.*/
+
+#define BAUD_SATELLITE 115200
+
+#define SATELLITE_MESSAGE_LENGTH 16
+
+#define CHANNEL_CONFIDENCE (1)
+#define FRAME_CONFIDENCE_MAX (15)
+#define FRAME_CONFIDENCE_THRESHOLD (10)
+#define MAX_NUMBER_OF_FRAME_TYPES (3)
+
+
+/**
+ * Struct describing one frame type. There might be multiple frame types needed
+ * to transmit all data from the satellite receiver. Each frame carries a fixed set
+ * of channels.
+ */
+typedef struct spektrum_frame {
+  uint16_t channels; // Used as bit-field indexed by channel no.
+  uint8_t confidence;
+} spektrum_frame_config_t;
+
+/**
+ * Struct describing the current frame configuration. First the module will build
+ * confidence in the setup, and only when a confident frame configuration is preset
+ * will the module send setpoint data to the setpoint handler.
+ */
+typedef struct spectrum_config {
+  spektrum_frame_config_t frame_types_present[MAX_NUMBER_OF_FRAME_TYPES];
+  uint8_t confident_frame_config;
+  uint16_t channels_available; // Used as bit-field indexed by channel no. Contains all channels in all frames.
+}spectrum_config_t;
+
+
+/**
+ * Struct containing all the data the "object" needs.
+ */
+typedef struct Satellite
+{
+  spektrum_data_t* decoded_data;
+  spectrum_config_t* configuration;
+  uint8_t *satellite_receive_buffer;
+  eventHandler_t* evHandler;
+  paramHander_t* paramHandler;
+  uint32_t bindMode;
+  uint32_t uartNr;
+  GpioName_t pwrCtrl;
+  FlightMode_t          current_flight_mode_state;
+  CtrlMode_t            current_control_mode;
+}Satellite_t;
+
+/**
+ * Initialize the satellite module. Allocates all data fields needed by the task.
+ * @param stateHandler
+ * @param setpointHandler
+ * @return Null if fail, pointer to a struct instance otherwise.
+ */
+Satellite_t* Satellite_Create(eventHandler_t* eventMaster, uint32_t uartNr, GpioName_t pwrCtrl, char index);
+
+/**
+ * @brief The receiver task. Reads serial data and decodes it. Then transmits the decoded setpoint to
+ * the setpoint handler.
+ *
+ * It is necessary to sync communication with the satellite receiver to
+ * ensure that each frame is captured as a whole. A frame consists of
+ * 16 consecutive bytes that should be received without delay. A new
+ * frame should arrive every 11 or 22 ms.
+ *
+ * @param pvParameters  Task parameters.
+ */
+void Satellite_ReceiverTask( void *pvParameters );
+
+/**
+ * Decode raw data from the serial port.
+ * @param data              Raw data from the port.
+ * @param configuration     A handle to the current configuration.
+ * @param spectrum_data     Output data.
+ * @return
+ */
+int Satellite_DecodeSignal(uint8_t* data, spectrum_config_t* configuration, spektrum_data_t* spectrum_data);
+
+/**
+ * Lock the valid frame types and number of channels needed for a valid setpoint. This function
+ * should be called a number of times with decoded data (it only needs the bitmask of the
+ * received channels) to lock a frame setup.
+ * @param configuration                 Pointer to a configuration struct.
+ * @param channels_in_current_frame     each bit represents one bit in the frame that is to be registered.
+ * @return
+ */
+uint8_t Satellite_LockFrameType(spectrum_config_t* configuration, uint16_t channels_in_current_frame);
+
+
 uint8_t Satellite_BindCB(eventHandler_t* obj, void* data, moduleMsg_t* eData);
 
-Satellite_t* Satellite_Init(eventHandler_t* eventHandler, uint32_t uartNr, GpioName_t pwrCtrl, char index)
+
+uint8_t Satellite_FModeCB(eventHandler_t* obj, void* data, moduleMsg_t* eData);
+
+uint8_t Satellite_CtrlModeCB(eventHandler_t* obj, void* data, moduleMsg_t* eData);
+
+Satellite_t* Satellite_Create(eventHandler_t* eventHandler, uint32_t uartNr, GpioName_t pwrCtrl, char index)
 {
     /* Create the queue used to pass things to the display task*/
     Satellite_t* taskParam = pvPortMalloc(sizeof(Satellite_t));
     taskParam->decoded_data = pvPortMalloc(sizeof(spektrum_data_t));
     taskParam->configuration = pvPortMalloc(sizeof(spectrum_config_t));
-    taskParam->setpoint = pvPortMalloc(sizeof(state_data_t));
     taskParam->satellite_receive_buffer = pvPortMalloc(SATELLITE_MESSAGE_LENGTH * 2);
-    taskParam->multiplier = INT_TO_FIXED(1, FP_16_16_SHIFT);
-    taskParam->throMult = INT_TO_FIXED(1, FP_16_16_SHIFT);
     taskParam->bindMode = 9;
     taskParam->uartNr = uartNr;
     taskParam->pwrCtrl = pwrCtrl;
-    taskParam->current_flight_mode_state = fmode_not_available;
-    taskParam->current_control_mode = Control_mode_not_available;
     taskParam->evHandler = eventHandler;
     char name[] = {"Spectrum_X"};
     name[9]=index;
-    taskParam->paramHandler = ParamHandler_CreateObj(3,eventHandler, name, 0); // Master handles all communication, we do not want to be master!
+    taskParam->paramHandler = ParamHandler_CreateObj(1,eventHandler, name, 0); // Master handles all communication, we do not want to be master!
+    taskParam->current_flight_mode_state = fmode_not_available;
+    taskParam->current_control_mode = Control_mode_not_available;
 
-
+    Event_RegisterCallback(taskParam->evHandler, Msg_BindRc_e, Satellite_BindCB, taskParam);
     Event_RegisterCallback(taskParam->evHandler, Msg_FlightMode_e, Satellite_FModeCB, taskParam);
     Event_RegisterCallback(taskParam->evHandler, Msg_CtrlMode_e, Satellite_CtrlModeCB, taskParam);
 
-    Event_RegisterCallback(taskParam->evHandler, Msg_BindRc_e, Satellite_BindCB, taskParam);
-
-    // Enable receiver sensitivity adjustment.
-    Param_CreateObj(0, variable_type_fp_16_16, readWrite, &taskParam->multiplier, "mult", ParamHandler_GetParam(taskParam->paramHandler));
-    Param_CreateObj(0, variable_type_fp_16_16, readWrite, &taskParam->throMult, "ThrottleMult", ParamHandler_GetParam(taskParam->paramHandler));
     Param_CreateObj(0, variable_type_uint32, readWrite, &taskParam->bindMode, "BindMode", ParamHandler_GetParam(taskParam->paramHandler));
 
 
-    if( !taskParam || !taskParam->decoded_data || !taskParam->configuration || !taskParam->setpoint
+    if( !taskParam || !taskParam->decoded_data || !taskParam->configuration
             || !taskParam->satellite_receive_buffer || !taskParam->evHandler)
     {
         return NULL;
@@ -101,9 +205,6 @@ Satellite_t* Satellite_Init(eventHandler_t* eventHandler, uint32_t uartNr, GpioN
 
         spectrum_config_t tmpConfig = {{{0}}};
         *taskParam->configuration = tmpConfig;
-
-        state_data_t tmpSetpoint = {{0}};
-        *taskParam->setpoint = tmpSetpoint;
     }
 
     // Turn on the power to the module.
@@ -122,7 +223,7 @@ void Satellite_CreateReceiverTask(  eventHandler_t* eventHandler, uint32_t uartN
     uint8_t* receiver_buffer_driver = pvPortMalloc(
             sizeof(uint8_t) * SATELLITE_MESSAGE_LENGTH*2 );
 
-    Satellite_t *SatelliteParam = Satellite_Init(eventHandler, uartNr, pwrCtrl, index);
+    Satellite_t *SatelliteParam = Satellite_Create(eventHandler, uartNr, pwrCtrl, index);
 
 
     if(!SatelliteParam || !receiver_buffer_driver)
@@ -185,7 +286,6 @@ void Satellite_ReceiverTask(void *pvParameters)
 
     spektrum_data_t* decoded_data = param->decoded_data;
     spectrum_config_t* configuration = param->configuration;
-    state_data_t* setpoint = param->setpoint;
     uint8_t *satellite_receive_buffer = param->satellite_receive_buffer;
 
     /*Like most tasks this is realized by a never-ending loop*/
@@ -214,13 +314,9 @@ void Satellite_ReceiverTask(void *pvParameters)
                 // If all channels in the configuration are present then we have a complete setpoint.
                 if (decoded_data->channels_merged == configuration->channels_available)
                 {
-                    // We have a complete set of channels.
-                    Satellite_MapToSetpoint(param, decoded_data, setpoint);
-                    moduleMsg_t* msg = Msg_NewSetpointCreate(FC_Broadcast_e, 0, *setpoint, 1, MESSAGE_VALID_FOR_MS);
-                    Event_Send(param->evHandler, msg);
+                    moduleMsg_t* msg = Msg_SpectrumDataCreate(FC_Broadcast_e, 0, *decoded_data);
 
-                    Satellite_UpdateState(param, decoded_data);
-                    Satellite_UpdateControlMode(param, decoded_data);
+                    Event_Send(param->evHandler, msg);
 
                 }
             }
@@ -409,111 +505,6 @@ uint8_t Satellite_LockFrameType(spectrum_config_t* configuration, uint16_t chann
     return ret;
 }
 
-void Satellite_MapToSetpoint(Satellite_t* obj, spektrum_data_t *reciever_data, state_data_t *setpoint)
-{
-    //subtract center point and convert to State scale.
-
-    setpoint->state_bf[thrust_sp]              = (my_mult(my_mult((reciever_data->ch[0].value), SPECTRUM_TO_CTRL_THROTTLE, 0), obj->throMult, FP_16_16_SHIFT)); // THRO
-    setpoint->state_bf[yaw_rate_bf]            = (my_mult(my_mult((reciever_data->ch[3].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_RATE, FP_16_16_SHIFT), obj->multiplier, FP_16_16_SHIFT)); // YAW
-    setpoint->state_bf[pitch_rate_bf]          = (my_mult(my_mult((reciever_data->ch[2].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_RATE, FP_16_16_SHIFT), obj->multiplier, FP_16_16_SHIFT)); // PITCH
-    setpoint->state_bf[roll_rate_bf]           = (my_mult(my_mult((reciever_data->ch[1].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_RATE, FP_16_16_SHIFT), obj->multiplier, FP_16_16_SHIFT)); // ROLL
-
-    setpoint->state_bf[pitch_bf]          = (my_mult(my_mult((reciever_data->ch[2].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_ANGLE, FP_16_16_SHIFT), obj->multiplier, FP_16_16_SHIFT)); // PITCH
-    setpoint->state_bf[roll_bf]           = (my_mult(my_mult((reciever_data->ch[1].value - SATELLITE_CH_CENTER), SPECTRUM_TO_STATE_ANGLE, FP_16_16_SHIFT), obj->multiplier, FP_16_16_SHIFT)); // ROLL
-
-    return;
-}
-
-uint8_t Satellite_UpdateState(Satellite_t* obj, spektrum_data_t *merged_data)
-{
-    if(obj->current_flight_mode_state == fmode_init || obj->current_flight_mode_state == fmode_not_available)
-    {
-        return 0; // Dont do anyting during init or fault condition.
-    }
-    /*Disarm requested*/
-    uint8_t ret = 1;
-    if ((merged_data->ch[4].value > SATELLITE_CH_CENTER) // Flap is on
-            && (merged_data->ch[0].value < 40)) // throttle is low
-    {
-        if(obj->current_flight_mode_state != fmode_disarming && obj->current_flight_mode_state != fmode_disarmed)
-        {
-            moduleMsg_t* msg = Msg_FlightModeReqCreate(FC_Broadcast_e, 0, fmode_disarming);
-            Event_Send(obj->evHandler, msg);
-            // latch to avoid multiple events. Will get updated to real system state in event CB.
-            obj->current_flight_mode_state = fmode_disarming;
-        }
-    }
-    /*Arming request*/
-    else if ((merged_data->ch[4].value < SATELLITE_CH_CENTER) // Flap is off
-            && (merged_data->ch[0].value < 40)) // throttle is low
-    {
-        if(obj->current_flight_mode_state != fmode_arming && obj->current_flight_mode_state != fmode_armed)
-        {
-            moduleMsg_t* msg = Msg_FlightModeReqCreate(FC_Broadcast_e, 0, fmode_arming);
-            Event_Send(obj->evHandler, msg);
-            // latch to avoid multiple events. Will get updated to real system state in event CB.
-            obj->current_flight_mode_state = fmode_arming;
-
-        }
-    }
-    return ret;
-}
-
-
-uint8_t Satellite_UpdateControlMode(Satellite_t* obj, spektrum_data_t *merged_data)
-{
-    if(obj->current_flight_mode_state == fmode_init || obj->current_flight_mode_state == fmode_not_available)
-    {
-        return 0; // Dont do anyting during init or fault condition.
-    }
-    /*Change to attitude mode requested.*/
-    uint8_t ret = 1;
-    if ((merged_data->ch[5].value > SATELLITE_CH_CENTER) // gear is on
-            && (merged_data->ch[0].value < 40)) // throttle is low
-    {
-        if(obj->current_control_mode != Control_mode_attitude)
-        {
-            moduleMsg_t* msg = Msg_CtrlModeReqCreate(FC_Broadcast_e, 0, Control_mode_attitude);
-            Event_Send(obj->evHandler, msg);
-            // latch to avoid multiple events. Will get updated to real system state in event CB.
-            obj->current_control_mode = Control_mode_attitude;
-        }
-    }
-    /*Change to rate mode requested.*/
-    else if ((merged_data->ch[5].value < SATELLITE_CH_CENTER) // gear is off
-            && (merged_data->ch[0].value < 40)) // throttle is low
-    {
-        if(obj->current_control_mode != Control_mode_rate)
-        {
-            moduleMsg_t* msg = Msg_CtrlModeReqCreate(FC_Broadcast_e, 0, Control_mode_rate);
-            Event_Send(obj->evHandler, msg);
-            // latch to avoid multiple events. Will get updated to real system state in event CB.
-            obj->current_control_mode = Control_mode_rate;
-        }
-    }
-    return ret;
-}
-uint8_t Satellite_FModeCB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
-{
-    if(!obj || !data || !eData)
-    {
-        return 0;
-    }
-    Satellite_t* satellite = (Satellite_t*)data; // data should always be the current handler.
-    satellite->current_flight_mode_state =  Msg_FlightModeGetMode(eData);
-    return 1;
-}
-uint8_t Satellite_CtrlModeCB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
-{
-    if(!obj || !data || !eData)
-    {
-        return 0;
-    }
-    Satellite_t* satellite = (Satellite_t*)data; // data should always be the current handler.
-    satellite->current_control_mode = Msg_CtrlModeGetMode(eData);
-    return 1;
-}
-
 uint8_t Satellite_BindCB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
 {
     if(!obj || !data || !eData)
@@ -574,5 +565,27 @@ uint8_t Satellite_BindCB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
     {
         LOG_ENTRY(FC_SerialIOtx_e,satellite->evHandler, "Only allowed to enter bind in disarmed mode.");
     }
+    return 1;
+}
+
+uint8_t Satellite_FModeCB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
+{
+    if(!obj || !data || !eData)
+    {
+        return 0;
+    }
+    Satellite_t* satellite = (Satellite_t*)data; // data should always be the current handler.
+    satellite->current_flight_mode_state =  Msg_FlightModeGetMode(eData);
+    return 1;
+}
+
+uint8_t Satellite_CtrlModeCB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
+{
+    if(!obj || !data || !eData)
+    {
+        return 0;
+    }
+    Satellite_t* satellite = (Satellite_t*)data; // data should always be the current handler.
+    satellite->current_control_mode = Msg_CtrlModeGetMode(eData);
     return 1;
 }

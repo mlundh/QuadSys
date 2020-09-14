@@ -48,6 +48,7 @@
 #include "QuadFC/QuadFC_MotorControl.h"
 #include "Parameters/inc/parameters.h"
 #include "SetpointHandler/inc/setpoint_handler.h"
+#include "SpectrumSatellite/inc/Satellite_SetpointHandler.h"
 #include "FlightController/inc/control_mode_handler.h"
 #include "FlightModeHandler/inc/flight_mode_handler.h"
 #include "Log/inc/logHandler.h"
@@ -70,6 +71,7 @@ typedef struct mainTaskParams
     FlightModeHandler_t* flightModeHandler;
     StateEst_t* stateEst;
     SpHandler_t* setPointHandler;
+    spectrumSpHandler_t* spectrumSpHandler;
     CtrlModeHandler_t * CtrlModeHandler;
     eventHandler_t* evHandler;
     LogHandler_t* logHandler;
@@ -103,6 +105,7 @@ void create_main_control_task(eventHandler_t* evHandler)
     taskParam->flightModeHandler = FMode_CreateFmodeHandler(evHandler); // registers event handler for flight mode requests.
     taskParam->stateEst = StateEst_Create(ParamHandler_GetParam(taskParam->paramHandler));
     taskParam->setPointHandler = SpHandl_Create(evHandler);
+    taskParam->spectrumSpHandler = SatSpHandler_CreateObj(evHandler, ParamHandler_GetParam(taskParam->paramHandler));
     taskParam->CtrlModeHandler = Ctrl_CreateModeHandler(evHandler);
     taskParam->evHandler = evHandler;
     taskParam->logHandler = LogHandler_CreateObj(20,evHandler,ParamHandler_GetParam(taskParam->paramHandler),"LogSctr",0);
@@ -111,7 +114,7 @@ void create_main_control_task(eventHandler_t* evHandler)
     if (   !taskParam                    || !taskParam->ctrl             || !taskParam->setpoint
             || !taskParam->state             || !taskParam->control_signal   // TODO!!|| !taskParam->motorControl
             || !taskParam->flightModeHandler || !taskParam->stateEst         || !taskParam->setPointHandler
-            || !taskParam->logHandler        || !taskParam->paramHandler)
+            || !taskParam->logHandler        || !taskParam->paramHandler || !taskParam->spectrumSpHandler)
     {
         for ( ;; )
         {

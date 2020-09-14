@@ -1,7 +1,7 @@
 /*
- * satellite_receiver_public.h
+ * Msg_SpectrumData.c
  *
- * Copyright (C) 2016 Martin Lundh
+ * Copyright (C) 2019 Martin Lundh
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,34 +21,29 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef PORTLAYER_COMMUNICATION_INC_SATELLITE_RECEIVER_PUBLIC_H_
-#define PORTLAYER_COMMUNICATION_INC_SATELLITE_RECEIVER_PUBLIC_H_
+
+#ifndef MODULES_MESSAGES_INC_MSG_SPECTRUMDATA_H_
+#define MODULES_MESSAGES_INC_MSG_SPECTRUMDATA_H_
+
+#include "MsgBase/inc/message_base.h"
 #include "Messages/inc/common_types.h"
-#include "EventHandler/inc/event_handler.h"
+#include "Messages/inc/msg_enums.h"
+#include "Messages/inc/msgAddr.h"
+
+#include "SpectrumSatellite/inc/satellite_receiver_public.h"
 
 
-#define NUMBER_OF_CHANNELS (15)
+moduleMsg_t* Msg_SpectrumDataCreate(uint32_t destination, uint8_t msgNr
+    , spektrum_data_t data);
+
+spektrum_data_t Msg_SpectrumDataGetData(moduleMsg_t* msg);
+
+void Msg_SpectrumDataSetData(moduleMsg_t* msg, spektrum_data_t data);
 
 
-/**
- * Struct describing the value of the specific channel.
- */
-typedef struct spektrum_channel {
-  uint16_t value;
-} spektrum_channel_t;
+uint8_t* Msg_SpectrumDataSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
-/**
- * Struct describing the current data
- */
-typedef struct spektrum_data {
-  spektrum_channel_t ch[NUMBER_OF_CHANNELS];
-  uint16_t channels_merged;     // Used as bit-field indexed by channel no. Contains all the merged channels.
-  uint16_t channels_last_read; // Used as bit-field indexed by channel no. Contains the channels in the last frame.
-} spektrum_data_t;
+moduleMsg_t* Msg_SpectrumDataDeserialize(uint8_t* buffer, uint32_t buffer_size);
 
-/**
- * Public interface for the satellite receiver task.
- */
-void Satellite_CreateReceiverTask( eventHandler_t* eventHandler, uint32_t uartNr, GpioName_t pwrCtrl, char index);
+#endif /* MODULES_MESSAGES_INC_MSG_SPECTRUMDATA_H_ */
 
-#endif /* PORTLAYER_COMMUNICATION_INC_SATELLITE_RECEIVER_PUBLIC_H_ */

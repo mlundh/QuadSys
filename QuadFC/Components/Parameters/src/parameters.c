@@ -20,7 +20,7 @@ void Param_SetChild(param_obj_t *current, param_obj_t *child)
 {
     if(!current || !child || !(current->registered_children < current->num_variables))
     {
-        for(;;);//error..
+        configASSERT(0);
     }
     current->children[current->registered_children++] = child;
 }
