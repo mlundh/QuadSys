@@ -33,6 +33,7 @@
 #include "FlightController/inc/control_mode_handler.h"
 #include "Messages/inc/Msg_CtrlMode.h"
 #include "HAL/QuadFC/QuadFC_Gpio.h"
+#include "Messages/inc/Msg_ValidSp.h"
 
 #define NR_LEDS (6)
 #define LED_TASK_DELAY (20UL / portTICK_PERIOD_MS)
@@ -82,6 +83,7 @@ void Led_update( ledState_t* ledState, LedName_t pin);
 uint8_t Led_HandleFlightMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
 uint8_t Led_HandleCtrltMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
 uint8_t Led_HandlePeripheralError(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
+uint8_t Led_HandleValidSp(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
 
 void Led_toggleLed(ledState_t* ledState, LedName_t pin);
 
@@ -111,6 +113,7 @@ void Led_CreateLedControlTask(eventHandler_t* evHandler )
   Event_RegisterCallback(ledParams->evHandler, Msg_FlightMode_e,    Led_HandleFlightMode,      ledParams);
   Event_RegisterCallback(ledParams->evHandler, Msg_CtrlMode_e,      Led_HandleCtrltMode,       ledParams);
   Event_RegisterCallback(ledParams->evHandler, Msg_Error_e,         Led_HandlePeripheralError, ledParams);
+  Event_RegisterCallback(ledParams->evHandler, Msg_ValidSp_e,       Led_HandleValidSp,         ledParams);
 
 
   portBASE_TYPE create_result;
@@ -320,4 +323,21 @@ void Led_resetLeds(ledTaskParams * param)
   param->ledState[ledmode].mode = led_Off;
   param->ledState[ledHeartBeat].mode  = led_Off;
   param->ledState[ledSetPoint].mode  = led_Off;
+}
+
+uint8_t Led_HandleValidSp(eventHandler_t* obj, void* taskParam, moduleMsg_t* data)
+{
+  ledTaskParams * param = (ledTaskParams*)(taskParam);
+  uint32_t validSp = Msg_ValidSpGetValid(data);
+
+  if(validSp)
+  {
+    param->ledState[ledSetPoint].mode    = led_const_on;
+  }
+  else
+  {
+    param->ledState[ledSetPoint].mode    = led_Off;
+  }
+  
+  return 1;
 }

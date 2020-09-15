@@ -28,6 +28,7 @@
 #include "Messages/inc/Msg_NewSetpoint.h"
 #include "SetpointHandler/inc/setpoint_handler.h"
 #include "EventHandler/inc/event_handler.h"
+#include "Messages/inc/Msg_ValidSp.h"
 
 /**
  * Interface function for sending setpoints.If a still valid, higher setpoint
@@ -55,7 +56,8 @@ struct SpObj
 {
     QueueHandle_t xQueue_Sp_Handl;
     TimerHandle_t xTimer;
-
+    uint32_t      validSp;
+    eventHandler_t* evHandler;
 };
 
 const static uint8_t timerBlockTimeMs = 1;
@@ -72,12 +74,13 @@ SpHandler_t *SpHandl_Create(eventHandler_t* eHandler)
     SpHandler_t* obj = pvPortMalloc(sizeof(SpHandler_t));
     obj->xQueue_Sp_Handl = xQueueCreate( SP_HANDL_QUEUE_LENGTH, SP_HANDL_QUEUE_ITEM_SIZE );
     obj->xTimer = xTimerCreate("Timer", 1, pdFALSE, ( void * ) obj, SPHandl_TimerCallback);
+    obj->validSp = 0;
     if(!obj || ! obj->xQueue_Sp_Handl)
     {
         return NULL;
     }
     Event_RegisterCallback(eHandler, Msg_NewSetpoint_e, SpHandl_SpCB, obj);
-
+    obj->evHandler = eHandler;
     return obj;
 }
 
@@ -112,6 +115,7 @@ uint8_t SpHandl_SetSetpoint(SpHandler_t* obj, state_data_t* setpoint, uint8_t va
     {
         //Clear the queue, we are not able to set a correct timer value!
         xQueueReset(obj->xQueue_Sp_Handl);
+        obj->validSp = 0;
         return 0;
     }
     // Reset the timer.
@@ -119,6 +123,7 @@ uint8_t SpHandl_SetSetpoint(SpHandler_t* obj, state_data_t* setpoint, uint8_t va
     {
         //Clear the queue, we are not able to set a correct timer value!
         xQueueReset(obj->xQueue_Sp_Handl);
+        obj->validSp = 0;
         return 0;
     }
     BaseType_t write_result = xQueueOverwrite( obj->xQueue_Sp_Handl, &setpointdata );
@@ -147,6 +152,9 @@ void SPHandl_TimerCallback( TimerHandle_t pxTimer )
 {
     SpHandler_t *obj = ( SpHandler_t * ) pvTimerGetTimerID( pxTimer );
     xQueueReset(obj->xQueue_Sp_Handl);
+    obj->validSp = 0;
+    moduleMsg_t* msg = Msg_ValidSpCreate(FC_Broadcast_e, 0, obj->validSp);
+    Event_Send(obj->evHandler, msg);
     //TODO write error message!
 }
 
@@ -160,10 +168,12 @@ uint8_t SpHandl_SpCB(eventHandler_t* obj, void* data, moduleMsg_t* msg)
     SpHandler_t* setpointHobj = (SpHandler_t*)data; // data should always be the current handler.
     state_data_t state = Msg_NewSetpointGetSetpoint(msg); // TODO use pointers?
 
-    uint8_t result = SpHandl_SetSetpoint(setpointHobj, &state, Msg_NewSetpointGetValidfor(msg), Msg_NewSetpointGetPriority(msg));
-    if(!result)
+    SpHandl_SetSetpoint(setpointHobj, &state, Msg_NewSetpointGetValidfor(msg), Msg_NewSetpointGetPriority(msg));
+    if(!setpointHobj->validSp)
     {
-        // Do nothing
+        setpointHobj->validSp = 1;
+        moduleMsg_t* msgSp = Msg_ValidSpCreate(FC_Broadcast_e, 0, setpointHobj->validSp);
+        Event_Send(obj, msgSp);
     }
     return 1;
 }

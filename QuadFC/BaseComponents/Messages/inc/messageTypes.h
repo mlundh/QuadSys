@@ -37,6 +37,7 @@ enum messageTypes
 	Msg_HasParam_e,
 	Msg_ParamFc_e,
 	Msg_SpectrumData_e,
+	Msg_ValidSp_e,
 
 	Msg_LastType_e,
 };
@@ -78,6 +79,7 @@ static const char* const messageTypesStr[] =
 	"Msg_HasParam",
 	"Msg_ParamFc",
 	"Msg_SpectrumData",
+	"Msg_ValidSp",
 
 	"Msg_LastType",
 };
