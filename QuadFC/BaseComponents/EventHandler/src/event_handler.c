@@ -327,6 +327,8 @@ uint8_t Event_SendGeneric(eventHandler_t* obj, moduleMsg_t* msg)
         }
         else
         {
+            Msg_Delete(&msg);
+            LOG_ENTRY(FC_SerialIOtx_e, obj, "Event: Error. Unknown destination.");
             // We got a message without destination...
         }
     }
@@ -446,7 +448,6 @@ uint8_t Event_SendSubscription(eventHandler_t* obj)
     Event_CopySubscription((uint32_t*)payload, obj->subscriptions);
 
     Msg_SetSource(msg, obj->handlerId);
-    // Send to everyone except self.
 
     Event_SendBCInternal(obj, msg, 1);
     

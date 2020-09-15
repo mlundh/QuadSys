@@ -77,6 +77,8 @@ uint8_t AppLogHandler_TestReport(TestFw_t* obj)
 
     Event_InitHandler(evHandlerAppLog, evHandlerTester);
 
+    while(Event_Receive(evHandlerAppLog,2)){}
+    while(Event_Receive(evHandlerTester,2)){}
 
     uint8_t result = 1;
     if(!logobj || !evHandlerAppLog || !evHandlerTester)
@@ -127,7 +129,9 @@ uint8_t AppLogHandler_TestReportMacro(TestFw_t* obj)
 
     Event_InitHandler(evHandlerAppLog, evHandlerTester);
 
-
+    while(Event_Receive(evHandlerAppLog,2)){}
+    while(Event_Receive(evHandlerTester,2)){}
+    
     uint8_t result = 1;
     if(!logobj || !evHandlerAppLog || !evHandlerTester)
     {

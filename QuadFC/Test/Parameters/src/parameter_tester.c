@@ -95,6 +95,7 @@ uint8_t ParamT_TestGetOneHandler(TestFw_t* Tobj);
 uint8_t ParamT_TestGetTwoOneHandler(TestFw_t* Tobj);
 uint8_t ParamT_TestSetGetOneHandler(TestFw_t* Tobj);
 uint8_t ParamT_TestSetGetOneHandlerSearch(TestFw_t* Tobj);
+uint8_t ParamT_TestSaveOneHandler(TestFw_t* Tobj);
 uint8_t ParamT_TestSaveLoadOneHandler(TestFw_t* Tobj);
 uint8_t ParamT_TestGetTwoHandlers(TestFw_t* Tobj);
 uint8_t ParamT_TestGetShortTwoHandlers(TestFw_t* Tobj);
@@ -108,6 +109,7 @@ void ParamT_GetTCs(TestFw_t* Tobj)
     //TestFW_RegisterTest(Tobj, "GetShortMsg", ParamT_TestGetTwoOneHandler);// Does not work. Set internal length of messages in param handler to 60 to verify function.
     TestFW_RegisterTest(Tobj, "Param SetGet", ParamT_TestSetGetOneHandler);
     TestFW_RegisterTest(Tobj, "Param SetGetSearch", ParamT_TestSetGetOneHandlerSearch);
+    TestFW_RegisterTest(Tobj, "Param Save", ParamT_TestSaveOneHandler);
     TestFW_RegisterTest(Tobj, "Param SaveLoad", ParamT_TestSaveLoadOneHandler);
     TestFW_RegisterTest(Tobj, "Param GetTwoHandlers", ParamT_TestGetTwoHandlers);
     //TestFW_RegisterTest(Tobj, "GetShortTwoHandlers", ParamT_TestGetShortTwoHandlers); // Does not work. Set internal length of messages in param handler to 60 to verify function.
@@ -158,10 +160,10 @@ ParamTestTwoHandlers_t* ParamT_InitializeTwoHandlers(uint32_t responseSize)
     Event_InitHandler(obj->evHandlerMaster, obj->evHandlerTester);
 
     ParamHandler_InitMaster(obj->paramHandlerMaster);
-    Event_Receive(obj->evHandler,2);
-    Event_Receive(obj->evHandlerTester,2);
-    Event_Receive(obj->evHandlerMaster,2);
-
+    
+    while(Event_Receive(obj->evHandler,2)){}
+    while(Event_Receive(obj->evHandlerTester,2)){}
+    while(Event_Receive(obj->evHandlerMaster,2)){}
 
     return obj;
 }
@@ -193,8 +195,8 @@ ParamTestOneHandler_t* ParamT_InitializeOneHandler(uint32_t responseSize)
     Event_InitHandler(obj->evHandlerMaster, obj->evHandlerTester);
 
     ParamHandler_InitMaster(obj->paramHandlerMaster);
-    Event_Receive(obj->evHandlerTester,2);
-    Event_Receive(obj->evHandlerMaster,2);
+    while(Event_Receive(obj->evHandlerTester,2)){}
+    while(Event_Receive(obj->evHandlerMaster,2)){}
 
     return obj;
 }
@@ -446,6 +448,24 @@ uint8_t ParamT_TestSetGetOneHandlerSearch(TestFw_t* Tobj)
 
 }
 
+
+uint8_t ParamT_TestSaveOneHandler(TestFw_t* Tobj)
+{
+    // initialize all objects used in the test.
+    ParamTestOneHandler_t* obj = ParamT_InitializeOneHandler(PAYLOAD_LENGTH);
+    {
+        //Then save the parameters.
+        moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_save, 0, 0, 0);
+        Event_Send(obj->evHandlerTester, msg);
+        Event_Receive(obj->evHandlerMaster, 2);
+
+    }
+    while(Event_Receive(obj->evHandlerTester, 2)){;}
+    while(Event_Receive(obj->evHandlerMaster, 2)){;}
+
+    ParamT_DeleteOneHandler(obj);
+    return 1; // test case only used to look for mem leaks.
+}
 
 uint8_t ParamT_TestSaveLoadOneHandler(TestFw_t* Tobj)
 {

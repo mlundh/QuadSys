@@ -199,13 +199,19 @@ std::string Parameters::get(std::string path)
 }
 std::string Parameters::set(std::string path)
 {
+	std::string result;
 	std::exception_ptr eptr;
 	try
 	{
 		while(!path.empty())
 		{
-			UpdateTmp(path,false);
-			if(!path.empty())
+			bool found = UpdateTmp(path,false);
+			if(!found)
+			{
+				result = "No such path.";
+				break;
+			}
+			else if(!path.empty())
 			{
 				mTmpBranch->SetValue(path);
 				QGS_Tree::RemoveModuleString(path);
@@ -218,7 +224,7 @@ std::string Parameters::set(std::string path)
 		std::rethrow_exception(eptr);
 	}
 	writeCmd("");
-	return "";
+	return result;
 }
 
 std::string Parameters::add(std::string path)

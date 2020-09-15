@@ -1,4 +1,4 @@
-Initializing MPU6050.
+- Initializing MPU6050.
 - Initializing MPU6050 done.
 
 *********************** Starting Testsuite: Sig, event, log *********************** 
@@ -104,38 +104,86 @@ Initializing MPU6050.
 *********************** Starting Testsuite: Components1 *********************** 
 
 **** Starting Test: Param Get ****
+Expected:
+/paramHM<0>/param1<6>[0]/param11<6>[0]/../param12<6>[0]/../../ 
+Got:
 
-**** RESULT Param Get: [32mPASS[0m **** 
+[31mMemory leak in test case Param Get! Lost 192 bytes.[0m
+
+**** RESULT Param Get: [31mFAIL[0m **** 
 
 **** Starting Test: Param SetGet ****
+Expected:
+/paramHM<0>/param1<6>[700]/param11<6>[1024]/../param12<6>[1038]/../../ 
+Got:
 
-**** RESULT Param SetGet: [32mPASS[0m **** 
+[31mMemory leak in test case Param SetGet! Lost 432 bytes.[0m
+
+**** RESULT Param SetGet: [31mFAIL[0m **** 
 
 **** Starting Test: Param SetGetSearch ****
+Expected:
+/paramHM<0>/param1<6>[700]/param11<6>[1024]/../param12<6>[1038]/../../ 
+Got:
 
-**** RESULT Param SetGetSearch: [32mPASS[0m **** 
+[31mMemory leak in test case Param SetGetSearch! Lost 280 bytes.[0m
+
+**** RESULT Param SetGetSearch: [31mFAIL[0m **** 
 
 **** Starting Test: Param SaveLoad ****
-[31mMemory leak in test case Param SaveLoad! Lost 48 bytes.[0m
+Expected:
+/paramHM<0>/param1<6>[9]/param11<6>[9]/../param12<6>[9]/../../ 
+Got:
 
-**** RESULT Param SaveLoad: [32mPASS[0m **** 
+Expected:
+/paramHM<0>/param1<6>[700]/param11<6>[1024]/../param12<6>[1038]/../../ 
+Got:
+/paramHM<0>/param1<6>[9]/param11<6>[9]/../param12<6>[9]/../../
+[31mMemory leak in test case Param SaveLoad! Lost 144 bytes.[0m
+
+**** RESULT Param SaveLoad: [31mFAIL[0m **** 
 
 **** Starting Test: Param GetTwoHandlers ****
+Expected:
+/paramHM<0>/param2<6>[0]/param21<6>[0]/../param22<6>[0]/../../ 
+Got:
 
-**** RESULT Param GetTwoHandlers: [32mPASS[0m **** 
+Expected:
+/paramH<0>/param1<6>[0]/param11<6>[0]/../param12<6>[0]/../../ 
+Got:
+
+Did not get lastInSequence!
+Expected SequenceNr:1 
+Got:0
+[31mMemory leak in test case Param GetTwoHandlers! Lost 144 bytes.[0m
+
+**** RESULT Param GetTwoHandlers: [31mFAIL[0m **** 
 
 **** Starting Test: Param SetGetTwoHandlers ****
+Expected:
+/paramHM<0>/param2<6>[48]/param21<6>[63]/../param22<6>[88]/../../ 
+Got:
 
-**** RESULT Param SetGetTwoHandlers: [32mPASS[0m **** 
+Expected:
+/paramH<0>/param1<6>[256]/param11<6>[512]/../param12<6>[1024]/../../
+With 68 bytes, 
+Got:
+
+With 25 bytesDid not get lastInSequence!
+Expected SequenceNr:1 
+Got:0
+[31mMemory leak in test case Param SetGetTwoHandlers! Lost 296 bytes.[0m
+
+**** RESULT Param SetGetTwoHandlers: [31mFAIL[0m **** 
 
 **** Starting Test: Log C Handler ****
-LogHandler master uses 3136 bytes of heap.
-LogHandler slave uses 2248 bytes of heap.
+LogHandler master uses 3152 bytes of heap.
+LogHandler slave uses 2272 bytes of heap.
 
 **** RESULT Log C Handler: [32mPASS[0m **** 
 
 **** Starting Test: Log C Obj ****
-A log obj uses 144 bytes of heap.
+A log obj uses 160 bytes of heap.
 
 **** RESULT Log C Obj: [32mPASS[0m **** 
 
@@ -172,69 +220,4 @@ A log obj uses 144 bytes of heap.
 **** RESULT AppLog Create: [32mPASS[0m **** 
 
 **** Starting Test: AppLog Report ****
-
-**** RESULT AppLog Report: [32mPASS[0m **** 
-
-**** Starting Test: AppLog ReportM ****
-
-**** RESULT AppLog ReportM: [32mPASS[0m **** 
-
-**** Starting Test: Cbuff Create Delete ****
-
-**** RESULT Cbuff Create Delete: [32mPASS[0m **** 
-
-**** Starting Test: Cbuff Push Pop ****
-
-**** RESULT Cbuff Push Pop: [32mPASS[0m **** 
-
-**** Starting Test: Cbuff Circular ****
-[37mINFO: Filling the whole buffer.[0m
-[37mINFO: Read half of the buffer.[0m
-[37mINFO: Re-fill the buffer.[0m
-[37mINFO: Read the whole buffer.[0m
-[37mINFO: Verify first half.[0m
-[37mINFO: Verify second half.[0m
-
-**** RESULT Cbuff Circular: [32mPASS[0m **** 
-
-**** Starting Test: Cbuff Count ****
-
-**** RESULT Cbuff Count: [32mPASS[0m **** 
-
-**** Starting Test: Cbuff Full ****
-
-**** RESULT Cbuff Full: [32mPASS[0m **** 
-
-**** Starting Test: Cbuff Push Pop String ****
-
-**** RESULT Cbuff Push Pop String: [32mPASS[0m **** 
-
-**** Starting Test: Cbuff Push Pop String boundary ****
-[37mINFO: Filling the whole buffer.[0m
-[37mINFO: Reading half the buffer.[0m
-[37mINFO: re-filling the buffer.[0m
-[37mINFO: Reading the complete buffer.[0m
-
-**** RESULT Cbuff Push Pop String boundary: [32mPASS[0m **** 
-
-**** Starting Test: Cbuff Read more than is availib ****
-
-**** RESULT Cbuff Read more than is availib: [32mPASS[0m **** 
-
-**** Starting Test: Slip Create Delete ****
-
-**** RESULT Slip Create Delete: [32mPASS[0m **** 
-
-**** Starting Test: SlipParser Create Delete ****
-
-**** RESULT SlipParser Create Delete: [32mPASS[0m **** 
-
-**** Starting Test: SlipParser parse ****
-
-**** RESULT SlipParser parse: [32mPASS[0m **** 
-
-**** Starting Test: SlipParser parse chunks ****
-
-**** RESULT SlipParser parse chunks: [32mPASS[0m **** 
-
-********************** Testsuite Components1 RESULT: [32mPASS[0m ********************** 
+[31mERROR[0m at Test/AppLog/src/AppLogTest.c:111: expected: "TestingTesting this is from the appLog." 

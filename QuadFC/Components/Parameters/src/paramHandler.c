@@ -413,7 +413,7 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
                 LOG_ENTRY(FC_SerialIOtx_e, obj, "Param Load: Error. Parser failed.");
             }
             LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "Param Load: Read %d at %d", (int)(address - startAddress), (int)startAddress);
-            printPacket(obj, packet);
+            // printPacket(obj, packet);
             // Whole package or error...
             result &= (read_status == SLIP_StatusOK);
 
@@ -558,11 +558,15 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
                  {
                     (handlerObj->currentlySavinging) = 0;
                     handlerObj->actionOngoing = paramReady; // Reset, ready.
-                    LOG_ENTRY(FC_SerialIOtx_e, obj, "------------------------Param Master: Save done");
+                    LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "------------------------Param Master: Save done");
                  }
                  else
                  {
                     (handlerObj->currentlySavinging)++;
+                    if(handlerObj->currentlySavinging > handlerObj->nrRegisteredHandlers)
+                    {
+                        LOG_ENTRY(FC_SerialIOtx_e, obj, "Param: Save error.");
+                    }
                  }
             } // else dump is not finished, keep helper till next time.
             else
