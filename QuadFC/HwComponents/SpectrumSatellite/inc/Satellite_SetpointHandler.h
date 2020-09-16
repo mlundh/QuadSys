@@ -37,6 +37,7 @@ struct spectrumSpHandler
   int32_t               throMult;
   FlightMode_t          current_flight_mode_state;
   CtrlMode_t            current_control_mode;
+  TickType_t            timeAtLastNewSp;
 };
 
 typedef struct spectrumSpHandler spectrumSpHandler_t;

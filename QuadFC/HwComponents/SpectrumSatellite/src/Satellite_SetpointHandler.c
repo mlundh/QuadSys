@@ -21,10 +21,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+//#define DEBUG
 
 #include "FreeRTOS.h"
 #include "task.h"
 #include <stdio.h>
+#include "Components/AppLog/inc/AppLog.h"
 #include "SetpointHandler/inc/setpoint_handler.h"
 #include "Parameters/inc/paramHandler.h"
 #include "SpectrumSatellite/inc/Satellite_SetpointHandler.h"
@@ -273,9 +275,18 @@ uint8_t SatSpHandler_HandleSatFrame(eventHandler_t* obj, void* data, moduleMsg_t
     }
     spectrumSpHandler_t* setpointHobj = (spectrumSpHandler_t*)data; // data should always be the current handler.
 
+    TickType_t ticks = xTaskGetTickCount();
+    TickType_t ticksSinceLast = ticks - setpointHobj->timeAtLastNewSp;
+    // We get new setpoints every 11 or 22 ms from a spectrum satellite, if two messages arrive
+    // too closely, it is because of multiple receivers. Disregard one of them.
+    if(ticksSinceLast <= 1)
+    {
+        LOG_DBG_ENTRY(FC_SerialIOtx_e, setpointHobj->evHandler, "Dropping an SP.");
+        return 1;
+    }
+    LOG_DBG_ENTRY(FC_SerialIOtx_e, setpointHobj->evHandler, "New SP.");
 
-    // We have a complete set of channels.
-
+    setpointHobj->timeAtLastNewSp = ticks;
     spektrum_data_t spectrumData = Msg_SpectrumDataGetData(msg);
     SatSpHandler_MapToSetpoint(setpointHobj, &spectrumData, setpointHobj->currentSetpoint);
     moduleMsg_t* msgSp = Msg_NewSetpointCreate(FC_Broadcast_e, 0, *setpointHobj->currentSetpoint, 1, MESSAGE_VALID_FOR_MS);
