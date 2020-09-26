@@ -524,7 +524,7 @@ uint8_t Satellite_BindCB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
                 Gpio_SetPinHigh(satellite->pwrCtrl);
                 vTaskDelay(pdMS_TO_TICKS(500));
                 Gpio_SetPinLow(satellite->pwrCtrl);
-                vTaskDelay(pdMS_TO_TICKS(200));
+                vTaskDelay(pdMS_TO_TICKS(100));
 
                 if(quitBind != 1)
                 {
