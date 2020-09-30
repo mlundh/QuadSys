@@ -260,16 +260,16 @@ uint8_t Led_HandleFlightMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* 
   case fmode_disarmed:
     param->ledState[ledError].mode    = led_Off;
     param->ledState[ledFatal].mode    = led_Off;
-    param->ledState[ledStatus].mode = led_blink_slow;
+    param->ledState[ledStatus].mode   = led_Off;
     break;
   case fmode_config:
-    param->ledState[ledStatus].mode = led_const_on;
+    param->ledState[ledStatus].mode = led_double_blink;
     break;
   case fmode_arming:
     param->ledState[ledStatus].mode = led_blink_fast;
     break;
   case fmode_armed:
-    param->ledState[ledStatus].mode = led_double_blink;
+    param->ledState[ledStatus].mode = led_const_on;
     break;
   case fmode_disarming:
     param->ledState[ledStatus].mode = led_blink_fast;
@@ -277,7 +277,7 @@ uint8_t Led_HandleFlightMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* 
   case fmode_fault:
     param->ledState[ledError].mode    = led_const_on;
     param->ledState[ledFatal].mode    = led_const_on;
-    param->ledState[ledStatus].mode = led_const_on;
+    param->ledState[ledStatus].mode   = led_const_on;
 
     break;
   case fmode_not_available:
@@ -297,7 +297,7 @@ uint8_t Led_HandleCtrltMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* d
     param->ledState[ledmode].mode = led_Off;
     break;
   case Control_mode_rate:
-    param->ledState[ledmode].mode = led_blink_fast;
+    param->ledState[ledmode].mode = led_const_on;
     break;
   case Control_mode_attitude:
     param->ledState[ledmode].mode = led_blink_slow;
