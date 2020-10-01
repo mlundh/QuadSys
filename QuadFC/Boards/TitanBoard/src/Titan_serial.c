@@ -397,7 +397,7 @@ void TitanUART_GPIOInit(USART_TypeDef* usart)
     LL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
     /* UART8 interrupt Init */
-    NVIC_SetPriority(UART8_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
+    NVIC_SetPriority(UART8_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),7, 0));
     NVIC_EnableIRQ(UART8_IRQn);
   }
   else if(usart==UART9)
@@ -420,7 +420,7 @@ void TitanUART_GPIOInit(USART_TypeDef* usart)
     LL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
     /* UART9 interrupt Init */
-    NVIC_SetPriority(UART9_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
+    NVIC_SetPriority(UART9_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),7, 0));
     NVIC_EnableIRQ(UART9_IRQn);
   }
   else if(usart==UART10)
@@ -443,7 +443,7 @@ void TitanUART_GPIOInit(USART_TypeDef* usart)
     LL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
     /* UART10 interrupt Init */
-    NVIC_SetPriority(UART10_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
+    NVIC_SetPriority(UART10_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),7, 0));
     NVIC_EnableIRQ(UART10_IRQn);
   }
   else if(usart==USART1)
@@ -476,7 +476,7 @@ void TitanUART_GPIOInit(USART_TypeDef* usart)
     LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     /* USART1 interrupt Init */
-    NVIC_SetPriority(USART1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
+    NVIC_SetPriority(USART1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),7, 0));
     NVIC_EnableIRQ(USART1_IRQn);
   }
   else if(usart==USART2)
@@ -499,7 +499,7 @@ void TitanUART_GPIOInit(USART_TypeDef* usart)
     LL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
     /* USART2 interrupt Init */
-    NVIC_SetPriority(USART2_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
+    NVIC_SetPriority(USART2_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),7, 0));
     NVIC_EnableIRQ(USART2_IRQn);
   }
   else if(usart==USART3)
@@ -550,7 +550,7 @@ void TitanUART_GPIOInit(USART_TypeDef* usart)
     LL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
     /* USART3 interrupt Init */
-    NVIC_SetPriority(USART3_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
+    NVIC_SetPriority(USART3_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),7, 0));
     NVIC_EnableIRQ(USART3_IRQn);
   }
   else if(usart==USART6)
@@ -573,7 +573,7 @@ void TitanUART_GPIOInit(USART_TypeDef* usart)
     LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
     /* USART6 interrupt Init */
-    NVIC_SetPriority(USART6_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),5, 0));
+    NVIC_SetPriority(USART6_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),7, 0));
     NVIC_EnableIRQ(USART6_IRQn);
   }
 }

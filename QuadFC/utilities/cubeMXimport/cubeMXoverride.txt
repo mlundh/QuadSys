@@ -9,3 +9,5 @@ USART6_IRQHandler
 UART8_IRQHandler
 UART9_IRQHandler
 UART10_IRQHandler
+I2C1_EV_IRQHandler
+I2C1_ER_IRQHandler

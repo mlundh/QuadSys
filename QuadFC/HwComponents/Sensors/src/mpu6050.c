@@ -146,7 +146,7 @@ uint8_t Imu_InitInternal(Imu_t *obj)
   ImuInternals_t *internals = Imu_getInternals(obj);
 
   internals->i2cBus = MPU6050_BUSS;
-  internals->slaveAddress = MPU6050_ADDRESS_DORTEK;
+  internals->slaveAddress = MPU6050_ADDRESS_AD0_LOW;
   ImuData_t  tmp =  {{0}};
 
   memcpy(&obj->ImuOffset, &tmp, sizeof(tmp));
