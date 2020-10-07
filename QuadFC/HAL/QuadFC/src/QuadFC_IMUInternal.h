@@ -36,11 +36,11 @@
 #include "Messages/inc/common_types.h"
 #include "Parameters/inc/parameters.h"
 /**
- * Create the IMU unit. This function should be called before the
+ * Create the IMU internals. This function should be called before the
  * scheduler is started.
  * @param param a root parameter to use if the internal data should be configurable.
  * @return            A newly created IMU object. */
-Imu_t * Imu_CreateInternal(param_obj_t * param);
+ImuInternals_t* Imu_CreateInternal(param_obj_t * param);
 
 /**
  * Initialize the imu object. This function should be called after the
@@ -51,7 +51,7 @@ Imu_t * Imu_CreateInternal(param_obj_t * param);
 uint8_t Imu_InitInternal(Imu_t *obj);
 
 /**
- * Internal function that adds sensor orientation information to the object.
+ * Internal function that adds data scaling the readings.
  * Any implementation has to implement this functionallity.
  * @param obj           Current IMU object.
  * @return              0 if fail, 1 otherwise.

@@ -34,13 +34,16 @@
 #include "Messages/inc/common_types.h"
 #include "Parameters/inc/parameters.h"
 
+typedef struct ImuInternals ImuInternals_t;
+
+
 typedef struct Imu
 {
   ImuData_t ImuOffset;
   ImuData_t ImuData;  // Copter coordinate system.
   ImuData_t tempData; // IMU coordinate system
   ImuOrientation_t Orient;
-  void *internals;
+  ImuInternals_t *internals;
 }Imu_t;
 
 /**

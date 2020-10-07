@@ -95,14 +95,13 @@
 
 
 
-typedef struct ImuInternals
+struct ImuInternals
 {
   uint8_t i2cBus;
   uint8_t slaveAddress;
   uint8_t rawData[14];
-  SemaphoreHandle_t xMutexParam;
 
-}ImuInternals_t;
+};
 
 ImuInternals_t *Imu_getInternals(Imu_t *obj);
 
@@ -111,42 +110,20 @@ ImuInternals_t *Imu_getInternals(Imu_t *obj)
   return (ImuInternals_t *)(obj->internals);
 }
 
-Imu_t * Imu_CreateInternal(param_obj_t * param)
+ImuInternals_t* Imu_CreateInternal(param_obj_t * param)
 {
-  Imu_t *ImuObj = pvPortMalloc(sizeof(Imu_t));
+  ImuInternals_t* internals = pvPortMalloc( sizeof(ImuInternals_t) );
 
-  ImuObj->internals = pvPortMalloc( sizeof(ImuInternals_t) );
-  ImuInternals_t *internals = Imu_getInternals(ImuObj);
+  internals->i2cBus = MPU6050_BUSS;
+  internals->slaveAddress = MPU6050_ADDRESS_AD0_LOW;
 
-  internals->xMutexParam = xSemaphoreCreateMutex();
-
-  param_obj_t * ImuRoot = Param_CreateObj(6, variable_type_NoType, readOnly, NULL, "IMU_Off", param);
-
-  Param_CreateObj(0, variable_type_int16, readOnly,
-      &ImuObj->ImuOffset.imu_data[accl_x], "accl_x", ImuRoot);
-  Param_CreateObj(0, variable_type_int16, readOnly,
-      &ImuObj->ImuOffset.imu_data[accl_y], "accl_y", ImuRoot);
-  Param_CreateObj(0, variable_type_int16, readOnly,
-      &ImuObj->ImuOffset.imu_data[accl_z], "accl_z", ImuRoot);
-  Param_CreateObj(0, variable_type_int16, readOnly,
-      &ImuObj->ImuOffset.imu_data[gyro_x], "gyro_x", ImuRoot);
-  Param_CreateObj(0, variable_type_int16, readOnly,
-      &ImuObj->ImuOffset.imu_data[gyro_y], "gyro_y", ImuRoot);
-  Param_CreateObj(0, variable_type_int16, readOnly,
-      &ImuObj->ImuOffset.imu_data[gyro_z], "gyro_z", ImuRoot);
-
-  return ImuObj;
+  return internals;
 }
-
 
 uint8_t Imu_InitInternal(Imu_t *obj)
 {
   TickType_t xPeriod = (20UL / portTICK_PERIOD_MS);
 
-  ImuInternals_t *internals = Imu_getInternals(obj);
-
-  internals->i2cBus = MPU6050_BUSS;
-  internals->slaveAddress = MPU6050_ADDRESS_AD0_LOW;
   ImuData_t  tmp =  {{0}};
 
   memcpy(&obj->ImuOffset, &tmp, sizeof(tmp));

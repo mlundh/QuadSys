@@ -201,7 +201,7 @@ void TitanI2c_TransCompleteCB(I2C_HandleTypeDef* i2cHandle)
   portBASE_TYPE higherPriorityTaskHasWoken = pdFALSE;
 
   uint32_t busIndex = TitanI2c_FindIndex(i2cHandle);
-  xSemaphoreGiveFromISR(titanI2c[0].trans_comp_sem, &higherPriorityTaskHasWoken);
+  xSemaphoreGiveFromISR(titanI2c[busIndex].trans_comp_sem, &higherPriorityTaskHasWoken);
 
   if(higherPriorityTaskHasWoken == pdTRUE)
   {
