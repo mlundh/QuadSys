@@ -108,7 +108,7 @@ void create_main_control_task(eventHandler_t* evHandler)
     taskParam->spectrumSpHandler = SatSpHandler_CreateObj(evHandler, ParamHandler_GetParam(taskParam->paramHandler));
     taskParam->CtrlModeHandler = Ctrl_CreateModeHandler(evHandler);
     taskParam->evHandler = evHandler;
-    taskParam->logHandler = LogHandler_CreateObj(20,evHandler,ParamHandler_GetParam(taskParam->paramHandler),"LogSctr",0);
+    taskParam->logHandler = LogHandler_CreateObj(20,evHandler,ParamHandler_GetParam(taskParam->paramHandler),"LogHandler",0);
     taskParam->SetpointTimeoutCounter = 0;
     /*Ensure that all mallocs returned valid pointers*/
     if (   !taskParam                    || !taskParam->ctrl             || !taskParam->setpoint
@@ -167,19 +167,19 @@ void main_control_task( void *pvParameters )
     TickType_t arming_counter = 0;
     uint32_t heartbeat_counter = 0;
     /* Loggers for rate mode */
-    Log_t* logPitchRate = Log_CreateObj(0,variable_type_fp_16_16,  &param->state->state_bf[pitch_rate_bf],NULL, param->logHandler, "m_PR");
-    Log_t* logRollRate = Log_CreateObj(0,variable_type_fp_16_16, &param->state->state_bf[roll_rate_bf],NULL, param->logHandler, "m_RR");
-    Log_t* logYawRate = Log_CreateObj(0,variable_type_fp_16_16, &param->state->state_bf[yaw_rate_bf],NULL, param->logHandler, "m_YR");
+    Log_t* logPitchRate = Log_CreateObj(0,variable_type_fp_16_16,  &param->state->state_bf[pitch_rate_bf],NULL, param->logHandler, "m_PitchRate");
+    Log_t* logRollRate = Log_CreateObj(0,variable_type_fp_16_16, &param->state->state_bf[roll_rate_bf],NULL, param->logHandler, "m_RollRate");
+    Log_t* logYawRate = Log_CreateObj(0,variable_type_fp_16_16, &param->state->state_bf[yaw_rate_bf],NULL, param->logHandler, "m_YawRate");
 
-    Log_t* logUPitch = Log_CreateObj(0,variable_type_fp_16_16,  &param->control_signal[u_pitch],NULL, param->logHandler, "u_P");
-    Log_t* logURoll = Log_CreateObj(0,variable_type_fp_16_16, &param->control_signal[u_roll],NULL, param->logHandler, "u_R");
-    Log_t* logUYaw = Log_CreateObj(0,variable_type_fp_16_16, &param->control_signal[u_yaw],NULL, param->logHandler, "u_Y");
-    Log_t* logUThrust = Log_CreateObj(0,variable_type_fp_16_16, &param->control_signal[u_thrust],NULL, param->logHandler, "u_T");
+    Log_t* logUPitch = Log_CreateObj(0,variable_type_fp_16_16,  &param->control_signal[u_pitch],NULL, param->logHandler, "u_Pitch");
+    Log_t* logURoll = Log_CreateObj(0,variable_type_fp_16_16, &param->control_signal[u_roll],NULL, param->logHandler, "u_Roll");
+    Log_t* logUYaw = Log_CreateObj(0,variable_type_fp_16_16, &param->control_signal[u_yaw],NULL, param->logHandler, "u_Yaw");
+    Log_t* logUThrust = Log_CreateObj(0,variable_type_fp_16_16, &param->control_signal[u_thrust],NULL, param->logHandler, "u_Throttle");
 
-    Log_t* logSpPitchRate = Log_CreateObj(0,variable_type_fp_16_16,  &param->setpoint->state_bf[pitch_rate_bf],NULL, param->logHandler, "sp_PR");
-    Log_t* logSpRollRate = Log_CreateObj(0,variable_type_fp_16_16, &param->setpoint->state_bf[roll_rate_bf],NULL, param->logHandler, "sp_RR");
-    Log_t* logSpYawRate = Log_CreateObj(0,variable_type_fp_16_16, &param->setpoint->state_bf[yaw_rate_bf],NULL, param->logHandler, "sp_YE");
-    Log_t* logSpThrustRate = Log_CreateObj(0,variable_type_fp_16_16, &param->setpoint->state_bf[thrust_sp],NULL, param->logHandler, "sp_T");
+    Log_t* logSpPitchRate = Log_CreateObj(0,variable_type_fp_16_16,  &param->setpoint->state_bf[pitch_rate_bf],NULL, param->logHandler, "sp_PitchRate");
+    Log_t* logSpRollRate = Log_CreateObj(0,variable_type_fp_16_16, &param->setpoint->state_bf[roll_rate_bf],NULL, param->logHandler, "sp_RollRate");
+    Log_t* logSpYawRate = Log_CreateObj(0,variable_type_fp_16_16, &param->setpoint->state_bf[yaw_rate_bf],NULL, param->logHandler, "sp_YawRate");
+    Log_t* logSpThrustRate = Log_CreateObj(0,variable_type_fp_16_16, &param->setpoint->state_bf[thrust_sp],NULL, param->logHandler, "sp_Throttle");
 
     /*The main control loop*/
 
