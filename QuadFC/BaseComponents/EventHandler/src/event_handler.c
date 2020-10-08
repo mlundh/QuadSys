@@ -297,16 +297,23 @@ uint8_t Event_Unsubscribe(eventHandler_t* obj, messageTypes_t event)
 
 uint8_t Event_Send(eventHandler_t* obj, moduleMsg_t* msg)
 {
-        Msg_SetSource(msg, obj->handlerId);
-        uint8_t result = Event_SendGeneric(obj, msg);
-        return result;
+    if(!obj || !msg || !obj->initialized)
+    {
+        Msg_Delete(&msg);
+        return 0;
+    }
+    uint8_t result = 0;
+    Msg_SetSource(msg, obj->handlerId);
+    result = Event_SendGeneric(obj, msg);
+    return result;
 }
 
 uint8_t Event_SendGeneric(eventHandler_t* obj, moduleMsg_t* msg)
 {
     // Use subscribeEvent to subscribe to an event, and
     // unsubscribeEvent to unsubscribe.
-    if(!obj || !msg 
+    if(!obj || !obj->initialized
+            || !msg 
             || (msg->type == Msg_Subscriptions_e)
             || (msg->type == Msg_NoType_e)
             || (msg->type == Msg_LastType_e))
@@ -352,8 +359,9 @@ uint8_t Event_SendGeneric(eventHandler_t* obj, moduleMsg_t* msg)
 }
 uint8_t Event_SendInternal(eventHandler_t* obj, moduleMsg_t* msg)
 {
-    if(!obj || !msg)
+    if(!obj || !msg || !obj->initialized)
     {
+        Msg_Delete(&msg);
         return 0;
     }
     uint8_t result = 0;
@@ -393,8 +401,10 @@ uint8_t Event_SendInternal(eventHandler_t* obj, moduleMsg_t* msg)
 
 uint8_t Event_SendBCInternal(eventHandler_t* obj, moduleMsg_t* msg, uint8_t delete)
 {
-    if(!obj || !msg)
+    
+    if(!obj || !msg || !obj->initialized)
     {
+        Msg_Delete(&msg);
         return 0;
     }
     uint8_t result = 1;
@@ -724,6 +734,20 @@ uint8_t Event_SubscriptionReq(eventHandler_t* obj, void* data, moduleMsg_t* eDat
     {
         return 0;
     }
-    Event_CopySubscription(&(obj->handlerSubscriptions[Msg_GetSource(eData)][0]), (uint32_t*)Msg_SubscriptionsGetSubscriptions(eData));
+    uint32_t handlerIndex = UINT32_MAX;
+    msgAddr_t address = Msg_GetSource(eData);
+    for (uint32_t i = 0; i < obj->registeredHandlers; i++)
+    {
+        if(obj->handlerIds[i] == address)
+        {
+            handlerIndex = i;
+            break;
+        }
+    }
+    if(handlerIndex == UINT32_MAX)
+    {
+        return 0;
+    }
+    Event_CopySubscription((obj->handlerSubscriptions[handlerIndex]), (uint32_t*)Msg_SubscriptionsGetSubscriptions(eData));
     return 1;
 }

@@ -293,5 +293,6 @@ uint8_t SatSpHandler_HandleSatFrame(eventHandler_t* obj, void* data, moduleMsg_t
     Event_Send(setpointHobj->evHandler, msgSp);
     SatSpHandler_UpdateState(setpointHobj, &spectrumData);
     SatSpHandler_UpdateControlMode(setpointHobj, &spectrumData);
+
     return 1;
 }
