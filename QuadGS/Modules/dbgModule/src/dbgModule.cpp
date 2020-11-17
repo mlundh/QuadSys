@@ -29,6 +29,7 @@
 #include "Msg_UiCommandResult.h"
 #include "Msg_Display.h"
 #include "Msg_BindRc.h"
+#include "Msg_FlightModeReq.h"
 #include <sstream>
 
 namespace QuadGS {
@@ -38,7 +39,7 @@ dbgModule::dbgModule(msgAddr_t name, msgAddr_t dbgAddr):QGS_MessageHandlerBase(n
 	mCommands.push_back(UiCommand("dbgModuleSend","Send a message from the dbg module to any other module.",std::bind(&dbgModule::sendUiMsg, this, std::placeholders::_1)));
 	mCommands.push_back(UiCommand("dbgGetRuntimeStats","Get runtime stats from the FC.",std::bind(&dbgModule::getRuntimeStats, this, std::placeholders::_1)));
 	mCommands.push_back(UiCommand("rcBind","Bind the spectrum receiver.",std::bind(&dbgModule::BindRc, this, std::placeholders::_1)));
-
+	mCommands.push_back(UiCommand("stateChange","Request a state change from the FC.",std::bind(&dbgModule::StateChangeReq, this, std::placeholders::_1)));
 }
 
 dbgModule::~dbgModule()
@@ -159,6 +160,62 @@ std::string dbgModule::BindRc(std::string param)
 	sendMsg(std::move(ptr));
 
 	return "";
+}
+
+std::string dbgModule::printStateStrings()
+{
+			std::stringstream ss;
+			ss << "No such state. " << std::endl << "Available states are: " << std::endl;
+			for (const auto& kv : mapStringToFlightMode)
+			{
+				ss << "	" << kv.first << std::endl;
+			}
+			return ss.str();
+}
+
+
+std::string dbgModule::StateChangeReq(std::string param)
+{
+	if(!param.empty())
+	{
+		FlightMode_t flightMode;
+		try
+		{
+			flightMode = mapStringToFlightMode.at(param);
+
+		}
+		catch(const std::out_of_range & e)
+		{
+			return printStateStrings();
+		}
+		
+		switch (flightMode)
+		{
+		    case FlightMode_t::fmode_init:
+		        break;
+
+		    case FlightMode_t::fmode_config:
+		        break;
+
+		    case FlightMode_t::fmode_arming:
+		        break;
+
+		    case FlightMode_t::fmode_disarming:
+		        break;
+
+		    default:
+				return printStateStrings();
+
+		}
+		Msg_FlightModeReq::ptr ptr = std::make_unique<Msg_FlightModeReq>(FC_Broadcast_e, flightMode);
+		sendMsg(std::move(ptr));
+	}
+	else
+	{
+		return printStateStrings();
+	}
+	
+	return "Request sent";
 }
 
 
