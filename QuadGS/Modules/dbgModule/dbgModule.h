@@ -33,6 +33,7 @@
 #include "Msg_Debug.h"
 #include "msg_enums.h"
 #include "Msg_Test.h"
+#include "Msg_FlightMode.h"
 #include <string>
 
 namespace QuadGS {
@@ -42,6 +43,8 @@ class dbgModule
 , public QGS_MessageHandler<Msg_GetUiCommands>
 , public QGS_MessageHandler<Msg_FireUiCommand>
 , public QGS_MessageHandler<Msg_Debug>
+, public QGS_MessageHandler<Msg_FlightMode>
+
 
 {
 
@@ -53,6 +56,17 @@ class dbgModule
 		{ "disarm", FlightMode_t::fmode_disarming },
 	};
 
+	std::map<FlightMode_t, std::string> mapFlightModeToString =
+	{
+		{ FlightMode_t::fmode_init, "init" },
+		{ FlightMode_t::fmode_disarmed, "disarmed" },
+		{ FlightMode_t::fmode_config, "config" },
+		{ FlightMode_t::fmode_arming, "arming" },
+		{ FlightMode_t::fmode_armed, "armed"},
+		{ FlightMode_t::fmode_disarming,"disarm" },
+		{ FlightMode_t::fmode_fault, "fault" },
+		{ FlightMode_t::fmode_not_available, "Not availible"},
+	};
 public:
 
 	dbgModule(msgAddr_t name, msgAddr_t dbgAddr);
@@ -72,6 +86,7 @@ public:
 	virtual void process(Msg_GetUiCommands* message);
 	virtual void process(Msg_FireUiCommand* message);
 	virtual void process(Msg_Debug* message);
+	virtual void process(Msg_FlightMode* message);
 
 	std::vector<UiCommand> mCommands;
 	msgAddr_t mDbgAddr;

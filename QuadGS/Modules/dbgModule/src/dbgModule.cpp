@@ -228,6 +228,8 @@ void dbgModule::process(Msg_GetUiCommands* message)
 	}
 }
 
+
+
 void dbgModule::process(Msg_FireUiCommand* message)
 {
 	for(UiCommand command : mCommands)
@@ -250,6 +252,22 @@ void dbgModule::process(Msg_Debug* message)
 {
 	Msg_Display::ptr ptr = std::make_unique<Msg_Display>(msgAddr_t::GS_GUI_e, message->getPayload());
 
+	sendMsg(std::move(ptr));
+}
+
+void dbgModule::process(Msg_FlightMode* message)
+{
+	std::string flightMode;
+	try
+	{
+		flightMode = mapFlightModeToString.at(static_cast<FlightMode_t>(message->getMode()));
+	}
+	catch(const std::out_of_range & e)
+	{
+		mLogger.QuadLog(QuadGS::error, "Received unknown flight mode.");
+		return;
+	}
+	Msg_Display::ptr ptr = std::make_unique<Msg_Display>(msgAddr_t::GS_GUI_e, flightMode);
 	sendMsg(std::move(ptr));
 }
 
