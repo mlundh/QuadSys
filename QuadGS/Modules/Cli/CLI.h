@@ -37,6 +37,8 @@
 #include "Msg_FindParam.h"
 #include "Msg_Stop.h"
 #include "Msg_Display.h"
+#include "Msg_FlightMode.h"
+#include "msg_enums.h"
 
 
 namespace QuadGS {
@@ -47,10 +49,22 @@ class CLI
 		, public QGS_MessageHandler<Msg_UiCommandResult>
 		, public QGS_MessageHandler<Msg_FindParam>
 		, public QGS_MessageHandler<Msg_Display>
+		, public QGS_MessageHandler<Msg_FlightMode>
 
 {
 private:
 
+	std::map<FlightMode_t, std::string> mapFlightModeToString =
+	{
+		{ FlightMode_t::fmode_init, "init" },
+		{ FlightMode_t::fmode_disarmed, "disarmed" },
+		{ FlightMode_t::fmode_config, "config" },
+		{ FlightMode_t::fmode_arming, "arming" },
+		{ FlightMode_t::fmode_armed, "armed"},
+		{ FlightMode_t::fmode_disarming,"disarm" },
+		{ FlightMode_t::fmode_fault, "fault" },
+		{ FlightMode_t::fmode_not_available, "Not availible"},
+	};
 
 	class UiCommand
 	{
@@ -94,6 +108,7 @@ public:
 	virtual void process(Msg_UiCommandResult* message);
 	virtual void process(Msg_FindParam* message);
 	virtual void process(Msg_Display* message);
+	virtual void process(Msg_FlightMode* message);
 
 	void waitForUiResult();
 

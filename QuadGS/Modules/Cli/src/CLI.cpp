@@ -124,7 +124,14 @@ std::string CLI::ExecuteLine(std::string line)
 
 void CLI::Display(std::string str)
 {
+	if(str.empty())
+	{
+		return;
+	}
 	std::cout << std::endl << str << std::endl;
+	rl_on_new_line(); // Regenerate the prompt on a newline
+    rl_replace_line("", 0); // Clear the previous text
+    rl_redisplay();
 }
 
 void CLI::BuildPrompt()
@@ -165,7 +172,7 @@ bool CLI::RunUI()
 		std::string resp = ExecuteLine(line);
 		if(!resp.empty())
 		{
-			std::cout << resp << std::endl;
+			Display(resp);
 		}
 
 	}
@@ -362,7 +369,11 @@ void CLI::process(Msg_UiCommandResult* message)
 	std::lock_guard<std::mutex> lock(mMutex);
 
 	newUiRsp = true;
-	Display(message->getResult());
+	if(!message->getResult().empty())
+	{
+		Display(message->getResult());
+	}
+	
 
 	mMutex.unlock();
 	cvNewUiRsp.notify_one();
@@ -393,6 +404,21 @@ void CLI::waitForUiResult()
 		throw std::runtime_error("Did not get a ui command result");
 	}
 	newUiRsp = false;
+}
+
+void CLI::process(Msg_FlightMode* message)
+{
+	std::string flightMode;
+	try
+	{
+		flightMode = mapFlightModeToString.at(static_cast<FlightMode_t>(message->getMode()));
+	}
+	catch(const std::out_of_range & e)
+	{
+		mLogger.QuadLog(QuadGS::error, "Received unknown flight mode.");
+		return;
+	}
+	mPromptStatus = flightMode;
 }
 
 } /* namespace QuadGS */
