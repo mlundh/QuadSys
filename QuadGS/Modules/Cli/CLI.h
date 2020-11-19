@@ -86,13 +86,15 @@ public:
 
 	static size_t FindCommand(std::string& line);
 
-	std::string ExecuteLine(std::string line);
+	static std::string ExecuteLine(std::string line);
 
-	void Display(std::string str);
+	static void Display(std::string str);
 
 	void BuildPrompt();
 
 	bool RunUI();
+
+	static void ProcessLine(char *line);
 
 	void SetPrompt(std::string prompt);
 
@@ -132,6 +134,7 @@ public:
 
 	bool newUiRsp = false;
 	std::condition_variable cvNewUiRsp;
+	static bool stopCli;
 
 
 

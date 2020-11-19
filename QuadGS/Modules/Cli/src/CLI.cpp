@@ -24,8 +24,7 @@
 
 #include "CLI.h"
 
-#include <readline/readline.h>
-#include <readline/history.h>
+#include <editline.h>
 #include <iostream>
 #include <sstream>
 #include <stdlib.h>
@@ -42,7 +41,7 @@ namespace QuadGS {
 char  CLI::WordBreakPath[] = " \t\n\"\\'`@$><=;|&{(/";
 char  CLI::WordBreak[]     = " \t\n\"\\'`@$><=;|&{(";
 CLI* CLI::cli = NULL;
-
+bool CLI::stopCli = false;
 CLI::UiCommand::UiCommand(std::string command, std::string args, msgAddr_t address):
 						command(command), doc(args), address(address)
 {
@@ -57,8 +56,11 @@ CLI::CLI(msgAddr_t name)
 ,mPrompt()
 {
 	cli = this;
+	using_history();
+	rl_callback_handler_install(mPrompt.c_str(), ProcessLine);
 	rl_attempted_completion_function = completion;
 	read_history(NULL);
+
 	mCommands.push_back(UiCommand("quit","",getName()));
 	setProcessingFcn(std::bind(&CLI::processingFcn, this));
 	startProcessing();
@@ -110,32 +112,41 @@ std::string CLI::ExecuteLine(std::string line)
 {
 	size_t i = FindCommand(line); // FindCommands leaves only args in line.
 	//mLogger.QuadLog(debug, "Calling command: " + mCommands[i].command);
-	if(mCommands[i].address == getName() && mCommands[i].command == "quit")
+	if(cli->mCommands[i].address == cli->getName() && cli->mCommands[i].command == "quit")
 	{
-		stopProcessing();
+		cli->mStop = true;
+		cli->stopProcessing();
 		return"";
 	}
 	// Send and wait for reply...
-	Msg_FireUiCommand::ptr ptr = std::make_unique<Msg_FireUiCommand>(mCommands[i].address, mCommands[i].command, line);
-	sendMsg(std::move(ptr));
-	waitForUiResult();
+	Msg_FireUiCommand::ptr ptr = std::make_unique<Msg_FireUiCommand>(cli->mCommands[i].address, cli->mCommands[i].command, line);
+	cli->sendMsg(std::move(ptr));
+	cli->waitForUiResult();
 	return "";
 }
 
 void CLI::Display(std::string str)
 {
-	if(str.empty())
+	char line_buf[256];
+	strncpy(line_buf, rl_line_buffer, sizeof(line_buf));
+  	line_buf[sizeof(line_buf) - 1] = 0;
+	if(!str.empty())
 	{
-		return;
+		std::cout << std::endl << str << std::endl;
 	}
-	std::cout << std::endl << str << std::endl;
+	
+
+	rl_callback_handler_install(cli->mPrompt.c_str(), ProcessLine);
+	rl_insert_text(line_buf);
 	rl_on_new_line(); // Regenerate the prompt on a newline
-    rl_replace_line("", 0); // Clear the previous text
+    rl_redisplay();
+	rl_on_new_line(); // Regenerate the prompt on a newline
     rl_redisplay();
 }
 
 void CLI::BuildPrompt()
 {
+
 	if(mPromptStatus.empty())
 	{
 		mPrompt = mPromptBase + ": ";
@@ -144,6 +155,7 @@ void CLI::BuildPrompt()
 	{
 		mPrompt = mPromptBase + "-[" + mPromptStatus + "]" + ": ";
 	}
+	Display("");
 }
 
 
@@ -156,20 +168,23 @@ bool CLI::RunUI()
 
 		mIsInitilized = true;
 	}
+	rl_callback_read_char();
+	return !mStop;
+}
+
+void CLI::ProcessLine(char *line)
+{
 	try
 	{
-		char * tmp_line;
-		BuildPrompt();
-		tmp_line = readline (mPrompt.c_str());
-		std::string line(tmp_line);
-		free(tmp_line);
+		std::string strLine(line);
+		free(line);
 
-		boost::trim(line);
-		if (line.empty())
-			return true;
+		boost::trim(strLine);
+		if (strLine.empty())
+			return;
 
-		add_history (line.c_str());
-		std::string resp = ExecuteLine(line);
+		add_history (strLine.c_str());
+		std::string resp = ExecuteLine(strLine);
 		if(!resp.empty())
 		{
 			Display(resp);
@@ -178,24 +193,22 @@ bool CLI::RunUI()
 	}
 	catch(const std::invalid_argument& e)
 	{
-		mLogger.QuadLog(error, e.what());
-		return true;
+		//mLogger.QuadLog(error, e.what());
+		return;
 	}
 	catch(const std::runtime_error& e)
 	{
-		mLogger.QuadLog(error, e.what());
-		return true;
+		//mLogger.QuadLog(error, e.what());
+		return;
 	}
 
 	catch(const std::exception& e)
 	{
-		mLogger.QuadLog(error, e.what());
-		return true;
+		//mLogger.QuadLog(error, e.what());
+		return;
 	}
-	return !mStop;
+	return;
 }
-
-
 
 
 /* Attempt to complete on the contents of TEXT.  START and END bound the
