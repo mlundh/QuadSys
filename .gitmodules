@@ -1,0 +1,3 @@
+[submodule "QuadGS/lib/editline"]
+	path = QuadGS/lib/editline
+	url = git@github.com:troglobit/editline.git

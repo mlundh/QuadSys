@@ -59,7 +59,7 @@ find_package(Boost 1.60.0 REQUIRED COMPONENTS
                     date_time)
 include_directories(${Boost_INCLUDE_DIRS})
 
-find_package(Readline REQUIRED)
+find_package(editline REQUIRED)
 
 if(WITH_VISION)
     message(STATUS "Building with vision support.")

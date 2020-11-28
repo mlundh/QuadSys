@@ -1,7 +1,6 @@
 # Define an executable  
 list(APPEND src_gs "src/main.cpp")
 list(APPEND dep_gs ${Boost_LIBRARIES}
-                    "libeditline"
                     "pthread"
                     "Parameters"
                     "cli"

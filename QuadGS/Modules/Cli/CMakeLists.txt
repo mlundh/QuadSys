@@ -1,6 +1,6 @@
 list(APPEND src "CLI.cpp")
 list(APPEND dep "AppLog"
-                "readline"
+                ${editline_LIBRARIES}
                 "GS_Ui_Command"
                 "GS_FC_Status"
                 "QGS_Module")

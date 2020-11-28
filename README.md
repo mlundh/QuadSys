@@ -4,7 +4,7 @@ QuadSys consists of two parts, one MCU part that contains the flight controller 
 
 # QuadFC
 
-is a flight controller for quadcopters. It is designed to be easy to port to any mcu that can run FreeRTOS, but the only port currently availible is for the arduino due with certain peripherals. It is also designed for modularity, and the modules themselfs can easily be used for someting other than quadcopter control. 
+is a flight controller for quadcopters. It is designed to be easy to port to any mcu that can run FreeRTOS, currently there are two ports availible, one for the arduino due with certain peripherals, and one for the custom Titan stm32 based board. It is also designed for modularity, and the modules themselfs can easily be used for someting other than quadcopter control. 
 
 # QuadGS
 
@@ -23,13 +23,12 @@ Quit the program by typing "quit" and press enter.
   
 Other:
  - boost
- - readline
+ - editline (requires installation of autoconf and libtool-bin)
  - gtest (automatically downloaded by cmake)
  - ZED sdk (optional, required if WITH_VISION=true)
  - openCV (optional, required if WITH_VISION=true)
   
 ##### tested on:
-Linux (tested on Ubuntu 16.04, 19.04 )
 
 ### Other
 - Set the following env variables to build: 
@@ -37,9 +36,6 @@ Linux (tested on Ubuntu 16.04, 19.04 )
 ``` 
 BOOST_ROOT = path_to_boost_root_dir
 ``` 
-Linux:
-Install libreadline-dev. 
-
 Build: 
 ```
 mkdir build

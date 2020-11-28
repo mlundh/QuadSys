@@ -107,7 +107,7 @@ int main(int ac, char* av[])
 	mRouter.bind(&serialIo);
 	mRouter.bind(&dbgModule);
 
-    while(mCli.RunUI());
+    mCli.RunUI();
 
     return 0;
 }

@@ -96,11 +96,9 @@ public:
 
 	static void ProcessLine(char *line);
 
-	void SetPrompt(std::string prompt);
+	static char *my_rl_complete(char *token, int *match);
 
-	static char ** completion (const char *text, int start, int );
-
-	static char * command_generator (const char *text, int state);
+	static int my_rl_list_possib(char *token, char ***av);
 
 	static char * path_generator (const char *text, int state);
 

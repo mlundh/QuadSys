@@ -55,11 +55,14 @@ CLI::CLI(msgAddr_t name)
 ,mPromptBase("QuadGS")
 ,mPrompt()
 {
+	read_history("QuadGS.hist");
 	cli = this;
-	using_history();
+	BuildPrompt();
 	rl_callback_handler_install(mPrompt.c_str(), ProcessLine);
-	rl_attempted_completion_function = completion;
-	read_history(NULL);
+	//rl_attempted_completion_function = completion;
+
+	rl_set_complete_func(&my_rl_complete);
+    rl_set_list_possib_func(&my_rl_list_possib);
 
 	mCommands.push_back(UiCommand("quit","",getName()));
 	setProcessingFcn(std::bind(&CLI::processingFcn, this));
@@ -69,8 +72,8 @@ CLI::CLI(msgAddr_t name)
 CLI::~CLI()
 {
 	cli = NULL;
-	write_history(NULL);
-	history_truncate_file(NULL, 100);
+	write_history("QuadGS.hist");
+	rl_deprep_terminal();
 }
 
 void CLI::processingFcn()
@@ -135,13 +138,9 @@ void CLI::Display(std::string str)
 		std::cout << std::endl << str << std::endl;
 	}
 	
-
-	rl_callback_handler_install(cli->mPrompt.c_str(), ProcessLine);
-	rl_insert_text(line_buf);
-	rl_on_new_line(); // Regenerate the prompt on a newline
-    rl_redisplay();
-	rl_on_new_line(); // Regenerate the prompt on a newline
-    rl_redisplay();
+	//rl_callback_handler_install(cli->mPrompt.c_str(), ProcessLine);
+	//rl_insert_text(line_buf);
+	//rl_refresh_line(0, 0);
 }
 
 void CLI::BuildPrompt()
@@ -155,7 +154,6 @@ void CLI::BuildPrompt()
 	{
 		mPrompt = mPromptBase + "-[" + mPromptStatus + "]" + ": ";
 	}
-	Display("");
 }
 
 
@@ -168,7 +166,10 @@ bool CLI::RunUI()
 
 		mIsInitilized = true;
 	}
-	rl_callback_read_char();
+	while(!mStop)
+	{
+		rl_callback_read_char();
+	}
 	return !mStop;
 }
 
@@ -210,85 +211,127 @@ void CLI::ProcessLine(char *line)
 	return;
 }
 
-
-/* Attempt to complete on the contents of TEXT.  START and END bound the
-   region of rl_line_buffer that contains the word to complete.  TEXT is
-   the word to complete.  We can use the entire contents of rl_line_buffer
-   in case we want to do some simple parsing.  Return the array of matches,
-   or NULL if there aren't any. */
-char ** CLI::completion (const char *text, int start, int)
+/* Attempt to complete the pathname, returning an allocated copy.
+ * Fill in *unique if we completed it, or set it to 0 if ambiguous. */
+char *CLI::my_rl_complete(char *token, int *match)
 {
 
-	char **matches;
+	bool firstWord = (strlen(token) >= strlen(rl_line_buffer));
+	uint len = static_cast<unsigned int>(strlen (token));
 
-	matches = (char **)NULL;
-
-	/* If this word is at the start of the line, then it is a command
-     to complete.  Otherwise it is a path in the tree. */
-	if (start == 0)
+	if(firstWord)
 	{
-		rl_completer_word_break_characters = WordBreak;
-		matches = rl_completion_matches (text, command_generator);
+		/* Return the number of characters that is common between all partial matches from the command list. */
+		std::vector<uint> matches;
+
+		for( uint i = 0; i < cli->mCommands.size(); i++)
+		{
+			if (strncmp (cli->mCommands[i].command.c_str(), token, len) == 0)
+			{
+				matches.push_back(i);
+			}
+		}
+		uint nrMatchChar = 255;
+		if(matches.size() == 1)
+		{
+			*match = 1;
+			return (strdup(cli->mCommands[matches[0]].command.c_str() + len));
+		}
+		else if(matches.size() > 1)
+		{
+    	    for(uint index : matches)
+			{
+				uint i = 0;
+    	        for(i = len; (i < cli->mCommands[index].command.size()) && 
+							    (i < cli->mCommands[matches[0]].command.size()); i++)
+				{
+					if(cli->mCommands[index].command[i] != cli->mCommands[matches[0]].command[i])
+					{
+						break;
+					}
+    	        }
+				if(i < (nrMatchChar))
+				{
+					nrMatchChar = i;
+				}
+    	    }
+			if(nrMatchChar > len)
+			{
+				*match = 1;
+				return (strndup(cli->mCommands[matches[0]].command.c_str() + len, nrMatchChar - len));
+			}
+		}
 	}
 	else
 	{
 		std::string tmpLine(rl_line_buffer);
-		size_t i = 0;
-		try
-		{
-			i = FindCommand(tmpLine);
-		}
-		catch(const std::runtime_error& e)
-		{
-			return (matches);
-		}
-
+		int i = FindCommand(tmpLine);
 		if(cli->mCommands[i].address == msgAddr_t::GS_Param_e)
 		{
-			rl_completer_word_break_characters = WordBreakPath;
-			rl_attempted_completion_over = 1;
 
-			matches = rl_completion_matches (tmpLine.c_str(), path_generator);
-
-			rl_completer_word_break_characters = WordBreak;
+			///matches = rl_completion_matches (tmpLine.c_str(), path_generator);
 
 		}
-		else if(cli->mCommands[i].address != msgAddr_t::GS_Param_e)
+		else
 		{
-
+			char* result = NULL;
+			rl_set_complete_func(NULL);
+			result = rl_complete(token, match);
+			rl_set_complete_func(&my_rl_complete);
+			return result;
 		}
-
 	}
-	return (matches);
+	
+	
+	/* If no names matched, then return NULL. */
+    return NULL;
 }
 
-/* Generator function for command completion.  STATE lets us know whether
-   to start from scratch; without any state (i.e. STATE == 0), then we
-   start at the top of the list. rl will free the returned char *, therefore
-   we have to  malloc the c_str.*/
-char * CLI::command_generator (const char *text, int state)
+/* Return all possible completions. */
+int CLI::my_rl_list_possib(char *token, char ***av)
 {
-	static unsigned int list_index, len;
+	bool firstWord = (strlen(token) >= strlen(rl_line_buffer));
 
-	/* If this is a new word to complete, initialize now.  This includes
-     saving the length of TEXT for efficiency, and initializing the index
-     variable to 0. */
-	if (!state)
+	int total = 0;
+
+	if(firstWord)
 	{
-		list_index = 0;
-		len = static_cast<unsigned int>(strlen (text));
-	}
+		char **copy;
 
-	/* Return the next name which partially matches from the command list. */
-	while(list_index < cli->mCommands.size())
+    	copy = (char**)malloc(cli->mCommands.size() * sizeof(char *));
+    	for (uint i = 0; i < cli->mCommands.size(); i++) 
+		{
+			if (!strncmp(cli->mCommands[i].command.c_str(), token, strlen (token))) 
+			{
+			    copy[total] = strdup(cli->mCommands[i].command.c_str());
+			    total++;
+			}
+    	}
+    	*av = copy;
+	}
+	else
 	{
-		list_index++;
-		if (strncmp (cli->mCommands[list_index - 1].command.c_str(), text, len) == 0)
-			return (dupstr(cli->mCommands[list_index - 1].command.c_str()));
-	}
+		std::string tmpLine(rl_line_buffer);
+		int i = FindCommand(tmpLine);
+		if(cli->mCommands[i].address == msgAddr_t::GS_Param_e)
+		{
 
-	/* If no names matched, then return NULL. */
-	return ((char *)NULL);
+			///matches = rl_completion_matches (tmpLine.c_str(), path_generator);
+
+		}
+		else
+		{
+			rl_set_list_possib_func(NULL);
+			total = rl_list_possib(token, av);
+			rl_set_list_possib_func(&my_rl_list_possib);
+		}
+		
+	}
+	
+    
+
+
+    return total;
 }
 
 /* Generator function for path completion.  STATE lets us know whether
@@ -297,7 +340,7 @@ char * CLI::command_generator (const char *text, int state)
    we have to  malloc the c_str.*/
 char * CLI::path_generator (const char *text, int state)
 {
-	rl_completion_append_character = '/';
+	//rl_completion_append_character = '/';
 	static unsigned int list_index;
 	static std::vector<std::string> vec;
 
@@ -432,6 +475,8 @@ void CLI::process(Msg_FlightMode* message)
 		return;
 	}
 	mPromptStatus = flightMode;
+	BuildPrompt();
+	Display("");
 }
 
 } /* namespace QuadGS */
