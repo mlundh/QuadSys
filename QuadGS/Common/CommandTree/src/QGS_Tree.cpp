@@ -258,17 +258,15 @@ bool QGS_Tree::NeedUpdate(const std::string& path)
 }
 
 
-void QGS_Tree::FindPartial(const std::string& name, std::vector<std::string>& vec)
+void QGS_Tree::FindPartial(const std::string& name, std::vector<std::string>& vec, std::string basePath)
 {
   std::string token = GetModuleName(name);
-  //std::cout << "QuadGSTree::FindPartial 1 finding: " << token << " on branch: " << GetName() << std::endl;
   for(size_t i = 0; i < mChildren.size(); i++)
   {
-      if(mChildren[i]->GetName().find(token) == 0)
+      if(token.empty() || (mChildren[i]->GetName().find(token) == 0))
       {
-          //std::cout << "QuadGSTree::FindPartial 2 found: " << token << " on child: " << mChildren[i]->GetName() << std::endl;
 
-          vec.push_back( mChildren[i]->GetName() );
+          vec.push_back( basePath + mChildren[i]->GetName() + "/");
       }
   }
 }
@@ -349,23 +347,26 @@ bool QGS_Tree::DumpTree(std::string &tree, std::vector<size_t> &startPosition, u
 std::string QGS_Tree::DumpTreeFormatted(size_t depth)
 {
     std::stringstream ss;
-    ss.flags(std::ios::left);
-
-    ss << std::setw(4 * static_cast<int>(depth)) << "";
-    ss << std::setw(20) << (GetName() + "<" + std::to_string(mValue.mNodeType) + ">");
-    if(QGS_TreeValue::NodeType_t::NoType != mValue.mNodeType)
+    if(GetName()!="")
     {
-        ss << std::setw(10) << "[" + mValue.GetValue(true) + "]" << std::endl;
-    }
-    else
-    {
-        ss << std::endl;
-    }
+        ss.flags(std::ios::left);
 
+        ss << std::setw(4 * static_cast<int>(depth)) << "";
+        ss << std::setw(20) << (GetName() + "<" + std::to_string(mValue.mNodeType) + ">");
+        if(QGS_TreeValue::NodeType_t::NoType != mValue.mNodeType)
+        {
+            ss << std::setw(10) << "[" + mValue.GetValue(true) + "]" << std::endl;
+        }
+        else
+        {
+            ss << std::endl;
+        }
+        depth++;
+    }
     std::string tmp = ss.str();
     for(size_t i = 0; i < mChildren.size(); i++)
     {
-        tmp += mChildren[i]->DumpTreeFormatted( depth + 1);
+        tmp += mChildren[i]->DumpTreeFormatted( depth );
     }
     return tmp;
 }

@@ -47,26 +47,28 @@ CLI::UiCommand::UiCommand(std::string command, std::string args, msgAddr_t addre
 {
 
 }
-
+// There are many thread-saftey issues here. The main thread handles the editline, but the worker-thread
+// handles the module. These two would neeed to synchronize much better.
 CLI::CLI(msgAddr_t name)
 :QGS_MessageHandlerBase(name)
 ,mCommands()
 ,mPromptStatus("N/A")
+,mPromptPath("")
 ,mPromptBase("QuadGS")
 ,mPrompt()
 {
-	read_history("QuadGS.hist");
 	cli = this;
 	BuildPrompt();
-	rl_callback_handler_install(mPrompt.c_str(), ProcessLine);
-	//rl_attempted_completion_function = completion;
 
+	read_history("QuadGS.hist");
+	rl_callback_handler_install(mPrompt.c_str(), ProcessLine);
 	rl_set_complete_func(&my_rl_complete);
     rl_set_list_possib_func(&my_rl_list_possib);
 
 	mCommands.push_back(UiCommand("quit","",getName()));
 	setProcessingFcn(std::bind(&CLI::processingFcn, this));
 	startProcessing();
+
 }
 
 CLI::~CLI()
@@ -145,15 +147,8 @@ void CLI::Display(std::string str)
 
 void CLI::BuildPrompt()
 {
-
-	if(mPromptStatus.empty())
-	{
-		mPrompt = mPromptBase + ": ";
-	}
-	else
-	{
-		mPrompt = mPromptBase + "-[" + mPromptStatus + "]" + ": ";
-	}
+	mPrompt = mPromptBase + "-[" + mPromptStatus + "]" + ": ";
+	//mPrompt = mPromptBase + "-[" + mPromptStatus + "]" + "[" + mPromptPath + "]" + ": ";
 }
 
 
@@ -215,7 +210,6 @@ void CLI::ProcessLine(char *line)
  * Fill in *unique if we completed it, or set it to 0 if ambiguous. */
 char *CLI::my_rl_complete(char *token, int *match)
 {
-
 	bool firstWord = (strlen(token) >= strlen(rl_line_buffer));
 	uint len = static_cast<unsigned int>(strlen (token));
 
@@ -232,12 +226,12 @@ char *CLI::my_rl_complete(char *token, int *match)
 			}
 		}
 		uint nrMatchChar = 255;
-		if(matches.size() == 1)
+		if(matches.size() == 1) // Complete the whole word if there is only one match.
 		{
 			*match = 1;
 			return (strdup(cli->mCommands[matches[0]].command.c_str() + len));
 		}
-		else if(matches.size() > 1)
+		else if(matches.size() > 1) // Complete the longest common string among all matches.
 		{
     	    for(uint index : matches)
 			{
@@ -255,7 +249,7 @@ char *CLI::my_rl_complete(char *token, int *match)
 					nrMatchChar = i;
 				}
     	    }
-			if(nrMatchChar > len)
+			if(nrMatchChar > len) // Return the common string only if it adds anything to one on the line already.
 			{
 				*match = 1;
 				return (strndup(cli->mCommands[matches[0]].command.c_str() + len, nrMatchChar - len));
@@ -267,9 +261,39 @@ char *CLI::my_rl_complete(char *token, int *match)
 		std::string tmpLine(rl_line_buffer);
 		int i = FindCommand(tmpLine);
 		if(cli->mCommands[i].address == msgAddr_t::GS_Param_e)
-		{
-
-			///matches = rl_completion_matches (tmpLine.c_str(), path_generator);
+		{	
+			int nbr = 255;
+			char *entry;
+			char *firstEntry = path_generator(token, 0);
+			if(!firstEntry)
+			{
+				return NULL;
+			}
+			else
+			{
+				nbr = strlen(firstEntry);
+			}
+			while ((entry = path_generator(token, 1)))
+			{
+				int j = 0;
+				while(firstEntry[j] == entry[j])
+				{
+					j++;
+				}
+				if(j < nbr)
+				{
+					nbr = j;
+				}
+				free(entry);
+			}
+			int tokenLength = strlen(token);
+			char* result = NULL;
+			if(nbr > tokenLength)
+			{
+				result = strndup(firstEntry + tokenLength, nbr - tokenLength);
+				free(firstEntry);
+			}
+			return result;
 
 		}
 		else
@@ -315,9 +339,32 @@ int CLI::my_rl_list_possib(char *token, char ***av)
 		int i = FindCommand(tmpLine);
 		if(cli->mCommands[i].address == msgAddr_t::GS_Param_e)
 		{
+			int state = 0; 
+			int num = 0;
+			char **array;
+			char *entry;
 
-			///matches = rl_completion_matches (tmpLine.c_str(), path_generator);
+			array = (char**)malloc(512 * sizeof(char *));
+			if (!array)
+			{
+				return 0;
+			}
+			
+			while (num < 511 && (entry = path_generator(token, state))) 
+			{
+				state = 1;
+				array[num++] = entry;
+			}
+			array[num] = NULL;
 
+			if (!num) 
+			{
+				free(array);
+				return 0;
+			}
+
+			*av = array;
+			total = num;
 		}
 		else
 		{
@@ -340,11 +387,10 @@ int CLI::my_rl_list_possib(char *token, char ***av)
    we have to  malloc the c_str.*/
 char * CLI::path_generator (const char *text, int state)
 {
-	//rl_completion_append_character = '/';
-	static unsigned int list_index;
+	static unsigned int list_index = 0;
 	static std::vector<std::string> vec;
 
-
+	//std::cout << "CLI::path_generator entry: " << list_index << "state: " << state << std::endl;
 	/* If this is a new word to complete, initialize now.  This includes
      saving the length of TEXT for efficiency, and initializing the index
      variable to 0. */
@@ -360,13 +406,12 @@ char * CLI::path_generator (const char *text, int state)
 		// Now wait for message to get back
 		std::unique_lock<std::mutex> l(cli->mMutex);
 
-		if(!cli->cvFindParam.wait_for(l, std::chrono::milliseconds(5), [](){return cli->newFindParam; }))
+		if(!cli->cvFindParam.wait_for(l, std::chrono::milliseconds(5000), [](){return cli->newFindParam; }))
 		{
-			throw std::runtime_error("Did not get a find param result");
+			//throw std::runtime_error("Did not get a find param result");
+			return NULL;
 		}
-		cli->newUiRsp = false;
-
-		text_s = cli->mFindParamToFind;
+		cli->newFindParam = false;
 
 		// Msg_FindParam returns a comma separated list, we should convert this to a vector of strings.
 		while(!cli->mFindParamResult.empty())
@@ -401,6 +446,7 @@ char * CLI::path_generator (const char *text, int state)
 			}
 		}
 	}
+	
 	/* If no names matched, then return NULL. */
 	return ((char *)NULL);
 }
@@ -417,6 +463,8 @@ char * CLI::dupstr (const char * s)
 
 void CLI::process(Msg_RegUiCommand* message)
 {
+	std::lock_guard<std::mutex> lock(mMutex);
+
 	mLogger.QuadLog(debug, "Received UI command: " + message->getCommand() + " from " + msgAddrStr.at(message->getSource()));
 	mCommands.push_back(UiCommand(message->getCommand(), message->getDoc(), message->getSource()));
 }

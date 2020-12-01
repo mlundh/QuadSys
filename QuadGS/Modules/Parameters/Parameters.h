@@ -118,7 +118,7 @@ public:
 	std::vector<UiCommand> mCommands;
 	QGS_Tree::ptr mTmpBranch;
 	QGS_Tree::ptr mCurrentBranch;
-	std::vector<QGS_Tree::ptr> mTree;
+	QGS_Tree::ptr mRoot;
 	msgAddr_t mSendName;
 	uint8_t sequenceNr;
 };

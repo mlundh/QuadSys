@@ -146,8 +146,9 @@ public:
      * in the vector vec.
      * @param name  Partial name to match.
      * @param vec   return vector.
+     * @param basePath base path that will be applied to the return vector.
      */
-    void FindPartial(const std::string& name, std::vector<std::string>& vec);
+    void FindPartial(const std::string& name, std::vector<std::string>& vec, std::string basePath);
 
     /**
      * Get the number of child nodes this node has.
@@ -188,12 +189,11 @@ public:
      */
     std::string DumpTreeFormatted( size_t depth);
 
-
+    std::vector< QGS_Tree::ptr > mChildren;
 protected:
 
     std::string mName;
-    QGS_Tree* mParent;
-    std::vector< QGS_Tree::ptr > mChildren;
+    QGS_Tree* mParent;    
     QGS_TreeValue mValue;
     AppLog mLogger;
 public:

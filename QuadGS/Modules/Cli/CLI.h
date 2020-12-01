@@ -116,6 +116,7 @@ public:
 	std::vector<UiCommand> mCommands;
 	bool mIsInitilized = false;
 	std::string mPromptStatus;
+	std::string mPromptPath;
 	std::string mPromptBase;
 	std::string mPrompt;
 	static char WordBreakPath[];

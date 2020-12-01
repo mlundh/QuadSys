@@ -40,10 +40,11 @@ using namespace std::placeholders;
 
 namespace QuadGS {
 
-Parameters::Parameters(msgAddr_t name, msgAddr_t send_name):QGS_MessageHandlerBase(name),mTree(), mSendName(send_name), sequenceNr(0)
+Parameters::Parameters(msgAddr_t name, msgAddr_t send_name):QGS_MessageHandlerBase(name), mSendName(send_name), sequenceNr(0)
 
 {
-	mCurrentBranch = QGS_Tree::ptr();
+	mRoot = QGS_Tree::ptr(new QGS_Tree(""));
+	mCurrentBranch = mRoot;
 	mTmpBranch = QGS_Tree::ptr();
 	mCommands.push_back(UiCommand("paramCd","Change working branch",std::bind(&Parameters::ChangeBranchCmd, this, std::placeholders::_1)));
 	mCommands.push_back(UiCommand("paramPrintBranch","Print current branch",std::bind(&Parameters::PrintCurrentPath, this, std::placeholders::_1)));
@@ -65,53 +66,25 @@ Parameters::~Parameters()
 
 bool Parameters::UpdateTmp(std::string& path, bool restart)
 {
+	if(restart)
+	{
+		mTmpBranch = mCurrentBranch;
+	}
+	if(path.empty())
+	{
+		mTmpBranch = mCurrentBranch;
+		return true;
+	}
 	size_t pos = path.find(QGS_Tree::mBranchDelimiter);
 	if (pos == 0) // Update from root.
 	{
-		mTmpBranch.reset();
+		mTmpBranch = mRoot;
 		path.erase(0, pos + QGS_Tree::mBranchDelimiter.length());
-		std::string moduleName = QGS_Tree::GetModuleName(path);
-		std::string module = QGS_Tree::GetModuleString(path);
-
-		for(auto &item : mTree)
-		{
-			if(item->GetName().compare(moduleName) == 0 ) // Find root...
-			{
-				mTmpBranch = item;
-				break;
-			}
-		}
-		// If a tree with this root is not registerd, then create a new.
-		if(!mTmpBranch)
-		{
-			mTree.push_back(QGS_Tree::ptr(new QGS_Tree(module)));
-			mTmpBranch = mTree.back();
-		}
-		if(mTmpBranch->NeedUpdate(path))
-		{
-			return true;
-		}
-		//else remove module from string and continue.
-		QGS_Tree::RemoveModuleString(path);
 	}
-	else
+	if(!mCurrentBranch)
 	{
-		if(mTree.empty())
-		{
-			throw std::runtime_error("No tree registered");
-		}		
-		if(!mCurrentBranch)
-		{
-			mCurrentBranch = mTree.front();
-		}
-		if(restart)
-		{
-			// Update relative to current path. 
-			mTmpBranch = mCurrentBranch;
-		}
-
+		mCurrentBranch = mRoot;// Fallback...
 	}
-
 	while(!path.empty())
 	{
 		// Find will return shared_ptr to next element, or current if there is work to do in current node.
@@ -159,7 +132,7 @@ std::string Parameters::ChangeBranchCmd(std::string path)
 
 std::string Parameters::PrintCurrentPath(std::string)
 {
-	if(mTree.empty())
+	if(!mRoot->getNrChildren())
 	{
 		throw std::runtime_error("No tree registered");
 	}
@@ -167,8 +140,12 @@ std::string Parameters::PrintCurrentPath(std::string)
 	QGS_Tree* tmp = mCurrentBranch->GetParent();
 	while(tmp)
 	{
-		std::string parentName = tmp->GetName();
-		Path = parentName + QGS_Tree::mBranchDelimiter + Path;
+		if(tmp->GetName() != "")
+		{
+			std::string parentName = tmp->GetName();
+			Path = parentName + QGS_Tree::mBranchDelimiter + Path;	
+		}
+		
 		tmp = tmp->GetParent();
 	}
 	Path = "/" + Path;
@@ -282,18 +259,9 @@ std::string Parameters::SetAndRegister(std::string path)
 
 std::string Parameters::writeCmd(std::string path_dump)
 {
-	if(path_dump.empty())
-	{
-		for(auto &item : mTree)
-		{
-			mTmpBranch = item;
-			writeInternal(path_dump, false);
-		}
-	}
-	else
-	{
-		writeInternal(path_dump, true);
-	}
+	UpdateTmp(path_dump, false);
+	writeInternal(path_dump, true);
+
 	return "";
 }
 
@@ -307,10 +275,14 @@ void Parameters::writeInternal(std::string path_dump, bool restart)
 		UpdateTmp(path_dump, restart);
 		std::string Path;
 		QGS_Tree* tmp = mTmpBranch->GetParent();
-		while(tmp)
+		while(tmp) 
 		{
-			std::string parentString = tmp->GetNodeString();
-			Path = QGS_Tree::mBranchDelimiter + parentString + Path;
+			if(tmp->GetName() != "")
+			{
+				std::string parentString = tmp->GetNodeString();
+				Path = QGS_Tree::mBranchDelimiter + parentString + Path;
+			}
+			
 			tmp = tmp->GetParent();
 		}
 		unsigned int Depth = 0;
@@ -351,18 +323,9 @@ std::string Parameters::loadParamCmd(std::string )
 std::string Parameters::dump(std::string path)
 {
 	std::stringstream result;
-	if(path.empty())
-	{
-		for(auto &item : mTree)
-		{
-			result << std::endl << item->DumpTreeFormatted(0);
-		}
-	}
-	else
-	{
-		UpdateTmp(path);
-		result << mTmpBranch->DumpTreeFormatted(0);	
-	}
+
+	UpdateTmp(path);
+	result << mTmpBranch->DumpTreeFormatted(0);	
 	
 	return  result.str();
 
@@ -370,8 +333,12 @@ std::string Parameters::dump(std::string path)
 
 void Parameters::FindPartial(std::string& name, std::vector<std::string>& vec)
 {
+	std::string basePath(name);
 	UpdateTmp(name);
-	mTmpBranch->FindPartial(name, vec);
+	uint lengthBase = basePath.size();
+	uint lengthPath = name.size();
+	basePath.erase(lengthBase - lengthPath, lengthPath);
+	mTmpBranch->FindPartial(name, vec, basePath);
 }
 
 
