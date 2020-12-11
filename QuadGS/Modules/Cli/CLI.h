@@ -100,7 +100,7 @@ public:
 
 	static int my_rl_list_possib(char *token, char ***av);
 
-	static char * path_generator (const char *text, int state);
+	static std::string path_generator (const char *text, int state, bool removeBase = false);
 
 	static char * dupstr (const char * s);
 
@@ -133,6 +133,8 @@ public:
 
 	bool newUiRsp = false;
 	std::condition_variable cvNewUiRsp;
+	std::string uiRsp;
+
 	static bool stopCli;
 
 

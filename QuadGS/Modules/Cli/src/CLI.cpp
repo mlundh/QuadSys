@@ -127,7 +127,7 @@ std::string CLI::ExecuteLine(std::string line)
 	Msg_FireUiCommand::ptr ptr = std::make_unique<Msg_FireUiCommand>(cli->mCommands[i].address, cli->mCommands[i].command, line);
 	cli->sendMsg(std::move(ptr));
 	cli->waitForUiResult();
-	return "";
+	return cli->uiRsp;
 }
 
 void CLI::Display(std::string str)
@@ -263,35 +263,41 @@ char *CLI::my_rl_complete(char *token, int *match)
 		if(cli->mCommands[i].address == msgAddr_t::GS_Param_e)
 		{	
 			int nbr = 255;
-			char *entry;
-			char *firstEntry = path_generator(token, 0);
-			if(!firstEntry)
+			std::string firstEntry = path_generator(token, 0);
+			if(firstEntry.empty())
 			{
 				return NULL;
 			}
 			else
 			{
-				nbr = strlen(firstEntry);
+				nbr = firstEntry.length();
 			}
-			while ((entry = path_generator(token, 1)))
+			bool cont = true;
+			while (cont)
 			{
+				std::string entry = path_generator(token, 1);
 				int j = 0;
-				while(firstEntry[j] == entry[j])
+				if(!entry.empty())
 				{
-					j++;
+					while(firstEntry[j] == entry[j])
+					{
+						j++;
+					}
+					if(j < nbr)
+					{
+						nbr = j;
+					}
 				}
-				if(j < nbr)
+				else
 				{
-					nbr = j;
+					cont = false;
 				}
-				free(entry);
 			}
 			int tokenLength = strlen(token);
 			char* result = NULL;
 			if(nbr > tokenLength)
 			{
-				result = strndup(firstEntry + tokenLength, nbr - tokenLength);
-				free(firstEntry);
+				result = strndup(firstEntry.c_str() + tokenLength, nbr - tokenLength);
 			}
 			return result;
 
@@ -305,7 +311,6 @@ char *CLI::my_rl_complete(char *token, int *match)
 			return result;
 		}
 	}
-	
 	
 	/* If no names matched, then return NULL. */
     return NULL;
@@ -339,32 +344,42 @@ int CLI::my_rl_list_possib(char *token, char ***av)
 		int i = FindCommand(tmpLine);
 		if(cli->mCommands[i].address == msgAddr_t::GS_Param_e)
 		{
-			int state = 0; 
-			int num = 0;
-			char **array;
-			char *entry;
+			std::vector<std::string> vec;
+			int state = 0;
+			bool cont = true;
 
-			array = (char**)malloc(512 * sizeof(char *));
-			if (!array)
+			while (cont) 
+			{
+				std::string entry = path_generator(token, state, true);
+				if(!entry.empty())
+				{
+					vec.push_back(entry);
+					state = 1;
+				}
+				else
+				{
+					cont = false;
+				}
+				
+			}
+			if (vec.size() == 0) 
 			{
 				return 0;
 			}
 			
-			while (num < 511 && (entry = path_generator(token, state))) 
+			char **array;
+			array = (char**)malloc(vec.size() * sizeof(char *));
+			if (!array)
 			{
-				state = 1;
-				array[num++] = entry;
-			}
-			array[num] = NULL;
-
-			if (!num) 
-			{
-				free(array);
 				return 0;
 			}
-
+			uint i = 0;
+			for(auto item : vec)
+			{
+				array[i++] = dupstr(item.c_str());
+			}
 			*av = array;
-			total = num;
+			total = vec.size();
 		}
 		else
 		{
@@ -385,7 +400,7 @@ int CLI::my_rl_list_possib(char *token, char ***av)
    to start from scratch; without any state (i.e. STATE == 0), then we
    start at the top of the list. rl will free the returned char *, therefore
    we have to  malloc the c_str.*/
-char * CLI::path_generator (const char *text, int state)
+std::string CLI::path_generator (const char *text, int state, bool removeBase)
 {
 	static unsigned int list_index = 0;
 	static std::vector<std::string> vec;
@@ -395,7 +410,7 @@ char * CLI::path_generator (const char *text, int state)
      saving the length of TEXT for efficiency, and initializing the index
      variable to 0. */
 	std::string text_s(text);
-
+	std::string baseText = cli->mFindParamToFind;
 	if (!state)
 	{
 		list_index = 0;
@@ -434,7 +449,22 @@ char * CLI::path_generator (const char *text, int state)
 	}
 	boost::trim(text_s);
 
+	size_t pos = 0;
+	if(removeBase)
+	{
+    	pos = text_s.find_last_of("/");
+		if(pos == std::string::npos)
+		{
+			pos = 0;
+		}
+		else
+		{
+			pos++;
+		}
+	}
+
 	/* Return the next name which partially matches from the command list. */
+	// TODO remove the base string and only show the last module.
 	if(!vec.empty())
 	{
 		while(list_index < vec.size())
@@ -442,13 +472,23 @@ char * CLI::path_generator (const char *text, int state)
 			list_index++;
 			if(0 == vec[list_index-1].find(text_s))
 			{
-				return dupstr(vec[list_index-1].c_str());
+				std::string rtn;
+				if(removeBase)
+				{
+					rtn = vec[list_index-1].substr(pos);
+				}
+				else
+				{
+					rtn = vec[list_index-1];
+				}
+				
+				return rtn;
 			}
 		}
 	}
 	
-	/* If no names matched, then return NULL. */
-	return ((char *)NULL);
+	/* If no names matched, then return an empty string. */
+	return "";
 }
 
 
@@ -473,11 +513,7 @@ void CLI::process(Msg_UiCommandResult* message)
 	std::lock_guard<std::mutex> lock(mMutex);
 
 	newUiRsp = true;
-	if(!message->getResult().empty())
-	{
-		Display(message->getResult());
-	}
-	
+	uiRsp = message->getResult();
 
 	mMutex.unlock();
 	cvNewUiRsp.notify_one();
@@ -523,8 +559,8 @@ void CLI::process(Msg_FlightMode* message)
 		return;
 	}
 	mPromptStatus = flightMode;
-	BuildPrompt();
-	Display("");
+	//BuildPrompt();
+	//Display("");
 }
 
 } /* namespace QuadGS */
