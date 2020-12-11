@@ -338,6 +338,10 @@ void Parameters::FindPartial(std::string& name, std::vector<std::string>& vec)
 	uint lengthBase = basePath.size();
 	uint lengthPath = name.size();
 	basePath.erase(lengthBase - lengthPath, lengthPath);
+	if(lengthPath == 0 && lengthBase != 0 && (lengthBase != lengthPath) && (basePath.back() != '/'))
+	{
+		basePath.append("/");
+	}
 	mTmpBranch->FindPartial(name, vec, basePath);
 }
 

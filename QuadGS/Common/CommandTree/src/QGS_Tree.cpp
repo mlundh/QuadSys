@@ -266,7 +266,7 @@ void QGS_Tree::FindPartial(const std::string& name, std::vector<std::string>& ve
       if(token.empty() || (mChildren[i]->GetName().find(token) == 0))
       {
 
-          vec.push_back( basePath + mChildren[i]->GetName() + "/");
+          vec.push_back( basePath + mChildren[i]->GetName());
       }
   }
 }
