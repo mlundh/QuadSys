@@ -464,7 +464,6 @@ std::string CLI::path_generator (const char *text, int state, bool removeBase)
 	}
 
 	/* Return the next name which partially matches from the command list. */
-	// TODO remove the base string and only show the last module.
 	if(!vec.empty())
 	{
 		while(list_index < vec.size())

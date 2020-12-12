@@ -317,11 +317,14 @@ bool QGS_Tree::DumpTree(std::string &tree, std::vector<size_t> &startPosition, u
     {
         return false;
     }
-    //dump self.
-    tree += ("/" + GetName() + "<" + std::to_string(mValue.mNodeType) + ">");
-    if(QGS_TreeValue::NodeType_t::NoType != mValue.mNodeType)
+    //dump self unless a root node (name is an empty string)
+    if(GetName() != "")
     {
-        tree += "[" + mValue.GetValue() + "]";
+        tree += ("/" + GetName() + "<" + std::to_string(mValue.mNodeType) + ">");
+        if(QGS_TreeValue::NodeType_t::NoType != mValue.mNodeType)
+        {
+            tree += "[" + mValue.GetValue() + "]";
+        }
     }
     // Dump children from start position.
     for(size_t i = startPosition[depth]; i < mChildren.size(); i++)
