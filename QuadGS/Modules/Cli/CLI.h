@@ -119,6 +119,7 @@ public:
 	std::string mPromptPath;
 	std::string mPromptBase;
 	std::string mPrompt;
+	bool updatePrompt = false;
 	static char WordBreakPath[];
 	static char WordBreak[];
 	static CLI* cli;

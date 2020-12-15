@@ -61,6 +61,7 @@ CLI::CLI(msgAddr_t name)
 	BuildPrompt();
 
 	read_history("QuadGS.hist");
+	el_hist_size = 1000;
 	rl_callback_handler_install(mPrompt.c_str(), ProcessLine);
 	rl_set_complete_func(&my_rl_complete);
     rl_set_list_possib_func(&my_rl_list_possib);
@@ -139,15 +140,13 @@ void CLI::Display(std::string str)
 	{
 		std::cout << std::endl << str << std::endl;
 	}
-	
-	//rl_callback_handler_install(cli->mPrompt.c_str(), ProcessLine);
-	//rl_insert_text(line_buf);
-	//rl_refresh_line(0, 0);
 }
 
 void CLI::BuildPrompt()
 {
 	mPrompt = mPromptBase + "-[" + mPromptStatus + "]" + ": ";
+	updatePrompt = true;
+
 	//mPrompt = mPromptBase + "-[" + mPromptStatus + "]" + "[" + mPromptPath + "]" + ": ";
 }
 
@@ -164,6 +163,20 @@ bool CLI::RunUI()
 	while(!mStop)
 	{
 		rl_callback_read_char();
+		if(updatePrompt)
+		{
+			char line_buf[256];
+			  /* save away the current contents of the line */
+  			strncpy(line_buf, rl_line_buffer, sizeof(line_buf));
+  			line_buf[sizeof(line_buf) - 1] = 0;
+			rl_callback_handler_install(mPrompt.c_str(), ProcessLine);
+			rl_insert_text(line_buf);
+
+  			/* redraw the current line - this is an undocumented function. It invokes the
+  			 * redraw-current-line command.
+  			 */
+  			rl_refresh_line(0, 0);
+		}
 	}
 	return !mStop;
 }
@@ -558,8 +571,7 @@ void CLI::process(Msg_FlightMode* message)
 		return;
 	}
 	mPromptStatus = flightMode;
-	//BuildPrompt();
-	//Display("");
+	BuildPrompt();
 }
 
 } /* namespace QuadGS */
