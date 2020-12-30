@@ -250,14 +250,14 @@ void Com_CreateTasks(eventHandler_t* eventHandlerRx, eventHandler_t* eventHandle
     portBASE_TYPE create_result_rx, create_result_tx;
 
     create_result_tx = xTaskCreate( Com_TxTask,           /* The task that implements the transmission of messages. */
-            (const char *const) "UARTTX",                  /* Name, debugging only.*/
+            (const char *const) "ComTX",                  /* Name, debugging only.*/
             500,                                           /* The size of the stack allocated to the task. */
             (void *) paramTx,                                /* Pass the task parameters to the task. */
             configMAX_PRIORITIES-3,                        /* The priority allocated to the task. */
             NULL );                                        /* No handle required. */
 
     create_result_rx = xTaskCreate( Com_RxTask,          /* The task that implements the receiveing of messages. */
-            (const char *const) "UARTRX",                  /* Name, debugging only. */
+            (const char *const) "ComRX",                  /* Name, debugging only. */
             500,                                           /* The size of the stack allocated to the task. */
             (void *) paramRx,                                /* Pass the task parameters to the task. */
             configMAX_PRIORITIES-3,                        /* The priority allocated to the task. */

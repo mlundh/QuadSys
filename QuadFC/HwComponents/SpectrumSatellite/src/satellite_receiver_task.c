@@ -251,11 +251,12 @@ void Satellite_CreateReceiverTask(  eventHandler_t* eventHandler, uint32_t uartN
 
         }
     }
-
+    char tmpName[] = "SpecSatX";
+    tmpName[7] = index;
 
     /*Create the worker task*/
     xTaskCreate(  Satellite_ReceiverTask,   /* The task that implements the test. */
-            "Satellite",                        /* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
+            tmpName,                        /* Text name assigned to the task.  This is just to assist debugging.  The kernel does not use this name itself. */
             500,                                /* The size of the stack allocated to the task. */
             (void *) SatelliteParam,            /* The parameter is used to pass the already configured USART port into the task. */
             configMAX_PRIORITIES-2,             /* The priority allocated to the task. */
