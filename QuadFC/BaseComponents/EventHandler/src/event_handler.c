@@ -419,7 +419,8 @@ uint8_t Event_SendBCInternal(eventHandler_t* obj, moduleMsg_t* msg, uint8_t dele
             moduleMsg_t* clone = Msg_Clone(msg);
             if(!xQueueSendToBack(obj->handlers[i]->eventQueue, &clone, EVENT_BLOCK_TIME))
             {
-                LOG_ENTRY(FC_SerialIOtx_e, obj, "Event: Error. Failed sendToBack BC internal, handler: 0x%08x.", obj->handlers[i]->handlerId);
+                LOG_ENTRY(FC_SerialIOtx_e, obj, "Event: Error in SendBCInternal. Failed to send message %ld to handler: 0x%08x, from handler: 0x%08x."
+                                                , msg->type, obj->handlers[i]->handlerId, obj->handlerId);
                 result = 0;
                 Msg_Delete(&clone);
             }

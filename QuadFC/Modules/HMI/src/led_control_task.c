@@ -255,7 +255,7 @@ uint8_t Led_HandleFlightMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* 
   switch(flightMode)
   {
   case fmode_init:
-    param->ledState[ledStatus].mode = led_blink_fast;
+    param->ledState[ledStatus].mode = led_blink_slow;
     break;
   case fmode_disarmed:
     param->ledState[ledError].mode    = led_Off;

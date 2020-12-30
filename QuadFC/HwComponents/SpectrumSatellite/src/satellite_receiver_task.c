@@ -315,9 +315,14 @@ void Satellite_ReceiverTask(void *pvParameters)
                 // If all channels in the configuration are present then we have a complete setpoint.
                 if (decoded_data->channels_merged == configuration->channels_available)
                 {
-                    moduleMsg_t* msg = Msg_SpectrumDataCreate(FC_Broadcast_e, 0, *decoded_data);
+                    // We should not spam with setpoints when we are in init or config mode!
+                    if(param->current_flight_mode_state != fmode_init && param->current_flight_mode_state != fmode_config)
+                    {
+                        moduleMsg_t* msg = Msg_SpectrumDataCreate(FC_Broadcast_e, 0, *decoded_data);
 
-                    Event_Send(param->evHandler, msg);
+                        Event_Send(param->evHandler, msg);
+                    }
+
 
                 }
             }
