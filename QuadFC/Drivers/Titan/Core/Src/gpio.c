@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * File Name          : gpio.c
-  * Description        : This file provides code for the configuration
-  *                      of all used GPIO pins.
+  * @file    gpio.c
+  * @brief   This file provides code for the configuration
+  *          of all used GPIO pins.
   ******************************************************************************
   * @attention
   *
@@ -19,6 +19,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "gpio.h"
+
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
@@ -30,9 +31,9 @@
 
 /* USER CODE END 1 */
 
-/** Configure pins as 
-        * Analog 
-        * Input 
+/** Configure pins as
+        * Analog
+        * Input
         * Output
         * EVENT_OUT
         * EXTI
@@ -51,18 +52,18 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, RC_1_PWR_CTRL_Pin|IO_1_Pin|IO_2_Pin|IO_3_Pin 
+  HAL_GPIO_WritePin(GPIOE, RC_1_PWR_CTRL_Pin|IO_1_Pin|IO_2_Pin|IO_3_Pin
                           |IO_4_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, IO_12_Pin|IO_13_Pin|IO_14_Pin|IO_15_Pin 
+  HAL_GPIO_WritePin(GPIOC, IO_12_Pin|IO_13_Pin|IO_14_Pin|IO_15_Pin
                           |IO_10_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, NC1_Pin|IO_11_Pin|NC_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, IO_5_Pin|IO_6_Pin|IO_7_Pin|IO_8_Pin 
+  HAL_GPIO_WritePin(GPIOD, IO_5_Pin|IO_6_Pin|IO_7_Pin|IO_8_Pin
                           |RC_2_PWR_CTRL_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
@@ -72,12 +73,12 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(HEARTBEAT_GPIO_Port, HEARTBEAT_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, LED_SETPOINT_Pin|LED_CTRL_MODE_Pin|LED_STATUS_Pin|LED_ERROR_Pin 
+  HAL_GPIO_WritePin(GPIOD, LED_SETPOINT_Pin|LED_CTRL_MODE_Pin|LED_STATUS_Pin|LED_ERROR_Pin
                           |LED_FATAL_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pins : PEPin PEPin PEPin PEPin 
+  /*Configure GPIO pins : PEPin PEPin PEPin PEPin
                            PEPin */
-  GPIO_InitStruct.Pin = RC_1_PWR_CTRL_Pin|IO_1_Pin|IO_2_Pin|IO_3_Pin 
+  GPIO_InitStruct.Pin = RC_1_PWR_CTRL_Pin|IO_1_Pin|IO_2_Pin|IO_3_Pin
                           |IO_4_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -96,9 +97,9 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(IMU2_INT_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PCPin PCPin PCPin PCPin 
+  /*Configure GPIO pins : PCPin PCPin PCPin PCPin
                            PCPin PCPin */
-  GPIO_InitStruct.Pin = IO_12_Pin|IO_13_Pin|IO_14_Pin|IO_15_Pin 
+  GPIO_InitStruct.Pin = IO_12_Pin|IO_13_Pin|IO_14_Pin|IO_15_Pin
                           |IO_10_Pin|HEARTBEAT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -118,9 +119,9 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PDPin PDPin PDPin PDPin 
+  /*Configure GPIO pins : PDPin PDPin PDPin PDPin
                            PDPin */
-  GPIO_InitStruct.Pin = IO_5_Pin|IO_6_Pin|IO_7_Pin|IO_8_Pin 
+  GPIO_InitStruct.Pin = IO_5_Pin|IO_6_Pin|IO_7_Pin|IO_8_Pin
                           |RC_2_PWR_CTRL_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -134,9 +135,9 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(IO_9_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PDPin PDPin PDPin PDPin 
+  /*Configure GPIO pins : PDPin PDPin PDPin PDPin
                            PDPin */
-  GPIO_InitStruct.Pin = LED_SETPOINT_Pin|LED_CTRL_MODE_Pin|LED_STATUS_Pin|LED_ERROR_Pin 
+  GPIO_InitStruct.Pin = LED_SETPOINT_Pin|LED_CTRL_MODE_Pin|LED_STATUS_Pin|LED_ERROR_Pin
                           |LED_FATAL_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
   GPIO_InitStruct.Pull = GPIO_NOPULL;

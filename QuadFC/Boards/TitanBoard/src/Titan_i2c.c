@@ -108,6 +108,7 @@ uint8_t QuadFC_i2cWrite(QuadFC_I2C_t *i2c_data, uint8_t busIndex, TickType_t blo
     }
     else
     {
+      
       return 0;
     }
     
@@ -148,8 +149,8 @@ uint8_t QuadFC_i2cRead(QuadFC_I2C_t *i2c_data, uint8_t busIndex, TickType_t bloc
   HAL_StatusTypeDef result = 0;
   if(i2c_data->internalAddrLength > 0) // todo...
   {
-//    result = HAL_I2C_Master_Transmit_IT(&titanI2c[busIndex].i2c, (uint16_t)i2c_data->slaveAddress<<1, i2c_data->internalAddr, i2c_data->internalAddrLength);
-    result = HAL_I2C_Mem_Read_IT(&titanI2c[busIndex].i2c, (uint16_t)i2c_data->slaveAddress<<1, *i2c_data->internalAddr, i2c_data->internalAddrLength, i2c_data->buffer, i2c_data->bufferLength);
+    HAL_GPIO_TogglePin( IO_14_GPIO_Port, IO_14_Pin );
+    result = HAL_I2C_Master_Transmit_IT(&titanI2c[busIndex].i2c, (uint16_t)i2c_data->slaveAddress<<1, i2c_data->internalAddr, i2c_data->internalAddrLength);
     if(result == HAL_OK)
     {
       if(xSemaphoreTake(titanI2c[busIndex].trans_comp_sem, pdMS_TO_TICKS(blockTimeMs)) != pdTRUE)
@@ -163,8 +164,8 @@ uint8_t QuadFC_i2cRead(QuadFC_I2C_t *i2c_data, uint8_t busIndex, TickType_t bloc
     }
     
   }
-  else
   {
+    HAL_GPIO_TogglePin( IO_14_GPIO_Port, IO_14_Pin );
     result &= HAL_I2C_Master_Receive_IT(&titanI2c[busIndex].i2c, (uint16_t)i2c_data->slaveAddress<<1, i2c_data->buffer, i2c_data->bufferLength);
     if(result == HAL_OK)
     {

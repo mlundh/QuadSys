@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * File Name          : SPI.c
-  * Description        : This file provides code for the configuration
-  *                      of the SPI instances.
+  * @file    spi.c
+  * @brief   This file provides code for the configuration
+  *          of the SPI instances.
   ******************************************************************************
   * @attention
   *
@@ -107,13 +107,13 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
   /* USER CODE END SPI1_MspInit 0 */
     /* SPI1 clock enable */
     __HAL_RCC_SPI1_CLK_ENABLE();
-  
+
     __HAL_RCC_GPIOA_CLK_ENABLE();
-    /**SPI1 GPIO Configuration    
+    /**SPI1 GPIO Configuration
     PA4     ------> SPI1_NSS
     PA5     ------> SPI1_SCK
     PA6     ------> SPI1_MISO
-    PA7     ------> SPI1_MOSI 
+    PA7     ------> SPI1_MOSI
     */
     GPIO_InitStruct.Pin = SPI_MEM_NSS_Pin|SPI_MEM_SCK_Pin|SPI_MEM_MISO_Pin|SPI_MEM_MOSO_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -173,14 +173,14 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
   /* USER CODE END SPI2_MspInit 0 */
     /* SPI2 clock enable */
     __HAL_RCC_SPI2_CLK_ENABLE();
-  
+
     __HAL_RCC_GPIOC_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
-    /**SPI2 GPIO Configuration    
+    /**SPI2 GPIO Configuration
     PC2     ------> SPI2_MISO
     PC3     ------> SPI2_MOSI
     PB12     ------> SPI2_NSS
-    PB13     ------> SPI2_SCK 
+    PB13     ------> SPI2_SCK
     */
     GPIO_InitStruct.Pin = SPI_SLAVE_MISO_Pin|SPI_SLAVE_MOSI_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -210,13 +210,13 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
   /* USER CODE END SPI4_MspInit 0 */
     /* SPI4 clock enable */
     __HAL_RCC_SPI4_CLK_ENABLE();
-  
+
     __HAL_RCC_GPIOE_CLK_ENABLE();
-    /**SPI4 GPIO Configuration    
+    /**SPI4 GPIO Configuration
     PE5     ------> SPI4_MISO
     PE6     ------> SPI4_MOSI
     PE11     ------> SPI4_NSS
-    PE12     ------> SPI4_SCK 
+    PE12     ------> SPI4_SCK
     */
     GPIO_InitStruct.Pin = SPI_AUX_MISO_Pin|SPI_AUX_MOSI_Pin|SPI_AUX_NSS_Pin|SPI_AUX_SCK_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -244,12 +244,12 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* spiHandle)
   /* USER CODE END SPI1_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_SPI1_CLK_DISABLE();
-  
-    /**SPI1 GPIO Configuration    
+
+    /**SPI1 GPIO Configuration
     PA4     ------> SPI1_NSS
     PA5     ------> SPI1_SCK
     PA6     ------> SPI1_MISO
-    PA7     ------> SPI1_MOSI 
+    PA7     ------> SPI1_MOSI
     */
     HAL_GPIO_DeInit(GPIOA, SPI_MEM_NSS_Pin|SPI_MEM_SCK_Pin|SPI_MEM_MISO_Pin|SPI_MEM_MOSO_Pin);
 
@@ -270,12 +270,12 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* spiHandle)
   /* USER CODE END SPI2_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_SPI2_CLK_DISABLE();
-  
-    /**SPI2 GPIO Configuration    
+
+    /**SPI2 GPIO Configuration
     PC2     ------> SPI2_MISO
     PC3     ------> SPI2_MOSI
     PB12     ------> SPI2_NSS
-    PB13     ------> SPI2_SCK 
+    PB13     ------> SPI2_SCK
     */
     HAL_GPIO_DeInit(GPIOC, SPI_SLAVE_MISO_Pin|SPI_SLAVE_MOSI_Pin);
 
@@ -294,12 +294,12 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* spiHandle)
   /* USER CODE END SPI4_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_SPI4_CLK_DISABLE();
-  
-    /**SPI4 GPIO Configuration    
+
+    /**SPI4 GPIO Configuration
     PE5     ------> SPI4_MISO
     PE6     ------> SPI4_MOSI
     PE11     ------> SPI4_NSS
-    PE12     ------> SPI4_SCK 
+    PE12     ------> SPI4_SCK
     */
     HAL_GPIO_DeInit(GPIOE, SPI_AUX_MISO_Pin|SPI_AUX_MOSI_Pin|SPI_AUX_NSS_Pin|SPI_AUX_SCK_Pin);
 
@@ -309,7 +309,7 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* spiHandle)
 
   /* USER CODE END SPI4_MspDeInit 1 */
   }
-} 
+}
 
 /* USER CODE BEGIN 1 */
 
