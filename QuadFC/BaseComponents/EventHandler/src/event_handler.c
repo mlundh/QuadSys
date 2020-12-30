@@ -702,6 +702,10 @@ uint8_t Event_HandleBufferedEvents(eventHandler_t* obj)
 
 uint8_t Event_FireCB(eventHandler_t* obj, moduleMsg_t* event_data)
 {
+    if(!obj || !event_data)
+    {
+        return 0;
+    }
     if(obj->eventFcns[event_data->type])
     {
         obj->eventFcns[event_data->type](obj, obj->eventDataBinding[event_data->type], event_data);
