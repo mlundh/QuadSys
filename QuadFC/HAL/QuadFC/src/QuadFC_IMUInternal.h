@@ -40,7 +40,7 @@
  * scheduler is started.
  * @param param a root parameter to use if the internal data should be configurable.
  * @return            A newly created IMU object. */
-ImuInternals_t* Imu_CreateInternal(param_obj_t * param);
+ImuInternals_t* Imu_CreateInternal(param_obj_t * param, uint32_t index);
 
 /**
  * Initialize the imu object. This function should be called after the

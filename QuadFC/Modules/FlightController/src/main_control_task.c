@@ -36,7 +36,7 @@
 
 
 #include "HAL/QuadFC/QuadFC_Gpio.h"
-
+#include "HAL/QuadFC/QuadFC_Peripherals.h"
 #include "StateEstimator/inc/signal_processing.h"
 
 #include "Components/AppLog/inc/AppLog.h"
@@ -46,6 +46,7 @@
 #include "EventHandler/inc/event_handler.h"
 #include "StateEstimator/inc/state_estimator.h"
 #include "QuadFC/QuadFC_MotorControl.h"
+#include "QuadFC/QuadFC_IMU.h"
 #include "Parameters/inc/parameters.h"
 #include "SetpointHandler/inc/setpoint_handler.h"
 #include "SpectrumSatellite/inc/Satellite_SetpointHandler.h"
@@ -70,6 +71,7 @@ typedef struct mainTaskParams
     MotorControlObj *motorControl;
     FlightModeHandler_t* flightModeHandler;
     StateEst_t* stateEst;
+    Imu_t * imu;
     SpHandler_t* setPointHandler;
     spectrumSpHandler_t* spectrumSpHandler;
     CtrlModeHandler_t * CtrlModeHandler;
@@ -104,6 +106,7 @@ void create_main_control_task(eventHandler_t* evHandler)
     taskParam->motorControl = MotorCtrl_CreateAndInit(4,ParamHandler_GetParam(taskParam->paramHandler));
     taskParam->flightModeHandler = FMode_CreateFmodeHandler(evHandler); // registers event handler for flight mode requests.
     taskParam->stateEst = StateEst_Create(ParamHandler_GetParam(taskParam->paramHandler));
+    taskParam->imu = Imu_Create(ParamHandler_GetParam(taskParam->paramHandler),0);
     taskParam->setPointHandler = SpHandl_Create(evHandler);
     taskParam->spectrumSpHandler = SatSpHandler_CreateObj(evHandler, ParamHandler_GetParam(taskParam->paramHandler));
     taskParam->CtrlModeHandler = Ctrl_CreateModeHandler(evHandler);
@@ -141,6 +144,15 @@ void create_main_control_task(eventHandler_t* evHandler)
         }
     }
 
+    if(!QuadFC_i2cInit(0, 400000)) // IMUs are connected to the first I2C bus.
+    {
+        /*Error - Could initialize I2C bus.*/
+        for ( ;; )
+        {
+        }
+    }
+
+
 }
 
 /*
@@ -153,14 +165,22 @@ void main_control_task( void *pvParameters )
     MaintaskParams_t * param = (MaintaskParams_t*)(pvParameters);
 
 
+
+
     /*Initialize modules*/
     FMode_InitFModeHandler(param->flightModeHandler);
     Ctrl_InitModeHandler(param->CtrlModeHandler);
 
     //This takes some time due to calibration.
-    if(!StateEst_init(param->stateEst))
+    if(!Imu_Init(param->imu))
     {
         LOG_ENTRY(FC_SerialIOtx_e, param->evHandler, "Main: Error - Failed to initialize IMU!");
+        main_fault(param);      
+    }
+
+    if(!StateEst_init(param->stateEst, param->imu))
+    {
+        LOG_ENTRY(FC_SerialIOtx_e, param->evHandler, "Main: Error - Failed to initialize stateEstimator!");
         main_fault(param);
     }
     /*Utility variables*/

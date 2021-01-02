@@ -110,12 +110,24 @@ ImuInternals_t *Imu_getInternals(Imu_t *obj)
   return (ImuInternals_t *)(obj->internals);
 }
 
-ImuInternals_t* Imu_CreateInternal(param_obj_t * param)
+ImuInternals_t* Imu_CreateInternal(param_obj_t * param, uint32_t index)
 {
   ImuInternals_t* internals = pvPortMalloc( sizeof(ImuInternals_t) );
 
+  if(index == 0)
+  {
+    internals->slaveAddress = MPU6050_ADDRESS_AD0_LOW;
+  }
+  else if (index == 1)
+  {
+    internals->slaveAddress = MPU6050_ADDRESS_AD0_HIGH;
+  }
+  else
+  {
+    return NULL;
+  }
+  
   internals->i2cBus = MPU6050_BUSS;
-  internals->slaveAddress = MPU6050_ADDRESS_AD0_LOW;
 
   return internals;
 }
@@ -131,7 +143,7 @@ uint8_t Imu_InitInternal(Imu_t *obj)
   memcpy(&obj->tempData, &tmp, sizeof(tmp));
 
   mpu6050_reset(obj);
-  vTaskDelay( xPeriod * 2);
+  vTaskDelay( pdMS_TO_TICKS(100) );
 
   mpu6050_setSleepEnabled(obj, 0);
   mpu6050_setClockSource(obj, MPU6050_CLOCK_PLL_XGYRO);

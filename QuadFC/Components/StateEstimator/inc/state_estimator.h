@@ -41,6 +41,7 @@
 #include "Messages/inc/common_types.h"
 #include "EventHandler/inc/event_handler.h"
 #include "Parameters/inc/parameters.h"
+#include "QuadFC/QuadFC_IMU.h"
 
 
 typedef struct StateEst StateEst_t;
@@ -55,14 +56,14 @@ typedef enum etstimation_types
   type_not_availible = 4
 } estimation_types_t;
 
-StateEst_t *StateEst_Create(param_obj_t* param);
+StateEst_t *StateEst_Create();
 
 /**
  * Initialize the state estimator. This causes all connected and configured
  * sensors to be initialized.
  *
  * @return 0 if success else error code.*/
-uint8_t StateEst_init(StateEst_t *obj);
+uint8_t StateEst_init(StateEst_t *obj, Imu_t* imu);
 
 /**
  * Gets the new state data and copies it into state.

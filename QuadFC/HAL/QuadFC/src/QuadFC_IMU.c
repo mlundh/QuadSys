@@ -47,11 +47,11 @@
 
 #define SIGN(x) ((x > 0) - (x < 0))
 
-Imu_t * Imu_Create(param_obj_t * param)
+Imu_t * Imu_Create(param_obj_t * param, uint32_t index)
 {
   Imu_t *obj = pvPortMalloc(sizeof(Imu_t));
 
-  obj->internals = Imu_CreateInternal(param);
+  obj->internals = Imu_CreateInternal(param, index);
 
   ImuOrientation_t tmp = {0};
   obj->Orient = tmp;
@@ -121,12 +121,13 @@ Imu_t * Imu_Create(param_obj_t * param)
 uint8_t Imu_Init(Imu_t *obj)
 {
   uint8_t result = Imu_InitInternal(obj);
+  obj->initialized = result;
   return result;
 }
 
 uint8_t Imu_GetData(Imu_t *obj)
 {
-  if(!obj || !Imu_GetDataInternal(obj))
+  if(!obj || !Imu_GetDataInternal(obj) || !obj->initialized)
   {
     return 0;
   }

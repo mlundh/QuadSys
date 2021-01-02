@@ -42,6 +42,7 @@ typedef struct SigProcessTester
 {
   CtrlModeHandler_t* CtrlModeHandler;
   StateEst_t* stateEst;
+  Imu_t* imu;
 } SigProcessTester_t;
 
 #define SIG_PROCESS_INTENRNAL_IDX (1)
@@ -75,7 +76,14 @@ void SigProsses_GetTCs(TestFw_t* obj)
     TestFW_Report(obj, tmpstr);
     return;
   }
-  SigProcessTester->stateEst = StateEst_Create(NULL);
+  SigProcessTester->imu = Imu_Create(NULL, 1);
+  if(!SigProcessTester->imu)
+  {
+    snprintf (tmpstr, REPORT_STR_LEN,"Failed to create state imu.\n");
+    TestFW_Report(obj, tmpstr);
+    return;
+  }
+  SigProcessTester->stateEst = StateEst_Create();
   if(!SigProcessTester->stateEst)
   {
     snprintf (tmpstr, REPORT_STR_LEN,"Failed to create stateEst.\n");
@@ -203,8 +211,10 @@ uint8_t SigProsses_InitMpu6050(TestFw_t* obj)
   DummyI2C_AddResponse(1000, NULL, i2c_data_offset);
 
 
+  Imu_Init(SigProcessTester->imu);
+
   //TODO add data for factory trim.
-  if(!StateEst_init(SigProcessTester->stateEst))
+  if(!StateEst_init(SigProcessTester->stateEst, SigProcessTester->imu))
   {
     snprintf (tmpstr, 100,"- Failed to initialize state estimator.\n");
     TestFW_Report(obj, tmpstr);

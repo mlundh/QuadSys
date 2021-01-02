@@ -44,6 +44,7 @@ typedef struct Imu
   ImuData_t tempData; // IMU coordinate system
   ImuOrientation_t Orient;
   ImuInternals_t *internals;
+  uint8_t initialized;
 }Imu_t;
 
 /**
@@ -51,7 +52,7 @@ typedef struct Imu
  * scheduler is started.
  * @param param a root parameter for all Imu related parameters.
  * @return            A newly created IMU object. */
-Imu_t * Imu_Create(param_obj_t * param);
+Imu_t * Imu_Create(param_obj_t * param, uint32_t index);
 
 /**
  * Initialize the imu object. This function should be called after the

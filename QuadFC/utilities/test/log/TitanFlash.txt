@@ -1,5 +1,5 @@
-SEGGER J-Link Commander V6.72c (Compiled May  8 2020 17:14:20)
-DLL version V6.72c, compiled May  8 2020 17:14:10
+SEGGER J-Link Commander V6.88a (Compiled Nov 18 2020 16:08:22)
+DLL version V6.88a, compiled Nov 18 2020 16:08:10
 
 
 J-Link Command File read successfully.
@@ -7,11 +7,11 @@ Processing script file...
 
 J-Link connection not established yet but required for command.
 Connecting to J-Link via USB...O.K.
-Firmware: J-Link EDU Mini V1 compiled Apr 23 2020 16:51:07
+Firmware: J-Link EDU Mini V1 compiled Nov 12 2020 13:31:42
 Hardware version: V1.00
 S/N: 801013584
 License(s): FlashBP, GDB
-VTref=3.299V
+VTref=3.298V
 Target connection not established yet but required for command.
 Device "STM32F413VG" selected.
 
@@ -44,12 +44,9 @@ Reset: Halt core after reset via DEMCR.VC_CORERESET.
 Reset: Reset device via AIRCR.SYSRESETREQ.
 
 Downloading file [../../out/Titan/Test_Modules1.bin]...
-Comparing flash   [000%]000%]025%]025%]050%]100%] Done.
-Erasing flash     [000%]000%]025%]025%]050%]050%]100%] Done.
-Programming flash [000%]000%]000%]000%]000%]000%]000%]000%]005%]005%]005%]005%]005%]005%]010%]010%]010%]010%]010%]010%]015%]015%]015%]015%]015%]015%]020%]020%]020%]020%]020%]020%]025%]025%]025%]025%]025%]025%]025%]025%]030%]030%]030%]030%]030%]030%]035%]035%]035%]035%]035%]035%]040%]040%]040%]040%]040%]040%]045%]045%]045%]045%]045%]045%]050%]050%]050%]050%]050%]050%]050%]050%]055%]055%]055%]055%]055%]055%]060%]060%]060%]100%] Done.
-Verifying flash   [000%]000%]050%]050%]100%] Done.
-J-Link: Flash download: Bank 0 @ 0x08000000: 2 ranges affected (131072 bytes)
-J-Link: Flash download: Total time needed: 3.040s (Prepare: 0.024s, Compare: 0.008s, Erase: 2.498s, Program: 0.497s, Verify: 0.003s, Restore: 0.006s)
+J-Link: Flash download: Bank 0 @ 0x08000000: 1 range affected (49152 bytes)
+J-Link: Flash download: Total: 1.695s (Prepare: 0.091s, Compare: 0.089s, Erase: 1.055s, Program & Verify: 0.447s, Restore: 0.011s)
+J-Link: Flash download: Program & Verify speed: 106 KB/s
 O.K.
 
 Reset delay: 0 ms
@@ -60,8 +57,8 @@ Reset: Reset device via AIRCR.SYSRESETREQ.
 
 Script processing completed.
 
-SEGGER J-Link Commander V6.72c (Compiled May  8 2020 17:14:20)
-DLL version V6.72c, compiled May  8 2020 17:14:10
+SEGGER J-Link Commander V6.88a (Compiled Nov 18 2020 16:08:22)
+DLL version V6.88a, compiled Nov 18 2020 16:08:10
 
 
 J-Link Command File read successfully.
@@ -69,11 +66,11 @@ Processing script file...
 
 J-Link connection not established yet but required for command.
 Connecting to J-Link via USB...O.K.
-Firmware: J-Link EDU Mini V1 compiled Apr 23 2020 16:51:07
+Firmware: J-Link EDU Mini V1 compiled Nov 12 2020 13:31:42
 Hardware version: V1.00
 S/N: 801013584
 License(s): FlashBP, GDB
-VTref=3.299V
+VTref=3.298V
 Target connection not established yet but required for command.
 Device "STM32F413VG" selected.
 
@@ -106,12 +103,9 @@ Reset: Halt core after reset via DEMCR.VC_CORERESET.
 Reset: Reset device via AIRCR.SYSRESETREQ.
 
 Downloading file [../../out/Titan/Test_Modules2.bin]...
-Comparing flash   [000%]000%]050%]100%] Done.
-Erasing flash     [000%]000%]050%]050%]100%] Done.
-Programming flash [000%]000%]000%]000%]000%]000%]000%]000%]005%]005%]005%]005%]005%]005%]010%]010%]010%]010%]010%]010%]015%]015%]015%]015%]015%]015%]020%]020%]020%]020%]020%]020%]025%]025%]025%]025%]025%]025%]025%]025%]030%]030%]030%]030%]030%]030%]035%]035%]035%]035%]035%]035%]040%]040%]040%]040%]040%]040%]045%]045%]045%]045%]045%]045%]050%]050%]050%]050%]050%]050%]050%]050%]055%]055%]055%]055%]055%]055%]060%]060%]060%]060%]060%]060%]065%]065%]065%]065%]065%]065%]070%]070%]070%]070%]070%]070%]075%]075%]075%]100%] Done.
-Verifying flash   [000%]000%]100%] Done.
-J-Link: Flash download: Bank 0 @ 0x08000000: 1 range affected (65536 bytes)
-J-Link: Flash download: Total time needed: 1.783s (Prepare: 0.024s, Compare: 0.006s, Erase: 1.403s, Program: 0.340s, Verify: 0.001s, Restore: 0.006s)
+J-Link: Flash download: Bank 0 @ 0x08000000: 1 range affected (49152 bytes)
+J-Link: Flash download: Total: 1.752s (Prepare: 0.034s, Compare: 0.010s, Erase: 1.081s, Program & Verify: 0.615s, Restore: 0.010s)
+J-Link: Flash download: Program & Verify speed: 77 KB/s
 O.K.
 
 Reset delay: 0 ms
@@ -122,8 +116,8 @@ Reset: Reset device via AIRCR.SYSRESETREQ.
 
 Script processing completed.
 
-SEGGER J-Link Commander V6.72c (Compiled May  8 2020 17:14:20)
-DLL version V6.72c, compiled May  8 2020 17:14:10
+SEGGER J-Link Commander V6.88a (Compiled Nov 18 2020 16:08:22)
+DLL version V6.88a, compiled Nov 18 2020 16:08:10
 
 
 J-Link Command File read successfully.
@@ -131,11 +125,11 @@ Processing script file...
 
 J-Link connection not established yet but required for command.
 Connecting to J-Link via USB...O.K.
-Firmware: J-Link EDU Mini V1 compiled Apr 23 2020 16:51:07
+Firmware: J-Link EDU Mini V1 compiled Nov 12 2020 13:31:42
 Hardware version: V1.00
 S/N: 801013584
 License(s): FlashBP, GDB
-VTref=3.299V
+VTref=3.295V
 Target connection not established yet but required for command.
 Device "STM32F413VG" selected.
 
@@ -168,12 +162,9 @@ Reset: Halt core after reset via DEMCR.VC_CORERESET.
 Reset: Reset device via AIRCR.SYSRESETREQ.
 
 Downloading file [../../out/Titan/Test_Utilities.bin]...
-Comparing flash   [000%]000%]050%]100%] Done.
-Erasing flash     [000%]000%]065%]065%]100%] Done.
-Programming flash [000%]000%]000%]000%]000%]000%]005%]005%]005%]005%]010%]010%]010%]010%]010%]010%]015%]015%]015%]015%]020%]020%]020%]020%]025%]025%]025%]025%]025%]025%]030%]030%]030%]030%]035%]035%]035%]035%]035%]035%]040%]040%]040%]040%]045%]045%]045%]045%]050%]050%]050%]050%]050%]050%]055%]055%]055%]055%]060%]060%]060%]060%]060%]060%]065%]065%]065%]065%]070%]070%]070%]070%]075%]075%]075%]075%]075%]075%]080%]080%]080%]080%]085%]085%]085%]085%]085%]085%]090%]090%]090%]090%]095%]100%] Done.
-Verifying flash   [000%]000%]100%] Done.
 J-Link: Flash download: Bank 0 @ 0x08000000: 1 range affected (49152 bytes)
-J-Link: Flash download: Total time needed: 1.391s (Prepare: 0.026s, Compare: 0.007s, Erase: 1.032s, Program: 0.317s, Verify: 0.001s, Restore: 0.006s)
+J-Link: Flash download: Total: 1.679s (Prepare: 0.035s, Compare: 0.010s, Erase: 1.083s, Program & Verify: 0.539s, Restore: 0.010s)
+J-Link: Flash download: Program & Verify speed: 89 KB/s
 O.K.
 
 Reset delay: 0 ms
@@ -184,8 +175,8 @@ Reset: Reset device via AIRCR.SYSRESETREQ.
 
 Script processing completed.
 
-SEGGER J-Link Commander V6.72c (Compiled May  8 2020 17:14:20)
-DLL version V6.72c, compiled May  8 2020 17:14:10
+SEGGER J-Link Commander V6.88a (Compiled Nov 18 2020 16:08:22)
+DLL version V6.88a, compiled Nov 18 2020 16:08:10
 
 
 J-Link Command File read successfully.
@@ -193,11 +184,11 @@ Processing script file...
 
 J-Link connection not established yet but required for command.
 Connecting to J-Link via USB...O.K.
-Firmware: J-Link EDU Mini V1 compiled Apr 23 2020 16:51:07
+Firmware: J-Link EDU Mini V1 compiled Nov 12 2020 13:31:42
 Hardware version: V1.00
 S/N: 801013584
 License(s): FlashBP, GDB
-VTref=3.299V
+VTref=3.297V
 Target connection not established yet but required for command.
 Device "STM32F413VG" selected.
 
@@ -230,12 +221,9 @@ Reset: Halt core after reset via DEMCR.VC_CORERESET.
 Reset: Reset device via AIRCR.SYSRESETREQ.
 
 Downloading file [../../out/Titan/Test_Components1.bin]...
-Comparing flash   [000%]000%]025%]025%]050%]100%] Done.
-Erasing flash     [000%]000%]025%]025%]050%]050%]100%] Done.
-Programming flash [000%]000%]000%]000%]000%]000%]000%]000%]005%]005%]005%]005%]005%]005%]010%]010%]010%]010%]010%]010%]015%]015%]015%]015%]015%]015%]020%]020%]020%]020%]020%]020%]025%]025%]025%]025%]025%]025%]025%]025%]030%]030%]030%]030%]030%]030%]035%]035%]035%]035%]035%]035%]040%]040%]040%]040%]040%]040%]045%]045%]045%]045%]045%]045%]050%]050%]050%]050%]050%]050%]050%]050%]055%]055%]055%]055%]055%]055%]060%]060%]060%]060%]060%]060%]065%]065%]065%]065%]065%]065%]070%]070%]070%]070%]070%]070%]075%]075%]075%]075%]075%]075%]075%]075%]080%]080%]080%]100%] Done.
-Verifying flash   [000%]000%]050%]050%]100%] Done.
 J-Link: Flash download: Bank 0 @ 0x08000000: 2 ranges affected (131072 bytes)
-J-Link: Flash download: Total time needed: 3.200s (Prepare: 0.025s, Compare: 0.008s, Erase: 2.501s, Program: 0.653s, Verify: 0.004s, Restore: 0.006s)
+J-Link: Flash download: Total: 3.608s (Prepare: 0.037s, Compare: 0.013s, Erase: 2.511s, Program & Verify: 1.034s, Restore: 0.011s)
+J-Link: Flash download: Program & Verify speed: 123 KB/s
 O.K.
 
 Reset delay: 0 ms

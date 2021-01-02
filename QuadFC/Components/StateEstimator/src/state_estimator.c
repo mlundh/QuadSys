@@ -28,8 +28,8 @@
 #include "StateEstimator/inc/state_estimator.h"
 
 #include "../inc/signal_processing.h"
-#include "QuadFC/QuadFC_IMU.h"
 #include "Messages/inc/Msg_CtrlMode.h"
+#include "HAL/QuadFC/QuadFC_Peripherals.h"
 
 struct StateEst
 {
@@ -38,16 +38,16 @@ struct StateEst
 };
 
 
-StateEst_t *StateEst_Create(param_obj_t* param)
+StateEst_t *StateEst_Create()
 {
   StateEst_t * stateEstObj = pvPortMalloc(sizeof(StateEst_t));
   if(!stateEstObj)
   {
     return NULL;
   }
-  stateEstObj->imu = Imu_Create(param);
+  stateEstObj->imu = NULL;
   stateEstObj->gyroState = pvPortMalloc(sizeof(state_data_t));
-  if(!stateEstObj->imu || !stateEstObj->gyroState)
+  if(stateEstObj->imu || !stateEstObj->gyroState)
   {
     return NULL;
   }
@@ -58,10 +58,14 @@ StateEst_t *StateEst_Create(param_obj_t* param)
 }
 
 
-uint8_t StateEst_init(StateEst_t *obj)
+uint8_t StateEst_init(StateEst_t *obj, Imu_t* imu)
 {
-  uint8_t result = Imu_Init(obj->imu);
-  return result;
+  if(!imu || !imu->initialized)
+  {
+    return 0;
+  }
+  obj->imu = imu;
+  return 1;
 }
 
 uint8_t StateEst_getState(StateEst_t *obj, state_data_t *state_vector, CtrlMode_t CurrentMode)
