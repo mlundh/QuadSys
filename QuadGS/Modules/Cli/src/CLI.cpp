@@ -165,6 +165,7 @@ bool CLI::RunUI()
 		rl_callback_read_char();
 		if(updatePrompt)
 		{
+			updatePrompt = false;
 			char line_buf[256];
 			  /* save away the current contents of the line */
   			strncpy(line_buf, rl_line_buffer, sizeof(line_buf));
