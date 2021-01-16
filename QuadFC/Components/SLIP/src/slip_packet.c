@@ -164,6 +164,13 @@ void SlipParser_Delete(SLIP_Parser_t *obj)
     vPortFree(obj);
 }
 
+void SlipParser_Reset(SLIP_Parser_t* obj)
+{
+    obj->startFound = 0;
+    obj->index = 0;
+    obj->controlEscapeFound = 0;
+}
+
 SLIP_Status_t SlipParser_Parse(SLIP_Parser_t* obj, uint8_t *inputBuffer, uint32_t InputBufferLength,
                           SLIP_t *SLIP_packet)
 {
@@ -200,7 +207,7 @@ SLIP_Status_t SlipParser_Parse(SLIP_Parser_t* obj, uint8_t *inputBuffer, uint32_
 
         if ((bufferLength > (SLIP_packet->allocatedSize - obj->index)))
         {
-            obj->controlEscapeFound = 0;
+            SlipParser_Reset(obj);
             return SLIP_StatusLengthError;
         }
 
@@ -219,7 +226,7 @@ SLIP_Status_t SlipParser_Parse(SLIP_Parser_t* obj, uint8_t *inputBuffer, uint32_
                 }
                 else
                 {
-                    
+                    SlipParser_Reset(obj);
                     return SLIP_StatusEscapeError;
                 }
             }
@@ -234,6 +241,7 @@ SLIP_Status_t SlipParser_Parse(SLIP_Parser_t* obj, uint8_t *inputBuffer, uint32_
                     obj->controlEscapeFound = 0;
                     if(!SLIP_CheckCRC(SLIP_packet->payload, &SLIP_packet->packetSize))
                     {
+                        SlipParser_Reset(obj);
                         return SLIP_StatusCrcError;
                     }
                     packetComplete = 1;
