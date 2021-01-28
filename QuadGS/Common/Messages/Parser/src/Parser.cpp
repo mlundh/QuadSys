@@ -38,6 +38,8 @@
 #include "Msg_Log.h"
 #include "Msg_AppLog.h"
 #include "Msg_Debug.h"
+#include "Msg_TestMem.h"
+#include "Msg_TestMemReg.h"
 #include "Msg_Transmission.h"
 #include "Msg_TestTransmission.h"
 #include "Msg_FlightMode.h"
@@ -177,6 +179,22 @@ QGS_ModuleMsgBase::ptr Parser::parse( std::vector<unsigned char>  data)
 	case messageTypes_t::Msg_Debug_e:
 	{
 		Msg_Debug::ptr ptr = std::make_unique<Msg_Debug>(msgBase);
+		ptr->setSkipStreamHeader();
+		is >> *ptr;
+		returnPtr = std::move(ptr);
+		break;
+	}
+	case messageTypes_t::Msg_TestMem_e:
+	{
+		Msg_TestMem::ptr ptr = std::make_unique<Msg_TestMem>(msgBase);
+		ptr->setSkipStreamHeader();
+		is >> *ptr;
+		returnPtr = std::move(ptr);
+		break;
+	}
+	case messageTypes_t::Msg_TestMemReg_e:
+	{
+		Msg_TestMemReg::ptr ptr = std::make_unique<Msg_TestMemReg>(msgBase);
 		ptr->setSkipStreamHeader();
 		is >> *ptr;
 		returnPtr = std::move(ptr);

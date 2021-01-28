@@ -11,3 +11,6 @@ UART9_IRQHandler
 UART10_IRQHandler
 I2C1_EV_IRQHandler
 I2C1_ER_IRQHandler
+SPI1_IRQHandler
+DMA2_Stream2_IRQHandler
+DMA2_Stream5_IRQHandler

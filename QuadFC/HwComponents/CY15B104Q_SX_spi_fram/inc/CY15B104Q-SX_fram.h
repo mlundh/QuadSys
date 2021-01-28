@@ -38,9 +38,14 @@ typedef enum opcodes
   OPCODE_RDID   = 0b10011111  //!< Read Device ID */
 } opcodes_t;
 
+uint8_t CY15B104Q_SX_init();
+
 uint8_t CY15B104Q_SX_MemRead(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size);
 
 uint8_t CY15B104Q_SX_MemWrite(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size);
+
+uint8_t CY15B104Q_SX_MemReadWriteRaw(uint8_t *RxBuffer, uint8_t *TxBuffer, uint32_t buffer_size);
+
 uint8_t CY15B104Q_SX_WriteEnable(uint8_t enable);
 
 uint8_t CY15B104Q_SX_TestWriteEnable();

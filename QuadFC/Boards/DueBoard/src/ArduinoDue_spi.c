@@ -243,37 +243,6 @@ uint8_t SpiMaster_Transfer(uint8_t SpiIndex, uint8_t *buffer, uint32_t size)
 	return 1;
 }
 
-uint8_t SpiMaster_TransferPoll(uint8_t SpiIndex, uint8_t *buffer, uint32_t size)
-{
-	if(!Spi_init[SpiIndex])
-	{
-		if(!SpiMaster_Init(SpiIndex))
-		{
-			return 0;
-		}
-	}
-
-	uint8_t uc_pcs;
-	uint16_t data;
-
-	for (uint32_t i = 0; i < size; i++)
-	{
-		if(spi_write(Spi_instances[SpiIndex], buffer[i], 0, 0) != SPI_OK)
-		{
-			return 0;
-		}
-
-		if(spi_read(Spi_instances[SpiIndex], &data, &uc_pcs) != SPI_OK )
-		{
-			return 0;
-		}
-		buffer[i] = data;
-	}
-	return 1;
-}
-
-
-
 void SpiMaster_SelectSlave(uint8_t SpiIndex, SpiMaster_SlaveDevice_t* slave)
 {
 	if(!Spi_init[SpiIndex])

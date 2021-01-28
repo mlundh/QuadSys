@@ -287,24 +287,16 @@ SpiMaster_SlaveDevice_t* SpiMaster_CreateSlaveDevice(uint8_t SpiIndex,
     uint32_t baudRate, uint32_t csId, SpiMaster_BitsPerTransfer_t bits, Spi_Mode_t mode);
 
 /**
- * Transfer data to the last selected slave. Bytes from buffer will be written, and at the same
- * time buffer will be populated by the incoming data from the slave. Non blocking version, uses DMA.
+ * Transfer data to the last selected slave. Bytes from the tx buffer will be written, and at the same
+ * time the rx buffer will be populated by the incoming data from the slave. 
+ * 
+ * If only tx or rx should be used, then pass a NULL pointer to the other. 
  * @param SpiIndex  Bus index.
  * @param buffer    Buffer to write.
  * @param size      Size of the buffer.
  * @return          1 if success, 0 otherwise.
  */
-uint8_t SpiMaster_Transfer(uint8_t SpiIndex, uint8_t *buffer, uint32_t size);
-
-/**
- * Transfer data to the last selected slave. Bytes from buffer will be written, and at the same
- * time buffer will be populated by the incoming data from the slave. Blocking verstion.
- * @param SpiIndex  Bus index.
- * @param buffer    Buffer to write.
- * @param size      Size of the buffer.
- * @return          1 if success, 0 otherwise.
- */
-uint8_t SpiMaster_TransferPoll(uint8_t SpiIndex, uint8_t *buffer, uint32_t size);
+uint8_t SpiMaster_Transfer(uint8_t SpiIndex, uint8_t *rxBuffer, uint8_t *txBuffer, uint32_t size, TickType_t blockTimeMs);
 
 /**
  * Select the slave given by the parameters.

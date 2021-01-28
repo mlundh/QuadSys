@@ -49,4 +49,12 @@ uint8_t Mem_Read(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_
  */
 uint8_t Mem_Write(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size);
 
+/**
+ * Read write raw to the memory, without addressing. This makes it possible to read status registers etc.
+ * @param RxBuffer      Buffer data will be written to. 
+ * @param TxBuffer      Buffer data will be transmitted from.
+ * @param buffer_size   Size of the rx and tx buffers.
+ */
+uint8_t Mem_ReadWriteRaw(uint8_t *RxBuffer, uint8_t *TxBuffer, uint32_t buffer_size);
+
 #endif /* PORTLAYER_MEMORY_INC_MEMORY_H_ */

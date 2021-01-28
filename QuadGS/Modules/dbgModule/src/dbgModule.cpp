@@ -30,7 +30,10 @@
 #include "Msg_Display.h"
 #include "Msg_BindRc.h"
 #include "Msg_FlightModeReq.h"
+#include "Msg_TestMem.h"
+#include "Msg_TestMemReg.h"
 #include <sstream>
+#include <array>
 
 namespace QuadGS {
 
@@ -40,6 +43,9 @@ dbgModule::dbgModule(msgAddr_t name, msgAddr_t dbgAddr):QGS_MessageHandlerBase(n
 	mCommands.push_back(UiCommand("dbgGetRuntimeStats","Get runtime stats from the FC.",std::bind(&dbgModule::getRuntimeStats, this, std::placeholders::_1)));
 	mCommands.push_back(UiCommand("rcBind","Bind the spectrum receiver.",std::bind(&dbgModule::BindRc, this, std::placeholders::_1)));
 	mCommands.push_back(UiCommand("stateChange","Request a state change from the FC.",std::bind(&dbgModule::StateChangeReq, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("memTest","Test the memory on the FC.",std::bind(&dbgModule::MemTest, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("memReadReg","Read Status and/or device id registers.",std::bind(&dbgModule::MemReadReg, this, std::placeholders::_1)));
+
 }
 
 dbgModule::~dbgModule()
@@ -217,6 +223,80 @@ std::string dbgModule::StateChangeReq(std::string param)
 	
 	return "Request sent";
 }
+
+std::string dbgModule::MemTest(std::string param)
+{
+	std::array<std::string, 4> tokens;
+	for(int i = 0; i < 4; i++) 
+	{
+		size_t pos = 0;
+		pos = param.find(" ");
+		tokens[i] = param.substr(0, pos);
+		param.erase(0, pos + 1);
+
+		if(pos == std::string::npos && i != 3)
+		{
+			return "Please provide all arguments separated with space: Write [1/0] startAddress[0-255] startNumber[0-255] size[0-255]";
+		}
+	}
+
+	std::array<uint8_t, 4> args;
+	for(int i = 0; i < 4; i++)
+	{
+		try
+		{
+			args[i] = static_cast<uint8_t>(std::stoi(tokens[i]));
+		}
+		catch(const std::invalid_argument& e)
+		{
+			std::cerr << e.what() << '\n';
+			return "Only numbers are valid as arguments.";
+		}
+	}
+	Msg_TestMem::ptr ptr = std::make_unique<Msg_TestMem>(FC_Broadcast_e, args[0], args[1], args[2], args[3]);
+	sendMsg(std::move(ptr));
+	return "Test started.";
+	
+}
+
+std::string dbgModule::MemReadReg(std::string param)
+{
+	std::array<std::string, 2> tokens;
+	for(int i = 0; i < 2; i++) 
+	{
+		size_t pos = 0;
+		pos = param.find(" ");
+		tokens[i] = param.substr(0, pos);
+		param.erase(0, pos + 1);
+
+		if(pos == std::string::npos && i != 1)
+		{
+			return "Please provide all arguments separated with space.";
+		}
+	}
+
+	std::array<uint8_t, 2> args;
+	for(int i = 0; i < 2; i++)
+	{
+		try
+		{
+			args[i] = static_cast<uint8_t>(std::stoi(tokens[i]));
+		}
+		catch(const std::invalid_argument& e)
+		{
+			std::cerr << e.what() << '\n';
+			return "Only numbers are valid as arguments.";
+		}
+		if(args[i] != 1 && args[i] != 0)
+		{
+			return "Only 1 or 0 are valid as arguments.";
+		}
+	}
+	Msg_TestMemReg::ptr ptr = std::make_unique<Msg_TestMemReg>(FC_Broadcast_e, args[0], args[1]);
+	sendMsg(std::move(ptr));
+	return "Test started.";
+}
+
 
 
 void dbgModule::process(Msg_GetUiCommands* message)

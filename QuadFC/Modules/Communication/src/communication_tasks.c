@@ -28,11 +28,9 @@
 
 #include "Communication/inc/communication_tasks.h"
 #include "Parameters/inc/paramHandler.h"
-
+#include "Debug/inc/debug_handler.h"
 #include "Messages/inc/Msg_Parser.h"
 #include "Messages/inc/Msg_Transmission.h"
-#include "Messages/inc/Msg_TestTransmission.h"
-#include "Messages/inc/Msg_Debug.h"
 
 #include "Messages/inc/Msg_Log.h"
 
@@ -46,7 +44,6 @@
 #include "Parameters/inc/parameters.h"
 #include "QuadFC/QuadFC_Memory.h"
 #include "QuadFC/QuadFC_Peripherals.h"
-#include "Utilities/inc/run_time_stats.h"
 #include "Log/inc/logHandler.h"
 #include "FreeRTOS.h"
 #include "task.h"
@@ -59,6 +56,10 @@
 
 #define COM_PACKET_LENGTH_MAX       512
 #define NR_RETRANSMITT (3)
+
+// SPI index 1 used for the memory.
+#define MEM_SPI (0)
+
 /*Global crc table*/
 uint16_t *crcTable;
 
@@ -76,6 +77,7 @@ typedef struct RxCom
     eventHandler_t* evHandler;
     LogHandler_t* logHandler;
     paramHander_t* paramHandler;
+    debug_handler_t* debugHandler;
 
 }RxCom_t;
 
@@ -121,20 +123,9 @@ uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg);
 static void Com_RxTask( void *pvParameters );
 
 
-
-
 uint8_t Com_TxTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg);
 
-uint8_t Com_HandleDebug(eventHandler_t* obj, void* data, moduleMsg_t* msg);
-
 uint8_t Com_HandleLog(eventHandler_t* obj, void* data, moduleMsg_t* msg);
-
-uint8_t Com_TestTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg);
-
-
-//uint8_t Com_HandleDebug(eventHandler_t* obj, void* data, moduleMsg_t* msg);
-
-
 
 TxCom_t* Com_InitTx(eventHandler_t* eventHandler)
 {
@@ -174,6 +165,7 @@ RxCom_t* Com_InitRx(eventHandler_t* eventHandler)
     {
         return NULL;
     }
+    taskParam->debugHandler = Debug_CreateHandler(eventHandler);
     taskParam->helper = pvPortMalloc(sizeof(param_helper_t));
     taskParam->saveHelper = pvPortMalloc(sizeof(param_helper_t));
     taskParam->SLIP =  Slip_Create(COM_PACKET_LENGTH_MAX);
@@ -196,11 +188,6 @@ RxCom_t* Com_InitRx(eventHandler_t* eventHandler)
     taskParam->saveHelper->depth = 0;
     taskParam->saveHelper->sequence = 0;
 
-
-
-    // Subscribe to the events that the task is interested in.
-    Event_RegisterCallback(taskParam->evHandler, Msg_TestTransmission_e, Com_TestTransmission, taskParam);
-    Event_RegisterCallback(taskParam->evHandler, Msg_Debug_e, Com_HandleDebug, taskParam);
     Event_RegisterCallback(taskParam->evHandler, Msg_Log_e, Com_HandleLog, taskParam);
 
 
@@ -241,10 +228,18 @@ void Com_CreateTasks(eventHandler_t* eventHandlerRx, eventHandler_t* eventHandle
         /*Error - Could not create serial interface.*/
 
         for ( ;; )
-        {
-
-        }
+        {}
     }
+
+    uint8_t rspSpi = SpiMaster_Init(MEM_SPI);
+    if(!rspSpi)
+    {
+        /*Error - Could not create serial interface.*/
+
+        for ( ;; )
+        {}
+    }
+    Mem_Init();
 
     /* Create the freeRTOS tasks responsible for communication.*/
     portBASE_TYPE create_result_rx, create_result_tx;
@@ -509,37 +504,7 @@ uint8_t Com_TxTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg)
     return 1;
 }
 
-#define DBG_MSG_REPLY_LENGTH (255)
 
-uint8_t Com_HandleDebug(eventHandler_t* obj, void* data, moduleMsg_t* msg)
-{
-    if(!obj || ! data || !msg)
-    {
-        return 0;
-    }
-    uint8_t result = 0;
-
-    switch ( Msg_DebugGetControl(msg) )
-    {
-    case QSP_DebugGetRuntimeStats:
-        {   
-        moduleMsg_t* reply = Msg_DebugCreate(Msg_GetSource(msg), 0, QSP_DebugSetRuntimeStats, DBG_MSG_REPLY_LENGTH);
-
-        QuadFC_RuntimeStats(Msg_DebugGetPayload(reply) , Msg_DebugGetPayloadbufferlength(reply));
-        //vTaskList((char *)(QSP_GetPayloadPtr(obj->QspRespPacket)));
-        uint16_t len =  strlen((char *)Msg_DebugGetPayload(reply));
-        Msg_DebugSetPayloadlength(reply, len);
-        Event_Send(obj, reply);
-        result = 1;
-        }
-        break;
-    default:
-        break;
-    }
-
-    return result;
-}
- 
 #define LOG_MSG_REPLY_LENGTH (255)
 uint8_t Com_HandleLog(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 {
@@ -587,36 +552,3 @@ uint8_t Com_HandleLog(eventHandler_t* obj, void* data, moduleMsg_t* msg)
     }
     return result;
 }
-
-uint8_t Com_TestTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg)
-{
-    if(!obj || ! data || !msg)
-    {
-        return 0;
-    }
-
-    uint8_t result = 1;
-
-    if(Msg_TestTransmissionGetTest(msg) != 0xDEADBEEF)
-    {
-        LOG_ENTRY(FC_SerialIOtx_e, obj, "SerialTest: failed, did not get correct data!");
-        result = 0;
-    }
-    if(strncmp((char*)Msg_TestTransmissionGetPayload(msg),"Test string\0",11) != 0) // Null termination not sent serially.
-    {
-        LOG_ENTRY(FC_SerialIOtx_e, obj, "SerialTest: failed, expected \"%s\", got \"%s\"!","Test string\0", Msg_TestTransmissionGetPayload(msg));
-        LOG_ENTRY(FC_SerialIOtx_e, obj, "SerialTest: msgLength = %ld ", Msg_TestTransmissionGetPayloadlength(msg));
-        result = 0;
-    }
-    if(result)
-    {
-        moduleMsg_t* reply = Msg_TestTransmissionCreate(Msg_GetSource(msg),0,1,10);
-        strncpy((char*)Msg_TestTransmissionGetPayload(reply), "Test OK\0",8);
-        Msg_TestTransmissionSetPayloadlength(reply, 8);
-        LOG_ENTRY(FC_SerialIOtx_e, obj, "SerialTest: Passed, sending reply.");
-        Event_Send(obj, reply);
-    }
-    return result;
-}
-
-

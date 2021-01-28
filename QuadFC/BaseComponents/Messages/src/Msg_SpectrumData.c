@@ -37,8 +37,8 @@
 moduleMsg_t* Msg_SpectrumDataCreate(uint32_t destination, uint8_t msgNr
     , spektrum_data_t data)
 {
-    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_SpectrumData_t) ;
-    moduleMsg_t* msg = pvPortMalloc(size);
+    size_t mallocSize = sizeof(moduleMsg_t) + sizeof(Msg_SpectrumData_t) ;
+    moduleMsg_t* msg = pvPortMalloc(mallocSize);
 
     if(msg)
     {
@@ -46,7 +46,7 @@ moduleMsg_t* Msg_SpectrumDataCreate(uint32_t destination, uint8_t msgNr
         msg->mSource = Unassigned_e;
         msg->mMsgNr = msgNr;
         msg->type = Msg_SpectrumData_e;
-        msg->mAllocatedSize = size;
+        msg->mAllocatedSize = mallocSize;
 
         Msg_SpectrumData_t* internal_data = (Msg_SpectrumData_t*)(msg + 1);
         

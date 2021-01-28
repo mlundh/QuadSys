@@ -40,8 +40,8 @@
 moduleMsg_t* Msg_DebugCreate(uint32_t destination, uint8_t msgNr
     , uint8_t control, uint32_t Payloadbufferlength)
 {
-    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_Debug_t)  + (Payloadbufferlength);
-    moduleMsg_t* msg = pvPortMalloc(size);
+    size_t mallocSize = sizeof(moduleMsg_t) + sizeof(Msg_Debug_t)  + (Payloadbufferlength);
+    moduleMsg_t* msg = pvPortMalloc(mallocSize);
 
     if(msg)
     {
@@ -49,7 +49,7 @@ moduleMsg_t* Msg_DebugCreate(uint32_t destination, uint8_t msgNr
         msg->mSource = Unassigned_e;
         msg->mMsgNr = msgNr;
         msg->type = Msg_Debug_e;
-        msg->mAllocatedSize = size;
+        msg->mAllocatedSize = mallocSize;
 
         Msg_Debug_t* internal_data = (Msg_Debug_t*)(msg + 1);
         

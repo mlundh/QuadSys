@@ -37,8 +37,8 @@
 moduleMsg_t* Msg_RegisterHandlerCreate(uint32_t destination, uint8_t msgNr
     , QueueHandle_t data)
 {
-    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_RegisterHandler_t) ;
-    moduleMsg_t* msg = pvPortMalloc(size);
+    size_t mallocSize = sizeof(moduleMsg_t) + sizeof(Msg_RegisterHandler_t) ;
+    moduleMsg_t* msg = pvPortMalloc(mallocSize);
 
     if(msg)
     {
@@ -46,7 +46,7 @@ moduleMsg_t* Msg_RegisterHandlerCreate(uint32_t destination, uint8_t msgNr
         msg->mSource = Unassigned_e;
         msg->mMsgNr = msgNr;
         msg->type = Msg_RegisterHandler_e;
-        msg->mAllocatedSize = size;
+        msg->mAllocatedSize = mallocSize;
 
         Msg_RegisterHandler_t* internal_data = (Msg_RegisterHandler_t*)(msg + 1);
         

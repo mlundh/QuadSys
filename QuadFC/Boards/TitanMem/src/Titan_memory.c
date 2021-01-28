@@ -23,38 +23,35 @@
  */
 
 #include "HAL/QuadFC/QuadFC_Memory.h"
-#include "HwComponents/MB85RC_i2c_fram/inc/MB85RC_i2c_memory.h"
 #include "HwComponents/CY15B104Q_SX_spi_fram/inc/CY15B104Q-SX_fram.h"
 
 uint8_t Mem_Init()
 {
-  //MB85RS64V_TestWriteEnable();
-  return 1;//MB85RS64V_WriteEnable(1);
+  CY15B104Q_SX_init();
+  return 1;
 }
 
 
 uint8_t Mem_Read(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size)
 {
-  if(addr < MB85RC_SIZE) // i2c memory
+  if(addr < CY15B104Q_SX_SIZE) // SPI memory
   {
-    return MB85RC_MemRead(addr, size, buffer, buffer_size);
-  }
-  else if((addr >= MB85RC_SIZE) && (addr < (MB85RC_SIZE + CY15B104Q_SX_SIZE))) // SPI memory
-  {
-    return CY15B104Q_SX_MemRead(addr - MB85RC_SIZE, size, buffer, buffer_size);
+    return CY15B104Q_SX_MemRead(addr, size, buffer, buffer_size);
   }
   else return 0;
 }
 
 uint8_t Mem_Write(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer_size)
 {
-  if(addr < MB85RC_SIZE) // i2c memory
+  if(addr < CY15B104Q_SX_SIZE) // SPI memory
   {
-    return MB85RC_MemWrite(addr, size, buffer, buffer_size);
-  }
-  else if((addr >= MB85RC_SIZE) && (addr < (MB85RC_SIZE + CY15B104Q_SX_SIZE))) // SPI memory
-  {
-    return CY15B104Q_SX_MemWrite(addr - MB85RC_SIZE, size, buffer, buffer_size);
+    return CY15B104Q_SX_MemWrite(addr, size, buffer, buffer_size);
   }
   else return 0;
+}
+
+
+uint8_t Mem_ReadWriteRaw(uint8_t *RxBuffer, uint8_t *TxBuffer, uint32_t buffer_size)
+{
+  return CY15B104Q_SX_MemReadWriteRaw(RxBuffer, TxBuffer, buffer_size);
 }

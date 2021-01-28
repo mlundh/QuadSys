@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under BSD 3-Clause license,
@@ -43,9 +43,9 @@ void MX_DMA_Init(void)
   __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
-  /* DMA1_Stream3_IRQn interrupt configuration */
-  NVIC_SetPriority(DMA1_Stream3_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
-  NVIC_EnableIRQ(DMA1_Stream3_IRQn);
+  /* DMA1_Stream4_IRQn interrupt configuration */
+  NVIC_SetPriority(DMA1_Stream4_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
+  NVIC_EnableIRQ(DMA1_Stream4_IRQn);
   /* DMA1_Stream5_IRQn interrupt configuration */
   NVIC_SetPriority(DMA1_Stream5_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
   NVIC_EnableIRQ(DMA1_Stream5_IRQn);
@@ -53,14 +53,14 @@ void MX_DMA_Init(void)
   NVIC_SetPriority(DMA2_Stream0_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
   NVIC_EnableIRQ(DMA2_Stream0_IRQn);
   /* DMA2_Stream2_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
+  NVIC_SetPriority(DMA2_Stream2_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
+  NVIC_EnableIRQ(DMA2_Stream2_IRQn);
   /* DMA2_Stream3_IRQn interrupt configuration */
   NVIC_SetPriority(DMA2_Stream3_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
   NVIC_EnableIRQ(DMA2_Stream3_IRQn);
   /* DMA2_Stream5_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream5_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream5_IRQn);
+  NVIC_SetPriority(DMA2_Stream5_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
+  NVIC_EnableIRQ(DMA2_Stream5_IRQn);
   /* DMA2_Stream7_IRQn interrupt configuration */
   NVIC_SetPriority(DMA2_Stream7_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
   NVIC_EnableIRQ(DMA2_Stream7_IRQn);

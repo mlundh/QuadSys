@@ -28,6 +28,8 @@ Msg_AppLog --member uint8_t control --member std::string payload
 *
 *GS_FC_Debug
 Msg_Debug --member uint8_t control --member std::string payload
+Msg_TestMem --member uint8_t write --member uint32_t startAddr --member uint8_t startNumber --member uint8_t size 
+Msg_TestMemReg --member uint8_t deviceId --member uint8_t rdsr
 *
 
 *GS_FC_IO

@@ -39,8 +39,8 @@
 moduleMsg_t* Msg_SubscriptionsCreate(uint32_t destination, uint8_t msgNr
     , uint32_t Subscriptionsbufferlength)
 {
-    size_t size = sizeof(moduleMsg_t) + sizeof(Msg_Subscriptions_t)  + (Subscriptionsbufferlength);
-    moduleMsg_t* msg = pvPortMalloc(size);
+    size_t mallocSize = sizeof(moduleMsg_t) + sizeof(Msg_Subscriptions_t)  + (Subscriptionsbufferlength);
+    moduleMsg_t* msg = pvPortMalloc(mallocSize);
 
     if(msg)
     {
@@ -48,7 +48,7 @@ moduleMsg_t* Msg_SubscriptionsCreate(uint32_t destination, uint8_t msgNr
         msg->mSource = Unassigned_e;
         msg->mMsgNr = msgNr;
         msg->type = Msg_Subscriptions_e;
-        msg->mAllocatedSize = size;
+        msg->mAllocatedSize = mallocSize;
 
         Msg_Subscriptions_t* internal_data = (Msg_Subscriptions_t*)(msg + 1);
         

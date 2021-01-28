@@ -26,6 +26,8 @@
 #include "../../Messages/inc/Msg_Log.h"
 #include "../../Messages/inc/Msg_AppLog.h"
 #include "../../Messages/inc/Msg_Debug.h"
+#include "../../Messages/inc/Msg_TestMem.h"
+#include "../../Messages/inc/Msg_TestMemReg.h"
 #include "../../Messages/inc/Msg_Transmission.h"
 #include "../../Messages/inc/Msg_TestTransmission.h"
 #include "../../Messages/inc/Msg_FlightMode.h"
@@ -82,6 +84,18 @@ moduleMsg_t* Msg_Parse(uint8_t* buffer, uint32_t bufferLength)
     case Msg_Debug_e:
     {
         msgResult = Msg_DebugDeserialize(buffer, bufferLength);
+        break;
+    }
+    
+    case Msg_TestMem_e:
+    {
+        msgResult = Msg_TestMemDeserialize(buffer, bufferLength);
+        break;
+    }
+    
+    case Msg_TestMemReg_e:
+    {
+        msgResult = Msg_TestMemRegDeserialize(buffer, bufferLength);
         break;
     }
     
@@ -244,6 +258,16 @@ uint8_t* Msg_Serializer(moduleMsg_t* msg, uint8_t* buffer, uint32_t bufferLength
         case Msg_Debug_e:
     {
         result = Msg_DebugSerialize(msg, buffer, bufferLength);
+        break;
+    }
+        case Msg_TestMem_e:
+    {
+        result = Msg_TestMemSerialize(msg, buffer, bufferLength);
+        break;
+    }
+        case Msg_TestMemReg_e:
+    {
+        result = Msg_TestMemRegSerialize(msg, buffer, bufferLength);
         break;
     }
         case Msg_Transmission_e:

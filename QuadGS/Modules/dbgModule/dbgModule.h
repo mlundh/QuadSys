@@ -71,6 +71,9 @@ public:
 
 	std::string StateChangeReq(std::string param);
 
+	std::string MemTest(std::string param);
+	std::string MemReadReg(std::string param);
+
 	virtual void process(Msg_GetUiCommands* message);
 	virtual void process(Msg_FireUiCommand* message);
 	virtual void process(Msg_Debug* message);
