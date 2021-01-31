@@ -32,8 +32,15 @@ static  freertos_twi_if freeRTOS_twi[]  = {NULL, NULL};
 static  uint32_t        twi_Init[]      = {0, 0};
 static  twi_package_t   tmp_twi;
 
+uint8_t Init_Twi(int index, int speed);
 
-uint8_t Init_Twi(int index)
+uint8_t QuadFC_i2cInit(int index, int speed)
+{
+  return Init_Twi(index, speed);
+}
+
+
+uint8_t Init_Twi(int index, int speed)
 {
   if(index > (sizeof(twi_instances)/sizeof(twi_instances[0])))
   {
@@ -61,7 +68,7 @@ uint8_t Init_Twi(int index)
     return 0;
   }
   freeRTOS_twi[index] = twi;
-  twi_set_speed( twi_instances[index], 400000, sysclk_get_cpu_hz() ); /*High speed TWI setting*/
+  twi_set_speed( twi_instances[index], speed, sysclk_get_cpu_hz() ); /*High speed TWI setting*/
   twi_Init[index] = 1;
   return 1;
 }
@@ -75,10 +82,7 @@ uint8_t QuadFC_i2cWrite(QuadFC_I2C_t *i2c_data, uint8_t busIndex, TickType_t blo
   }
   if(!twi_Init[busIndex])
   {
-    if(!Init_Twi(busIndex))
-    {
-      return 0;
-    }
+    return 0;
   }
   TickType_t blockTimeTicks = (blockTimeMs / portTICK_PERIOD_MS);
 
@@ -96,7 +100,6 @@ uint8_t QuadFC_i2cWrite(QuadFC_I2C_t *i2c_data, uint8_t busIndex, TickType_t blo
 
   if (twi_status != STATUS_OK)
   {
-    // TODO Led_Set(led_error_TWI);
     return 0;
   }
   return 1;
@@ -111,10 +114,7 @@ uint8_t QuadFC_i2cRead(QuadFC_I2C_t *i2c_data, uint8_t busIndex, TickType_t bloc
   }
   if(!twi_Init[busIndex])
   {
-    if(!Init_Twi(busIndex))
-    {
-      return 0;
-    }
+    return 0;
   }
   TickType_t blockTimeTicks = (blockTimeMs / portTICK_PERIOD_MS);
 

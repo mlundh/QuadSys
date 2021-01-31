@@ -84,8 +84,8 @@ Test_Board_DEPS+= $(addprefix Test/, ArduinoDueBoard TestFW)
 Test_Board_DEPS+= $(addprefix Components/, Log LogMemBackend Utilities)
 Test_Board_DEPS+= $(addprefix HwComponents/, CY15B104Q_SX_spi_fram MB85RC_i2c_fram)
 Test_Board_DEPS+= $(addprefix OS/, $(PLATFORM))
-Test_Board_DEPS+= $(addprefix Boards/, $(PLATFORM)Startup $(PLATFORM)Gpio  $(PLATFORM)Mem $(PLATFORM)Test)
-Test_Board_DEPS+= $(addprefix Drivers/, Due)
+Test_Board_DEPS+= $(addprefix Boards/, $(PLATFORM)Board $(PLATFORM)Startup $(PLATFORM)Gpio  $(PLATFORM)Mem $(PLATFORM)Test)
+Test_Board_DEPS+= $(addprefix Drivers/, $(PLATFORM))
 
 Test_Components1_DEPS:= Top/Test_Components1 HAL/QuadFC
 Test_Components1_DEPS+= $(addprefix BaseComponents/, EventHandler Messages MsgBase)

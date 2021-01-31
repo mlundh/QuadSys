@@ -22,6 +22,9 @@
  * THE SOFTWARE.
  */
 
+#include "HAL/QuadFC/QuadFC_Board.h"
+#include "HAL/QuadFC/QuadFC_Gpio.h"
+
 /* Kernel includes. */
 #include "FreeRTOS.h"
 #include "task.h"
@@ -77,7 +80,7 @@ void mainTester(void *pvParameters)
   uint8_t result = TestFW_ExecuteTests(testFW);
   uint32_t heartbeat_counter = 0;
 
-  uint32_t pin = (result ? PIN_31_GPIO : PIN_41_GPIO);
+  uint32_t pin = (result ? ledHeartBeat : ledFatal);
   taskENTER_CRITICAL();
 
 
@@ -86,7 +89,7 @@ void mainTester(void *pvParameters)
     heartbeat_counter++;
     if ( heartbeat_counter >= 1000000 )
     {
-      gpio_toggle_pin( pin );
+      Led_Toggle( pin );
       heartbeat_counter = 0;
     }
   }

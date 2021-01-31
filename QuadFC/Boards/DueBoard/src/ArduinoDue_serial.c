@@ -157,9 +157,14 @@ uint32_t QuadFC_SerialRead(QuadFC_Serial_t *serial_data, uint8_t busIndex, TickT
 
 
 
-
-
-
+int QuadFC_SerialReconfigPin(int busIndex, QuadFC_PinConfig_t config)
+{
+  return 0; // not supported by due board.
+}
+int QuadFC_SerialSetPin(int busIndex, QuadFC_PinState_t state, QuadFC_SerialPins_t pin)
+{
+  return 0; // not supported by due board.
+}
 
 
 

@@ -58,3 +58,8 @@ uint8_t Mem_Write(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t buffer
   }
   else return 0;
 }
+
+uint8_t Mem_ReadWriteRaw(uint8_t *RxBuffer, uint8_t *TxBuffer, uint32_t buffer_size)
+{
+  return CY15B104Q_SX_MemReadWriteRaw(RxBuffer, TxBuffer, buffer_size);
+}

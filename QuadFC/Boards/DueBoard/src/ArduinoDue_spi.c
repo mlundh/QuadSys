@@ -102,13 +102,13 @@ static void configure_dmac(void)
 	dmac_enable_interrupt(DMAC, (1 << BOARD_SPI_DMAC_RX_CH));
 }
 
-static void spi_master_transfer(int SpiIndex, uint8_t *p_buf, uint32_t ul_size)
+static void spi_master_transfer(uint8_t SpiIndex, uint8_t *rxBuffer, uint8_t *txBuffer, uint32_t ul_size, TickType_t blockTimeMs)
 {
-	xSemaphoreTake(Spi_accessMutex[SpiIndex],portMAX_DELAY); // TODO timeout...
+	xSemaphoreTake(Spi_accessMutex[SpiIndex], pdMS_TO_TICKS(blockTimeMs));
 	dma_transfer_descriptor_t dmac_trans;
 
 	dmac_channel_disable(DMAC, BOARD_SPI_DMAC_TX_CH);
-	dmac_trans.ul_source_addr = (uint32_t) p_buf;
+	dmac_trans.ul_source_addr = (uint32_t) txBuffer;
 	dmac_trans.ul_destination_addr = (uint32_t) & Spi_instances[SpiIndex]->SPI_TDR;
 	dmac_trans.ul_ctrlA = ul_size | DMAC_CTRLA_SRC_WIDTH_BYTE |
 			DMAC_CTRLA_DST_WIDTH_BYTE;
@@ -122,7 +122,7 @@ static void spi_master_transfer(int SpiIndex, uint8_t *p_buf, uint32_t ul_size)
 
 	dmac_channel_disable(DMAC, BOARD_SPI_DMAC_RX_CH);
 	dmac_trans.ul_source_addr = (uint32_t) & Spi_instances[SpiIndex]->SPI_RDR;
-	dmac_trans.ul_destination_addr = (uint32_t) p_buf;
+	dmac_trans.ul_destination_addr = (uint32_t) rxBuffer;
 	dmac_trans.ul_ctrlA = ul_size | DMAC_CTRLA_SRC_WIDTH_BYTE |
 			DMAC_CTRLA_DST_WIDTH_BYTE;
 	dmac_trans.ul_ctrlB = DMAC_CTRLB_SRC_DSCR | DMAC_CTRLB_DST_DSCR |
@@ -139,7 +139,7 @@ static void spi_master_transfer(int SpiIndex, uint8_t *p_buf, uint32_t ul_size)
 
 uint8_t SpiMaster_Init(int SpiIndex)
 {
-	if(SpiIndex > 0)
+	if(SpiIndex > 0) // Only one spi availible currently.
 	{
 		return 0;
 	}
@@ -173,10 +173,7 @@ SpiMaster_SlaveDevice_t* SpiMaster_CreateSlaveDevice(uint8_t SpiIndex,
 {
 	if(!Spi_init[SpiIndex])
 	{
-		if(!SpiMaster_Init(SpiIndex))
-		{
-			return NULL;
-		}
+		return 0;
 	}
 	SpiMaster_SlaveDevice_t* slave = pvPortMalloc(sizeof(SpiMaster_SlaveDevice_t));
 	if(!slave)
@@ -227,19 +224,15 @@ SpiMaster_SlaveDevice_t* SpiMaster_CreateSlaveDevice(uint8_t SpiIndex,
 
 	return slave;
 }
-
-uint8_t SpiMaster_Transfer(uint8_t SpiIndex, uint8_t *buffer, uint32_t size)
+uint8_t SpiMaster_Transfer(uint8_t SpiIndex, uint8_t *rxBuffer, uint8_t *txBuffer, uint32_t size, TickType_t blockTimeMs)
 {
 
 	if(!Spi_init[SpiIndex])
 	{
-		if(!SpiMaster_Init(SpiIndex))
-		{
-			return 0;
-		}
+		return 0;
 	}
 
-	spi_master_transfer(SpiIndex, buffer, size);
+	spi_master_transfer(SpiIndex, rxBuffer, txBuffer, size, blockTimeMs);
 	return 1;
 }
 
@@ -247,10 +240,7 @@ void SpiMaster_SelectSlave(uint8_t SpiIndex, SpiMaster_SlaveDevice_t* slave)
 {
 	if(!Spi_init[SpiIndex])
 	{
-		if(!SpiMaster_Init(SpiIndex))
-		{
-			return;
-		}
+		return;
 	}
 	if(slave->selected)
 	{
@@ -264,10 +254,7 @@ void SpiMaster_DeselectSlave(uint8_t SpiIndex, SpiMaster_SlaveDevice_t* slave)
 {
 	if(!Spi_init[SpiIndex])
 	{
-		if(!SpiMaster_Init(SpiIndex))
-		{
-			return;
-		}
+		return;
 	}
 	if(!slave->selected)
 	{
