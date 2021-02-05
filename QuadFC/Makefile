@@ -56,7 +56,7 @@ BUILD_DIR := out/$(PLATFORM)
 VPATH:=
 
 # Add categories here if needed.
-CATEGORIES := Modules HwComponents Top Test HAL BaseComponents $(PLATFORM)Board Components 
+CATEGORIES := Modules HwComponents Top Test HAL BaseComponents Boards/$(PLATFORM) Components 
 CATEGORIES_R_PLF := Drivers OS
 CATEGORIES_R :=  
 
