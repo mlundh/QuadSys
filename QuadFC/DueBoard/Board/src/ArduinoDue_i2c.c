@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#include "QuadFC/QuadFC_Peripherals.h"
+#include "QuadFC/QuadFC_I2c.h"
 #include "freertos_twi_master.h"
 #include "HMI/inc/led_control_task.h"
 #include <string.h>

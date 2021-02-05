@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-#include "HAL/QuadFC/QuadFC_Peripherals.h"
+#include "HAL/QuadFC/QuadFC_SPI.h"
 #include "spi_master.h"
 #include "FreeRTOS.h"
 #include "semphr.h"

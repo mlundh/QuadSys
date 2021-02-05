@@ -25,7 +25,7 @@
 
 #include "freertos_uart_serial.h"
 #include "string.h"
-#include "QuadFC/QuadFC_Peripherals.h"
+#include "QuadFC/QuadFC_Serial.h"
 #include "uart_serial.h"
 
 

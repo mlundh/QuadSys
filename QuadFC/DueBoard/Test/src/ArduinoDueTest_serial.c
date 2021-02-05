@@ -24,7 +24,7 @@
 
 
 #include "string.h"
-#include "QuadFC/QuadFC_Peripherals.h"
+#include "QuadFC/QuadFC_Serial.h"
 #include "status_codes.h"
 #include "uart_serial.h"
 
