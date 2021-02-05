@@ -36,7 +36,7 @@
 
 
 #include "HAL/QuadFC/QuadFC_Gpio.h"
-#include "HAL/QuadFC/QuadFC_Peripherals.h"
+#include "QuadFC/QuadFC_I2c.h"
 #include "StateEstimator/inc/signal_processing.h"
 
 #include "Components/AppLog/inc/AppLog.h"

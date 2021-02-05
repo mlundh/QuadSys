@@ -25,7 +25,7 @@
 #include "FreeRTOS.h"
 #include "QuadFC/QuadFC_Memory.h"
 #include "MB85RC_i2c_fram/inc/MB85RC_i2c_memory.h"
-#include "HAL/QuadFC/QuadFC_Peripherals.h"
+#include "HAL/QuadFC/QuadFC_I2c.h"
 
 #define MB85RC_DEFAULT_ADDRESS        (0x50) /* 1010 + A2 + A1 + A0 = 0x50 default */
 #define MB85RC_SLAVE_ID               (0xF8)

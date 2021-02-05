@@ -24,7 +24,8 @@
 
 
 #include "string.h"
-#include "QuadFC/QuadFC_Peripherals.h"
+#include "QuadFC/QuadFC_PeripheralsCommon.h"
+#include "QuadFC/QuadFC_Serial.h"
 #include "HMI/inc/led_control_task.h"
 #include "usart.h"
 #include "stm32f413xx.h"

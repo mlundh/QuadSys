@@ -24,7 +24,7 @@
  */
 
 #include "Components/AppLog/inc/AppLogBackend.h"
-#include "QuadFC/QuadFC_Peripherals.h"
+#include "QuadFC/QuadFC_Serial.h"
 #define APP_LOG_SERIAL (3)
 #define APP_LOG_INTERNAL_BUFFER (512)
 #define APP_LOG_RECEIVE_BUFF (2)

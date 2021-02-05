@@ -45,7 +45,7 @@
 #include <string.h>
 #include <math.h>
 #include "Sensors/inc/mpu6050.h"
-#include "QuadFC/QuadFC_Peripherals.h"
+#include "QuadFC/QuadFC_I2c.h"
 #include "QuadFC/src/QuadFC_IMUInternal.h"
 #include "Parameters/inc/parameters.h"
 #include "Utilities/inc/my_math.h"

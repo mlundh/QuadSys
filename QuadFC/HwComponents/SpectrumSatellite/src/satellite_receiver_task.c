@@ -45,7 +45,7 @@
 #include "Components/Parameters/inc/paramHandler.h"
 
 #include "SpectrumSatellite/inc/satellite_receiver_public.h"
-#include "QuadFC/QuadFC_Peripherals.h"
+#include "QuadFC/QuadFC_Serial.h"
 #include "EventHandler/inc/event_handler.h"
 #include "Messages/inc/common_types.h"
 #include "Messages/inc/Msg_BindRc.h"

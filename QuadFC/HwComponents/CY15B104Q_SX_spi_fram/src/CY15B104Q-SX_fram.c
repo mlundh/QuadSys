@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 #include "CY15B104Q_SX_spi_fram/inc/CY15B104Q-SX_fram.h"
-#include "HAL/QuadFC/QuadFC_Peripherals.h"
+#include "HAL/QuadFC/QuadFC_SPI.h"
 static SpiMaster_SlaveDevice_t *slave = NULL;
 #define SPI_INDEX_FRAM 0
 #define BAUD_RATE 10000000

@@ -23,7 +23,7 @@
  */
 #ifndef TEST_DUMMYI2C_DUMMY_I2C_H_
 #define TEST_DUMMYI2C_DUMMY_I2C_H_
-#include "QuadFC/QuadFC_Peripherals.h" // Get access to io types.
+#include "QuadFC/QuadFC_I2c.h" // Get access to io types.
 /**
  * Test helper to simulate a real i2c device. Just add expected input and
  * the corresponding response. The following read/write accesses to the

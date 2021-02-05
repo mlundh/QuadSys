@@ -29,7 +29,6 @@
 
 #include "../inc/signal_processing.h"
 #include "Messages/inc/Msg_CtrlMode.h"
-#include "HAL/QuadFC/QuadFC_Peripherals.h"
 
 struct StateEst
 {

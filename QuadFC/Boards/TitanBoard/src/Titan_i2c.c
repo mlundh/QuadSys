@@ -24,7 +24,7 @@
 #include "cubeInit.h"
 #include "stm32f4xx_hal_i2c.h"
 #include "cubeInit.h"
-#include "QuadFC/QuadFC_Peripherals.h"
+#include "QuadFC/QuadFC_I2c.h"
 #include "HMI/inc/led_control_task.h"
 #include <string.h>
 

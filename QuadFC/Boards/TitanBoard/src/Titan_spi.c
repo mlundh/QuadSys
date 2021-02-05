@@ -26,7 +26,7 @@
 #include "stm32f4xx_hal_spi.h"
 #include "stm32f4xx_ll_spi.h"
 
-#include "HAL/QuadFC/QuadFC_Peripherals.h"
+#include "HAL/QuadFC/QuadFC_SPI.h"
 #include "FreeRTOS.h"
 #include "semphr.h"
 

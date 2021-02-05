@@ -32,7 +32,7 @@
 #include "queue.h"
 #include "timers.h"
 
-#include "HAL/QuadFC/QuadFC_Peripherals.h"
+#include "HAL/QuadFC/QuadFC_Serial.h"
 
 #include <gpio.h>
 
