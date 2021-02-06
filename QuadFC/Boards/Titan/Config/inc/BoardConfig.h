@@ -26,6 +26,7 @@
 
 #define IMU1_I2C_BUS (0)
 #define IMU2_I2C_BUS (0)
+#define FRAM_MEM_I2C_BUS (0)
 
 #define FRAM_MEM_SPI_BUS (0)
 
@@ -34,5 +35,6 @@
 
 #define COM_SERIAL_BUS (1)
 #define APPLOG_SERIAL_BUS (3)
+
 
 #endif // __BOARDCONFIG_H__

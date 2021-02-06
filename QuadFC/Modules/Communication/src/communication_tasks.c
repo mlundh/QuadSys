@@ -31,7 +31,7 @@
 #include "Debug/inc/debug_handler.h"
 #include "Messages/inc/Msg_Parser.h"
 #include "Messages/inc/Msg_Transmission.h"
-
+#include "BoardConfig.h"
 #include "Messages/inc/Msg_Log.h"
 
 
@@ -52,14 +52,11 @@
 
 
 /* Use USART1 (labeled RX2 17 and TX2 16)*/
-#define COM_SERIAL (1)
 #define COM_RECEIVE_BUFFER_LENGTH       (512)
 
 #define COM_PACKET_LENGTH_MAX       512
 #define NR_RETRANSMITT (3)
 
-// SPI index 1 used for the memory.
-#define MEM_SPI (0)
 
 /*Global crc table*/
 uint16_t *crcTable;
@@ -223,7 +220,7 @@ void Com_CreateTasks(eventHandler_t* eventHandlerRx, eventHandler_t* eventHandle
     };
 
 
-    uint8_t rsp = QuadFC_SerialInit(COM_SERIAL, &opt);
+    uint8_t rsp = QuadFC_SerialInit(COM_SERIAL_BUS, &opt);
     if(!rsp)
     {
         /*Error - Could not create serial interface.*/
@@ -232,7 +229,7 @@ void Com_CreateTasks(eventHandler_t* eventHandlerRx, eventHandler_t* eventHandle
         {}
     }
 
-    uint8_t rspSpi = SpiMaster_Init(MEM_SPI);
+    uint8_t rspSpi = SpiMaster_Init(FRAM_MEM_SPI_BUS);
     if(!rspSpi)
     {
         /*Error - Could not create serial interface.*/
@@ -342,7 +339,7 @@ uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
             QuadFC_Serial_t serialData;
             serialData.buffer = TxObj->txSLIP->payload;
             serialData.bufferLength = TxObj->txSLIP->packetSize;
-            result = QuadFC_SerialWrite(&serialData, COM_SERIAL, portMAX_DELAY);
+            result = QuadFC_SerialWrite(&serialData, COM_SERIAL_BUS, portMAX_DELAY);
 
             if ( !result )
             {
@@ -407,7 +404,7 @@ void Com_RxTask( void *pvParameters )
         serialData.buffer = obj->receive_buffer;
         serialData.bufferLength = COM_RECEIVE_BUFFER_LENGTH;
 
-        uint32_t nr_bytes_received = QuadFC_SerialRead(&serialData, COM_SERIAL, 1);
+        uint32_t nr_bytes_received = QuadFC_SerialRead(&serialData, COM_SERIAL_BUS, 1);
         if(nr_bytes_received)
         {
             LOG_DBG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "Received %ld", nr_bytes_received);

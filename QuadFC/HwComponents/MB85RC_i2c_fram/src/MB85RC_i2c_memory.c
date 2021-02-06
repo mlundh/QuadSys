@@ -23,6 +23,7 @@
  */
 
 #include "FreeRTOS.h"
+#include "BoardConfig.h"
 #include "QuadFC/QuadFC_Memory.h"
 #include "MB85RC_i2c_fram/inc/MB85RC_i2c_memory.h"
 #include "HAL/QuadFC/QuadFC_I2c.h"
@@ -41,7 +42,7 @@ uint8_t MB85RC_MemRead(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t b
   i2c_data.internalAddr[0] = (addr >> 8) & 0xff;
   i2c_data.internalAddr[1] = (addr) & 0xff;
   i2c_data.slaveAddress = MB85RC_DEFAULT_ADDRESS;
-  if(!QuadFC_i2cRead(&i2c_data, MB85RC_BUSS, MB85RC_BLOCK_TIME))
+  if(!QuadFC_i2cRead(&i2c_data, FRAM_MEM_I2C_BUS, MB85RC_BLOCK_TIME))
   {
     return 0;
   }
@@ -57,7 +58,7 @@ uint8_t MB85RC_MemWrite(uint32_t addr, uint32_t size, uint8_t *buffer, uint32_t 
   i2c_data.internalAddr[0] = (addr >> 8) & 0xff;
   i2c_data.internalAddr[1] = (addr) & 0xff;
   i2c_data.slaveAddress = MB85RC_DEFAULT_ADDRESS;
-  if(!QuadFC_i2cWrite(&i2c_data, MB85RC_BUSS, MB85RC_BLOCK_TIME))
+  if(!QuadFC_i2cWrite(&i2c_data, FRAM_MEM_I2C_BUS, MB85RC_BLOCK_TIME))
   {
     return 0;
   }

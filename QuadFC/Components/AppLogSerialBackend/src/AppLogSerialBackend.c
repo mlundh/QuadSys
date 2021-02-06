@@ -25,7 +25,7 @@
 
 #include "Components/AppLog/inc/AppLogBackend.h"
 #include "QuadFC/QuadFC_Serial.h"
-#define APP_LOG_SERIAL (3)
+#include "BoardConfig.h"
 #define APP_LOG_INTERNAL_BUFFER (512)
 #define APP_LOG_RECEIVE_BUFF (2)
 struct AppLogBackend
@@ -50,7 +50,7 @@ AppLogBackend_t* AppLogBackend_CreateObj()
         obj->receiveBuff,
         APP_LOG_RECEIVE_BUFF
     };
-    QuadFC_SerialInit(APP_LOG_SERIAL, &opt);
+    QuadFC_SerialInit(APPLOG_SERIAL_BUS, &opt);
     return obj;
 }
 
@@ -73,7 +73,7 @@ uint8_t AppLogBackend_Report(AppLogBackend_t* obj, uint8_t* buffer, uint32_t buf
     QuadFC_Serial_t serialData;
     serialData.buffer = buffer;
     serialData.bufferLength = buffer_size;
-    result = QuadFC_SerialWrite(&serialData, APP_LOG_SERIAL, portMAX_DELAY);
+    result = QuadFC_SerialWrite(&serialData, APPLOG_SERIAL_BUS, portMAX_DELAY);
 
     return result;
 }

@@ -28,7 +28,7 @@
 
 /*Include board*/
 #include "HAL/QuadFC/QuadFC_Board.h"
-
+#include "BoardConfig.h"
 /*Include tasks to start*/
 #include "FlightController/inc/main_control_task.h"
 #include "Communication/inc/communication_tasks.h"
@@ -41,10 +41,6 @@
 /*Include task communication modules*/
 #include "FlightController/inc/control_mode_handler.h"
 #include "EventHandler/inc/event_handler.h"
-
-
-#define SATELITE1_USART (0)
-#define SATELITE2_USART (2)
 
 /*
  * FreeRTOS hook (or callback) functions that are defined in this file.
@@ -80,8 +76,8 @@ int main( void )
 
 
   create_main_control_task(evHandlerM);
-  Satellite_CreateReceiverTask(evHandlerSatelliteInternal, SATELITE1_USART, rc1PwrCtrl, '1');
-  Satellite_CreateReceiverTask(evHandlerSatelliteExternal, SATELITE2_USART, rc2PwrCtrl, '2');
+  Satellite_CreateReceiverTask(evHandlerSatelliteInternal, RC1_SERIAL_BUS, rc1PwrCtrl, '1');
+  Satellite_CreateReceiverTask(evHandlerSatelliteExternal, RC2_SERIAL_BUS, rc2PwrCtrl, '2');
 
   Led_CreateLedControlTask(evHandlerLed);
   Com_CreateTasks(evHandlerComRx, evHandlerComTx); // Creates two tasks, RX and TX.

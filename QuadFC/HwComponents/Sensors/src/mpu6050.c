@@ -45,12 +45,12 @@
 #include <string.h>
 #include <math.h>
 #include "Sensors/inc/mpu6050.h"
+#include "BoardConfig.h"
 #include "QuadFC/QuadFC_I2c.h"
 #include "QuadFC/src/QuadFC_IMUInternal.h"
 #include "Parameters/inc/parameters.h"
 #include "Utilities/inc/my_math.h"
 
-#define MPU6050_BUSS                  (0x0)
 #define MPU6050_BLOCK_TIME_MS         (50UL)
 
 /**
@@ -127,7 +127,7 @@ ImuInternals_t* Imu_CreateInternal(param_obj_t * param, uint32_t index)
     return NULL;
   }
   
-  internals->i2cBus = MPU6050_BUSS;
+  internals->i2cBus = IMU1_I2C_BUS;
 
   return internals;
 }

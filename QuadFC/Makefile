@@ -74,7 +74,7 @@ I_ThirdParty := $(sort $(dir $(call rwildcard,Drivers/$(PLATFORM),*.h)))
 I_ThirdParty += $(sort $(dir $(call rwildcard,OS/$(PLATFORM),*.h)))
 INCLUDE_ThirdParty := $(addprefix -I, $(I_ThirdParty))
 
-INCLUDE_PATH := $(addprefix -I, $(CATEGORIES))
+INCLUDE_PATH := $(addprefix -I, $(CATEGORIES) Boards/$(PLATFORM)/Config/inc)
 
 CFLAGS+= $(INCLUDE_PATH) -I $(ROOT_DIR) $(INCLUDE_ThirdParty)
 
