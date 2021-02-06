@@ -30,6 +30,7 @@
 #include "Utilities/inc/string_utils.h"
 #include "Components/SLIP/inc/slip_packet.h"
 #include "HAL/QuadFC/QuadFC_Memory.h"
+#include "BoardConfig.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -148,7 +149,7 @@ paramHander_t* ParamHandler_CreateObj(uint8_t num_children, eventHandler_t* evHa
     obj->currentlySavinging = 0;
     obj->getter = Unassigned_e;
     obj->saver = Unassigned_e;
-    obj->setAddress = 0;
+    obj->setAddress = PARAM_MEM_START_ADDR;
     obj->actionOngoing = paramReady;
     obj->parser = SlipParser_Create(SLIP_PACKET_LEN);
     if(!obj->rootParam || !obj->parser)
@@ -380,7 +381,7 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
     {
         uint8_t lastInSequence = 0;
         uint8_t EcpectedSequenceNo = 0;
-        uint32_t address = 0;
+        uint32_t address = PARAM_MEM_START_ADDR;
         LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "Param Load: Received ParamLoad.");
 
         while(!lastInSequence)
@@ -531,7 +532,7 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
 
          if(handlerObj->currentlySavinging == 0)
          {
-            handlerObj->setAddress = 0;
+            handlerObj->setAddress = PARAM_MEM_START_ADDR;
             LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "Param Save: Saving Master.");
 
              uint32_t bufferLength = PARAM_BUFFER_LEN;

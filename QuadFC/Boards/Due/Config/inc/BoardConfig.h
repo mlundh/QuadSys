@@ -38,5 +38,8 @@
 #define COM_SERIAL_BUS (1)
 #define APPLOG_SERIAL_BUS (3)
 
+// mem area defines
+#define PARAM_MEM_START_ADDR (0)
+#define LOG_MEM_START_ADDR (32000)
 
 #endif // __BOARDCONFIG_H__

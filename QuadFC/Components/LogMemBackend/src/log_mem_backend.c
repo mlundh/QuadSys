@@ -23,7 +23,7 @@
  */
 
 #include "FreeRTOS.h"
-
+#include "BoardConfig.h"
 #include "Log/inc/log_backend.h"
 #include "Log/inc/logHandler.h"
 #include "HAL/QuadFC/QuadFC_Memory.h"
@@ -31,7 +31,6 @@
 
 #define LOG_BACKEND_ITEM_SIZE (12)
 #define LOG_BACKEND_SIZE (500000/LOG_BACKEND_ITEM_SIZE)
-#define LOG_BACKEND_BASE_ADDR 32000
 
 struct logBackEnd
 {
@@ -87,7 +86,7 @@ uint8_t LogBackend_Report(LogBackEnd_t* obj, logEntry_t* entry)
     bufferP = serialize_uint32_t(bufferP, &bufferLength, &entry->time);
 
 
-    if(!Mem_Write(LOG_BACKEND_BASE_ADDR + (obj->head * LOG_BACKEND_ITEM_SIZE), LOG_BACKEND_ITEM_SIZE, buffer,0))
+    if(!Mem_Write(LOG_MEM_START_ADDR + (obj->head * LOG_BACKEND_ITEM_SIZE), LOG_BACKEND_ITEM_SIZE, buffer,0))
     {
         return 0;
     }
@@ -111,7 +110,7 @@ uint8_t LogBackend_GetLog(LogBackEnd_t* obj, logEntry_t* entry, uint32_t nrEleme
     {
         // TODO optimize the transfer, allow for multiple entries to be read at the same time. This will minimize SPI overhead.
         uint8_t buffer[LOG_BACKEND_ITEM_SIZE] = {0};
-        if(!Mem_Read(LOG_BACKEND_BASE_ADDR + (obj->tail * LOG_BACKEND_ITEM_SIZE), LOG_BACKEND_ITEM_SIZE, buffer, LOG_BACKEND_ITEM_SIZE))
+        if(!Mem_Read(LOG_MEM_START_ADDR + (obj->tail * LOG_BACKEND_ITEM_SIZE), LOG_BACKEND_ITEM_SIZE, buffer, LOG_BACKEND_ITEM_SIZE))
         {
             return 0;
         }
