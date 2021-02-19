@@ -42,4 +42,15 @@
 #define PARAM_MEM_START_ADDR (0)
 #define LOG_MEM_START_ADDR (32000)
 
+// PWM defines
+
+#define PWM_PIN_1 (0)
+#define PWM_PIN_2 (0)
+#define PWM_PIN_3 (0)
+#define PWM_PIN_4 (0)
+#define PWM_PIN_5 (0)
+#define PWM_PIN_6 (0)
+#define PWM_PIN_7 (0)
+#define PWM_PIN_8 (0)
+
 #endif // __BOARDCONFIG_H__
