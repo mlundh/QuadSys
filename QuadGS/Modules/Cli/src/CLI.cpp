@@ -62,9 +62,8 @@ CLI::CLI(msgAddr_t name)
 
 	read_history("QuadGS.hist");
 	el_hist_size = 1000;
-	rl_callback_handler_install(mPrompt.c_str(), ProcessLine);
 	rl_set_complete_func(&my_rl_complete);
-    rl_set_list_possib_func(&my_rl_list_possib);
+	rl_set_list_possib_func(&my_rl_list_possib);
 
 	mCommands.push_back(UiCommand("quit","",getName()));
 	setProcessingFcn(std::bind(&CLI::processingFcn, this));
@@ -74,9 +73,9 @@ CLI::CLI(msgAddr_t name)
 
 CLI::~CLI()
 {
+	//rl_deprep_terminal();
 	cli = NULL;
-	write_history("QuadGS.hist");
-	rl_deprep_terminal();
+	write_history("QuadGS.hist");	
 }
 
 void CLI::processingFcn()
@@ -146,8 +145,6 @@ void CLI::BuildPrompt()
 {
 	mPrompt = mPromptBase + "-[" + mPromptStatus + "]" + ": ";
 	updatePrompt = true;
-
-	//mPrompt = mPromptBase + "-[" + mPromptStatus + "]" + "[" + mPromptPath + "]" + ": ";
 }
 
 
@@ -162,22 +159,9 @@ bool CLI::RunUI()
 	}
 	while(!mStop)
 	{
-		rl_callback_read_char();
-		if(updatePrompt)
-		{
-			updatePrompt = false;
-			char line_buf[256];
-			  /* save away the current contents of the line */
-  			strncpy(line_buf, rl_line_buffer, sizeof(line_buf));
-  			line_buf[sizeof(line_buf) - 1] = 0;
-			rl_callback_handler_install(mPrompt.c_str(), ProcessLine);
-			rl_insert_text(line_buf);
-
-  			/* redraw the current line - this is an undocumented function. It invokes the
-  			 * redraw-current-line command.
-  			 */
-  			rl_refresh_line(0, 0);
-		}
+		char *line;
+		line = readline(mPrompt.c_str());
+		ProcessLine(line);
 	}
 	return !mStop;
 }
