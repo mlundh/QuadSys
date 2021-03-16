@@ -13,6 +13,7 @@ GS_Log
 GS_SerialIO
 GS_SetpointGen
 GS_Router
+GS_AppLog
 *
 
 *FC

@@ -57,7 +57,7 @@ static  titan_uart_control_t   uart[] = {
   {USART1, 0, NULL, NULL, 0, NULL, 0}, // Com serial USB
   {USART2, 0, NULL, NULL, 0, NULL, 0}, // RC 2
   {UART9,  0, NULL, NULL, 0, NULL, 0}, // Applog serial backend
-  {USART3, 0, NULL, NULL, 0, NULL, 0},
+  {USART3, 0, NULL, NULL, 0, NULL, 0}, // Com serial Wireless
   {USART6, 0, NULL, NULL, 0, NULL, 0},
   {UART8,  0, NULL, NULL, 0, NULL, 0},
 
@@ -126,9 +126,9 @@ uint8_t QuadFC_SerialInit(int busIndex, QuadFC_SerialOptions_t* opt)
   }
 
   if((uart[busIndex].usart == USART1) ||
-     (uart[busIndex].usart == USART2))
+     (uart[busIndex].usart == USART3))
   {
-    init.HardwareFlowControl = LL_USART_HWCONTROL_RTS_CTS;
+    //init.HardwareFlowControl = LL_USART_HWCONTROL_RTS_CTS;
   }
  // else
   {

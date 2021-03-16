@@ -9,6 +9,7 @@
 
 #include <functional>
 #include <memory>
+#include <iomanip>
 
 #include "msg_enums.h"
 #include "QGS_Tree.h"
@@ -36,7 +37,6 @@ LogHandler::LogHandler(msgAddr_t name, msgAddr_t loggerAddr)
 	mCommands.push_back(UiCommand("logPrintNameMapping","Print name id mapping of logs.",std::bind(&LogHandler::FormatLogMapping, this, std::placeholders::_1)));
 	mCommands.push_back(UiCommand("logGetEntries","Get runtime logs from QuadFC.",std::bind(&LogHandler::getLogEntries, this, std::placeholders::_1)));
 	mCommands.push_back(UiCommand("logStopAll","Stop all logging.",std::bind(&LogHandler::stopAllLogs, this, std::placeholders::_1)));
-	mCommands.push_back(UiCommand("appLogLevel","Set the log level of the app.",std::bind(&LogHandler::SetAppLogLevel, this, std::placeholders::_1)));
 }
 LogHandler::~LogHandler()
 {
@@ -84,13 +84,6 @@ std::string LogHandler::FormatLogMapping(std::string)
 	}
 	return ss.str();
 }
-
-std::string LogHandler::SetAppLogLevel(std::string string)
-{
-	return AppLog::setLogLevelFromStr(string);
-}
-
-
 
 void LogHandler::process(Msg_GetUiCommands* message)
 {

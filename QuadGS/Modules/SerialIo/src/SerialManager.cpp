@@ -23,6 +23,7 @@
  */
 #include "SerialManager.h"
 
+#include <boost/bind/bind.hpp>
 #include <boost/algorithm/string.hpp>
 #include <string>
 #include "msg_enums.h"
@@ -82,17 +83,19 @@ Serial_Manager::~Serial_Manager()
 	if(mThread_io && mThread_io->joinable())
 	{
 		mThread_io->join();
+		delete mThread_io;
 	}
 	if(mThreadWriter && mThreadWriter->joinable())
 	{
 		mThreadWriter->join();
+		delete mThreadWriter;
 	}
 }
 
 void Serial_Manager::initialize()
 {
 	mThread_io = new std::thread(std::bind(&Serial_Manager::runThread, this));
-	mPort = QuadGS::SerialPort::create(mIo_service);
+	mPort = QuadGS::SerialPort::create(mIo_service, std::bind(&Serial_Manager::sendMsg, this, std::placeholders::_1));
 	mPort->setReadCallback( std::bind(&Serial_Manager::messageHandler, this, std::placeholders::_1) );
 	mPort->setWriteCallback( std::bind(&Serial_Manager::writeCallback, this) );
 
@@ -106,7 +109,7 @@ void Serial_Manager::processingFcn()
 	}
 	catch(const std::exception& e)
 	{
-		mLogger.QuadLog(QuadGS::error, e.what());
+		LOG_ERROR(log, e.what());
 	}
 	
 	
@@ -231,12 +234,9 @@ void Serial_Manager::process(Msg_Transmission* transMsg)
 {
 
 	mTimeoutRead.cancel();
-
 	if(mMsgNrTx != transMsg->getMsgNr())
 	{
-		std::stringstream ss;
-		ss << "Ack does not match expected message number: " << (int)transMsg->getMsgNr() << " expected: " << (int) mMsgNrTx;
-		mLogger.QuadLog(QuadGS::error, ss.str());
+		LOG_ERROR(log,"Ack does not match expected message number: " << (int)transMsg->getMsgNr() << " expected: " << (int) mMsgNrTx);
 	}
 	if(transMsg->getStatus() == transmission_OK) 
 	{
@@ -259,7 +259,7 @@ void Serial_Manager::ReceivingFcnIo(std::unique_ptr<QGS_ModuleMsgBase> message)
 	}
 	catch(const std::exception& e)
 	{
-		mLogger.QuadLog(QuadGS::error, e.what());
+		LOG_ERROR(log, e.what());
 	}
 }
 
@@ -272,11 +272,11 @@ void Serial_Manager::runThread()
 	catch(const std::exception &exc)
 	{
 		std::string exception(exc.what());
-		mLogger.QuadLog(severity_level::error, "Exception from  io service: " + exception );
+		LOG_MESSAGE_TRACE(log, "Exception from  io service: " << exception );
 	}
 	catch(...)
 	{
-		mLogger.QuadLog(severity_level::error, "Unknown exception from  io service! " );
+		LOG_ERROR(log, "Unknown exception from  io service! " );
 	}
 }
 
@@ -297,16 +297,12 @@ void Serial_Manager::messageHandler(QGS_ModuleMsgBase::ptr msg)
 	}	
 	if(msg->getType() == messageTypes_t::Msg_Transmission_e)
 	{
-		std::stringstream ss;
-		ss << "Received OK/NOK msg nr: " << (int)msg->getMsgNr();
-		mLogger.QuadLog(severity_level::message_trace, ss.str());
+		LOG_MESSAGE_TRACE(log, "Received OK/NOK msg nr: " << (int)msg->getMsgNr());
 	}
 	// Respond transmission OK and forward the message.
 	else
 	{
-		std::stringstream ss;
-		ss << "Received msg nr: " << (int)msg->getMsgNr();
-		mLogger.QuadLog(severity_level::message_trace, ss.str());
+		LOG_MESSAGE_TRACE(log, "Received msg nr: " << (int)msg->getMsgNr());
 
 		//Received message OK, return transmission OK!
 		Msg_Transmission::ptr transmission = std::make_unique<Msg_Transmission>(mTransmissionAddr, transmission_OK);
@@ -328,7 +324,7 @@ void Serial_Manager::doWrite()
 {
 	if(!mPort->isOpen())
 	{
-		mLogger.QuadLog(severity_level::error, "Port not open.");
+		LOG_ERROR(log, "Port not open.");
 		return;
 	}
 	
@@ -344,11 +340,10 @@ void Serial_Manager::doWrite()
 		{
 			mMsgNrTx = ((mMsgNrTx+1)%256);
 			
-			std::stringstream ss;
-			ss << "Transmitting msg nr: " << (int)msg->getMsgNr();
-			mLogger.QuadLog(severity_level::message_trace, ss.str());
+			
 
 			msg->setMsgNr(mMsgNrTx);
+			LOG_MESSAGE_TRACE(log, "Transmitting msg nr: " << (int)msg->getMsgNr());
 			startReadTimer();
 			msg = mPort->write( std::move(msg) );
 
@@ -359,23 +354,18 @@ void Serial_Manager::doWrite()
 				startReadTimer();
 				msg = mPort->write( std::move(msg) );
 
-				std::stringstream ss;
-				ss << "Transmission failed, resending msg nr: " << (int)msg->getMsgNr();
-				mLogger.QuadLog(severity_level::warning, ss.str());
+				LOG_WARNING(log, "Transmission failed, resending msg nr: " << (int)msg->getMsgNr());
+
 				mTransmittDone.wait();
 			}
 			if(!mTxSuccess)
 			{
-				std::stringstream ss;
-				ss << "Transmission failed, dropping msg nr: " << (int)msg->getMsgNr();
-				mLogger.QuadLog(severity_level::warning, ss.str());	
+				LOG_WARNING(log, "Transmission failed, dropping msg nr: " << (int)msg->getMsgNr());
 			}
 		}
 		else
 		{
-			std::stringstream ss;
-			ss << "Transmitting OK/NOK nr: " << (int)msg->getMsgNr();
-			mLogger.QuadLog(severity_level::message_trace, ss.str());
+			LOG_MESSAGE_TRACE(log,"Transmitting OK/NOK nr: " << (int)msg->getMsgNr());
 
 			// Transmissions should not be re-sent.
 			mPort->write( std::move(msg) );
@@ -407,7 +397,7 @@ void Serial_Manager::timerReadCallback( const boost::system::error_code& error )
 		 * the timer was canceled and did not fire. Everything else is an error*/
 		if( error != boost::asio::error::operation_aborted )
 		{
-			mLogger.QuadLog(severity_level::error, "Read timer callback: " + error.message());
+			LOG_ERROR(log, "Read timer callback: " << error.message());
 			throw std::runtime_error(error.message());
 		}
 		return;
@@ -415,7 +405,8 @@ void Serial_Manager::timerReadCallback( const boost::system::error_code& error )
 	else
 	{
 		mTransmittDone.notify();
-		mLogger.QuadLog(severity_level::warning, " Read timeout fired.");
+		//mLogger.QuadLog(severity_level::warning, " Read timeout fired.");
+		LOG_WARNING(log, " Read timeout fired.");
 	}
 
 	//TODO add thread saftey measures!

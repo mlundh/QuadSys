@@ -32,9 +32,11 @@
 #include <string>
 #include <vector>
 #include <thread>
-#include "AppLog.h"
 #include "ThreadSafeFifo.hpp"
 #include "QGS_ModuleMsg.h"
+#include "Msg_GsHasLog.h"
+#include "Msg_GsLogLevel.h"
+#include "AppLog.h"
 
 namespace QuadGS
 {
@@ -116,8 +118,24 @@ protected:
     WriteFcn mSendFcn;
 };
 
+class QGS_LoggingModule
+	: public virtual QGS_Module
+	, public QGS_MessageHandler<Msg_GsHasLog> 
+	, public QGS_MessageHandler<Msg_GsLogLevel> 
 
-class QGS_ReactiveModule: public virtual QGS_Module
+{
+public:
+	QGS_LoggingModule();
+
+	virtual ~QGS_LoggingModule();
+protected:
+    virtual void process(Msg_GsHasLog* message);
+    virtual void process(Msg_GsLogLevel* message);
+
+	AppLog log;
+};
+
+class QGS_ReactiveModule: public virtual QGS_LoggingModule
 {
 public:
 	typedef std::function<void() > processingFcn;
@@ -139,7 +157,7 @@ private:
  * This type of QGS_Module is threaded, and can thus be both active and reactive. All thread sync and thread
  * safety is handled by this base class.
  */
-class QGS_ThreadedModule: public QGS_Module
+class QGS_ThreadedModule: public QGS_LoggingModule
 {
 public:
 	typedef std::function<void() > processingFcn;

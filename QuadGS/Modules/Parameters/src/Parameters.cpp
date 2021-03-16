@@ -357,7 +357,7 @@ void Parameters::RequestTree()
 
 void Parameters::process(Msg_Param* message)
 {
-	mLogger.QuadLog(severity_level::message_trace, "Processing incoming param message.");
+	LOG_MESSAGE_TRACE(log, "Processing incoming param message.");
 
 	uint8_t control = message->getControl();
 
@@ -371,7 +371,7 @@ void Parameters::process(Msg_Param* message)
 		{
 			std::stringstream ss;
 			ss << "Lost a setTree package! Got: " << (int)receivedNr << " expected: " << (int) sequenceNr;
-			mLogger.QuadLog(QuadGS::error, ss.str());
+			LOG_ERROR(log, ss.str());
 			sequenceNr = 0;
 			break;
 		}
@@ -388,7 +388,7 @@ void Parameters::process(Msg_Param* message)
 		}
 		break;
 	case ParamCtrl::param_get:
-		mLogger.QuadLog(QuadGS::error, "GetTree command not implemented in GS!" + path );
+		LOG_ERROR(log, "GetTree command not implemented in GS!" + path );
 		break;
 	default:
 		break;

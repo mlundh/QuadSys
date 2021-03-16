@@ -50,7 +50,6 @@ class SlipPacket;
  */
 class SerialPort
         : public std::enable_shared_from_this< SerialPort >
-        , public AppLog
 {
 	typedef std::function<void(QGS_ModuleMsgBase::ptr) > msgCallbackFcn;
 	typedef std::function<void() > timeoutHandlerFcn;
@@ -65,7 +64,7 @@ public:
      * @brief Private constructor, only use create method.
      * @param io_service An io_service instance.
      */
-    SerialPort( boost::asio::io_service &io_service );
+    SerialPort( boost::asio::io_service &io_service, sendFunction_t logSendFcn);
     
     /**
      * @brief Destructor.
@@ -77,7 +76,7 @@ public:
      * @param io_service An io_service instance.
      * @return ptr to the created serial port interface.
      */
-    static ptr create( boost::asio::io_service &io_service );
+    static ptr create( boost::asio::io_service &io_service, sendFunction_t logSendFcn );
 
 
     /**
@@ -205,6 +204,7 @@ private:
     msgCallbackFcn mMessageHandler;
     timeoutHandlerFcn mReadTimeoutHandler;
     timeoutHandlerFcn mWriteCallback;
+    AppLog log;
 };
 
 } /* namespace QuadGS */

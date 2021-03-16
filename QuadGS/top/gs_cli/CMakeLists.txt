@@ -6,7 +6,8 @@ list(APPEND dep_gs ${Boost_LIBRARIES}
                     "cli"
                     "LogHandler"
                     "serial_io"
-                    "dbgModule")
+                    "dbgModule"
+                    "AppLogHandler")
 if(WITH_VISION)
 #    list(APPEND dep_gs "ZedTracker"
 #                       )

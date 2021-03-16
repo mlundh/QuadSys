@@ -25,38 +25,26 @@
 #ifndef LOG_H_
 #define LOG_H_
 
-#include <cassert>
-#include <iostream>
-#include <fstream>
-#include <boost/smart_ptr/shared_ptr.hpp>
-#include <boost/core/null_deleter.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/log/common.hpp>
-#include <boost/log/expressions.hpp>
-#include <boost/log/attributes.hpp>
-#include <boost/log/sinks.hpp>
-#include <boost/log/sources/logger.hpp>
-#include <boost/log/sources/severity_feature.hpp>
-#include <boost/log/sources/severity_logger.hpp>
-#include <boost/log/utility/manipulators/add_value.hpp>
-#include <boost/log/attributes/scoped_attribute.hpp>
-#include <boost/log/support/date_time.hpp>
+#include <sstream>
+#include <vector>
+#include "QGS_ModuleMsg.h"
+
+#define LOG_ERROR(log, message) {log.setMsgLogLevel(log_level::error); log << message; log.flush();}
+#define LOG_WARNING(log, message) {log.setMsgLogLevel(log_level::warning); log << message; log.flush();}
+#define LOG_INFO(log, message) {log.setMsgLogLevel(log_level::info); log << message; log.flush();}
+#define LOG_DEBUG(log, message) {log.setMsgLogLevel(log_level::debug); log << message; log.flush();}
+#define LOG_MESSAGE_TRACE(log, message) {log.setMsgLogLevel(log_level::message_trace); log << message; log.flush();}
 
 
 namespace QuadGS {
 
-namespace logging = boost::log;
-namespace expr = boost::log::expressions;
-namespace sinks = boost::log::sinks;
-namespace attrs = boost::log::attributes;
-namespace src = boost::log::sources;
-namespace keywords = boost::log::keywords;
-using boost::shared_ptr;
+
+typedef std::function< void(std::unique_ptr<QGS_ModuleMsgBase> message) > sendFunction_t;
 
 // Here we define our application severity levels.
-enum severity_level
+enum log_level
 {
-	invalid,
+    invalid,
 	off,
     error,
     warning,
@@ -65,27 +53,61 @@ enum severity_level
     message_trace,
 };
 
+class AppLog;
+//template <
+//    typename T,
+//    typename = decltype(std::declval<std::istringstream &>() >> std::declval<T &>(), void())>
+template <
+    typename T>
+AppLog& operator<<(AppLog& applog, T const& t);
 
-std::ostream& operator<<( std::ostream& strm, QuadGS::severity_level level);
+std::ostream &operator<<(std::ostream &strm, QuadGS::log_level const &level);
+
 
 class AppLog
 {
 public:
-    AppLog();
-    AppLog(const std::string tag);
-    virtual ~AppLog();
-    static void Init( std::string FilenameAppLog, std::string FilenameMsgLog, std::ostream& outstream, severity_level svl);
-    void QuadLog(QuadGS::severity_level svl, std::string msg);
-    static QuadGS::severity_level logLevelFromStr(std::string level);
-    static std::string setLogLevelFromStr(std::string level);
 
-    static void logLevel(QuadGS::severity_level const svl);
+    template <typename T>
+    friend AppLog& operator<<(AppLog& applog, T const& t);
+
+    AppLog(const std::string tag, sendFunction_t function);
+
+    virtual ~AppLog();
+
+    void setLogHandlerAddr(msgAddr_t addr);
+
+    void flush();
+
+    void setModuleLogLevel(QuadGS::log_level const svl);
+    QuadGS::log_level getModuleLogLevel();
+    
+    void setMsgLogLevel(QuadGS::log_level const svl);
+    std::string time_in_HH_MM_SS_MMM();
 
     static std::vector<std::string> mSeverityStrings;
 
-protected:
-    src::severity_logger<QuadGS::severity_level> slg;
+protected: 
+    std::string mTag;
+    log_level mLogLevel = off;
+    std::stringstream mMessage;
+    log_level mMessageLogLevel = info;
+    sendFunction_t mSendFunction;
+    msgAddr_t mLoggerAddr;
+    AppLog();
 };
+
+
+template <typename T>
+AppLog& operator<<(AppLog& applog, T const& t)
+{
+    if(applog.mMessageLogLevel <= applog.mLogLevel)
+    {
+        applog.mMessage << t;
+    }
+    
+    return applog;
+}
 
 } /* namespace QuadGS */
 

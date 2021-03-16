@@ -31,7 +31,6 @@
 
 #include "messageTypes.h"
 #include "msgAddr.h"
-#include "AppLog.h"
 #include "BinaryStream.h"
 #include "messageTypes.h"
 
@@ -42,7 +41,7 @@ namespace QuadGS {
 class QGS_MessageHandlerBase
 {
 public:
-	QGS_MessageHandlerBase(msgAddr_t address):mLogger(msgAddrStr.at(address)), mName(address)
+	QGS_MessageHandlerBase(msgAddr_t address): mName(address)
 	{
 
 	}
@@ -50,7 +49,7 @@ public:
 
 	virtual void unhandledMsg()
 	{
-		//mLogger.QuadLog( severity_level::error ,"Received unhandled message.");
+		
 	}
 
 	msgAddr_t getName()
@@ -59,7 +58,6 @@ public:
 	}
 
 protected:
-	AppLog mLogger;
 	msgAddr_t mName;
 };
 

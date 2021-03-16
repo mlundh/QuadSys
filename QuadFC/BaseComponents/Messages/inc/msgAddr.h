@@ -14,6 +14,7 @@ typedef enum
 	GS_SerialIO_e = 0x105,
 	GS_SetpointGen_e = 0x106,
 	GS_Router_e = 0x107,
+	GS_AppLog_e = 0x108,
 	FC_Broadcast_e = 0x200,
 	FC_Param_e = 0x201,
 	FC_Log_e = 0x202,

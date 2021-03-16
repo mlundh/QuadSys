@@ -51,6 +51,11 @@ typedef enum {
     param_error,
 }ParamCtrl;
 
+typedef enum {
+    appLog_getLL,
+    appLog_setLL,
+}appLogLL;
+
 typedef enum 
 {
   QSP_DebugGetRuntimeStats = 0,

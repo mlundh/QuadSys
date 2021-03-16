@@ -32,7 +32,13 @@
 namespace QuadGS
 {
 
-QGS_Router::QGS_Router(msgAddr_t name): mFifo(200), mPortWriteFcn(NULL), mNrModules(0), mName(name), mStop(false), mLogger(msgAddrStr.at(name))
+QGS_Router::QGS_Router(msgAddr_t name): 
+	mFifo(200)
+	, mPortWriteFcn(NULL)
+	, mNrModules(0)
+	, mName(name)
+	, mStop(false)
+	, mLog(msgAddrStr.at(name), std::bind(&QGS_Router::sendMsg, this, std::placeholders::_1))
 {
 	mThread = std::thread(std::bind(&QGS_Router::runRouter, this));
 }
@@ -104,7 +110,8 @@ void QGS_Router::sendMsg(QGS_ModuleMsgBase::ptr message)
 		}
 		else
 		{
-			mLogger.QuadLog(severity_level::error, "Received a message without destination!" );
+			mLog << "Received a message without destination!" ;
+			mLog.flush();
 		}
 
 	}
@@ -159,12 +166,16 @@ QGS_ModuleMsgBase::ptr QGS_Router::internalSend(QGS_ModuleMsgBase::ptr message, 
 		}
 		catch (std::runtime_error& e)
 		{
-			mLogger.QuadLog(severity_level::error, "Module: " + msgAddrStr.at(port) + " encountered an error: " + e.what());
+			mLog.setMsgLogLevel(log_level::error);
+			mLog << "Module: " << msgAddrStr.at(port) << " encountered an error: " << e.what();
+			mLog.flush();
 		}
 	}
 	else
 	{
-		mLogger.QuadLog(severity_level::error, "No port: " + msgAddrStr.at(port) + ", error in topology? ");
+		mLog.setMsgLogLevel(log_level::error);
+		mLog << "No port: " << msgAddrStr.at(port) << ", error in topology? ";
+		mLog.flush();
 	}
 	return message;
 }
@@ -178,8 +189,9 @@ void QGS_Router::runRouter()
 		QGS_ModuleMsgBase::ptr msg(mFifo.dequeue());
 		route(std::move(msg));
 	}
-	mLogger.QuadLog(severity_level::info, "Stopping router.");
-
+	mLog.setMsgLogLevel(log_level::info);
+	mLog << "Stopping router.";
+	mLog.flush();
 }
 
 
@@ -188,7 +200,9 @@ void QGS_Router::checkUniqueName(msgAddr_t name)
 	std::map<msgAddr_t,WriteFcn>::iterator it = mWriteFunctions.find(name);
 	if(it != mWriteFunctions.end())
 	{
-		mLogger.QuadLog(severity_level::warning, "Name collision, two modules named: " + msgAddrStr.at(name) + ". Advice to change name.");
+		mLog.setMsgLogLevel(log_level::warning);
+		mLog << "Name collision, two modules named: " << msgAddrStr.at(name) << ". Advice to change name.";
+		mLog.flush();
 	}
 }
 
@@ -208,7 +222,10 @@ void QGS_Router::route(QGS_ModuleMsgBase::ptr msg)
 	}
 	else
 	{
-		//mLogger.QuadLog(severity_level::debug, "sending to " + msgAddrStr.at(msg->getDestination()));
+		mLog.setMsgLogLevel(log_level::debug);
+		mLog << "sending to " << msgAddrStr.at(msg->getDestination());
+		mLog.flush();
+
 		sendMsg(std::move(msg));
 	}
 

@@ -1,4 +1,5 @@
 add_subdirectory(AppLog)
+add_subdirectory(AppLogHandler)
 add_subdirectory(BinaryStream)
 add_subdirectory(CommandTree)
 add_subdirectory(MsgBase)

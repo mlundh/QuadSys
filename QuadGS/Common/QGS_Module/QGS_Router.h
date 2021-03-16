@@ -59,7 +59,6 @@ private:
 
 	void externalSend(QGS_ModuleMsgBase::ptr message);
 
-
 	void internalBC(QGS_ModuleMsgBase::ptr message);
 
 	QGS_ModuleMsgBase::ptr internalSend(QGS_ModuleMsgBase::ptr message, msgAddr_t port, bool broadcast);
@@ -77,7 +76,7 @@ private:
 	unsigned int mNrModules;
 	msgAddr_t mName;
     bool mStop;
-	AppLog mLogger;
+	AppLog mLog;
 
 
 

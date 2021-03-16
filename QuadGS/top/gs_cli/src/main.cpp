@@ -34,6 +34,7 @@ namespace po = boost::program_options;
 #include "LogHandler.h"
 #include "SerialManager.h"
 #include "dbgModule.h"
+#include "AppLogHandler.h"
 
 #include <iostream>
 #include <fstream>
@@ -66,7 +67,7 @@ struct program_args
   lvl()
   {}
     string logLevel;
-    severity_level lvl;
+    log_level lvl;
 };
 }
 using namespace QuadGS;
@@ -86,7 +87,6 @@ int main(int ac, char* av[])
         return 1;
     }
     //Initialize the app log.
-    QuadGS::AppLog::Init("app_log", "msg_log", std::clog, args.lvl);
 
   	std::cout << "\033]0;" << "QuadGS" << "\007";
 
@@ -96,7 +96,7 @@ int main(int ac, char* av[])
 	LogHandler mLogHandler(msgAddr_t::GS_Log_e, msgAddr_t::FC_SerialIOrx_e);
 	Serial_Manager serialIo(msgAddr_t::GS_SerialIO_e, msgAddr_t::FC_SerialIOtx_e);
 	dbgModule dbgModule(msgAddr_t::GS_Dbg_e, msgAddr_t::FC_SerialIOrx_e);
-
+    AppLogHandler appLogHandler(msgAddr_t::GS_AppLog_e);
 	//Instantiate the router.
 	QGS_Router mRouter(msgAddr_t::GS_Router_e);
 
@@ -106,6 +106,7 @@ int main(int ac, char* av[])
 	mRouter.bind(&mLogHandler);
 	mRouter.bind(&serialIo);
 	mRouter.bind(&dbgModule);
+	mRouter.bind(&appLogHandler);
 
     mCli.RunUI();
 
@@ -120,9 +121,7 @@ void handle_program_args(int ac, char* av[], QuadGS::program_args& args)
     po::options_description generic("Generic options");
     generic.add_options()
                     ("help,h", "produce help message")
-                    ("version,v", "print version string")
-                    ("LogLevel,l", po::value< std::string >(&args.logLevel)->default_value("error"),
-                            "Log level for outputing to screen.");
+                    ("version,v", "print version string");
     po::variables_map opts;
     po::store(po::parse_command_line(ac, av, generic), opts);
     po::notify(opts);
@@ -136,15 +135,7 @@ void handle_program_args(int ac, char* av[], QuadGS::program_args& args)
         cout << "QuadGS, unofficial version\n";
         return;
     }
-    if (opts.count("LogLevel"))
-    {
-    	args.lvl = AppLog::logLevelFromStr(args.logLevel);
-    	if(args.lvl == severity_level::invalid)
-    	{
-    		args.lvl = QuadGS::error;
-    		cout << "Invalid log level. Using default: error." << std::endl;
-    	}
-    }
+
     return;
 }
 

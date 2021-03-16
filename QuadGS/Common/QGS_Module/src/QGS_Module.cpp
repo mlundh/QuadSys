@@ -28,6 +28,7 @@
 #include "Msg_Stop.h"
 #include "msgAddr.h"
 #include "messageTypes.h"
+#include "msg_enums.h"
 
 namespace QuadGS
 {
@@ -39,7 +40,8 @@ QGS_Module::UiCommand::UiCommand(std::string command,  std::string doc, UiFcn fu
 }
 
 QGS_Module::QGS_Module()
-:QGS_MessageHandlerBase(msgAddr_t::Unassigned_e), mSendFcn(NULL)
+:QGS_MessageHandlerBase(msgAddr_t::Unassigned_e)
+	, mSendFcn(NULL)
 {
 
 }
@@ -106,6 +108,45 @@ void QGS_Module::setSendFunc(WriteFcn func)
 	{
 		mSendFcn = func;
 	}
+}
+
+
+QGS_LoggingModule::QGS_LoggingModule()
+	: QGS_MessageHandlerBase(msgAddr_t::Unassigned_e)
+	, log(msgAddrStr.at(getName()), std::bind(&QGS_LoggingModule::sendMsg, this, std::placeholders::_1))
+{
+
+}
+QGS_LoggingModule::~QGS_LoggingModule()
+{
+
+}
+
+void QGS_LoggingModule::process(Msg_GsHasLog* message)
+{
+	log.setLogHandlerAddr(message->getSource());
+	Msg_GsHasLog::ptr ptr = std::make_unique<Msg_GsHasLog>(message->getSource());
+	sendMsg(std::move(ptr));
+}
+
+void QGS_LoggingModule::process(Msg_GsLogLevel* message)
+{
+	if(message->getCommand() == appLogLL::appLog_getLL)
+	{
+		Msg_GsLogLevel::ptr ptr = std::make_unique<Msg_GsLogLevel>(message->getSource(), appLogLL::appLog_getLL, log.getModuleLogLevel());
+		sendMsg(std::move(ptr));
+	}
+	else
+	{
+		uint32_t logLevelInt = message->getLoglevel();
+		if(logLevelInt >= log_level::invalid && logLevelInt <= log_level::message_trace)
+		{
+			log_level logLevel = static_cast<log_level>(logLevelInt);
+			log.setModuleLogLevel(logLevel);
+		}
+	}
+	
+
 }
 
 QGS_ReactiveModule::QGS_ReactiveModule()
@@ -188,7 +229,7 @@ void QGS_ThreadedModule::setProcessingFcn(processingFcn fcn)
 	}
 	else
 	{
-		mLogger.QuadLog(severity_level::warning, "No processing function set.");
+		throw std::runtime_error("No processing function set.");
 	}
 }
 
@@ -234,10 +275,9 @@ void QGS_ThreadedModule::runThread()
 		}
 		else
 		{
-			mLogger.QuadLog(severity_level::warning, "No processing function set.");
+			throw std::runtime_error("No processing function set.");
 		}
 	}
-	mLogger.QuadLog(severity_level::info, "Stopping threaded module.");
 }
 
 } /* namespace QuadGS */

@@ -6,8 +6,7 @@ list(APPEND src "Msg_FindParam.cpp"
 				)
                 
 list(APPEND dep "BinaryStream"
-				"MsgBase"
-				"AppLog")
+				"MsgBase")
 				
 qgs_make_shared_lib( GS_Ui_Command src dep)
 

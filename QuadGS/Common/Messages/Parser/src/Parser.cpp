@@ -28,6 +28,9 @@
 #include "Msg_Stop.h"
 #include "Msg_RegisterName.h"
 #include "Msg_Display.h"
+#include "Msg_GsAppLog.h"
+#include "Msg_GsHasLog.h"
+#include "Msg_GsLogLevel.h"
 #include "Msg_Test.h"
 #include "Msg_FindParam.h"
 #include "Msg_GetUiCommands.h"
@@ -99,6 +102,30 @@ QGS_ModuleMsgBase::ptr Parser::parse( std::vector<unsigned char>  data)
 	case messageTypes_t::Msg_Display_e:
 	{
 		Msg_Display::ptr ptr = std::make_unique<Msg_Display>(msgBase);
+		ptr->setSkipStreamHeader();
+		is >> *ptr;
+		returnPtr = std::move(ptr);
+		break;
+	}
+	case messageTypes_t::Msg_GsAppLog_e:
+	{
+		Msg_GsAppLog::ptr ptr = std::make_unique<Msg_GsAppLog>(msgBase);
+		ptr->setSkipStreamHeader();
+		is >> *ptr;
+		returnPtr = std::move(ptr);
+		break;
+	}
+	case messageTypes_t::Msg_GsHasLog_e:
+	{
+		Msg_GsHasLog::ptr ptr = std::make_unique<Msg_GsHasLog>(msgBase);
+		ptr->setSkipStreamHeader();
+		is >> *ptr;
+		returnPtr = std::move(ptr);
+		break;
+	}
+	case messageTypes_t::Msg_GsLogLevel_e:
+	{
+		Msg_GsLogLevel::ptr ptr = std::make_unique<Msg_GsLogLevel>(msgBase);
 		ptr->setSkipStreamHeader();
 		is >> *ptr;
 		returnPtr = std::move(ptr);

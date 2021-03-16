@@ -7,6 +7,10 @@
 Msg_Stop
 Msg_RegisterName --member uint32_t name
 Msg_Display --member std::string message
+Msg_GsAppLog --member std::string message
+Msg_GsHasLog
+Msg_GsLogLevel --member uint8_t command --member uint32_t logLevel
+
 Msg_Test 
 *
 

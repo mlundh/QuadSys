@@ -37,6 +37,7 @@
 #define RC2_SERIAL_BUS (2)
 #define COM_SERIAL_BUS (1)
 #define APPLOG_SERIAL_BUS (3)
+#define COM_WIRELESS_SERIAL_BUS (4)
 
 // mem area defines
 #define PARAM_MEM_START_ADDR (0)

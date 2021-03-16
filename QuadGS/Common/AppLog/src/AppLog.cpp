@@ -23,172 +23,102 @@
  */
 
 #include "AppLog.h"
+#include <chrono>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
+#include <string>
+#include "Msg_GsAppLog.h"
 
-#include <boost/core/null_deleter.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/algorithm/string.hpp>
-
-namespace QuadGS {
-
-std::vector<std::string> AppLog::mSeverityStrings =
-{
-		"invalid",
-		"off",
-		"error",
-		"warning",
-		"info",
-		"debug",
-		"message_trace",
-};
-
-AppLog::AppLog()
+namespace QuadGS
 {
 
-}
-
-AppLog::AppLog(const std::string tag)
-{
-	slg.add_attribute("Tag", attrs::constant< std::string >(tag));
-}
-
-AppLog::~AppLog()
-{
-
-}
-
-void AppLog::QuadLog(QuadGS::severity_level svl, std::string msg)
-{
-	logging::record rec = slg.open_record(keywords::severity = svl);
-	if (rec)
-	{
-		logging::record_ostream strm(rec);
-		strm << msg;
-		strm.flush();
-		slg.push_record(boost::move(rec));
-	}
-}
-
-// The operator puts a human-friendly representation of the severity level to the stream
-std::ostream& operator<< (std::ostream& strm, QuadGS::severity_level level)
-{
-
-	if (static_cast< std::size_t >(level) < AppLog::mSeverityStrings.size())
-		strm << AppLog::mSeverityStrings[level];
-	else
-		strm << static_cast< int >(level);
-
-	return strm;
-}
-
-
-void AppLog::Init( std::string FilenameAppLog, std::string FilenameMsgLog, std::ostream& outstream, severity_level svl)
-{
-	if(boost::filesystem::exists(FilenameAppLog)) // foce libboost_filesystem.so to be an explicit dependency so that RUNPATH works as expeced.
-	{
-
-	}
-
-	// Create the formatter for all file sinks.
-	logging::formatter fmt = expr::stream
-			<< "[" << expr::attr< unsigned int >("RecordID") // First an attribute "RecordID" is written to the log
-			<< "] [" << expr::format_date_time< boost::posix_time::ptime >("TimeStamp", "%H:%M:%S.%f ")
-			<< expr::if_(expr::has_attr("Severity"))
-	[
-	 expr::stream << "] ["
-	 << expr::attr< QuadGS::severity_level >("Severity")
-	 ]
-	 << "] " // then this delimiter separates it from the rest of the line
-	 << expr::if_(expr::has_attr("Tag"))
-	[
-	 expr::stream << "[" << expr::attr< std::string >("Tag")
-	 << "] " // yet another delimiter
-	 ]
-	 << expr::smessage; // here goes the log record text
-
-	// Create the formatter for the clog sink.
-	logging::formatter fmt_clog = expr::stream
-			<< expr::if_(expr::has_attr("Severity"))
-	[
-	 expr::stream << "["
-	 << expr::attr< QuadGS::severity_level >("Severity")
-	 << "] "
-	 ]
-	 << expr::if_(expr::has_attr("Tag"))
-	[
-	 expr::stream << "[" << expr::attr< std::string >("Tag")
-	 << "] "
-	 ]
-	 << expr::smessage; // here goes the log record text
-
-	typedef sinks::synchronous_sink< sinks::text_ostream_backend > text_sink;
-
-
-	// The file sink that will be used to log app messages.
-	shared_ptr< text_sink > pSink = boost::make_shared< text_sink >();
-	pSink->locked_backend()->add_stream(
-			boost::make_shared< std::ofstream >(FilenameAppLog + ".log"));
-	// The same formatter is used for all log entries.
-	pSink->set_formatter(fmt);
-	pSink->set_filter(expr::attr< severity_level >("Severity") <= svl );
-	pSink->locked_backend()->auto_flush(true);
-	logging::core::get()->add_sink(pSink);
-
-	pSink = boost::make_shared< text_sink >();
-	boost::shared_ptr< std::ostream > stream(&outstream, boost::null_deleter());
-	pSink->locked_backend()->add_stream(stream);
-	pSink->set_formatter(fmt_clog);
-	pSink->set_filter(expr::attr< severity_level >("Severity") <= svl );
-	logging::core::get()->add_sink(pSink);
-
-
-	attrs::counter< unsigned int > RecordID(0);
-	logging::core::get()->add_global_attribute("RecordID", RecordID);
-
-	attrs::local_clock TimeStamp;
-	logging::core::get()->add_global_attribute("TimeStamp", TimeStamp);
-
-}
-
-
-QuadGS::severity_level AppLog::logLevelFromStr(std::string level)
-{
-	QuadGS::severity_level logLevel = QuadGS::invalid;
-	boost::algorithm::trim(level);
-
-	for(unsigned int i = 0; i < AppLog::mSeverityStrings.size(); i++)
-	{
-		if(!level.compare(AppLog::mSeverityStrings[i]))
+	std::vector<std::string> AppLog::mSeverityStrings =
 		{
-			logLevel = static_cast<severity_level>(i);
-			break;
+			"invalid",
+			"off",
+			"error",
+			"warning",
+			"info",
+			"debug",
+			"message_trace",
+	};
+
+	AppLog::AppLog(const std::string tag, sendFunction_t function)
+		: mTag(tag), mSendFunction(function), mLoggerAddr(GS_Broadcast_e)
+	{
+	}
+
+	AppLog::~AppLog()
+	{
+	}
+
+    void AppLog::setLogHandlerAddr(msgAddr_t addr)
+	{
+		mLoggerAddr = addr;
+	}	
+
+	void AppLog::flush()
+	{
+		if (mMessageLogLevel <= mLogLevel)
+		{
+			std::stringstream ss;
+			ss << "<" << time_in_HH_MM_SS_MMM() << "> " << "[" << mMessageLogLevel << "] " 
+				<< "[" << mTag << "]: "
+			    << mMessage.str() << std::endl;
+			Msg_GsAppLog::ptr ptr = std::make_unique<Msg_GsAppLog>(mLoggerAddr, ss.str());
+			mSendFunction(std::move(ptr)); // Send the message.
+			mMessage.str(""); // Clear the stringstream
+			mMessageLogLevel = info; // reset the logLevel to initial.
 		}
 	}
-	return logLevel;
-}
-std::string AppLog::setLogLevelFromStr(std::string level)
-{
-	QuadGS::severity_level lvl = AppLog::logLevelFromStr(level);
-	std::string result;
-	if(lvl != severity_level::invalid)
+	// The operator puts a human-friendly representation of the severity level to the stream
+	std::ostream &operator<<(std::ostream &strm, QuadGS::log_level const &level)
 	{
-		AppLog::logLevel(lvl);
-		result = "";
+		if (static_cast<std::size_t>(level) < AppLog::mSeverityStrings.size())
+			strm << AppLog::mSeverityStrings[level];
+		else
+			strm << static_cast<int>(level);
+		return strm;
 	}
-	else
-	{
-		std::stringstream ss;
-		ss << "Invalid log level: " << level << " ." << std::endl << " Allowed options are: " << std::endl;
-		for(auto i : AppLog::mSeverityStrings)
-		{
-			ss << i << std::endl;
-		}
-		result = ss.str();
-	}
-	return result;
-}
 
-void AppLog::logLevel(QuadGS::severity_level const svl)
-{
-	boost::log::core::get()->set_filter(expr::attr< severity_level >("Severity") < svl);
-}
+	void AppLog::setModuleLogLevel(QuadGS::log_level const svl)
+	{
+		mLogLevel = svl;
+	}
+
+	QuadGS::log_level AppLog::getModuleLogLevel()
+	{
+		return mLogLevel;
+	}
+
+	void AppLog::setMsgLogLevel(QuadGS::log_level const svl)
+	{
+		mMessageLogLevel = svl;
+	}
+
+	std::string AppLog::time_in_HH_MM_SS_MMM()
+	{
+		using namespace std::chrono;
+
+		// get current time
+		auto now = system_clock::now();
+
+		// get number of milliseconds for the current second
+		// (remainder after division into seconds)
+		auto ms = duration_cast<milliseconds>(now.time_since_epoch()) % 1000;
+
+		// convert to std::time_t in order to convert to std::tm (broken time)
+		auto timer = system_clock::to_time_t(now);
+
+		// convert to broken time
+		std::tm bt = *std::localtime(&timer);
+
+		std::ostringstream oss;
+
+		oss << std::put_time(&bt, "%H:%M:%S"); // HH:MM:SS
+		oss << '.' << std::setfill('0') << std::setw(3) << ms.count();
+
+		return oss.str();
+	}
 } /* namespace QuadGS */

@@ -1,5 +1,6 @@
 list(APPEND src_testTop   "testCLIParam.cpp")
-list(APPEND dep_testTop   "Parameters"
+list(APPEND dep_testTop   "pthread"
+                          "Parameters"
                           "cli"
                           "LogHandler"
                           "serial_io"

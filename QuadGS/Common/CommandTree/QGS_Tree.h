@@ -195,7 +195,6 @@ protected:
     std::string mName;
     QGS_Tree* mParent;    
     QGS_TreeValue mValue;
-    AppLog mLogger;
 public:
     /**
      * Get the module name from a string.

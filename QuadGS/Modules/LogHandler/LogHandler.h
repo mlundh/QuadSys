@@ -85,9 +85,6 @@ public:
      */
     std::string FormatLogMapping(std::string string);
 
-    std::string SetAppLogLevel(std::string string);
-
-
 	virtual void process(Msg_GetUiCommands* message);
 	virtual void process(Msg_FireUiCommand* message);
 	virtual void process(Msg_Log* message);

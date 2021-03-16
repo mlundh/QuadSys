@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-//#define DEBUG // uncomment this line to enable debug prints.
+#define DEBUG // uncomment this line to enable debug prints.
 
 #include "string.h"
 
@@ -228,6 +228,14 @@ void Com_CreateTasks(eventHandler_t* eventHandlerRx, eventHandler_t* eventHandle
         for ( ;; )
         {}
     }
+    rsp = QuadFC_SerialInit(COM_WIRELESS_SERIAL_BUS, &opt);
+    if(!rsp)
+    {
+        /*Error - Could not create serial interface.*/
+
+        for ( ;; )
+        {}
+    }
 
     uint8_t rspSpi = SpiMaster_Init(FRAM_MEM_SPI_BUS);
     if(!rspSpi)
@@ -416,7 +424,6 @@ void Com_RxTask( void *pvParameters )
         {
         case SLIP_StatusCont:
             // Package is not finished, continue.
-            vTaskDelay(100);
             break;
         case SLIP_StatusOK:
         {

@@ -28,6 +28,8 @@
 #include "msgAddr.h"
 #include "messageTypes.h"
 #include "common_types.h"
+#include <functional>
+
 
 namespace QuadGS {
 class QGS_ModuleMsgBase;

@@ -73,7 +73,6 @@ CLI::CLI(msgAddr_t name)
 
 CLI::~CLI()
 {
-	//rl_deprep_terminal();
 	cli = NULL;
 	write_history("QuadGS.hist");	
 }
@@ -502,7 +501,7 @@ void CLI::process(Msg_RegUiCommand* message)
 {
 	std::lock_guard<std::mutex> lock(mMutex);
 
-	mLogger.QuadLog(debug, "Received UI command: " + message->getCommand() + " from " + msgAddrStr.at(message->getSource()));
+	LOG_DEBUG(log, "Received UI command: " + message->getCommand() + " from " + msgAddrStr.at(message->getSource()));
 	mCommands.push_back(UiCommand(message->getCommand(), message->getDoc(), message->getSource()));
 }
 void CLI::process(Msg_UiCommandResult* message)
@@ -552,7 +551,7 @@ void CLI::process(Msg_FlightMode* message)
 	}
 	catch(const std::out_of_range & e)
 	{
-		mLogger.QuadLog(QuadGS::error, "Received unknown flight mode.");
+		LOG_ERROR(log, "Received unknown flight mode.");
 		return;
 	}
 	mPromptStatus = flightMode;

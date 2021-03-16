@@ -45,8 +45,7 @@ namespace QuadGS {
 QGS_Tree::QGS_Tree(std::string name, QGS_TreeValue::NodeType_t type):
     mName(name),
     mParent(NULL),
-    mValue(type),
-    mLogger("Tree")
+    mValue(type)
 {
 
 }
@@ -120,7 +119,6 @@ std::string QGS_Tree::Register(std::string path)
     {
       tmpPtr->mValue.SetValue(value);
     }
-    //mLogger.QuadLog(severity_level::info, "registering: " + module + " on branch: " + GetName());
     mChildren.push_back(tmpPtr);
     return name;
 }
@@ -149,7 +147,6 @@ std::string QGS_Tree::SetValue(const std::string path)
     std::string module = GetModuleString(path);
     std::string name = GetModuleName(module);
     std::string value = GetValueString(module);
-    //mLogger.QuadLog(severity_level::info, "Setting: " + value + " on branch: " + GetName());
 
     if(value.empty())
     {
