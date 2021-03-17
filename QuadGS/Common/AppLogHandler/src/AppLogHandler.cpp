@@ -143,6 +143,7 @@ void AppLogHandler::process(Msg_FireUiCommand* message)
 void AppLogHandler::process(Msg_GsAppLog* message)
 {
 	// TODO write to file and screen.
+	mAppLogFile << message->getMessage();
 	std::cout << message->getMessage();
 	return;
 }
