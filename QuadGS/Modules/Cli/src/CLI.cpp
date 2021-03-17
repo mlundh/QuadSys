@@ -114,8 +114,17 @@ size_t CLI::FindCommand(std::string& line)
 
 std::string CLI::ExecuteLine(std::string line)
 {
-	size_t i = FindCommand(line); // FindCommands leaves only args in line.
-	//mLogger.QuadLog(debug, "Calling command: " + mCommands[i].command);
+	size_t i;
+	try
+	{
+		i = FindCommand(line); // FindCommands leaves only args in line.
+	}
+	catch(const std::runtime_error& e)
+	{
+		return "";
+	}
+	
+	LOG_DEBUG(cli->log, "Calling command: " << cli->mCommands[i].command);
 	if(cli->mCommands[i].address == cli->getName() && cli->mCommands[i].command == "quit")
 	{
 		cli->mStop = true;
@@ -256,7 +265,16 @@ char *CLI::my_rl_complete(char *token, int *match)
 	else
 	{
 		std::string tmpLine(rl_line_buffer);
-		int i = FindCommand(tmpLine);
+
+		size_t i;
+		try
+		{
+			i = FindCommand(tmpLine); // FindCommands leaves only args in line.
+		}
+		catch(const std::runtime_error& e)
+		{
+			return NULL;
+		}
 		if(cli->mCommands[i].address == msgAddr_t::GS_Param_e)
 		{	
 			int nbr = 255;
@@ -338,7 +356,15 @@ int CLI::my_rl_list_possib(char *token, char ***av)
 	else
 	{
 		std::string tmpLine(rl_line_buffer);
-		int i = FindCommand(tmpLine);
+		size_t i;
+		try
+		{
+			i = FindCommand(tmpLine); // FindCommands leaves only args in line.
+		}
+		catch(const std::runtime_error& e)
+		{
+			return 0;
+		}
 		if(cli->mCommands[i].address == msgAddr_t::GS_Param_e)
 		{
 			std::vector<std::string> vec;
