@@ -251,6 +251,18 @@ void Serial_Manager::process(Msg_Transmission* transMsg)
 	}
 }
 
+
+void Serial_Manager::process(Msg_GsLogLevel* message)
+{
+	uint32_t logLevelInt = message->getLoglevel();
+	if(logLevelInt >= log_level::invalid && logLevelInt <= log_level::message_trace)
+	{
+		log_level logLevel = static_cast<log_level>(logLevelInt);
+	mPort->setLogLevel(logLevel);
+	}
+	QGS_LoggingModule::process(message);
+}
+
 void Serial_Manager::ReceivingFcnIo(std::unique_ptr<QGS_ModuleMsgBase> message)
 {
 	try

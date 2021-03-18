@@ -154,6 +154,8 @@ public:
      */
     void setReadTimeoutCallback(  timeoutHandlerFcn fcn  );
 
+    void setLogLevel(log_level lvl);
+
 private:
 
 

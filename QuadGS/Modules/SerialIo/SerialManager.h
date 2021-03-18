@@ -115,6 +115,7 @@ public:
 	virtual void process(Msg_FireUiCommand* message);
 	virtual void process(Msg_TestTransmission* message);
     virtual void process(Msg_Transmission* message);
+    virtual void process(Msg_GsLogLevel* message);
 
     /**
      * @brief Port function. Receives the messages from the Router. Re-entrant.

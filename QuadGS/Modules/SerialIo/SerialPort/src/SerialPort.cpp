@@ -96,13 +96,11 @@ std::string SerialPort::open( std::string port_name )
 
 			throw std::runtime_error(ec.message());
 		}
-		std::cout << "Serial Port " << port_name << " opened.";
-		//QuadLog(severity_level::debug, "Serial Port " + port_name + " opened.");
+		LOG_DEBUG(log, "Serial Port " << port_name << " opened.");
 	}
 	else
 	{
-		std::cout << "Serial Port already open";
-		//QuadLog(severity_level::warning, "Serial Port already open");
+		LOG_WARNING(log, "Serial Port already open");
 		return "";
 	}
 	return "Port opened.";
@@ -152,6 +150,10 @@ void SerialPort::setReadTimeoutCallback(  timeoutHandlerFcn fcn  )
 	return;
 }
 
+void SerialPort::setLogLevel(log_level lvl)
+{
+	log.setModuleLogLevel(lvl);
+}
 
 /*Close the serial port*/
 void SerialPort::doClose( const boost::system::error_code& error )
@@ -234,7 +236,7 @@ void SerialPort::writeCallback( const boost::system::error_code& error,
 	{
 		if( error )
 		{
-			//QuadLog(severity_level::error, "Write_callback called with an error: " + error.message() );
+			LOG_ERROR(log, "Write_callback called with an error: " + error.message() );
 			doClose( error );
 		}
 		mTimeoutWrite.cancel();
@@ -257,8 +259,7 @@ void SerialPort::readCallback( const boost::system::error_code& error,
 	{
 		if( error )
 		{
-			std::cout << " Read_callback called with an error: " << error.message() << std::endl;
-			//QuadLog(severity_level::error,  " Read_callback called with an error: " + error.message());
+			LOG_ERROR(log, " Read_callback called with an error: " << error.message());
 			doClose( error );
 			return;
 		}
@@ -280,8 +281,7 @@ void SerialPort::readCallback( const boost::system::error_code& error,
 		QGS_ModuleMsgBase::ptr msg = mParser.parse(std::vector<unsigned char>(tmpSlip.GetPayload()));
 		if(!msg)
 		{
-			std::cout << " Read_callback failed to parse the message." << std::endl;
-			//QuadLog(severity_level::error,  " Read_callback failed to parse the message.");
+			LOG_ERROR(log, " Read_callback failed to parse the message." );
 			read();
 			return;
 		}
@@ -290,7 +290,7 @@ void SerialPort::readCallback( const boost::system::error_code& error,
 			std::stringstream ss;
 			ss << "Received OK/NOK nr: " << (int)msg->getMsgNr();
 			std::cout << ss.str() << std::endl;
-			//QuadLog(severity_level::message_trace, ss.str());
+			LOG_MESSAGE_TRACE(log, ss.str());
 		}
 		if(msg) // do not use tmpSlip after move!
 		{
@@ -302,7 +302,7 @@ void SerialPort::readCallback( const boost::system::error_code& error,
 		else
 		{
 			std::cout << "Parser error" << std::endl;
-			//QuadLog(severity_level::error,  "Parser error");
+			LOG_ERROR(log,  "Parser error");
 			if(mMessageHandler)
 			{
 
@@ -329,16 +329,14 @@ void SerialPort::timerWriteCallback( const boost::system::error_code& error )
 		 * the timer was canceled and did not fire. Everything else is an error*/
 		if( error != boost::asio::error::operation_aborted )
 		{
-			std::cout << "Write timer callback: " << error.message() << std::endl;
-			//QuadLog(severity_level::error, "Write timer callback: " + error.message());
+			LOG_ERROR(log, "Write timer callback: " << error.message());
 			doClose( error );
 			throw std::runtime_error(error.message());
 		}
 
 		return;
 	}
-	std::cout <<"Write timeout fired." << std::endl;
-	//QuadLog(severity_level::warning, "Write timeout fired.");
+	LOG_ERROR(log, "Write timeout fired." );
 	mSerialPort.cancel(); // Close all asynchronous operation with serial port.
 	//will cause read_callback to fire with an error
 	return;
