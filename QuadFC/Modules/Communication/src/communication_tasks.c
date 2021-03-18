@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-#define DEBUG // uncomment this line to enable debug prints.
+//#define DEBUG // uncomment this line to enable debug prints.
 
 #include "string.h"
 
@@ -415,7 +415,7 @@ void Com_RxTask( void *pvParameters )
         uint32_t nr_bytes_received = QuadFC_SerialRead(&serialData, COM_SERIAL_BUS, 1);
         if(nr_bytes_received)
         {
-            LOG_DBG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "Received %ld", nr_bytes_received);
+            //LOG_DBG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "Received %ld", nr_bytes_received);
         }
 
         SLIP_Status_t result;
@@ -539,7 +539,7 @@ uint8_t Com_HandleLog(eventHandler_t* obj, void* data, moduleMsg_t* msg)
     case log_entry:
     {
         result = 1;
-        moduleMsg_t* reply = Msg_LogCreate(Msg_GetSource(msg), 0, log_name, LOG_MSG_REPLY_LENGTH);
+        moduleMsg_t* reply = Msg_LogCreate(Msg_GetSource(msg), 0, log_entry, LOG_MSG_REPLY_LENGTH);
 
         LogHandler_AppendSerializedlogs(RxObj->logHandler, Msg_LogGetPayload(reply), Msg_LogGetPayloadbufferlength(reply));
         uint16_t len =  strlen((char *)Msg_LogGetPayload(reply));

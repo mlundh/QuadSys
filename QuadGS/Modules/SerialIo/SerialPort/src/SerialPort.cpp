@@ -287,10 +287,7 @@ void SerialPort::readCallback( const boost::system::error_code& error,
 		}
 		if(msg->getType() == messageTypes_t::Msg_Transmission_e)
 		{
-			std::stringstream ss;
-			ss << "Received OK/NOK nr: " << (int)msg->getMsgNr();
-			std::cout << ss.str() << std::endl;
-			LOG_MESSAGE_TRACE(log, ss.str());
+			LOG_DEBUG(log, "Received OK/NOK nr: " << (int)msg->getMsgNr());
 		}
 		if(msg) // do not use tmpSlip after move!
 		{
@@ -301,7 +298,6 @@ void SerialPort::readCallback( const boost::system::error_code& error,
 		}
 		else
 		{
-			std::cout << "Parser error" << std::endl;
 			LOG_ERROR(log,  "Parser error");
 			if(mMessageHandler)
 			{

@@ -55,9 +55,8 @@
 #include "Log/inc/logHandler.h"
 #include "Log/inc/log.h"
 
+#include "Messages/inc/Msg_Param.h"
 
-//TODO remove
-#include "Parameters/inc/parameters.h"
 
 const static unsigned int SpTimeoutMs = 500;
 
@@ -170,6 +169,9 @@ void main_control_task( void *pvParameters )
     /*Initialize modules*/
     FMode_InitFModeHandler(param->flightModeHandler);
     Ctrl_InitModeHandler(param->CtrlModeHandler);
+
+    moduleMsg_t* msg = Msg_ParamCreate(FC_SerialIOrx_e, 0, param_load, 0, 0, 0);
+    Event_Send(param->evHandler, msg);
 
     //This takes some time due to calibration.
     if(!Imu_Init(param->imu))

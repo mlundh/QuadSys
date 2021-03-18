@@ -132,7 +132,11 @@ uint8_t Com_TestMemory(eventHandler_t* obj, void* data, moduleMsg_t* msg)
     uint8_t startAddr = Msg_TestMemGetStartaddr(msg);
     uint8_t startNumber = Msg_TestMemGetStartnumber(msg);
 
-    
+    if(size > 40)
+    {
+        size = 40;
+    }
+
     uint8_t endNumber = startNumber + size;
     if(endNumber < startNumber)
     {
@@ -141,18 +145,34 @@ uint8_t Com_TestMemory(eventHandler_t* obj, void* data, moduleMsg_t* msg)
     }
 
     uint8_t memData[size];
-    for (uint32_t i = startNumber; i < endNumber; i++)
-    {
-        memData[i] = i;
-    }
+
     uint8_t result = 0;
     switch (Msg_TestMemGetWrite(msg))
     {
     case 1: // write
+        for (uint32_t i = startNumber; i < endNumber; i++)
+        {
+            memData[i - startNumber] = i;
+        }
         result = Mem_Write(startAddr, size, memData, size);
         break;
     case 0: // read
-        result = Mem_Read(startAddr, size, memData, size);
+        {
+            for (uint32_t i = 0; i < size; i++)
+            {
+                memData[i] = 0;
+            }
+            result = Mem_Read(startAddr, size, memData, size);
+            LOG_ENTRY(FC_SerialIOtx_e, obj, "SpiTest: read:\n");
+            char printBuffer [size*4];
+            for(int i = 0; i < size; i++)
+            {  
+                char buf[4];
+                sprintf(buf, "\n%d", memData[i]);
+                strncat(printBuffer, buf, 4);
+            }
+            LOG_ENTRY(FC_SerialIOtx_e, obj, "%s", printBuffer);
+        }
         break;
     default:
         LOG_ENTRY(FC_SerialIOtx_e, obj, "SpiTest: failed, read or write should be 1 or 0!");

@@ -34,7 +34,7 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
-//#define DEBUG
+#define DEBUG
 
 #include "Components/AppLog/inc/AppLog.h"
 
