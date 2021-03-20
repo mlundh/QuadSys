@@ -102,8 +102,9 @@ size_t CLI::FindCommand(std::string& line)
 
 	for(size_t i = 0; i < cli->mCommands.size(); i++)
 	{
-		if(!cli->mCommands[i].command.find(command))
+		if((cli->mCommands[i].command.size() == command.size()) && !cli->mCommands[i].command.find(command))
 		{
+
 			return i;
 		}
 	}
@@ -119,7 +120,7 @@ std::string CLI::ExecuteLine(std::string line)
 	}
 	catch(const std::runtime_error& e)
 	{
-		return "";
+		return "No such command!";
 	}
 	
 	LOG_DEBUG(cli->log, "Calling command: " << cli->mCommands[i].command);
@@ -559,7 +560,7 @@ void CLI::process(Msg_Display* message)
 void CLI::waitForUiResult()
 {
 	std::unique_lock<std::mutex> l(mMutex);
-	if(!cvNewUiRsp.wait_for(l, std::chrono::milliseconds(5), [this](){return newUiRsp; }))
+	if(!cvNewUiRsp.wait_for(l, std::chrono::milliseconds(15), [this](){return newUiRsp; }))
 	{
 		throw std::runtime_error("Did not get a ui command result");
 	}
