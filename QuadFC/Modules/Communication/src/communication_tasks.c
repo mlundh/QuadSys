@@ -210,6 +210,7 @@ void Com_CreateTasks(eventHandler_t* eventHandlerRx, eventHandler_t* eventHandle
     }
 
     QuadFC_SerialOptions_t opt = {
+            //115200,
             115200,
             EightDataBits,
             NoParity,

@@ -37,6 +37,7 @@ namespace QuadGS {
 SerialPort::SerialPort(  boost::asio::io_service &io_service, sendFunction_t logSendFcn) 
 : mName( "unnamed" )
 , mBaudRate( 115200 )
+//, mBaudRate( 57600 )
 , mFlowControl( b_a_sp::flow_control::none )
 , mParity( b_a_sp::parity::none )
 , mStopBits( b_a_sp::stop_bits::one )
@@ -160,7 +161,7 @@ void SerialPort::doClose( const boost::system::error_code& error )
 {
 	if( error )
 	{
-		LOG_ERROR(log, "Close: "+ error.message() );
+		//LOG_ERROR(log, "Close: "+ error.message() );
 		throw std::runtime_error(error.message());
 	}
 	if( error == boost::asio::error::operation_aborted )
@@ -169,20 +170,20 @@ void SerialPort::doClose( const boost::system::error_code& error )
 	}
 	mTimeoutWrite.cancel();
 	mSerialPort.close();
-	LOG_ERROR(log, "Serial Port closed");
+	//LOG_ERROR(log, "Serial Port closed");
 	return;
 }
 QGS_ModuleMsgBase::ptr SerialPort::write(QGS_ModuleMsgBase::ptr msg)
 {
 	if( ! mSerialPort.is_open() )
 	{
-		LOG_ERROR(log, "Port is not open." );
+//		LOG_ERROR(log, "Port is not open." );
 		return msg;
 	}
 	if(mWriteOngoing)
 	{
 		//error
-		LOG_ERROR(log, "Write called during ongoing write operation." );
+//		LOG_ERROR(log, "Write called during ongoing write operation." );
 	}
 	//Package into a slip packet and send the packaged data.
 	BinaryOStream os;
@@ -192,8 +193,8 @@ QGS_ModuleMsgBase::ptr SerialPort::write(QGS_ModuleMsgBase::ptr msg)
 	}
 
 	SlipPacket tmpSlip = SlipPacket(os.get_internal_vec(), true);
-	std::size_t packetSize = tmpSlip.GetPacket().size();
-	LOG_MESSAGE_TRACE(log, "Writing" + packetSize);
+//	std::size_t packetSize = tmpSlip.GetPacket().size();
+//	LOG_MESSAGE_TRACE(log, "Writing" + packetSize);
 	mTimeoutWrite.expires_from_now( boost::posix_time::milliseconds( 1000 ) );
 	mTimeoutWrite.async_wait(
 			boost::bind( & SerialPort::timerWriteCallback,
@@ -236,7 +237,7 @@ void SerialPort::writeCallback( const boost::system::error_code& error,
 	{
 		if( error )
 		{
-			LOG_ERROR(log, "Write_callback called with an error: " + error.message() );
+			//LOG_ERROR(log, "Write_callback called with an error: " + error.message() );
 			doClose( error );
 		}
 		mTimeoutWrite.cancel();
@@ -259,7 +260,7 @@ void SerialPort::readCallback( const boost::system::error_code& error,
 	{
 		if( error )
 		{
-			LOG_ERROR(log, " Read_callback called with an error: " << error.message());
+			//LOG_ERROR(log, " Read_callback called with an error: " << error.message());
 			doClose( error );
 			return;
 		}
@@ -281,13 +282,13 @@ void SerialPort::readCallback( const boost::system::error_code& error,
 		QGS_ModuleMsgBase::ptr msg = mParser.parse(std::vector<unsigned char>(tmpSlip.GetPayload()));
 		if(!msg)
 		{
-			LOG_ERROR(log, " Read_callback failed to parse the message." );
+			//LOG_ERROR(log, " Read_callback failed to parse the message." );
 			read();
 			return;
 		}
 		if(msg->getType() == messageTypes_t::Msg_Transmission_e)
 		{
-			LOG_DEBUG(log, "Received OK/NOK nr: " << (int)msg->getMsgNr());
+			//LOG_DEBUG(log, "Received OK/NOK nr: " << (int)msg->getMsgNr());
 		}
 		if(msg) // do not use tmpSlip after move!
 		{
@@ -298,7 +299,7 @@ void SerialPort::readCallback( const boost::system::error_code& error,
 		}
 		else
 		{
-			LOG_ERROR(log,  "Parser error");
+			//LOG_ERROR(log,  "Parser error");
 			if(mMessageHandler)
 			{
 
@@ -309,7 +310,7 @@ void SerialPort::readCallback( const boost::system::error_code& error,
 	}
 	catch (const std::runtime_error& e)
 	{
-		LOG_ERROR(log, e.what() );
+		//LOG_ERROR(log, e.what() );
 		return;
 	}
 	read();
@@ -325,14 +326,14 @@ void SerialPort::timerWriteCallback( const boost::system::error_code& error )
 		 * the timer was canceled and did not fire. Everything else is an error*/
 		if( error != boost::asio::error::operation_aborted )
 		{
-			LOG_ERROR(log, "Write timer callback: " << error.message());
+			//LOG_ERROR(log, "Write timer callback: " << error.message());
 			doClose( error );
 			throw std::runtime_error(error.message());
 		}
 
 		return;
 	}
-	LOG_ERROR(log, "Write timeout fired." );
+	//LOG_ERROR(log, "Write timeout fired." );
 	mSerialPort.cancel(); // Close all asynchronous operation with serial port.
 	//will cause read_callback to fire with an error
 	return;

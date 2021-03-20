@@ -336,7 +336,7 @@ void Serial_Manager::doWrite()
 {
 	if(!mPort->isOpen())
 	{
-		LOG_ERROR(log, "Port not open.");
+		//LOG_ERROR(log, "Port not open.");
 		return;
 	}
 	
@@ -355,7 +355,7 @@ void Serial_Manager::doWrite()
 			
 
 			msg->setMsgNr(mMsgNrTx);
-			LOG_MESSAGE_TRACE(log, "Transmitting msg nr: " << (int)msg->getMsgNr());
+			//LOG_MESSAGE_TRACE(log, "Transmitting msg nr: " << (int)msg->getMsgNr());
 			startReadTimer();
 			msg = mPort->write( std::move(msg) );
 
@@ -366,18 +366,18 @@ void Serial_Manager::doWrite()
 				startReadTimer();
 				msg = mPort->write( std::move(msg) );
 
-				LOG_WARNING(log, "Transmission failed, resending msg nr: " << (int)msg->getMsgNr());
+				//LOG_WARNING(log, "Transmission failed, resending msg nr: " << (int)msg->getMsgNr());
 
 				mTransmittDone.wait();
 			}
 			if(!mTxSuccess)
 			{
-				LOG_WARNING(log, "Transmission failed, dropping msg nr: " << (int)msg->getMsgNr());
+				//LOG_WARNING(log, "Transmission failed, dropping msg nr: " << (int)msg->getMsgNr());
 			}
 		}
 		else
 		{
-			LOG_MESSAGE_TRACE(log,"Transmitting OK/NOK nr: " << (int)msg->getMsgNr());
+			//LOG_MESSAGE_TRACE(log,"Transmitting OK/NOK nr: " << (int)msg->getMsgNr());
 
 			// Transmissions should not be re-sent.
 			mPort->write( std::move(msg) );
