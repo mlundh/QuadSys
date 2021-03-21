@@ -149,7 +149,7 @@ private:
      * 
      * @param msg   The received message.
      */
-    void messageHandler(QGS_ModuleMsgBase::ptr msg);
+    void messageHandler(QGS_ModuleMsgBase::ptr msg, AppLog &logger);
 
     /**
      * Internal write message. This is the only function allowed to write to the
@@ -200,6 +200,8 @@ private:
     std::atomic<bool> mTxSuccess;
     int mRetries;
     bool mStop = false;
+    AppLog writerLog;
+
 
 };
 

@@ -51,7 +51,7 @@ class SlipPacket;
 class SerialPort
         : public std::enable_shared_from_this< SerialPort >
 {
-	typedef std::function<void(QGS_ModuleMsgBase::ptr) > msgCallbackFcn;
+	typedef std::function<void(QGS_ModuleMsgBase::ptr, AppLog&) > msgCallbackFcn;
 	typedef std::function<void() > timeoutHandlerFcn;
 
 public:
@@ -96,7 +96,7 @@ public:
      * and opened serial port.
      * @param msg to a QSP instance to be transmitted.
      */
-    QGS_ModuleMsgBase::ptr write( QGS_ModuleMsgBase::ptr msg);
+    QGS_ModuleMsgBase::ptr write( QGS_ModuleMsgBase::ptr msg, AppLog &logger);
 
 
     /**
@@ -207,6 +207,8 @@ private:
     timeoutHandlerFcn mReadTimeoutHandler;
     timeoutHandlerFcn mWriteCallback;
     AppLog log;
+    AppLog asioLog;
+
 };
 
 } /* namespace QuadGS */
