@@ -91,9 +91,9 @@ int main(int ac, char* av[])
   	std::cout << "\033]0;" << "QuadGS" << "\007";
 
 	//Instantiate modules.
-	Parameters mParameters(msgAddr_t::GS_Param_e, msgAddr_t::FC_SerialIOrx_e);
+	Parameters mParameters(msgAddr_t::GS_Param_e, msgAddr_t::FC_Param_e);
 	CLI mCli(msgAddr_t::GS_GUI_e);
-	LogHandler mLogHandler(msgAddr_t::GS_Log_e, msgAddr_t::FC_SerialIOrx_e);
+	LogHandler mLogHandler(msgAddr_t::GS_Log_e, msgAddr_t::FC_Param_e);
 	Serial_Manager serialIo(msgAddr_t::GS_SerialIO_e, msgAddr_t::FC_SerialIOtx_e);
 	dbgModule dbgModule(msgAddr_t::GS_Dbg_e, msgAddr_t::FC_SerialIOrx_e);
     AppLogHandler appLogHandler(msgAddr_t::GS_AppLog_e);

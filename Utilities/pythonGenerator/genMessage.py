@@ -364,6 +364,8 @@ def genAdresses(addresses, enumName, outputDirCpp, outputDirC):
 	addressString = ''
 	enumString = ''
 	stringEnum = ''
+	enumCstr = ''
+	nrElements = 0
 	#Go through all interfaces and generate messages, enums and addresses based on that. 
 	with open(args.addresses, "r") as file:
 		for line in file:
@@ -383,8 +385,9 @@ def genAdresses(addresses, enumName, outputDirCpp, outputDirC):
 			currentAddress += 1
 			addressString += "	" + line.rstrip() + "_e = {},\n".format(hex(address))
 			enumString += "	{" + hex(address) + ", " + '"' + line.rstrip() + '_e"' + "},\n"
-			stringEnum += "	{" + '"' + line.rstrip() + '_e"' + ", " + hex(address) + "},\n"
-	
+			stringEnum += "	{" + '"' + line.rstrip() + '_e"' + ", " + hex(address) + "},\n"	
+			enumCstr += "	{" + hex(address) + ", " + '"' + line.rstrip() + '_e"' + "},\n"
+			nrElements += 1
 
 	substTypes = {}
 	substTypes['regionStrings'] = regionStrings
@@ -393,6 +396,9 @@ def genAdresses(addresses, enumName, outputDirCpp, outputDirC):
 	substTypes['addresses'] = addressString
 	substTypes['strings'] = enumString
 	substTypes['stringEnum'] = stringEnum
+	substTypes['enumCstr'] = enumCstr
+	substTypes['nrElements'] = nrElements
+
 
 	with open(dir+'/c++/msgAddressesTemplate', 'r') as ftemp:
 		templateStringEnum = ftemp.read()
@@ -401,11 +407,16 @@ def genAdresses(addresses, enumName, outputDirCpp, outputDirC):
 		f.write(templateStringEnum.format(**substTypes))
 
 	with open(dir+'/c/msgAddressesTemplate', 'r') as ftemp:
-		templateStringEnum = ftemp.read()
-		
+		templateStringEnum = ftemp.read()	
+
 	with open(outputDirC+'/inc/msgAddr.h', 'w') as f:
 		f.write(templateStringEnum.format(**substTypes))
-		
+
+	with open(dir+'/c/msgAddressesSrcTemplate', 'r') as ftemp:
+		templateStringEnum = ftemp.read()	
+
+	with open(outputDirC+'/src/msgAddr.c', 'w') as f:
+		f.write(templateStringEnum.format(**substTypes))		
 		
 def genMsgEnums(outputDirCpp, outputDirC):
 

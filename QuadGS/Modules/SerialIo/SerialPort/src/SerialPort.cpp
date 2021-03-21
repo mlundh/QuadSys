@@ -196,7 +196,7 @@ QGS_ModuleMsgBase::ptr SerialPort::write(QGS_ModuleMsgBase::ptr msg, AppLog &log
 
 	SlipPacket tmpSlip = SlipPacket(os.get_internal_vec(), true);
 	std::size_t packetSize = tmpSlip.GetPacket().size();
-	LOG_MESSAGE_TRACE(logger, "Writing" << packetSize);
+	LOG_MESSAGE_TRACE(logger, "Writing " << packetSize << " bytes");
 	mTimeoutWrite.expires_from_now( boost::posix_time::milliseconds( 1000 ) );
 	mTimeoutWrite.async_wait(
 			boost::bind( & SerialPort::timerWriteCallback,

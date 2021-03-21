@@ -170,7 +170,7 @@ void main_control_task( void *pvParameters )
     FMode_InitFModeHandler(param->flightModeHandler);
     Ctrl_InitModeHandler(param->CtrlModeHandler);
 
-    moduleMsg_t* msg = Msg_ParamCreate(FC_SerialIOrx_e, 0, param_load, 0, 0, 0);
+    moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_load, 0, 0, 0);
     Event_Send(param->evHandler, msg);
 
     //This takes some time due to calibration.

@@ -144,7 +144,7 @@ void AppLogHandler::process(Msg_GsAppLog* message)
 {
 	// TODO write to file and screen.
 	mAppLogFile << message->getMessage();
-	std::cout << message->getMessage();
+	std::cout << std::endl << message->getMessage();
 	return;
 }
 

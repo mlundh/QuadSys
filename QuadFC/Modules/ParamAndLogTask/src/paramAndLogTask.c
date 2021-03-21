@@ -1,0 +1,156 @@
+/*
+* parameter_task.c
+*
+* Copyright (C) 2021  Martin Lundh
+*
+* Permission is hereby granted, free of charge, to any person obtaining a copy
+* of this software and associated documentation files (the "Software"), to deal
+* in the Software without restriction, including without limitation the rights
+* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+* copies of the Software, and to permit persons to whom the Software is
+* furnished to do so, subject to the following conditions:
+*
+* The above copyright notice and this permission notice shall be included in
+* all copies or substantial portions of the Software.
+*
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+* THE SOFTWARE.
+*/
+#include <string.h>
+#include "../inc/paramAndLogTask.h"
+#include "Parameters/inc/paramHandler.h"
+#include "Log/inc/logHandler.h"
+#include "QuadFC/QuadFC_SPI.h"
+#include "BoardConfig.h"
+#include "QuadFC/QuadFC_Memory.h"
+#include "Messages/inc/Msg_Log.h"
+
+
+typedef struct paramAndLogTask
+{
+    eventHandler_t *evHandler;
+    LogHandler_t *logHandler;
+    paramHander_t *paramHandler;
+
+} paramAndLogTask_t;
+void PL_Task(void *pvParameters);
+uint8_t PL_HandleLog(eventHandler_t *obj, void *data, moduleMsg_t *msg);
+
+void PL_CreateTask(eventHandler_t *eventHandlerParam)
+{
+    paramAndLogTask_t *taskParam = pvPortMalloc(sizeof(paramAndLogTask_t));
+    if (!taskParam)
+    {
+        for (;;)
+        {
+        }
+    }
+
+    taskParam->evHandler = eventHandlerParam;
+    taskParam->logHandler = LogHandler_CreateObj(0, taskParam->evHandler, NULL, "LogM", 1);
+    taskParam->paramHandler = ParamHandler_CreateObj(1, taskParam->evHandler, "PL", 1); // Master handles all communication, we are master!
+
+    if (!taskParam->evHandler || !taskParam->logHandler || !taskParam->paramHandler)
+    {
+        for (;;)
+        {
+        }
+    }
+
+    Event_RegisterCallback(taskParam->evHandler, Msg_Log_e, PL_HandleLog, taskParam);
+
+    uint8_t rspSpi = SpiMaster_Init(FRAM_MEM_SPI_BUS);
+    if (!rspSpi)
+    {
+        /*Error - Could not create serial interface.*/
+
+        for (;;)
+        {
+        }
+    }
+    Mem_Init();
+
+    /* Create the freeRTOS tasks responsible for communication.*/
+    portBASE_TYPE create_result;
+
+    create_result = xTaskCreate(PL_Task,                      /* The task that implements the transmission of messages. */
+                                (const char *const) "Param&Log", /* Name, debugging only.*/
+                                500,                             /* The size of the stack allocated to the task. */
+                                (void *)taskParam,                 /* Pass the task parameters to the task. */
+                                configMAX_PRIORITIES - 3,        /* The priority allocated to the task. */
+                                NULL);                           /* No handle required. */
+
+    if (create_result != pdTRUE)
+    {
+        /*Error - Could not create task.*/
+        for (;;)
+        {
+        }
+    }
+}
+
+void PL_Task(void *pvParameters)
+{
+    paramAndLogTask_t * obj = (paramAndLogTask_t *) pvParameters;
+
+    ParamHandler_InitMaster(obj->paramHandler);
+    for (;;)
+    {
+        while(Event_Receive(obj->evHandler, 400))//TODO change to max delay...
+        {}
+    }
+    
+}
+
+#define LOG_MSG_REPLY_LENGTH (255)
+uint8_t PL_HandleLog(eventHandler_t *obj, void *data, moduleMsg_t *msg)
+{
+    if (!obj || !data || !msg)
+    {
+        return 0;
+    }
+
+    paramAndLogTask_t *RxObj = (paramAndLogTask_t *)data;
+    uint8_t result = 0;
+
+    switch (Msg_LogGetControl(msg))
+    {
+    case log_name:
+    {
+        result = 1;
+        moduleMsg_t *reply = Msg_LogCreate(Msg_GetSource(msg), 0, log_name, LOG_MSG_REPLY_LENGTH);
+
+        LogHandler_GetNameIdMapping(RxObj->logHandler, Msg_LogGetPayload(reply), Msg_LogGetPayloadbufferlength(reply));
+
+        uint16_t len = strlen((char *)Msg_LogGetPayload(reply));
+        Msg_LogSetPayloadlength(reply, len);
+
+        Event_Send(obj, reply);
+    }
+    break;
+    case log_entry:
+    {
+        result = 1;
+        moduleMsg_t *reply = Msg_LogCreate(Msg_GetSource(msg), 0, log_entry, LOG_MSG_REPLY_LENGTH);
+
+        LogHandler_AppendSerializedlogs(RxObj->logHandler, Msg_LogGetPayload(reply), Msg_LogGetPayloadbufferlength(reply));
+        uint16_t len = strlen((char *)Msg_LogGetPayload(reply));
+        Msg_LogSetPayloadlength(reply, len);
+
+        Event_Send(obj, reply);
+    }
+    break;
+    case log_stopAll:
+        LogHandler_StopAllLogs(RxObj->logHandler);
+        result = 0;
+        break;
+    default:
+        break;
+    }
+    return result;
+}

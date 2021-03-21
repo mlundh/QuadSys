@@ -1,0 +1,17 @@
+#include "../inc/msgAddr.h"
+
+addressMap_t enumStringMap[] = {{
+{enumCstr}
+}};
+
+char* getStrFromAddr(int address)
+{{
+	for(int i = 0; i < NR_ADDRESSES; i++)
+	{{
+		if(address == enumStringMap[i].key)
+		{{
+			return enumStringMap[i].string;
+		}}
+	}}
+    return enumStringMap[0].string;
+}}

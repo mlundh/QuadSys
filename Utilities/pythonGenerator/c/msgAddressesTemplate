@@ -1,6 +1,6 @@
 #ifndef QUADFC_MESSAGE_ADDRESSES_H_
 #define QUADFC_MESSAGE_ADDRESSES_H_
-
+#include <stdint.h>
 #define REGION_MASK (0xFF00)
 typedef enum
 {{
@@ -12,5 +12,18 @@ typedef enum
 {{
 {regionStrings}
 }}{enumNameRegion}_t;
+
+
+typedef struct addressMap {{
+    int key;
+    char string[40];
+}} addressMap_t;
+
+#define NR_ADDRESSES ({nrElements})
+
+addressMap_t enumStringMap[{nrElements}];
+
+char* getStrFromAddr(int);
+
 
 #endif /* QUADFC_MESSAGE_ADDRESSES_H_ */

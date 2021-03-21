@@ -73,6 +73,7 @@ struct paramHander
 
 void printPacket(eventHandler_t* obj, SLIP_t* packet)
 {// TODO!!
+#ifdef DEBUG
     uint8_t array[400]={0};
     for(int i = 0; i < packet->packetSize; i++)
     {
@@ -84,9 +85,9 @@ void printPacket(eventHandler_t* obj, SLIP_t* packet)
         {
             snprintf((char*)array+i, 2, "%c", '0');
         }
-    }     
+    } 
     LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "Packet: %.*s", (int)220, array);
-               
+#endif
 }
 
 /**
@@ -340,7 +341,7 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
     {
     case param_set:
     {
-        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "Param Set: Received ParamSet.");
+        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "ParamMaster %s Received ParamSet.", getStrFromAddr(obj->handlerId));
 
         uint8_t* payload = Msg_ParamGetPayload(msg);
         uint32_t payloadLength = Msg_ParamGetPayloadlength(msg);
@@ -355,10 +356,11 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
             result = Param_SetFromHere(handlerObj->rootParam, root, remainingLength);
         }
         //Then send to every other paramHandler. We copy the message payload.
-        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "Param Set: Sending to all other handlers.");
+        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "ParamMaster %s Sending to all other handlers.", getStrFromAddr(obj->handlerId));
 
         for(int i = 0; i < handlerObj->nrRegisteredHandlers; i++)
         {
+            LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "ParamMaster %s Sending to %s", getStrFromAddr(obj->handlerId), getStrFromAddr(handlerObj->handlers[i]));
 
             moduleMsg_t* msgParam = Msg_ParamFcCreate(handlerObj->handlers[i],0,param_set,0,0,payloadLength);
             if(!msgParam)
@@ -382,7 +384,7 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
         uint8_t lastInSequence = 0;
         uint8_t EcpectedSequenceNo = 0;
         uint32_t address = PARAM_MEM_START_ADDR;
-        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "Param Load: Received ParamLoad.");
+        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "%s Received ParamLoad.", getStrFromAddr(obj->handlerId));
 
         while(!lastInSequence)
         {
@@ -414,7 +416,7 @@ uint8_t ParamHandler_HandleParamMsg(eventHandler_t* obj, void* data, moduleMsg_t
                 LOG_ENTRY(FC_SerialIOtx_e, obj, "Param Load: Error. Parser failed.");
             }
             LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "Param Load: Read %d at %d", (int)(address - startAddress), (int)startAddress);
-            // printPacket(obj, packet);
+            printPacket(obj, packet);
             // Whole package or error...
             result &= (read_status == SLIP_StatusOK);
 
@@ -632,7 +634,7 @@ uint8_t ParamHandler_HandleParamFcMsgMaster(eventHandler_t* obj, void* data, mod
     paramHander_t* handlerObj = (paramHander_t*)data; // The data should always be the handler object when a Msg_param is received.
 
     uint8_t control = Msg_ParamFcGetControl(msg);
-    LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "ParamFC Master: Received from %lu.", Msg_GetSource(msg));
+    LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "ParamFC Master: %s Received msg from %s.", getStrFromAddr(obj->handlerId), getStrFromAddr(Msg_GetSource(msg)));
 
     // Parameter messages uses string payload, and they have persistent storage, and has to
     // be manually allocated and freed. This means we can re-use the buffer provided in this
@@ -648,7 +650,7 @@ uint8_t ParamHandler_HandleParamFcMsgMaster(eventHandler_t* obj, void* data, mod
     break;
     case param_get:
        {
-        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "ParamFC Master: Received Get from %lu.", Msg_GetSource(msg));
+        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "ParamFC Master: %s Received Get from %s.", getStrFromAddr(obj->handlerId), getStrFromAddr(Msg_GetSource(msg)));
         uint8_t lastInSequence = 0;
         if(Msg_ParamFcGetLastinsequence(msg))
         {
@@ -675,6 +677,7 @@ uint8_t ParamHandler_HandleParamFcMsgMaster(eventHandler_t* obj, void* data, mod
     break;
     case param_save:
     {
+        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "ParamFC Master: %s Received Set from %s.", getStrFromAddr(obj->handlerId), getStrFromAddr(Msg_GetSource(msg)));
         uint8_t lastInSequence = 0;
         if(Msg_ParamFcGetLastinsequence(msg))
         {
@@ -745,7 +748,7 @@ uint8_t ParamHandler_HandleParamFcMsg(eventHandler_t* obj, void* data, moduleMsg
     }
     uint8_t result = 0;
     paramHander_t* handlerObj = (paramHander_t*)data; // The data should always be the handler object when a Msg_param is received.
-
+    LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "ParamFC: %s Received Set from %s.", getStrFromAddr(obj->handlerId), getStrFromAddr(Msg_GetSource(msg)));
     uint8_t control = Msg_ParamFcGetControl(msg);
 
     switch (control)
@@ -776,7 +779,7 @@ uint8_t ParamHandler_HandleParamFcMsg(eventHandler_t* obj, void* data, moduleMsg
     case param_get:
     case param_save:
     {
-        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "ParamFC Module: Received from Master.");
+        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "ParamFC Module: %s Received save/get from Master.", getStrFromAddr(obj->handlerId));
         param_helper_t* helper = NULL;
         if(control == param_get)
         {
@@ -797,7 +800,7 @@ uint8_t ParamHandler_HandleParamFcMsg(eventHandler_t* obj, void* data, moduleMsg
         uint32_t payloadLength = strlen((char*)payload);
         if(result_get) // Dump from root is finished, reset helper.
         {
-            LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "ParamFC Module: dump finished.");
+            LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "ParamFC Module: %s dump finished.", getStrFromAddr(obj->handlerId));
             memset(helper->dumpStart, 0, MAX_DEPTH); // Starting point of dump.
             //handlerObj->helper.sequence = 0;
             lastInSequence = 1;
@@ -811,7 +814,7 @@ uint8_t ParamHandler_HandleParamFcMsg(eventHandler_t* obj, void* data, moduleMsg
         Msg_ParamFcSetSequencenr(paramMsg, helper->sequence);
 
         // send the reply to the caller, should always be the master ParamHandler.
-        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "ParamFC Module: Sending to master");
+        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "ParamFC Module: %s Sending paramFc msg to master", getStrFromAddr(obj->handlerId));
         Event_Send(handlerObj->evHandler,paramMsg);
         result = 1;
     }

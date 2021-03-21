@@ -378,7 +378,7 @@ uint8_t Event_SendInternal(eventHandler_t* obj, moduleMsg_t* msg)
                     
                     if(msg->mDestination != FC_SerialIOtx_e) // We should not spam FC_SerialIOtx_e, if that is what failed.
                     {
-                        LOG_ENTRY(FC_SerialIOtx_e, obj, "Event: Error. Failed sendToBack SendInternal, handler: 0x%08x.", obj->handlers[i]->handlerId);
+                        LOG_ENTRY(FC_SerialIOtx_e, obj, "Event: Error. Failed sendToBack SendInternal, handler: %s.", getStrFromAddr(obj->handlers[i]->handlerId));
                     }
                     Msg_Delete(&msg);
                     

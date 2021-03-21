@@ -27,12 +27,10 @@
 #include "string.h"
 
 #include "Communication/inc/communication_tasks.h"
-#include "Parameters/inc/paramHandler.h"
 #include "Debug/inc/debug_handler.h"
 #include "Messages/inc/Msg_Parser.h"
 #include "Messages/inc/Msg_Transmission.h"
 #include "BoardConfig.h"
-#include "Messages/inc/Msg_Log.h"
 
 
 
@@ -42,10 +40,7 @@
 #include "Components/AppLog/inc/AppLogHandler.h"
 #include "Components/AppLog/inc/AppLog.h"
 #include "Parameters/inc/parameters.h"
-#include "QuadFC/QuadFC_Memory.h"
 #include "QuadFC/QuadFC_Serial.h"
-#include "QuadFC/QuadFC_SPI.h"
-#include "Log/inc/logHandler.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
@@ -69,12 +64,8 @@ typedef struct RxCom
     SLIP_t *SLIP;                   //!< RxTask owns SLIP package.
     SLIP_Parser_t* parser;
     uint8_t receive_buffer[COM_RECEIVE_BUFFER_LENGTH];
-    param_helper_t *helper;
-    param_helper_t *saveHelper;
     FlightModeHandler_t* stateHandler;
     eventHandler_t* evHandler;
-    LogHandler_t* logHandler;
-    paramHander_t* paramHandler;
     debug_handler_t* debugHandler;
 
 }RxCom_t;
@@ -123,7 +114,6 @@ static void Com_RxTask( void *pvParameters );
 
 uint8_t Com_TxTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg);
 
-uint8_t Com_HandleLog(eventHandler_t* obj, void* data, moduleMsg_t* msg);
 
 TxCom_t* Com_InitTx(eventHandler_t* eventHandler)
 {
@@ -140,7 +130,8 @@ TxCom_t* Com_InitTx(eventHandler_t* eventHandler)
     taskParam->serializebufferSize = COM_PACKET_LENGTH_MAX;
     taskParam->AppLogHandler = AppLogHandler_Create(eventHandler);
 
-    if( !taskParam->txSLIP || !taskParam->evHandler)
+
+    if( !taskParam->txSLIP || !taskParam->evHandler || !taskParam->AppLogHandler)
     {
         return NULL;
     }
@@ -164,30 +155,14 @@ RxCom_t* Com_InitRx(eventHandler_t* eventHandler)
         return NULL;
     }
     taskParam->debugHandler = Debug_CreateHandler(eventHandler);
-    taskParam->helper = pvPortMalloc(sizeof(param_helper_t));
-    taskParam->saveHelper = pvPortMalloc(sizeof(param_helper_t));
+
     taskParam->SLIP =  Slip_Create(COM_PACKET_LENGTH_MAX);
     taskParam->evHandler = eventHandler;
-    taskParam->logHandler = LogHandler_CreateObj(0,taskParam->evHandler,NULL,"LogM",1);
-    taskParam->paramHandler = ParamHandler_CreateObj(1,eventHandler, "Com_RX", 1); // Master handles all communication, we are master!
     taskParam->parser = SlipParser_Create(COM_PACKET_LENGTH_MAX);
-    if(    !taskParam->helper || !taskParam->saveHelper
-        || !taskParam->SLIP || !taskParam->evHandler  
-        || !taskParam->logHandler || !taskParam->parser)
+    if(!taskParam->SLIP || !taskParam->evHandler  || !taskParam->parser)
     {
         return NULL;
     }
-
-    memset(taskParam->helper->dumpStart, 0, MAX_DEPTH);
-    taskParam->helper->depth = 0;
-    taskParam->helper->sequence = 0;
-
-    memset(taskParam->saveHelper->dumpStart, 0, MAX_DEPTH);
-    taskParam->saveHelper->depth = 0;
-    taskParam->saveHelper->sequence = 0;
-
-    Event_RegisterCallback(taskParam->evHandler, Msg_Log_e, Com_HandleLog, taskParam);
-
 
     return taskParam;
 }
@@ -210,8 +185,8 @@ void Com_CreateTasks(eventHandler_t* eventHandlerRx, eventHandler_t* eventHandle
     }
 
     QuadFC_SerialOptions_t opt = {
-            //115200,
             115200,
+            //57600,
             EightDataBits,
             NoParity,
             OneStopBit,
@@ -238,15 +213,6 @@ void Com_CreateTasks(eventHandler_t* eventHandlerRx, eventHandler_t* eventHandle
         {}
     }
 
-    uint8_t rspSpi = SpiMaster_Init(FRAM_MEM_SPI_BUS);
-    if(!rspSpi)
-    {
-        /*Error - Could not create serial interface.*/
-
-        for ( ;; )
-        {}
-    }
-    Mem_Init();
 
     /* Create the freeRTOS tasks responsible for communication.*/
     portBASE_TYPE create_result_rx, create_result_tx;
@@ -395,8 +361,6 @@ void Com_RxTask( void *pvParameters )
     /*The already allocated data is passed to the task.*/
     RxCom_t * obj = (RxCom_t *) pvParameters;
 
-    ParamHandler_InitMaster(obj->paramHandler);
-
     for ( ;; )
     {
 
@@ -510,51 +474,3 @@ uint8_t Com_TxTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg)
     return 1;
 }
 
-
-#define LOG_MSG_REPLY_LENGTH (255)
-uint8_t Com_HandleLog(eventHandler_t* obj, void* data, moduleMsg_t* msg)
-{
-    if(!obj || ! data || !msg)
-    {
-        return 0;
-    }
-
-    RxCom_t* RxObj = (RxCom_t*)data;
-    uint8_t result = 0;
-
-    switch ( Msg_LogGetControl(msg))
-    {
-    case log_name:
-    {
-        result = 1;
-        moduleMsg_t* reply = Msg_LogCreate(Msg_GetSource(msg), 0, log_name, LOG_MSG_REPLY_LENGTH);
-
-        LogHandler_GetNameIdMapping(RxObj->logHandler,Msg_LogGetPayload(reply), Msg_LogGetPayloadbufferlength(reply));
-
-        uint16_t len =  strlen((char *)Msg_LogGetPayload(reply));
-        Msg_LogSetPayloadlength(reply, len);
-
-        Event_Send(obj, reply);
-    }
-    break;
-    case log_entry:
-    {
-        result = 1;
-        moduleMsg_t* reply = Msg_LogCreate(Msg_GetSource(msg), 0, log_entry, LOG_MSG_REPLY_LENGTH);
-
-        LogHandler_AppendSerializedlogs(RxObj->logHandler, Msg_LogGetPayload(reply), Msg_LogGetPayloadbufferlength(reply));
-        uint16_t len =  strlen((char *)Msg_LogGetPayload(reply));
-        Msg_LogSetPayloadlength(reply, len);
-
-        Event_Send(obj, reply);
-    }
-    break;
-    case log_stopAll:
-        LogHandler_StopAllLogs(RxObj->logHandler);
-        result = 0;
-        break;
-    default:
-        break;
-    }
-    return result;
-}
