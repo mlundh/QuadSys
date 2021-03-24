@@ -273,6 +273,10 @@ uint8_t* Msg_ParamFcSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer
         Msg_ParamFc_t* data = (Msg_ParamFc_t*)(msg + 1);
         if(data)
         {
+            buffer = serialize_uint8_t(buffer, &buffer_size, &data->mControl);
+            buffer = serialize_int8_t(buffer, &buffer_size, &data->mSequencenr);
+            buffer = serialize_uint8_t(buffer, &buffer_size, &data->mLastinsequence);
+            buffer = serialize_string(buffer, &buffer_size, data->mPayload, data->mPayloadlength);
 
         }
     }
@@ -292,6 +296,12 @@ moduleMsg_t* Msg_ParamFcDeserialize(uint8_t* buffer, uint32_t buffer_size)
         Msg_ParamFc_t* data = (Msg_ParamFc_t*)(msg + 1);
         if(data)
         {
+            buffer = deserialize_uint8_t(buffer, &buffer_size, &data->mControl);
+            buffer = deserialize_int8_t(buffer, &buffer_size, &data->mSequencenr);
+            buffer = deserialize_uint8_t(buffer, &buffer_size, &data->mLastinsequence);
+            data->mPayloadbufferlength = buffer_size;
+            data->mPayload = (uint8_t*)(data+1);
+            buffer = deserialize_string(buffer, &buffer_size, data->mPayload, &data->mPayloadlength, data->mPayloadbufferlength);
 
         }
     }

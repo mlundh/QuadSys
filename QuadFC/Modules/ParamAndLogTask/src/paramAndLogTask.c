@@ -23,7 +23,7 @@
 */
 #include <string.h>
 #include "../inc/paramAndLogTask.h"
-#include "Parameters/inc/paramHandler.h"
+#include "Parameters/inc/paramMasterHandler.h"
 #include "Log/inc/logHandler.h"
 #include "QuadFC/QuadFC_SPI.h"
 #include "BoardConfig.h"
@@ -35,7 +35,7 @@ typedef struct paramAndLogTask
 {
     eventHandler_t *evHandler;
     LogHandler_t *logHandler;
-    paramHander_t *paramHandler;
+    ParamMaster_t *paramMaster;
 
 } paramAndLogTask_t;
 void PL_Task(void *pvParameters);
@@ -53,16 +53,16 @@ void PL_CreateTask(eventHandler_t *eventHandlerParam)
 
     taskParam->evHandler = eventHandlerParam;
     taskParam->logHandler = LogHandler_CreateObj(0, taskParam->evHandler, NULL, "LogM", 1);
-    taskParam->paramHandler = ParamHandler_CreateObj(1, taskParam->evHandler, "PL", 1); // Master handles all communication, we are master!
+    taskParam->paramMaster = ParamMaster_CreateObj(taskParam->evHandler);
 
-    if (!taskParam->evHandler || !taskParam->logHandler || !taskParam->paramHandler)
+    if (!taskParam->evHandler || !taskParam->logHandler || !taskParam->paramMaster)
     {
         for (;;)
         {
         }
     }
 
-    Event_RegisterCallback(taskParam->evHandler, Msg_Log_e, PL_HandleLog, taskParam);
+    Event_RegisterCallback(taskParam->evHandler, Msg_Log_e, PL_HandleLog, taskParam->logHandler);
 
     uint8_t rspSpi = SpiMaster_Init(FRAM_MEM_SPI_BUS);
     if (!rspSpi)
@@ -98,7 +98,7 @@ void PL_Task(void *pvParameters)
 {
     paramAndLogTask_t * obj = (paramAndLogTask_t *) pvParameters;
 
-    ParamHandler_InitMaster(obj->paramHandler);
+    ParamMaster_InitMaster(obj->paramMaster);
     for (;;)
     {
         while(Event_Receive(obj->evHandler, 400))//TODO change to max delay...
@@ -115,7 +115,7 @@ uint8_t PL_HandleLog(eventHandler_t *obj, void *data, moduleMsg_t *msg)
         return 0;
     }
 
-    paramAndLogTask_t *RxObj = (paramAndLogTask_t *)data;
+    LogHandler_t *logObj = (LogHandler_t *)data;
     uint8_t result = 0;
 
     switch (Msg_LogGetControl(msg))
@@ -125,7 +125,7 @@ uint8_t PL_HandleLog(eventHandler_t *obj, void *data, moduleMsg_t *msg)
         result = 1;
         moduleMsg_t *reply = Msg_LogCreate(Msg_GetSource(msg), 0, log_name, LOG_MSG_REPLY_LENGTH);
 
-        LogHandler_GetNameIdMapping(RxObj->logHandler, Msg_LogGetPayload(reply), Msg_LogGetPayloadbufferlength(reply));
+        LogHandler_GetNameIdMapping(logObj, Msg_LogGetPayload(reply), Msg_LogGetPayloadbufferlength(reply));
 
         uint16_t len = strlen((char *)Msg_LogGetPayload(reply));
         Msg_LogSetPayloadlength(reply, len);
@@ -138,7 +138,7 @@ uint8_t PL_HandleLog(eventHandler_t *obj, void *data, moduleMsg_t *msg)
         result = 1;
         moduleMsg_t *reply = Msg_LogCreate(Msg_GetSource(msg), 0, log_entry, LOG_MSG_REPLY_LENGTH);
 
-        LogHandler_AppendSerializedlogs(RxObj->logHandler, Msg_LogGetPayload(reply), Msg_LogGetPayloadbufferlength(reply));
+        LogHandler_AppendSerializedlogs(logObj, Msg_LogGetPayload(reply), Msg_LogGetPayloadbufferlength(reply));
         uint16_t len = strlen((char *)Msg_LogGetPayload(reply));
         Msg_LogSetPayloadlength(reply, len);
 
@@ -146,7 +146,7 @@ uint8_t PL_HandleLog(eventHandler_t *obj, void *data, moduleMsg_t *msg)
     }
     break;
     case log_stopAll:
-        LogHandler_StopAllLogs(RxObj->logHandler);
+        LogHandler_StopAllLogs(logObj);
         result = 0;
         break;
     default:

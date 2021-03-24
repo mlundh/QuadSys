@@ -66,7 +66,7 @@ LogStop --internal
 Msg_CtrlSig --member control_signal_t signal --internal
 Msg_NewState --member state_data_t state --internal
 Msg_HasParam --internal
-Msg_ParamFc --member uint8_t control --member int8_t sequenceNr --member uint8_t lastInSequence --member std::string payload --internal
+Msg_ParamFc --member uint8_t control --member int8_t sequenceNr --member uint8_t lastInSequence --member std::string payload
 Msg_SpectrumData --member spektrum_data_t data --include SpectrumSatellite/inc/satellite_receiver_public.h --internal
 Msg_ValidSp --member uint8_t valid --internal
 
