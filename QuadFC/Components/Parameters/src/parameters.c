@@ -126,7 +126,7 @@ uint8_t Param_AppendDivider( uint8_t *buffer, uint32_t buffer_length)
     {
         return 0;
     }
-    strncat( (char *) buffer, (const char *) "/", (unsigned short) 1);
+    strcat( (char *) buffer, (const char *) "/");
     return 1;
 }
 
@@ -143,7 +143,7 @@ uint8_t Param_AppendParentNotation( uint8_t *buffer, uint32_t buffer_length)
     {
         return 0;
     }
-    strncat( (char *) buffer, (const char *) "../", (unsigned short) 3);
+    strcat( (char *) buffer, (const char *) "../");
     return 1;
 }
 
@@ -298,19 +298,19 @@ uint8_t Param_AppendNodeString(param_obj_t *current, uint8_t *buffer, uint32_t b
     //append group name and update buf_index.
     strncat( (char *) buffer , (const char *) current->group_name, (unsigned short) MAX_PARAM_NAME_LENGTH);
     // append variabletype "<y>" and value "[xxx]"
-    strncat( (char *) buffer, (const char *) "<", (unsigned short) 1);
+    strcat( (char *) buffer, (const char *) "<");
     uint8_t pTemp[MAX_VALUE_TYPE_LENGTH];
     snprintf((char *) pTemp, MAX_VALUE_TYPE_LENGTH, "%lu",(uint32_t)current->type);
     strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_VALUE_TYPE_LENGTH);
-    strncat( (char *) buffer, (const char *) ">", (unsigned short) 1);
+    strcat( (char *) buffer, (const char *) ">");
     if(variable_type_NoType != current->type)
     {
-        strncat( (char *) buffer, (const char *) "[", (unsigned short) 1);
+        strcat( (char *) buffer, (const char *) "[");
         if(!Param_GetNodeValue(current, buffer, buffer_length))
         {
             return 0;
         }
-        strncat( (char *) buffer, (const char *) "]", (unsigned short) 1);
+        strcat( (char *) buffer, (const char *) "]");
     }
     return 1;
 }

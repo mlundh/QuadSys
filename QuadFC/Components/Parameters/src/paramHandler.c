@@ -31,7 +31,7 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
-//#define DEBUG
+// #define DEBUG
 
 #include "Components/AppLog/inc/AppLog.h"
 
@@ -73,7 +73,7 @@ uint8_t ParamHandler_HandleParamFcMsg(eventHandler_t* obj, void* data, moduleMsg
  */
 uint8_t ParamHandler_HandleHasParamMsg(eventHandler_t* obj, void* data, moduleMsg_t* msg);
 
-paramHander_t* ParamHandler_CreateObj(uint8_t num_children, eventHandler_t* evHandler,const char *obj_name, uint8_t master)
+paramHander_t* ParamHandler_CreateObj(uint8_t num_children, eventHandler_t* evHandler,const char *obj_name)
 {
     paramHander_t *obj = pvPortMalloc( sizeof(paramHander_t) );
     if(!obj)
@@ -239,8 +239,15 @@ uint8_t ParamHandler_HandleParamFcMsg(eventHandler_t* obj, void* data, moduleMsg
             result = Param_SetFromHere(handlerObj->rootParam, root, remainingLength);
             if(!result)
             {
+                LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "%s No matching parameters.", getStrFromAddr(obj->handlerId));
+
                 //TODO send error setting parameters.
             }
+            else
+            {
+                LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "%s Parameters set!", getStrFromAddr(obj->handlerId));
+            }
+            
         }
 
         // Send answer to the paramHandler master. Set messages to the master has no length as they are only used for signaling.
@@ -251,7 +258,7 @@ uint8_t ParamHandler_HandleParamFcMsg(eventHandler_t* obj, void* data, moduleMsg
     case param_get:
     case param_save:
     {
-        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "%s Received save/get param.", getStrFromAddr(obj->handlerId));
+        //LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "%s Received save/get param.", getStrFromAddr(obj->handlerId));
         param_helper_t* helper = NULL;
         if(control == param_get)
         {
@@ -269,10 +276,10 @@ uint8_t ParamHandler_HandleParamFcMsg(eventHandler_t* obj, void* data, moduleMsg
         uint8_t result_get = 0;
         result_get = ParamHandler_Dump(handlerObj, payload, PARAM_BUFFER_LEN, helper);
         uint8_t lastInSequence = 0;
-        uint32_t payloadLength = strlen((char*)payload);
+        uint32_t payloadLength = strlen((char*)payload) + 1;// +1 for null char.
         if(result_get) // Dump from root is finished, reset helper.
         {
-            LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "%s Param dump finished.", getStrFromAddr(obj->handlerId));
+            //LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "%s Param dump finished.", getStrFromAddr(obj->handlerId));
             memset(helper->dumpStart, 0, MAX_DEPTH); // Starting point of dump.
             //handlerObj->helper.sequence = 0;
             lastInSequence = 1;
@@ -286,7 +293,7 @@ uint8_t ParamHandler_HandleParamFcMsg(eventHandler_t* obj, void* data, moduleMsg
         Msg_ParamFcSetSequencenr(paramMsg, helper->sequence);
 
         // send the reply to the caller, should always be the master ParamHandler.
-        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "%s Sending msg to master", getStrFromAddr(obj->handlerId));
+        //LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "%s Sending msg to master", getStrFromAddr(obj->handlerId));
         Event_Send(handlerObj->evHandler,paramMsg);
         result = 1;
     }

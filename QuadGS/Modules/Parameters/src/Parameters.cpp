@@ -233,6 +233,10 @@ std::string Parameters::SetAndRegister(std::string path)
 		while(!path.empty())
 		{
 			bool found = UpdateTmp(path, false);
+			if(!path.empty() && (path[0] == 0)) // Remove nulltermination of string if present.
+			{
+				path.erase();
+			}
 			if(!path.empty())
 			{
 				if(!found)

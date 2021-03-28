@@ -87,7 +87,7 @@ std::string QGS_Tree::Register(std::string path)
     std::string valueType = GetValueTypeString(module);
     std::string value = GetValueString(module);
     
-    if(name.empty())
+    if(name.empty() || (name[0] == 0))
     {
       return "";
     }

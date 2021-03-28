@@ -32,7 +32,7 @@ typedef struct paramHander paramHander_t;
 #include "Parameters/inc/parameters_internal.h"
 
 
-paramHander_t* ParamHandler_CreateObj(uint8_t num_children, eventHandler_t* evHandler,const char *obj_name, uint8_t master);
+paramHander_t* ParamHandler_CreateObj(uint8_t num_children, eventHandler_t* evHandler,const char *obj_name);
 
 /**
  * Free all memory created by the ParamHander_CreateObj function.

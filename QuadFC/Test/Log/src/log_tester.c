@@ -48,7 +48,7 @@ void Log_GetTCs(TestFw_t* obj)
 uint8_t LogHandler_TestCreate(TestFw_t* obj)
 {
     size_t heapSize = xPortGetFreeHeapSize();
-    paramHander_t* paramHandler = ParamHandler_CreateObj(1, NULL,"paramM", 1);
+    paramHander_t* paramHandler = ParamHandler_CreateObj(1, NULL,"paramM");
     LogHandler_t* logHObjM = LogHandler_CreateObj(2,NULL,ParamHandler_GetParam(paramHandler),"TestRoot",1); // Not using eventHandler at the moment.
 
     uint8_t result = 1;
@@ -117,7 +117,7 @@ uint8_t LogHandler_TestCreate(TestFw_t* obj)
 
 uint8_t Log_TestCreate(TestFw_t* obj)
 {
-    paramHander_t* paramHandler = ParamHandler_CreateObj(1, NULL,"paramM", 1);
+    paramHander_t* paramHandler = ParamHandler_CreateObj(1, NULL,"paramM");
 
     LogHandler_t* logHObj = LogHandler_CreateObj(2,NULL,ParamHandler_GetParam(paramHandler), "TestH",1); // Not using event handler, but we are master.
 
@@ -167,7 +167,7 @@ uint8_t Log_TestCreate(TestFw_t* obj)
 uint8_t Log_TestSetChild(TestFw_t* obj)
 {
     uint8_t result = 1;
-    paramHander_t* paramHandler = ParamHandler_CreateObj(1, NULL,"paramM", 1);
+    paramHander_t* paramHandler = ParamHandler_CreateObj(1, NULL,"paramM");
 
     LogHandler_t* logHObj = LogHandler_CreateObj(2,NULL,ParamHandler_GetParam(paramHandler),"TestH",1); // Not using event handler, but we are master.
     Log_t* logObj = Log_CreateObj(2,variable_type_NoType, NULL,NULL,logHObj,"root");
@@ -196,7 +196,7 @@ uint8_t Log_TestSetChild(TestFw_t* obj)
 uint8_t Log_TestReport(TestFw_t* obj)
 {
     uint8_t result = 1;
-    paramHander_t* paramHandler = ParamHandler_CreateObj(1, NULL,"paramM", 1);
+    paramHander_t* paramHandler = ParamHandler_CreateObj(1, NULL,"paramM");
 
     LogHandler_t* logHObj = LogHandler_CreateObj(2,NULL,ParamHandler_GetParam(paramHandler),"Report",1); // Not using event handler, but we are master.
     int32_t data = 9;

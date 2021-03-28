@@ -40,6 +40,7 @@
 
 // mem area defines
 #define PARAM_MEM_START_ADDR (0)
-#define LOG_MEM_START_ADDR (32000)
+#define PARAM_MEM_STOP_ADDR (16000)
+#define LOG_MEM_START_ADDR (16000)
 
 #endif // __BOARDCONFIG_H__

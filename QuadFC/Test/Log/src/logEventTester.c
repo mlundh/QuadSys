@@ -79,7 +79,7 @@ uint8_t LogEv_createTestTasks(TestFw_t* obj, SemaphoreHandle_t semaphore, logEvT
     }
     masterParam->xSemaphore = semaphore;
     masterParam->evHandler = Event_CreateHandler(FC_Ctrl_e, 1);
-    masterParam->paramHandler = ParamHandler_CreateObj(1, masterParam->evHandler,"paramM", 1);
+    masterParam->paramHandler = ParamHandler_CreateObj(1, masterParam->evHandler,"paramM");
     masterParam->logHObj = LogHandler_CreateObj(2, masterParam->evHandler, ParamHandler_GetParam(masterParam->paramHandler), "logEvTM",1);
     masterParam->logValue0 = 0;
     masterParam->logValue1 = 0;
@@ -100,7 +100,7 @@ uint8_t LogEv_createTestTasks(TestFw_t* obj, SemaphoreHandle_t semaphore, logEvT
     }
     slaveParam->xSemaphore = NULL;
     slaveParam->evHandler = Event_CreateHandler(FC_SerialIOrx_e,0);
-    slaveParam->paramHandler = ParamHandler_CreateObj(2, slaveParam->evHandler,"paramH", 0);
+    slaveParam->paramHandler = ParamHandler_CreateObj(2, slaveParam->evHandler,"paramH");
     slaveParam->logHObj = LogHandler_CreateObj(2,slaveParam->evHandler, ParamHandler_GetParam(slaveParam->paramHandler), "logEvTS",0);
     slaveParam->logValue0 = 0;
     slaveParam->logValue1 = 0;
@@ -115,7 +115,10 @@ uint8_t LogEv_createTestTasks(TestFw_t* obj, SemaphoreHandle_t semaphore, logEvT
     }
 
     Event_InitHandler(masterParam->evHandler, slaveParam->evHandler);
-    ParamHandler_InitMaster(masterParam->paramHandler);
+
+    //ParamHandler_InitMaster(masterParam->paramHandler);
+
+
     Event_Receive(slaveParam->evHandler,2);
     Event_Receive(masterParam->evHandler,2);
 

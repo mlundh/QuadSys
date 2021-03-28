@@ -182,7 +182,7 @@ Satellite_t* Satellite_Create(eventHandler_t* eventHandler, uint32_t uartNr, Gpi
     taskParam->evHandler = eventHandler;
     char name[] = {"Spectrum_X"};
     name[9]=index;
-    taskParam->paramHandler = ParamHandler_CreateObj(1,eventHandler, name, 0); // Master handles all communication, we do not want to be master!
+    taskParam->paramHandler = ParamHandler_CreateObj(1,eventHandler, name);
     taskParam->current_flight_mode_state = fmode_not_available;
     taskParam->current_control_mode = Control_mode_not_available;
 

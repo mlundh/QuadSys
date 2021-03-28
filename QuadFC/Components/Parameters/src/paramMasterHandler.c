@@ -33,7 +33,7 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
-//#define DEBUG
+// #define DEBUG
 
 #include "Components/AppLog/inc/AppLog.h"
 
@@ -205,11 +205,7 @@ uint8_t ParamMaster_HandleParamMsg(eventHandler_t *obj, void *data, moduleMsg_t 
     {
     case param_set:
     {
-        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "%s Received ParamSet.", getStrFromAddr(obj->handlerId));
-
         //Send to every paramHandler. We copy the message payload.
-        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "%s Sending ParamSet to all other handlers.", getStrFromAddr(obj->handlerId));
-
         for (int i = 0; i < handlerObj->nrRegisteredHandlers; i++)
         {
             LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "%s Sending ParamSet to %s", getStrFromAddr(obj->handlerId), getStrFromAddr(handlerObj->handlers[i]));
@@ -424,36 +420,47 @@ uint8_t ParamMaster_HandleParamFcMsg(eventHandler_t *obj, void *data, moduleMsg_
 
         // Packetize into a slip package before write to mem.
         result = Slip_Packetize(serializeBuffer, serializedLength, SLIP_PACKET_LEN, packet);
+        result = result && ((handlerObj->setAddress + packet->packetSize) < PARAM_MEM_STOP_ADDR);
         if (result) // Packetization OK, write to mem.
         {
-            //LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "Param Save: Saving %d at %d", (int)(packet->packetSize), (int)handlerObj->setAddress);
+            LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "Param Save: Saving %d at %d", (int)(packet->packetSize), (int)handlerObj->setAddress);
             printPacket(obj, packet);
-
+            
             result = Mem_Write(handlerObj->setAddress, packet->packetSize,
                                packet->payload, packet->allocatedSize);
             handlerObj->setAddress += (packet->packetSize + 1);
         }
+        else
+        {
+            LOG_ENTRY(FC_SerialIOtx_e, obj, "Not able to write param to memory, address: %ld.", handlerObj->setAddress)
+            break;
+        }
+        
         Slip_Delete(packet);
-        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "Currently saving: %ld", handlerObj->currentlySavinging);
+        //LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "Currently saving: %ld", handlerObj->currentlySavinging);
 
         if (!lastInSequence) // Send to next handler.
         {
             moduleMsg_t *msgParam = Msg_ParamFcCreate(handlerObj->handlers[(handlerObj->currentlySavinging)],
                                                       0, control, 0, 0, 0);
             Event_Send(obj, msgParam);
-        }
-        if(lastInSequence == 1)
-        {
-            handlerObj->saveSequence = 0;
-            handlerObj->setAddress = PARAM_MEM_START_ADDR;
+            handlerObj->saveSequence++;
         }
         else
         {
-            handlerObj->saveSequence++;
-        }
-        
+            handlerObj->saveSequence = 0;
+            handlerObj->setAddress = PARAM_MEM_START_ADDR;
+        }       
     }
     break;
+    }
+    if(!result)
+    {
+        // Clean-up
+        handlerObj->actionOngoing = paramReady; 
+        handlerObj->saveSequence = 0;
+        handlerObj->setAddress = PARAM_MEM_START_ADDR;
+        handlerObj->currentlySavinging = 0;
     }
     return result;
 }

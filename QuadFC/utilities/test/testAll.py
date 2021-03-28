@@ -71,7 +71,7 @@ class Tester:
         try: 
             if not os.path.exists(self.logFileDir):
                 os.makedirs(self.logFileDir)
-            with serial.Serial(port='/dev/TitanDebug'
+            with serial.Serial(port='/dev/TitanV2Debug'
                     ,baudrate=115200,parity=serial.PARITY_NONE
                     ,stopbits=serial.STOPBITS_ONE
                     ,bytesize=serial.EIGHTBITS) as ser, \
