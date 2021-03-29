@@ -58,8 +58,8 @@ static  titan_uart_control_t   uart[] = {
   {USART2, 0, NULL, NULL, 0, NULL, 0}, // RC 2
   {UART9,  0, NULL, NULL, 0, NULL, 0}, // Applog serial backend
   {USART3, 0, NULL, NULL, 0, NULL, 0}, // Com serial Wireless
-  {USART6, 0, NULL, NULL, 0, NULL, 0},
-  {UART8,  0, NULL, NULL, 0, NULL, 0},
+  {USART6, 0, NULL, NULL, 0, NULL, 0}, // Motor 2
+  {UART8,  0, NULL, NULL, 0, NULL, 0}, // Motor 1
 
 };
 
@@ -82,6 +82,7 @@ static uint32_t StopBits[] =
 {
     LL_USART_STOPBITS_0_5,
     LL_USART_STOPBITS_1,
+    0,
     LL_USART_STOPBITS_2
 };
 

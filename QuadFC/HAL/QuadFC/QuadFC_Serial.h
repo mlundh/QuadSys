@@ -59,7 +59,8 @@ typedef enum{
  * the allowed number of stop bits.
  */
 typedef enum{
-  OneStopBit = 0,
+  OneHalfStopBit,
+  OneStopBit,
   OneAndHalfStopBits,
   TwoStopBits,
 }QuadFC_SerialStopBits_t;
