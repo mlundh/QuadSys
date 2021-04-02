@@ -69,13 +69,13 @@ uint8_t Com_TestTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 
     if(Msg_TestTransmissionGetTest(msg) != 0xDEADBEEF)
     {
-        LOG_ENTRY(FC_SerialIOtx_e, obj, "SerialTest: failed, did not get correct data!");
+        LOG_ENTRY(obj, "SerialTest: failed, did not get correct data!");
         result = 0;
     }
     if(strncmp((char*)Msg_TestTransmissionGetPayload(msg),"Test string\0",11) != 0) // Null termination not sent serially.
     {
-        LOG_ENTRY(FC_SerialIOtx_e, obj, "SerialTest: failed, expected \"%s\", got \"%s\"!","Test string\0", Msg_TestTransmissionGetPayload(msg));
-        LOG_ENTRY(FC_SerialIOtx_e, obj, "SerialTest: msgLength = %ld ", Msg_TestTransmissionGetPayloadlength(msg));
+        LOG_ENTRY(obj, "SerialTest: failed, expected \"%s\", got \"%s\"!","Test string\0", Msg_TestTransmissionGetPayload(msg));
+        LOG_ENTRY(obj, "SerialTest: msgLength = %ld ", Msg_TestTransmissionGetPayloadlength(msg));
         result = 0;
     }
     if(result)
@@ -83,7 +83,7 @@ uint8_t Com_TestTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg)
         moduleMsg_t* reply = Msg_TestTransmissionCreate(Msg_GetSource(msg),0,1,10);
         strncpy((char*)Msg_TestTransmissionGetPayload(reply), "Test OK\0",8);
         Msg_TestTransmissionSetPayloadlength(reply, 8);
-        LOG_ENTRY(FC_SerialIOtx_e, obj, "SerialTest: Passed, sending reply.");
+        LOG_ENTRY(obj, "SerialTest: Passed, sending reply.");
         Event_Send(obj, reply);
     }
     return result;
@@ -163,7 +163,7 @@ uint8_t Com_TestMemory(eventHandler_t* obj, void* data, moduleMsg_t* msg)
                 memData[i] = 0;
             }
             result = Mem_Read(startAddr, size, memData, size);
-            LOG_ENTRY(FC_SerialIOtx_e, obj, "SpiTest: read:\n");
+            LOG_ENTRY(obj, "SpiTest: read:\n");
             char printBuffer [size*4];
             for(int i = 0; i < size; i++)
             {  
@@ -171,11 +171,11 @@ uint8_t Com_TestMemory(eventHandler_t* obj, void* data, moduleMsg_t* msg)
                 sprintf(buf, "\n%d", memData[i]);
                 strncat(printBuffer, buf, 4);
             }
-            LOG_ENTRY(FC_SerialIOtx_e, obj, "%s", printBuffer);
+            LOG_ENTRY(obj, "%s", printBuffer);
         }
         break;
     default:
-        LOG_ENTRY(FC_SerialIOtx_e, obj, "SpiTest: failed, read or write should be 1 or 0!");
+        LOG_ENTRY(obj, "SpiTest: failed, read or write should be 1 or 0!");
         break;
     }
     return result;
@@ -198,7 +198,7 @@ uint8_t Com_MemoryReadReg(eventHandler_t* obj, void* data, moduleMsg_t* msg)
         uint8_t txBuff[5] = {159, 0, 0, 0, 0};
         uint8_t rxBuff[5] = {0xff, 0xff, 0xff, 0xff, 0xff};
         Mem_ReadWriteRaw(rxBuff, txBuff, 5);
-        LOG_ENTRY(FC_SerialIOtx_e, obj, "SpiTest: ID = %u, %u, %u, %u", rxBuff[1], rxBuff[2], rxBuff[3], rxBuff[4]);
+        LOG_ENTRY(obj, "SpiTest: ID = %u, %u, %u, %u", rxBuff[1], rxBuff[2], rxBuff[3], rxBuff[4]);
 
     }
     if(readSr)
@@ -206,7 +206,7 @@ uint8_t Com_MemoryReadReg(eventHandler_t* obj, void* data, moduleMsg_t* msg)
         uint8_t txBuff[2] = {5, 0};
         uint8_t rxBuff[2] = {0xff, 0xff};
         Mem_ReadWriteRaw(rxBuff, txBuff, 2);
-        LOG_ENTRY(FC_SerialIOtx_e, obj, "SpiTest: Sr = %u", rxBuff[1]);
+        LOG_ENTRY(obj, "SpiTest: Sr = %u", rxBuff[1]);
     }
 
     return result;

@@ -28,8 +28,8 @@
 #include "FreeRTOS.h"
 
 #define LOG_LENGTH_MAX (200)
-#define LOG_ENTRY(addr, evHandler,  format, ...) {  \
-    moduleMsg_t* msgAppLog = Msg_AppLogCreate(addr,0,writeAppLog,LOG_LENGTH_MAX); \
+#define LOG_ENTRY(evHandler,  format, ...) {  \
+    moduleMsg_t* msgAppLog = Msg_AppLogCreate(FC_AppLog_e,0,writeAppLog,LOG_LENGTH_MAX); \
     snprintf((char*)Msg_AppLogGetPayload(msgAppLog), LOG_LENGTH_MAX, "%8lu: "format"\n" ,xTaskGetTickCount(), ##__VA_ARGS__);\
     uint32_t buffSize = strlen((char*)Msg_AppLogGetPayload(msgAppLog))+1;\
     Msg_AppLogSetPayloadlength(msgAppLog, buffSize);\
@@ -38,13 +38,13 @@
 
 #ifdef DEBUG
 #define LOG_DBG_LENGTH_MAX (300)
-#define LOG_DBG_ENTRY(addr, evHandler,  format, ...) {  \
-    moduleMsg_t* msgAppLog = Msg_AppLogCreate(addr,0,writeAppLog,LOG_DBG_LENGTH_MAX); \
+#define LOG_DBG_ENTRY(evHandler,  format, ...) {  \
+    moduleMsg_t* msgAppLog = Msg_AppLogCreate(FC_AppLog_e,0,writeAppLog,LOG_DBG_LENGTH_MAX); \
     snprintf((char*)Msg_AppLogGetPayload(msgAppLog), LOG_DBG_LENGTH_MAX, "%8lu: DBG "format"\n" ,xTaskGetTickCount(), ##__VA_ARGS__);\
     uint32_t buffSize = strlen((char*)Msg_AppLogGetPayload(msgAppLog))+1;\
     Msg_AppLogSetPayloadlength(msgAppLog, buffSize);\
     Event_Send(evHandler, msgAppLog);\
     }
 #else
-#define LOG_DBG_ENTRY(addr, evHandler, format, ...)
+#define LOG_DBG_ENTRY(evHandler, format, ...)
 #endif

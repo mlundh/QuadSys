@@ -79,7 +79,7 @@ void printPacket(eventHandler_t *obj, SLIP_t *packet)
             snprintf((char *)array + i, 2, "%c", '0');
         }
     }
-    LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "Packet: %.*s", (int)220, array);
+    LOG_DBG_ENTRY( obj, "Packet: %.*s", (int)220, array);
 #endif
 }
 
@@ -192,7 +192,7 @@ uint8_t ParamMaster_HandleParamMsg(eventHandler_t *obj, void *data, moduleMsg_t 
     {
         moduleMsg_t *msgParam = Msg_ParamCreate(Msg_GetSource(msg), 0, param_error, 0, 0, 0);
         Event_Send(obj, msgParam);
-        LOG_ENTRY(FC_SerialIOtx_e, obj, "Param: Action ongoing, discarding message.");
+        LOG_ENTRY(obj, "Param: Action ongoing, discarding message.");
         return 1;
     }
     handlerObj->actionOngoing = paramActionOngoing; // Start action.
@@ -208,12 +208,12 @@ uint8_t ParamMaster_HandleParamMsg(eventHandler_t *obj, void *data, moduleMsg_t 
         //Send to every paramHandler. We copy the message payload.
         for (int i = 0; i < handlerObj->nrRegisteredHandlers; i++)
         {
-            LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "%s Sending ParamSet to %s", getStrFromAddr(obj->handlerId), getStrFromAddr(handlerObj->handlers[i]));
+            LOG_DBG_ENTRY( obj, "%s Sending ParamSet to %s", getStrFromAddr(obj->handlerId), getStrFromAddr(handlerObj->handlers[i]));
 
             moduleMsg_t *msgParam = Msg_ParamFcCreate(handlerObj->handlers[i], 0, param_set, 0, 0, payloadLength);
             if (!msgParam)
             {
-                LOG_ENTRY(FC_SerialIOtx_e, obj, "Param Set: Error - Not able to create a paramFC message.");
+                LOG_ENTRY(obj, "Param Set: Error - Not able to create a paramFC message.");
                 handlerObj->actionOngoing = paramReady; // Reset.
                 break;
             }
@@ -232,7 +232,7 @@ uint8_t ParamMaster_HandleParamMsg(eventHandler_t *obj, void *data, moduleMsg_t 
         uint8_t lastInSequence = 0;
         uint8_t EcpectedSequenceNo = 0;
         uint32_t address = PARAM_MEM_START_ADDR;
-        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "%s Received ParamLoad.", getStrFromAddr(obj->handlerId));
+        LOG_DBG_ENTRY( obj, "%s Received ParamLoad.", getStrFromAddr(obj->handlerId));
 
         while (!lastInSequence)
         {
@@ -253,7 +253,7 @@ uint8_t ParamMaster_HandleParamMsg(eventHandler_t *obj, void *data, moduleMsg_t 
                 {
                     result = 0;
                     Slip_Delete(packet); // Cleanup...
-                    LOG_ENTRY(FC_SerialIOtx_e, obj, "Param Load: Packet could not fit in buffer.");
+                    LOG_ENTRY(obj, "Param Load: Packet could not fit in buffer.");
                     handlerObj->actionOngoing = paramReady; // Reset.
                     break;
                 }
@@ -261,9 +261,9 @@ uint8_t ParamMaster_HandleParamMsg(eventHandler_t *obj, void *data, moduleMsg_t 
             }
             if (read_status == SLIP_StatusNok)
             {
-                LOG_ENTRY(FC_SerialIOtx_e, obj, "Param Load: Error. Parser failed.");
+                LOG_ENTRY(obj, "Param Load: Error. Parser failed.");
             }
-            LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "Param Load: Read %d at %d", (int)(address - startAddress), (int)startAddress);
+            LOG_DBG_ENTRY( obj, "Param Load: Read %d at %d", (int)(address - startAddress), (int)startAddress);
             printPacket(obj, packet);
             // Whole package or error...
             result &= (read_status == SLIP_StatusOK);
@@ -281,7 +281,7 @@ uint8_t ParamMaster_HandleParamMsg(eventHandler_t *obj, void *data, moduleMsg_t 
             }
             else
             {
-                LOG_ENTRY(FC_SerialIOtx_e, obj, "Param Load: Error. Deserialize failed.");
+                LOG_ENTRY(obj, "Param Load: Error. Deserialize failed.");
                 handlerObj->actionOngoing = paramReady; // Reset.
                 break;
             }
@@ -294,13 +294,13 @@ uint8_t ParamMaster_HandleParamMsg(eventHandler_t *obj, void *data, moduleMsg_t 
             {
                 Msg_Delete(&loadedMsg);
                 Slip_Delete(packet);
-                LOG_ENTRY(FC_SerialIOtx_e, obj, "Param Load: Error. Failed to read param.");
+                LOG_ENTRY(obj, "Param Load: Error. Failed to read param.");
                 handlerObj->actionOngoing = paramReady; // Reset.
                 break;
             }
             Slip_Delete(packet);
         }
-        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "Param Load: Finished.");
+        LOG_DBG_ENTRY( obj, "Param Load: Finished.");
         handlerObj->actionOngoing = paramReady; // Load is ready when all messages has been sent.
     }
     break;
@@ -309,7 +309,7 @@ uint8_t ParamMaster_HandleParamMsg(eventHandler_t *obj, void *data, moduleMsg_t 
         handlerObj->getter = Msg_GetSource(msg); // save who is currently getting the tree.
         if ((handlerObj->currentlyGetting) < handlerObj->nrRegisteredHandlers)
         {
-            LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "Param: Master Request from other handlers.");
+            LOG_DBG_ENTRY( obj, "Param: Master Request from other handlers.");
 
             moduleMsg_t *msgParam = Msg_ParamFcCreate(handlerObj->handlers[(handlerObj->currentlyGetting)],
                                                       0, control, 0, 0, 0);
@@ -359,14 +359,14 @@ uint8_t ParamMaster_HandleParamFcMsg(eventHandler_t *obj, void *data, moduleMsg_
     break;
     case param_get:
     {
-        LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "ParamFC Master: %s Received Get from %s.", getStrFromAddr(obj->handlerId), getStrFromAddr(Msg_GetSource(msg)));
+        LOG_DBG_ENTRY( obj, "ParamFC Master: %s Received Get from %s.", getStrFromAddr(obj->handlerId), getStrFromAddr(Msg_GetSource(msg)));
         uint8_t lastInSequence = 0;
         if (Msg_ParamFcGetLastinsequence(msg))
         {
             handlerObj->currentlyGetting++; //Last of the current handler, move on to the next.
             if (handlerObj->currentlyGetting >= handlerObj->nrRegisteredHandlers) // last of all handlers, signal last in sequence.
             {
-                LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "ParamFC Master: %s Last in sequense!", getStrFromAddr(obj->handlerId));
+                LOG_DBG_ENTRY( obj, "ParamFC Master: %s Last in sequense!", getStrFromAddr(obj->handlerId));
 
                 lastInSequence = 1;
                 handlerObj->currentlyGetting = 0;
@@ -397,7 +397,7 @@ uint8_t ParamMaster_HandleParamFcMsg(eventHandler_t *obj, void *data, moduleMsg_
             handlerObj->currentlySavinging++;                                       //Last of the current handler, move on to the next.
             if (handlerObj->currentlySavinging >= handlerObj->nrRegisteredHandlers) // last of all handlers, signal last in sequence.
             {
-                LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "Last in sequense!");
+                LOG_DBG_ENTRY( obj, "Last in sequense!");
 
                 lastInSequence = 1;
                 handlerObj->currentlySavinging = 0;
@@ -423,7 +423,7 @@ uint8_t ParamMaster_HandleParamFcMsg(eventHandler_t *obj, void *data, moduleMsg_
         result = result && ((handlerObj->setAddress + packet->packetSize) < PARAM_MEM_STOP_ADDR);
         if (result) // Packetization OK, write to mem.
         {
-            LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "Param Save: Saving %d at %d", (int)(packet->packetSize), (int)handlerObj->setAddress);
+            LOG_DBG_ENTRY( obj, "Param Save: Saving %d at %d", (int)(packet->packetSize), (int)handlerObj->setAddress);
             printPacket(obj, packet);
             
             result = Mem_Write(handlerObj->setAddress, packet->packetSize,
@@ -432,12 +432,12 @@ uint8_t ParamMaster_HandleParamFcMsg(eventHandler_t *obj, void *data, moduleMsg_
         }
         else
         {
-            LOG_ENTRY(FC_SerialIOtx_e, obj, "Not able to write param to memory, address: %ld.", handlerObj->setAddress)
+            LOG_ENTRY(obj, "Not able to write param to memory, address: %ld.", handlerObj->setAddress)
             break;
         }
         
         Slip_Delete(packet);
-        //LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "Currently saving: %ld", handlerObj->currentlySavinging);
+        //LOG_DBG_ENTRY( obj, "Currently saving: %ld", handlerObj->currentlySavinging);
 
         if (!lastInSequence) // Send to next handler.
         {

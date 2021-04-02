@@ -34,7 +34,8 @@
 #include "Communication/inc/communication_tasks.h"
 #include "HMI/inc/led_control_task.h"
 #include "SpectrumSatellite/inc/satellite_receiver_public.h"
-#include "ParamAndLogTask/inc/paramAndLogTask.h"
+#include "ServiceTask/inc/ServiceTask.h"
+#include "AppLogTask/inc/AppLogTask.h"
 /*include utilities*/
 #include "Messages/inc/common_types.h"
 
@@ -68,10 +69,11 @@ int main( void )
 
   eventHandler_t* evHandlerLed = Event_CreateHandler(FC_Led_e,0);
 
-  eventHandler_t* evHandlerParamLog = Event_CreateHandler(FC_Param_e,0);
+  eventHandler_t* evHandlerService = Event_CreateHandler(FC_Param_e,0);
+  eventHandler_t* evHandlerAppLog = Event_CreateHandler(FC_AppLog_e,0);
 
 
-  if(!evHandlerM || !evHandlerComRx || !evHandlerLed || !evHandlerSatelliteInternal || !evHandlerSatelliteExternal || !evHandlerParamLog)
+  if(!evHandlerM || !evHandlerComRx || !evHandlerLed || !evHandlerSatelliteInternal || !evHandlerSatelliteExternal || !evHandlerService || !evHandlerAppLog)
   {
     for(;;); //Error!
   }
@@ -83,14 +85,16 @@ int main( void )
   Satellite_CreateReceiverTask(evHandlerSatelliteExternal, RC2_SERIAL_BUS, rc2PwrCtrl, '2');
   Led_CreateLedControlTask(evHandlerLed);
   Com_CreateTasks(evHandlerComRx, evHandlerComTx); // Creates two tasks, RX and TX.
-  PL_CreateTask(evHandlerParamLog);
+  Service_CreateTask(evHandlerService);
+  AppLog_CreateTask(evHandlerAppLog);
 
   Event_InitHandler(evHandlerM, evHandlerComRx);
   Event_InitHandler(evHandlerM, evHandlerComTx);
   Event_InitHandler(evHandlerM, evHandlerLed);
   Event_InitHandler(evHandlerM, evHandlerSatelliteInternal);
   Event_InitHandler(evHandlerM, evHandlerSatelliteExternal);
-  Event_InitHandler(evHandlerM, evHandlerParamLog);
+  Event_InitHandler(evHandlerM, evHandlerService);
+  Event_InitHandler(evHandlerM, evHandlerAppLog);
 
   /* Start the RTOS scheduler. */
   vTaskStartScheduler();

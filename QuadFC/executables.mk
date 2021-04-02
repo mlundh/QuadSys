@@ -43,7 +43,7 @@ else
 endif
 
 QuadFC_DEPS:= Top/QuadFC HAL/QuadFC
-QuadFC_DEPS+= $(addprefix Modules/, Communication FlightController HMI FlightModeHandler ParamAndLogTask) 
+QuadFC_DEPS+= $(addprefix Modules/, Communication FlightController HMI FlightModeHandler ServiceTask AppLogTask) 
 QuadFC_DEPS+= $(addprefix BaseComponents/, EventHandler Messages MsgBase)
 QuadFC_DEPS+= $(addprefix Components/, AppLog AppLogSerialBackend Log LogMemBackend PidController StateEstimator)
 QuadFC_DEPS+= $(addprefix Components/, Utilities SetpointHandler Parameters SLIP CharCircularBuffer Debug)

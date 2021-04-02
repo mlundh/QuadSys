@@ -27,19 +27,16 @@
 #include "string.h"
 
 #include "Communication/inc/communication_tasks.h"
-#include "Debug/inc/debug_handler.h"
 #include "Messages/inc/Msg_Parser.h"
 #include "Messages/inc/Msg_Transmission.h"
 #include "BoardConfig.h"
 
 
 
-#include "FlightModeHandler/inc/flight_mode_handler.h"
 #include "Components/SLIP/inc/slip_packet.h"
 #include "Components/SLIP/inc/crc.h"
 #include "Components/AppLog/inc/AppLogHandler.h"
 #include "Components/AppLog/inc/AppLog.h"
-#include "Parameters/inc/parameters.h"
 #include "QuadFC/QuadFC_Serial.h"
 #include "FreeRTOS.h"
 #include "task.h"
@@ -64,9 +61,7 @@ typedef struct RxCom
     SLIP_t *SLIP;                   //!< RxTask owns SLIP package.
     SLIP_Parser_t* parser;
     uint8_t receive_buffer[COM_RECEIVE_BUFFER_LENGTH];
-    FlightModeHandler_t* stateHandler;
     eventHandler_t* evHandler;
-    debug_handler_t* debugHandler;
 
 }RxCom_t;
 
@@ -79,7 +74,6 @@ typedef struct TxCom
     TransmissionCtrl transmission;
     uint8_t serializeBuffer[COM_PACKET_LENGTH_MAX];
     uint32_t serializebufferSize;
-    AppLogHandler_t* AppLogHandler;
 
 }TxCom_t;
 
@@ -128,10 +122,9 @@ TxCom_t* Com_InitTx(eventHandler_t* eventHandler)
     taskParam->transmission = transmission_OK;
     taskParam->serializeBuffer[0] = '\0';
     taskParam->serializebufferSize = COM_PACKET_LENGTH_MAX;
-    taskParam->AppLogHandler = AppLogHandler_Create(eventHandler);
 
 
-    if( !taskParam->txSLIP || !taskParam->evHandler || !taskParam->AppLogHandler)
+    if( !taskParam->txSLIP || !taskParam->evHandler)
     {
         return NULL;
     }
@@ -154,7 +147,6 @@ RxCom_t* Com_InitRx(eventHandler_t* eventHandler)
     {
         return NULL;
     }
-    taskParam->debugHandler = Debug_CreateHandler(eventHandler);
 
     taskParam->SLIP =  Slip_Create(COM_PACKET_LENGTH_MAX);
     taskParam->evHandler = eventHandler;
@@ -304,11 +296,11 @@ uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
         {
             if(Msg_Transmission_e == Msg_GetType(msg))
             {
-                LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "COM TX: Sending OK/NOK nr: %lu", Msg_GetMsgNr(msg));
+                LOG_DBG_ENTRY( obj, "COM TX: Sending OK/NOK nr: %lu", Msg_GetMsgNr(msg));
             }
             else
             {
-                LOG_DBG_ENTRY(FC_SerialIOtx_e, obj, "COM TX: Sending message nr: %lu", Msg_GetMsgNr(msg));
+                LOG_DBG_ENTRY( obj, "COM TX: Sending message nr: %lu", Msg_GetMsgNr(msg));
             }
             /* TX is blocking */
             QuadFC_Serial_t serialData;
@@ -329,17 +321,17 @@ uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
             if(!Event_WaitForEvent(TxObj->evHandler, Msg_Transmission_e, 1, 0, 1000)) // wait for the transmission event.
             {
                 reTransmittNr ++;
-                LOG_ENTRY(FC_SerialIOtx_e, obj, "COM TX: Error: Transfer failed, retransmitt. Message nr: %lu", Msg_GetMsgNr(msg));
+                LOG_ENTRY(obj, "COM TX: Error: Transfer failed, retransmitt. Message nr: %lu", Msg_GetMsgNr(msg));
             }
             else if(TxObj->transmission == transmission_NOK) // We got a transmission message. Check if it was a NOK message.
             {
-                LOG_ENTRY(FC_SerialIOtx_e, obj, "COM TX: Timeout or NOK, retransmitt. Message nr: %lu", Msg_GetMsgNr(msg));
+                LOG_ENTRY(obj, "COM TX: Timeout or NOK, retransmitt. Message nr: %lu", Msg_GetMsgNr(msg));
                 reTransmittNr++; // If we got a tranmission_NOK message we should also re-transmitt.
             }
             
             if(reTransmittNr >= NR_RETRANSMITT)
             {
-                LOG_ENTRY(FC_SerialIOtx_e, obj, "COM TX: Transmission failed, dropping package. Message nr: %lu", Msg_GetMsgNr(msg));
+                LOG_ENTRY(obj, "COM TX: Transmission failed, dropping package. Message nr: %lu", Msg_GetMsgNr(msg));
             	TxObj->transmission = transmission_OK; // We failed, and have notified this. Prepare for next message.
                 TxObj->msgNr = (TxObj->msgNr+1) % 255; // wrap at 255...
                 break; // Retransmit failed.
@@ -380,7 +372,7 @@ void Com_RxTask( void *pvParameters )
         uint32_t nr_bytes_received = QuadFC_SerialRead(&serialData, COM_SERIAL_BUS, 1);
         if(nr_bytes_received)
         {
-            //LOG_DBG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "Received %ld", nr_bytes_received);
+            //LOG_DBG_ENTRY( obj->evHandler, "Received %ld", nr_bytes_received);
         }
 
         SLIP_Status_t result;
@@ -414,11 +406,11 @@ void Com_RxTask( void *pvParameters )
             }
             if(Msg_Transmission_e == Msg_GetType(msg))
             {
-                LOG_DBG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "COM RX: Received OK/NOK nr: %lu", Msg_GetMsgNr(msg));
+                LOG_DBG_ENTRY( obj->evHandler, "COM RX: Received OK/NOK nr: %lu", Msg_GetMsgNr(msg));
             }
             else
             {
-                LOG_DBG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "COM RX: Received message nr: %lu", Msg_GetMsgNr(msg));
+                LOG_DBG_ENTRY( obj->evHandler, "COM RX: Received message nr: %lu", Msg_GetMsgNr(msg));
             }
             
             Event_SendGeneric(obj->evHandler, msg);
@@ -426,15 +418,15 @@ void Com_RxTask( void *pvParameters )
         break;
         case SLIP_StatusCrcError:
         {
-            LOG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "COM RX: Error - SLIP CRC error.");
+            LOG_ENTRY(obj->evHandler, "COM RX: Error - SLIP CRC error.");
         }
         case SLIP_StatusEscapeError:
         {
-            LOG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "COM RX: Error - SLIP escape error.");
+            LOG_ENTRY(obj->evHandler, "COM RX: Error - SLIP escape error.");
         }
         case SLIP_StatusLengthError:
         {
-            LOG_ENTRY(FC_SerialIOtx_e, obj->evHandler, "COM RX: Error - SLIP length error.");
+            LOG_ENTRY(obj->evHandler, "COM RX: Error - SLIP length error.");
         }
         case SLIP_StatusNok:
         {
@@ -461,7 +453,7 @@ uint8_t Com_TxTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 
     if(handlerObj->msgNr != Msg_GetMsgNr(msg))
     {
-        LOG_ENTRY(FC_SerialIOtx_e, obj, "COM: Message out of sync, expected: %d, got: %lu", handlerObj->msgNr, Msg_GetMsgNr(msg) );
+        LOG_ENTRY(obj, "COM: Message out of sync, expected: %d, got: %lu", handlerObj->msgNr, Msg_GetMsgNr(msg) );
     }
     else
     {

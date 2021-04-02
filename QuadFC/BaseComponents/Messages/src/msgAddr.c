@@ -23,6 +23,7 @@ addressMap_t enumStringMap[] = {
 	{0x208, "RC_SetpointGen_e"},
 	{0x209, "RC_SetpointGen2_e"},
 	{0x20a, "FC_eventSys_e"},
+	{0x20b, "FC_AppLog_e"},
 
 };
 

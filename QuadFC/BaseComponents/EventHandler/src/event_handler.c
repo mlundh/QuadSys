@@ -335,7 +335,7 @@ uint8_t Event_SendGeneric(eventHandler_t* obj, moduleMsg_t* msg)
         else
         {
             Msg_Delete(&msg);
-            LOG_ENTRY(FC_SerialIOtx_e, obj, "Event: Error. Unknown destination, handler: 0x%08x.", obj->handlerId);
+            LOG_ENTRY(obj, "Event: Error. Unknown destination, handler: 0x%08x.", obj->handlerId);
             // We got a message without destination...
         }
     }
@@ -378,7 +378,7 @@ uint8_t Event_SendInternal(eventHandler_t* obj, moduleMsg_t* msg)
                     
                     if(msg->mDestination != FC_SerialIOtx_e) // We should not spam FC_SerialIOtx_e, if that is what failed.
                     {
-                        LOG_ENTRY(FC_SerialIOtx_e, obj, "Event: Error. Failed sendToBack SendInternal, handler: %s.", getStrFromAddr(obj->handlers[i]->handlerId));
+                        LOG_ENTRY(obj, "Event: Error. Failed sendToBack SendInternal, handler: %s.", getStrFromAddr(obj->handlers[i]->handlerId));
                     }
                     Msg_Delete(&msg);
                     
@@ -419,7 +419,7 @@ uint8_t Event_SendBCInternal(eventHandler_t* obj, moduleMsg_t* msg, uint8_t dele
             moduleMsg_t* clone = Msg_Clone(msg);
             if(!xQueueSendToBack(obj->handlers[i]->eventQueue, &clone, EVENT_BLOCK_TIME))
             {
-                LOG_ENTRY(FC_SerialIOtx_e, obj, "Event: Error in SendBCInternal. Failed to send message %ld to handler: 0x%08x, from handler: 0x%08x."
+                LOG_ENTRY(obj, "Event: Error in SendBCInternal. Failed to send message %ld to handler: 0x%08x, from handler: 0x%08x."
                                                 , msg->type, obj->handlers[i]->handlerId, obj->handlerId);
                 result = 0;
                 Msg_Delete(&clone);
@@ -442,7 +442,7 @@ uint8_t Event_SendExternal(eventHandler_t* obj, moduleMsg_t* msg)
    
     if(!xQueueSendToBack(obj->portQueue, &msg, EVENT_BLOCK_TIME))
     {
-        LOG_ENTRY(FC_SerialIOtx_e, obj, "Event: Error. Failed send to external queue, handler: 0x%08x.", obj->handlerId);
+        LOG_ENTRY(obj, "Event: Error. Failed send to external queue, handler: 0x%08x.", obj->handlerId);
         result = 0;
         Msg_Delete(&msg);
     }
@@ -604,7 +604,7 @@ uint8_t Event_InsertSubscription(eventHandler_t* obj, messageTypes_t type)
     {
         if(obj->initialized)
         {
-            LOG_ENTRY(FC_SerialIOtx_e, obj, "0x%08x Failed to subscribe to message: 0x%08x", obj->handlerId, type);
+            LOG_ENTRY(obj, "0x%08x Failed to subscribe to message: 0x%08x", obj->handlerId, type);
         }
         else
         {
@@ -704,7 +704,7 @@ uint8_t Event_FireCB(eventHandler_t* obj, moduleMsg_t* event_data)
 {
     if(!obj || !event_data)
     {
-        LOG_ENTRY(FC_SerialIOtx_e, obj, "Event: Error. event_data NULL, handler: 0x%08x.", obj->handlerId);
+        LOG_ENTRY(obj, "Event: Error. event_data NULL, handler: 0x%08x.", obj->handlerId);
         return 0;
     }
     if(obj->eventFcns[event_data->type])

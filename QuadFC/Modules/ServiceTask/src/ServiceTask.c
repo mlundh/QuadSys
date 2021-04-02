@@ -22,8 +22,9 @@
 * THE SOFTWARE.
 */
 #include <string.h>
-#include "../inc/paramAndLogTask.h"
+#include "../inc/ServiceTask.h"
 #include "Parameters/inc/paramMasterHandler.h"
+#include "Debug/inc/debug_handler.h"
 #include "Log/inc/logHandler.h"
 #include "QuadFC/QuadFC_SPI.h"
 #include "BoardConfig.h"
@@ -31,27 +32,29 @@
 #include "Messages/inc/Msg_Log.h"
 
 
-typedef struct paramAndLogTask
+typedef struct serviceTask
 {
     eventHandler_t *evHandler;
     LogHandler_t *logHandler;
     ParamMaster_t *paramMaster;
+    debug_handler_t* debugHandler;
+} serviceTask_t;
 
-} paramAndLogTask_t;
-void PL_Task(void *pvParameters);
-uint8_t PL_HandleLog(eventHandler_t *obj, void *data, moduleMsg_t *msg);
+void Service_Task(void *pvParameters);
+uint8_t Service_HandleLog(eventHandler_t *obj, void *data, moduleMsg_t *msg);
 
-void PL_CreateTask(eventHandler_t *eventHandlerParam)
+void Service_CreateTask(eventHandler_t *eventHandler)
 {
-    paramAndLogTask_t *taskParam = pvPortMalloc(sizeof(paramAndLogTask_t));
+    serviceTask_t *taskParam = pvPortMalloc(sizeof(serviceTask_t));
     if (!taskParam)
     {
         for (;;)
         {
         }
     }
-
-    taskParam->evHandler = eventHandlerParam;
+    
+    taskParam->evHandler = eventHandler;
+    taskParam->debugHandler = Debug_CreateHandler(taskParam->evHandler);
     taskParam->logHandler = LogHandler_CreateObj(0, taskParam->evHandler, NULL, "LogM", 1);
     taskParam->paramMaster = ParamMaster_CreateObj(taskParam->evHandler);
 
@@ -62,7 +65,7 @@ void PL_CreateTask(eventHandler_t *eventHandlerParam)
         }
     }
 
-    Event_RegisterCallback(taskParam->evHandler, Msg_Log_e, PL_HandleLog, taskParam->logHandler);
+    Event_RegisterCallback(taskParam->evHandler, Msg_Log_e, Service_HandleLog, taskParam->logHandler);
 
     uint8_t rspSpi = SpiMaster_Init(FRAM_MEM_SPI_BUS);
     if (!rspSpi)
@@ -78,8 +81,8 @@ void PL_CreateTask(eventHandler_t *eventHandlerParam)
     /* Create the freeRTOS tasks responsible for communication.*/
     portBASE_TYPE create_result;
 
-    create_result = xTaskCreate(PL_Task,                      /* The task that implements the transmission of messages. */
-                                (const char *const) "Param&Log", /* Name, debugging only.*/
+    create_result = xTaskCreate(Service_Task,                      /* The task that implements the transmission of messages. */
+                                (const char *const) "Service", /* Name, debugging only.*/
                                 500,                             /* The size of the stack allocated to the task. */
                                 (void *)taskParam,                 /* Pass the task parameters to the task. */
                                 configMAX_PRIORITIES - 3,        /* The priority allocated to the task. */
@@ -94,9 +97,9 @@ void PL_CreateTask(eventHandler_t *eventHandlerParam)
     }
 }
 
-void PL_Task(void *pvParameters)
+void Service_Task(void *pvParameters)
 {
-    paramAndLogTask_t * obj = (paramAndLogTask_t *) pvParameters;
+    serviceTask_t * obj = (serviceTask_t *) pvParameters;
 
     ParamMaster_InitMaster(obj->paramMaster);
     for (;;)
@@ -108,7 +111,7 @@ void PL_Task(void *pvParameters)
 }
 
 #define LOG_MSG_REPLY_LENGTH (255)
-uint8_t PL_HandleLog(eventHandler_t *obj, void *data, moduleMsg_t *msg)
+uint8_t Service_HandleLog(eventHandler_t *obj, void *data, moduleMsg_t *msg)
 {
     if (!obj || !data || !msg)
     {

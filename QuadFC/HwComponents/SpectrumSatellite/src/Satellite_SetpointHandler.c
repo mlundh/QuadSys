@@ -281,10 +281,10 @@ uint8_t SatSpHandler_HandleSatFrame(eventHandler_t* obj, void* data, moduleMsg_t
     // too closely, it is because of multiple receivers. Disregard one of them.
     if(ticksSinceLast <= 1)
     {
-        LOG_DBG_ENTRY(FC_SerialIOtx_e, setpointHobj->evHandler, "Dropping an SP.");
+        LOG_DBG_ENTRY( setpointHobj->evHandler, "Dropping an SP.");
         return 1;
     }
-    LOG_DBG_ENTRY(FC_SerialIOtx_e, setpointHobj->evHandler, "New SP.");
+    LOG_DBG_ENTRY( setpointHobj->evHandler, "New SP.");
 
     setpointHobj->timeAtLastNewSp = ticks;
     spektrum_data_t spectrumData = Msg_SpectrumDataGetData(msg);

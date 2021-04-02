@@ -21,16 +21,14 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 * THE SOFTWARE.
 */
-#ifndef __PARAMANDLOGTASK_H__
-#define __PARAMANDLOGTASK_H__
+#ifndef __SERVICETASK_H__
+#define __SERVICETASK_H__
 
 #include <stdint.h>
 #include "Messages/inc/common_types.h"
 #include "EventHandler/inc/event_handler.h"
 
-void PL_CreateTask(eventHandler_t* eventHandlerParam );
+void Service_CreateTask(eventHandler_t* eventHandlerParam );
 
-
-
-#endif // __PARAMANDLOGTASK_H__
+#endif // __SERVICETASK_H__
 

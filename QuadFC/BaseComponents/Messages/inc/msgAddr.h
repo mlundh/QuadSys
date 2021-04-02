@@ -26,6 +26,7 @@ typedef enum
 	RC_SetpointGen_e = 0x208,
 	RC_SetpointGen2_e = 0x209,
 	FC_eventSys_e = 0x20a,
+	FC_AppLog_e = 0x20b,
 
 }msgAddr_t;
 
@@ -44,9 +45,9 @@ typedef struct addressMap {
     char string[40];
 } addressMap_t;
 
-#define NR_ADDRESSES (22)
+#define NR_ADDRESSES (23)
 
-addressMap_t enumStringMap[22];
+addressMap_t enumStringMap[23];
 
 char* getStrFromAddr(int);
 

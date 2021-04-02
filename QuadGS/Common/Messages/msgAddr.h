@@ -30,6 +30,7 @@ typedef enum
 	RC_SetpointGen_e = 0x208,
 	RC_SetpointGen2_e = 0x209,
 	FC_eventSys_e = 0x20a,
+	FC_AppLog_e = 0x20b,
 
 }msgAddr_t;
 
@@ -65,6 +66,7 @@ static const std::map<int, std::string> msgAddrStr =
 	{0x208, "RC_SetpointGen_e"},
 	{0x209, "RC_SetpointGen2_e"},
 	{0x20a, "FC_eventSys_e"},
+	{0x20b, "FC_AppLog_e"},
 
 };
 
@@ -92,6 +94,7 @@ static const std::map<std::string, int> msgAddrfromStr =
 	{"RC_SetpointGen_e", 0x208},
 	{"RC_SetpointGen2_e", 0x209},
 	{"FC_eventSys_e", 0x20a},
+	{"FC_AppLog_e", 0x20b},
 
 };
 

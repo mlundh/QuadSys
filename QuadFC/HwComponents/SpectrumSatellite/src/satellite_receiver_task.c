@@ -534,7 +534,7 @@ uint8_t Satellite_BindCB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
 
                 if(quitBind != 1)
                 {
-                    LOG_ENTRY(FC_SerialIOtx_e,satellite->evHandler, "Binding RC.");
+                    LOG_ENTRY(satellite->evHandler, "Binding RC.");
                     for (size_t i = 0; i < satellite->bindMode; i++)
                     {
                         QuadFC_SerialSetPin(satellite->uartNr, stateReset, rx);
@@ -546,7 +546,7 @@ uint8_t Satellite_BindCB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
                 }
                 else
                 {
-                    LOG_ENTRY(FC_SerialIOtx_e,satellite->evHandler, "Quitting binding process.");
+                    LOG_ENTRY(satellite->evHandler, "Quitting binding process.");
                 }
                 
                 // Reconfigure gpio back to rx.
@@ -554,14 +554,14 @@ uint8_t Satellite_BindCB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
             }
             else
             {
-                LOG_ENTRY(FC_SerialIOtx_e,satellite->evHandler, "Not able to re-configure pin.");
+                LOG_ENTRY(satellite->evHandler, "Not able to re-configure pin.");
                 //TODO return not supported message.
             }
             
         }
         else
         {
-            LOG_ENTRY(FC_SerialIOtx_e,satellite->evHandler, "Unsupported bind mode. Please configure a different bind mode.");
+            LOG_ENTRY(satellite->evHandler, "Unsupported bind mode. Please configure a different bind mode.");
             //TODO return not supported message.
         }
         
@@ -569,7 +569,7 @@ uint8_t Satellite_BindCB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
     }
     else
     {
-        LOG_ENTRY(FC_SerialIOtx_e,satellite->evHandler, "Only allowed to enter bind in disarmed mode.");
+        LOG_ENTRY(satellite->evHandler, "Only allowed to enter bind in disarmed mode.");
     }
     return 1;
 }
