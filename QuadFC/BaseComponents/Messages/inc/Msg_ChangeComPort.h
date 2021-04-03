@@ -1,7 +1,7 @@
 /*
- * communication_tasks.h
+ * Msg_ChangeComPort.c
  *
- * Copyright (C) 2015 Martin Lundh
+ * Copyright (C) 2019 Martin Lundh
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,19 +22,27 @@
  * THE SOFTWARE.
  */
 
+#ifndef MODULES_MESSAGES_INC_MSG_CHANGECOMPORT_H_
+#define MODULES_MESSAGES_INC_MSG_CHANGECOMPORT_H_
 
-
-#ifndef COMMUNICATION_TASKS_H_
-#define COMMUNICATION_TASKS_H_
-
-#include <stdint.h>
+#include "MsgBase/inc/message_base.h"
 #include "Messages/inc/common_types.h"
-#include "EventHandler/inc/event_handler.h"
+#include "Messages/inc/msg_enums.h"
+#include "Messages/inc/msgAddr.h"
 
-/**
- * Create the communication tasks. These tasks are responsible for
- * communication with external components such as QuadGS. 
- */
-void Com_CreateTasks(eventHandler_t* eventHandlerRx, eventHandler_t* eventHandlerTx, uint32_t uartNrUSB, uint32_t uartNrWirless);
 
-#endif /* COMMUNICATION-TASKS-H- */
+
+moduleMsg_t* Msg_ChangeComPortCreate(uint32_t destination, uint8_t msgNr
+    , uint32_t uartNr);
+
+uint32_t Msg_ChangeComPortGetUartnr(moduleMsg_t* msg);
+
+void Msg_ChangeComPortSetUartnr(moduleMsg_t* msg, uint32_t uartNr);
+
+
+uint8_t* Msg_ChangeComPortSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
+
+moduleMsg_t* Msg_ChangeComPortDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+#endif /* MODULES_MESSAGES_INC_MSG_CHANGECOMPORT_H_ */
+

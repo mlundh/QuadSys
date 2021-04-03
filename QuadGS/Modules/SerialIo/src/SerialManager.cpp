@@ -156,7 +156,7 @@ namespace QuadGS
 
 	std::string Serial_Manager::testSerial(std::string path)
 	{
-		Msg_TestTransmission::ptr msg = std::make_unique<Msg_TestTransmission>(msgAddr_t::mTransmissionAddr, 0xDEADBEEF, "Test string\0");
+		Msg_TestTransmission::ptr msg = std::make_unique<Msg_TestTransmission>(msgAddr_t::FC_Param_e, 0xDEADBEEF, "Test string\0");
 		std::string result = "Test message sent!";
 		sendMsg(std::move(msg));
 		return result;

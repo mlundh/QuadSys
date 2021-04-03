@@ -46,6 +46,7 @@ enum messageTypes
 	Msg_ParamFc_e,
 	Msg_SpectrumData_e,
 	Msg_ValidSp_e,
+	Msg_ChangeComPort_e,
 
 	Msg_LastType_e,
 };
@@ -93,6 +94,7 @@ static const std::vector<std::string> messageTypesStr =
 	"Msg_ParamFc",
 	"Msg_SpectrumData",
 	"Msg_ValidSp",
+	"Msg_ChangeComPort",
 
 	"Msg_LastType",
 };

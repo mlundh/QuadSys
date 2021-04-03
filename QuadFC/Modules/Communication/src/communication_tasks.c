@@ -29,7 +29,9 @@
 #include "Communication/inc/communication_tasks.h"
 #include "Messages/inc/Msg_Parser.h"
 #include "Messages/inc/Msg_Transmission.h"
+#include "Messages/inc/Msg_ChangeComPort.h"
 #include "BoardConfig.h"
+#include "Components/Parameters/inc/paramHandler.h"
 
 
 
@@ -62,7 +64,12 @@ typedef struct RxCom
     SLIP_Parser_t* parser;
     uint8_t receive_buffer[COM_RECEIVE_BUFFER_LENGTH];
     eventHandler_t* evHandler;
-
+    uint32_t uartNrUSB;
+    uint32_t uartNrWirless;
+    uint32_t busNr;
+    uint32_t paramBusNr;
+    uint32_t paramPrevBusNr;
+    paramHander_t* paramHandler;
 }RxCom_t;
 
 
@@ -74,7 +81,9 @@ typedef struct TxCom
     TransmissionCtrl transmission;
     uint8_t serializeBuffer[COM_PACKET_LENGTH_MAX];
     uint32_t serializebufferSize;
-
+    uint32_t uartNrUSB;
+    uint32_t uartNrWirless;
+    uint32_t busNr;
 }TxCom_t;
 
 
@@ -82,13 +91,13 @@ typedef struct TxCom
  * Initialize the communication module.
  * @return    1 if OK, 0 otherwise.
  */
-TxCom_t* Com_InitTx(eventHandler_t* eventHandler);
+TxCom_t* Com_InitTx(eventHandler_t* eventHandler, uint32_t uartNrUSB, uint32_t uartNrWirless);
 
 /**
  * Initialize the communication module.
  * @return    1 if OK, 0 otherwise.
  */
-RxCom_t* Com_InitRx(eventHandler_t* eventHandler);
+RxCom_t* Com_InitRx(eventHandler_t* eventHandler, uint32_t uartNrUSB, uint32_t uartNrWirless);
 
 
 /**
@@ -108,8 +117,10 @@ static void Com_RxTask( void *pvParameters );
 
 uint8_t Com_TxTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg);
 
+uint8_t Com_TxChangePort(eventHandler_t* obj, void* data, moduleMsg_t* msg);
 
-TxCom_t* Com_InitTx(eventHandler_t* eventHandler)
+
+TxCom_t* Com_InitTx(eventHandler_t* eventHandler, uint32_t uartNrUSB, uint32_t uartNrWirless)
 {
     TxCom_t* taskParam = pvPortMalloc(sizeof(TxCom_t));
     if(!taskParam)
@@ -122,7 +133,9 @@ TxCom_t* Com_InitTx(eventHandler_t* eventHandler)
     taskParam->transmission = transmission_OK;
     taskParam->serializeBuffer[0] = '\0';
     taskParam->serializebufferSize = COM_PACKET_LENGTH_MAX;
-
+    taskParam->uartNrUSB = uartNrUSB;
+    taskParam->uartNrWirless = uartNrWirless;
+    taskParam->busNr = uartNrUSB;
 
     if( !taskParam->txSLIP || !taskParam->evHandler)
     {
@@ -134,12 +147,13 @@ TxCom_t* Com_InitTx(eventHandler_t* eventHandler)
     Event_RegisterPortFunction(taskParam->evHandler, Com_TxSend, taskParam);
 
     Event_RegisterCallback(taskParam->evHandler, Msg_Transmission_e, Com_TxTransmission, taskParam);
+    Event_RegisterCallback(taskParam->evHandler, Msg_ChangeComPort_e, Com_TxChangePort, taskParam);
 
     return taskParam;
 }
 
 
-RxCom_t* Com_InitRx(eventHandler_t* eventHandler)
+RxCom_t* Com_InitRx(eventHandler_t* eventHandler, uint32_t uartNrUSB, uint32_t uartNrWirless)
 {
     /* Create the queue used to pass things to the display task*/
     RxCom_t* taskParam = pvPortMalloc(sizeof(RxCom_t));
@@ -151,6 +165,14 @@ RxCom_t* Com_InitRx(eventHandler_t* eventHandler)
     taskParam->SLIP =  Slip_Create(COM_PACKET_LENGTH_MAX);
     taskParam->evHandler = eventHandler;
     taskParam->parser = SlipParser_Create(COM_PACKET_LENGTH_MAX);
+    taskParam->uartNrUSB = uartNrUSB;
+    taskParam->uartNrWirless = uartNrWirless;
+    taskParam->busNr = uartNrUSB;
+    taskParam->paramBusNr = 0;
+    taskParam->paramPrevBusNr = taskParam->paramBusNr;
+    taskParam->paramHandler = ParamHandler_CreateObj(1,eventHandler, "ComRx");
+    Param_CreateObj(0, variable_type_uint32, readWrite, &taskParam->paramBusNr, "UartBus", ParamHandler_GetParam(taskParam->paramHandler));
+
     if(!taskParam->SLIP || !taskParam->evHandler  || !taskParam->parser)
     {
         return NULL;
@@ -159,13 +181,13 @@ RxCom_t* Com_InitRx(eventHandler_t* eventHandler)
     return taskParam;
 }
 
-void Com_CreateTasks(eventHandler_t* eventHandlerRx, eventHandler_t* eventHandlerTx )
+void Com_CreateTasks(eventHandler_t* eventHandlerRx, eventHandler_t* eventHandlerTx, uint32_t uartNrUSB, uint32_t uartNrWirless)
 {
     uint8_t* receive_buffer_driver = pvPortMalloc(
             sizeof(uint8_t) * COM_PACKET_LENGTH_MAX );
 
-    RxCom_t *paramRx = Com_InitRx(eventHandlerRx);
-    TxCom_t *paramTx = Com_InitTx(eventHandlerTx);
+    RxCom_t *paramRx = Com_InitRx(eventHandlerRx, uartNrUSB, uartNrWirless);
+    TxCom_t *paramTx = Com_InitTx(eventHandlerTx, uartNrUSB, uartNrWirless);
     crcTable =  pvPortMalloc( sizeof(crc_data_t) * CRC_ARRAY_SIZE );
 
 
@@ -178,7 +200,6 @@ void Com_CreateTasks(eventHandler_t* eventHandlerRx, eventHandler_t* eventHandle
 
     QuadFC_SerialOptions_t opt = {
             115200,
-            //57600,
             EightDataBits,
             NoParity,
             OneStopBit,
@@ -188,7 +209,7 @@ void Com_CreateTasks(eventHandler_t* eventHandlerRx, eventHandler_t* eventHandle
     };
 
 
-    uint8_t rsp = QuadFC_SerialInit(COM_SERIAL_BUS, &opt);
+    uint8_t rsp = QuadFC_SerialInit(uartNrUSB, &opt);
     if(!rsp)
     {
         /*Error - Could not create serial interface.*/
@@ -196,7 +217,20 @@ void Com_CreateTasks(eventHandler_t* eventHandlerRx, eventHandler_t* eventHandle
         for ( ;; )
         {}
     }
-    rsp = QuadFC_SerialInit(COM_WIRELESS_SERIAL_BUS, &opt);
+
+
+    QuadFC_SerialOptions_t optWl = {
+            57600,
+            EightDataBits,
+            NoParity,
+            OneStopBit,
+            NoFlowControl,
+            receive_buffer_driver,
+            COM_PACKET_LENGTH_MAX
+    };
+
+
+    rsp = QuadFC_SerialInit(uartNrWirless, &optWl);
     if(!rsp)
     {
         /*Error - Could not create serial interface.*/
@@ -209,19 +243,19 @@ void Com_CreateTasks(eventHandler_t* eventHandlerRx, eventHandler_t* eventHandle
     /* Create the freeRTOS tasks responsible for communication.*/
     portBASE_TYPE create_result_rx, create_result_tx;
 
-    create_result_tx = xTaskCreate( Com_TxTask,           /* The task that implements the transmission of messages. */
-            (const char *const) "ComTX",                  /* Name, debugging only.*/
+    create_result_tx = xTaskCreate( Com_TxTask,            /* The task that implements the transmission of messages. */
+            (const char *const)"ComTx",                    /* Name, debugging only.*/
             500,                                           /* The size of the stack allocated to the task. */
-            (void *) paramTx,                                /* Pass the task parameters to the task. */
+            (void *) paramTx,                              /* Pass the task parameters to the task. */
             configMAX_PRIORITIES-3,                        /* The priority allocated to the task. */
             NULL );                                        /* No handle required. */
 
-    create_result_rx = xTaskCreate( Com_RxTask,          /* The task that implements the receiveing of messages. */
-            (const char *const) "ComRX",                  /* Name, debugging only. */
-            500,                                           /* The size of the stack allocated to the task. */
-            (void *) paramRx,                                /* Pass the task parameters to the task. */
-            configMAX_PRIORITIES-3,                        /* The priority allocated to the task. */
-            NULL );                                        /* No handle required. */
+    create_result_rx = xTaskCreate( Com_RxTask,             /* The task that implements the receiveing of messages. */
+            (const char *const)"ComTx",                     /* Name, debugging only. */
+            500,                                            /* The size of the stack allocated to the task. */
+            (void *) paramRx,                               /* Pass the task parameters to the task. */
+            configMAX_PRIORITIES-3,                         /* The priority allocated to the task. */
+            NULL );                                         /* No handle required. */
 
     if ( create_result_tx != pdTRUE || create_result_rx != pdTRUE)
     {
@@ -306,7 +340,7 @@ uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
             QuadFC_Serial_t serialData;
             serialData.buffer = TxObj->txSLIP->payload;
             serialData.bufferLength = TxObj->txSLIP->packetSize;
-            result = QuadFC_SerialWrite(&serialData, COM_SERIAL_BUS, portMAX_DELAY);
+            result = QuadFC_SerialWrite(&serialData, TxObj->busNr, portMAX_DELAY);
 
             if ( !result )
             {
@@ -362,6 +396,21 @@ void Com_RxTask( void *pvParameters )
             //received event and processed it successfully! 
             (void)(obj);
         }
+        if(obj->paramBusNr != obj->paramPrevBusNr) // If the parameter has changed then make sure it has the correct bus number.
+        {
+            if(obj->paramBusNr == 0)
+            {
+                obj->busNr = obj->uartNrUSB;
+            }
+            else
+            {
+                obj->busNr = obj->uartNrWirless;
+            }
+            obj->paramPrevBusNr = obj->paramBusNr;
+            moduleMsg_t* msg = Msg_ChangeComPortCreate(FC_Broadcast_e, 0, obj->busNr);
+            Event_Send(obj->evHandler, msg);
+        }
+
         /*--------------------------Receive the packet---------------------*/
 
         QuadFC_Serial_t serialData;
@@ -369,7 +418,7 @@ void Com_RxTask( void *pvParameters )
         serialData.buffer = obj->receive_buffer;
         serialData.bufferLength = COM_RECEIVE_BUFFER_LENGTH;
 
-        uint32_t nr_bytes_received = QuadFC_SerialRead(&serialData, COM_SERIAL_BUS, 1);
+        uint32_t nr_bytes_received = QuadFC_SerialRead(&serialData, obj->busNr, 1);
         if(nr_bytes_received)
         {
             //LOG_DBG_ENTRY( obj->evHandler, "Received %ld", nr_bytes_received);
@@ -466,3 +515,21 @@ uint8_t Com_TxTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg)
     return 1;
 }
 
+uint8_t Com_TxChangePort(eventHandler_t* obj, void* data, moduleMsg_t* msg)
+{
+    if(!obj || ! data || !msg)
+    {
+        return 0;
+    }
+    TxCom_t* handlerObj = (TxCom_t*)data; // The data should always be the handler object when a Msg_paramSave is received.
+    uint32_t uartNr = Msg_ChangeComPortGetUartnr(msg);
+    if(uartNr == handlerObj->uartNrWirless)
+    {
+        handlerObj->busNr = handlerObj->uartNrWirless;
+    }
+    else
+    {
+        handlerObj->busNr = handlerObj->uartNrUSB;
+    }
+    return 1;
+}

@@ -73,7 +73,7 @@ int main( void )
   eventHandler_t* evHandlerAppLog = Event_CreateHandler(FC_AppLog_e,0);
 
 
-  if(!evHandlerM || !evHandlerComRx || !evHandlerLed || !evHandlerSatelliteInternal || !evHandlerSatelliteExternal || !evHandlerService || !evHandlerAppLog)
+  if(!evHandlerM || !evHandlerComRx || !evHandlerLed || !evHandlerSatelliteInternal || !evHandlerSatelliteExternal || !evHandlerService || !evHandlerAppLog )
   {
     for(;;); //Error!
   }
@@ -84,7 +84,8 @@ int main( void )
   Satellite_CreateReceiverTask(evHandlerSatelliteInternal, RC1_SERIAL_BUS, rc1PwrCtrl, '1');
   Satellite_CreateReceiverTask(evHandlerSatelliteExternal, RC2_SERIAL_BUS, rc2PwrCtrl, '2');
   Led_CreateLedControlTask(evHandlerLed);
-  Com_CreateTasks(evHandlerComRx, evHandlerComTx); // Creates two tasks, RX and TX.
+  Com_CreateTasks(evHandlerComRx, evHandlerComTx, COM_SERIAL_BUS, COM_WIRELESS_SERIAL_BUS); // Creates two tasks, RX and TX.
+
   Service_CreateTask(evHandlerService);
   AppLog_CreateTask(evHandlerAppLog);
 

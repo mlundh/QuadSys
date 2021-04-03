@@ -49,6 +49,7 @@
 #include "../../Messages/inc/Msg_ParamFc.h"
 #include "../../Messages/inc/Msg_SpectrumData.h"
 #include "../../Messages/inc/Msg_ValidSp.h"
+#include "../../Messages/inc/Msg_ChangeComPort.h"
 
 
 moduleMsg_t* Msg_Parse(uint8_t* buffer, uint32_t bufferLength)
@@ -225,6 +226,12 @@ moduleMsg_t* Msg_Parse(uint8_t* buffer, uint32_t bufferLength)
         break;
     }
     
+    case Msg_ChangeComPort_e:
+    {
+        msgResult = Msg_ChangeComPortDeserialize(buffer, bufferLength);
+        break;
+    }
+    
     default:
     {
     }
@@ -373,6 +380,11 @@ uint8_t* Msg_Serializer(moduleMsg_t* msg, uint8_t* buffer, uint32_t bufferLength
         case Msg_ValidSp_e:
     {
         result = Msg_ValidSpSerialize(msg, buffer, bufferLength);
+        break;
+    }
+        case Msg_ChangeComPort_e:
+    {
+        result = Msg_ChangeComPortSerialize(msg, buffer, bufferLength);
         break;
     }
     
