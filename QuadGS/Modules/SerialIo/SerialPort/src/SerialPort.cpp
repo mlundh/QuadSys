@@ -272,7 +272,7 @@ void SerialPort::readCallback( const boost::system::error_code& error,
 			buffers_begin(mStreambuf.data()) + bytes_transferred};
 		mStreambuf.consume(bytes_transferred);
 		mReceivedData.append(data);
-
+		LOG_MESSAGE_TRACE(asioLog, "Read  Callback: length = " << mReceivedData.length());
 		if(mReceivedData.length() < 4)
 		{
 			read();
@@ -313,7 +313,7 @@ void SerialPort::readCallback( const boost::system::error_code& error,
 	catch (const std::runtime_error& e)
 	{
 		LOG_ERROR(asioLog, e.what() );
-		return;
+		mReceivedData.erase();
 	}
 	read();
 }

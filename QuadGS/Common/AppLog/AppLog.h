@@ -89,7 +89,7 @@ public:
 
 protected: 
     std::string mTag;
-    log_level mLogLevel = off;
+    log_level mLogLevel = warning;
     std::stringstream mMessage;
     log_level mMessageLogLevel = info;
     sendFunction_t mSendFunction;
