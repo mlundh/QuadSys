@@ -123,7 +123,7 @@ uint8_t AppLogHandler_TestReport(TestFw_t* obj)
 
 uint8_t AppLogHandler_TestReportMacro(TestFw_t* obj)
 {
-    eventHandler_t* evHandlerAppLog = Event_CreateHandler(FC_SerialIOrx_e, 1);
+    eventHandler_t* evHandlerAppLog = Event_CreateHandler(FC_AppLog_e, 1);
     eventHandler_t* evHandlerTester = Event_CreateHandler(FC_Led_e, 0);
     AppLogHandler_t* logobj = AppLogHandler_Create(evHandlerAppLog);
 
@@ -138,7 +138,6 @@ uint8_t AppLogHandler_TestReportMacro(TestFw_t* obj)
         TEST_REPORT_ERROR(obj, "Could not create a AppLogHandler or eventHandler object(s).");
         result = 0;
     }
-    portENTER_CRITICAL();
     char orig[] = {"hello!"};
     LOG_ENTRY(evHandlerTester, "%s", orig);
 
@@ -161,7 +160,6 @@ uint8_t AppLogHandler_TestReportMacro(TestFw_t* obj)
         TEST_REPORT_ERROR(obj, "expected: \"%s\" \ngot: \"%s\"!.", expected, (char*)buffer);
         result = 0;
     }
-    portEXIT_CRITICAL();
 
     AppLogHandler_Delete(logobj);
     Event_DeleteHandler(evHandlerAppLog);

@@ -251,7 +251,7 @@ void Com_CreateTasks(eventHandler_t* eventHandlerRx, eventHandler_t* eventHandle
             NULL );                                        /* No handle required. */
 
     create_result_rx = xTaskCreate( Com_RxTask,             /* The task that implements the receiveing of messages. */
-            (const char *const)"ComTx",                     /* Name, debugging only. */
+            (const char *const)"ComRx",                     /* Name, debugging only. */
             500,                                            /* The size of the stack allocated to the task. */
             (void *) paramRx,                               /* Pass the task parameters to the task. */
             configMAX_PRIORITIES-3,                         /* The priority allocated to the task. */
