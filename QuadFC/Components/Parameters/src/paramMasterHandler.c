@@ -21,6 +21,7 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 * THE SOFTWARE.
 */
+//#define DEBUG
 
 #include "../inc/paramMasterHandler.h"
 #include "Messages/inc/Msg_ParamFc.h"
@@ -33,7 +34,6 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
-// #define DEBUG
 
 #include "Components/AppLog/inc/AppLog.h"
 
@@ -259,12 +259,15 @@ uint8_t ParamMaster_HandleParamMsg(eventHandler_t *obj, void *data, moduleMsg_t 
                 }
                 address++;
             }
+
             if (read_status == SLIP_StatusNok)
             {
                 LOG_ENTRY(obj, "Param Load: Error. Parser failed.");
             }
+
             LOG_DBG_ENTRY( obj, "Param Load: Read %d at %d", (int)(address - startAddress), (int)startAddress);
             printPacket(obj, packet);
+
             // Whole package or error...
             result &= (read_status == SLIP_StatusOK);
 
@@ -281,7 +284,7 @@ uint8_t ParamMaster_HandleParamMsg(eventHandler_t *obj, void *data, moduleMsg_t 
             }
             else
             {
-                LOG_ENTRY(obj, "Param Load: Error. Deserialize failed.");
+                LOG_ENTRY(obj, "Param Load: SLIP NOK");
                 handlerObj->actionOngoing = paramReady; // Reset.
                 break;
             }
@@ -294,7 +297,7 @@ uint8_t ParamMaster_HandleParamMsg(eventHandler_t *obj, void *data, moduleMsg_t 
             {
                 Msg_Delete(&loadedMsg);
                 Slip_Delete(packet);
-                LOG_ENTRY(obj, "Param Load: Error. Failed to read param.");
+                LOG_ENTRY(obj, "Param Load: Error. Failed to read param, issue with sequenceNr?.");
                 handlerObj->actionOngoing = paramReady; // Reset.
                 break;
             }
