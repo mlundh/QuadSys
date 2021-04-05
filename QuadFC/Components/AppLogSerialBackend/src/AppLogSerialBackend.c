@@ -42,7 +42,7 @@ AppLogBackend_t* AppLogBackend_CreateObj()
         return NULL;
     }
     QuadFC_SerialOptions_t opt = {
-        115200,
+        460800,
         EightDataBits,
         NoParity,
         OneStopBit,
