@@ -307,6 +307,7 @@ uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 
     if(Msg_GetType(msg) != Msg_Transmission_e)
     {
+        TxObj->msgNr = (TxObj->msgNr+1) % 255;
         Msg_SetMsgNr(msg, TxObj->msgNr);
     }
 
@@ -354,22 +355,21 @@ uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
             }
             if(!Event_WaitForEvent(TxObj->evHandler, Msg_Transmission_e, 1, 0, 1000)) // wait for the transmission event.
             {
-                reTransmittNr ++;
-                LOG_ENTRY(obj, "COM TX: Error: Transfer failed, retransmitt. Message nr: %lu", Msg_GetMsgNr(msg));
+                LOG_ENTRY(obj, "COM TX: Timeout: Transmission msg not received, retransmitt. Message nr: %lu", Msg_GetMsgNr(msg));
             }
-            else if(TxObj->transmission == transmission_NOK) // We got a transmission message. Check if it was a NOK message.
+            if(TxObj->transmission == transmission_NOK) // We got a transmission message. Check if it was a NOK message.
             {
                 LOG_ENTRY(obj, "COM TX: Timeout or NOK, retransmitt. Message nr: %lu", Msg_GetMsgNr(msg));
                 reTransmittNr++; // If we got a tranmission_NOK message we should also re-transmitt.
+
+                if(reTransmittNr >= NR_RETRANSMITT)
+                {
+                    LOG_ENTRY(obj, "COM TX: Transmission failed, dropping package. Message nr: %lu", Msg_GetMsgNr(msg));
+                	TxObj->transmission = transmission_OK; // We failed, and have notified this. Prepare for next message.
+                    break; // Retransmit failed.
+                }
             }
-            
-            if(reTransmittNr >= NR_RETRANSMITT)
-            {
-                LOG_ENTRY(obj, "COM TX: Transmission failed, dropping package. Message nr: %lu", Msg_GetMsgNr(msg));
-            	TxObj->transmission = transmission_OK; // We failed, and have notified this. Prepare for next message.
-                TxObj->msgNr = (TxObj->msgNr+1) % 255; // wrap at 255...
-                break; // Retransmit failed.
-            }
+
         }
 
         Event_HandleBufferedEvents(TxObj->evHandler); // We might have buffered events, handle them if we did!
@@ -389,7 +389,6 @@ void Com_RxTask( void *pvParameters )
 
     for ( ;; )
     {
-
         //Process incoming events.
         while(Event_Receive(obj->evHandler, 0) == 1)
         {
@@ -502,16 +501,12 @@ uint8_t Com_TxTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 
     if(handlerObj->msgNr != Msg_GetMsgNr(msg))
     {
-        LOG_ENTRY(obj, "COM: Message out of sync, expected: %d, got: %lu", handlerObj->msgNr, Msg_GetMsgNr(msg) );
+        LOG_ENTRY(obj, "COM: Message out of sync, expected: %d, got: %lu, re-transmitt!", handlerObj->msgNr, Msg_GetMsgNr(msg) );
     }
     else
     {
-        handlerObj->msgNr = (handlerObj->msgNr+1) % 255; // wrap at 255...
-        handlerObj->transmission = Msg_TransmissionGetStatus(msg); // stop transmission 
+        handlerObj->transmission = Msg_TransmissionGetStatus(msg); // stop transmission
     }
-    
-
-    // This stops re-transmit.
     return 1;
 }
 

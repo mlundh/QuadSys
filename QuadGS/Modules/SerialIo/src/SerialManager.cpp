@@ -218,6 +218,7 @@ namespace QuadGS
 		if (mMsgNrTx != transMsg->getMsgNr())
 		{
 			LOG_ERROR(log, "Ack does not match expected message number: " << (int)transMsg->getMsgNr() << " expected: " << (int)mMsgNrTx);
+			transMsg->setStatus(transmission_NOK); // It is NOK to have missmatched message numbers.
 		}
 		if (transMsg->getStatus() == transmission_OK)
 		{
@@ -227,7 +228,6 @@ namespace QuadGS
 		else
 		{
 			mTxSuccess = false;
-			mRetries++;
 			mTransmittDone.notify();
 		}
 	}
@@ -291,8 +291,7 @@ namespace QuadGS
 		{
 			LOG_MESSAGE_TRACE(logger, "Received OK/NOK msg nr: " << (int)msg->getMsgNr());
 		}
-		// Respond transmission OK and forward the message.
-		else
+		else // Respond transmission OK and forward the message.
 		{
 			LOG_MESSAGE_TRACE(logger, "Received msg nr: " << (int)msg->getMsgNr());
 
@@ -330,6 +329,8 @@ namespace QuadGS
 			// Do not expect a result, and do not re-transmitt a transmission message.
 			if (msg->getType() != Msg_Transmission_e)
 			{
+				mTxSuccess = false;
+				mRetries = 0;
 				mMsgNrTx = ((mMsgNrTx + 1) % 256);
 
 				msg->setMsgNr(mMsgNrTx);
@@ -340,13 +341,13 @@ namespace QuadGS
 				mTransmittDone.wait();
 				while (!mTxSuccess && (mRetries < NR_RETRIES))
 				{
+					LOG_WARNING(writerLog, "Transmission failed, resending msg nr: " << (int)msg->getMsgNr());
+					mRetries++;
 					msg->setMsgNr(mMsgNrTx);
 					startReadTimer();
 					msg = mPort->write(std::move(msg), writerLog);
-
-					LOG_WARNING(writerLog, "Transmission failed, resending msg nr: " << (int)msg->getMsgNr());
-
 					mTransmittDone.wait();
+					
 				}
 				if (!mTxSuccess)
 				{
@@ -395,13 +396,8 @@ namespace QuadGS
 		else
 		{
 			mTransmittDone.notify();
-			//mLogger.QuadLog(severity_level::warning, " Read timeout fired.");
 			LOG_WARNING(log, " Read timeout fired.");
 		}
-
-		//TODO add thread saftey measures!
-		mRetries++;
-
 		return;
 	}
 
