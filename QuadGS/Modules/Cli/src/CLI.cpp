@@ -59,6 +59,7 @@ CLI::CLI(msgAddr_t name)
 {
 	cli = this;
 	BuildPrompt();
+	el_hist_size = 1000;
 	read_history("QuadGS.hist");
 	rl_set_complete_func(&my_rl_complete);
 	rl_set_list_possib_func(&my_rl_list_possib);

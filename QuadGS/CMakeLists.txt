@@ -9,6 +9,7 @@ include(cmake/QuadGSUtils.cmake)
 
 SET(BUILD_TESTS "TRUE" CACHE BOOL "Build Tests")
 SET(WITH_VISION "TRUE" CACHE BOOL "Build with vision support.")
+SET(ASAN "TRUE" CACHE BOOL "Build with vision support.")
 SET(STOP_ON_ERROR "FALSE" CACHE BOOL "Stop build on first error.")
 
 #SET(CMAKE_VERBOSE_MAKEFILE ON)
@@ -33,8 +34,10 @@ IF(CMAKE_COMPILER_IS_GNUCXX)
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fmessage-length=0")
 ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 
-set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
-set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+if(ASAN)
+  set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+  set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+endif()
 
 # Set some warning flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -pedantic -Werror")
