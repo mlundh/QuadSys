@@ -282,12 +282,10 @@ void Com_TxTask( void *pvParameters )
     for ( ;; )
     {
         //Process incoming events.
-        while(Event_Receive(obj->evHandler, 0))
+        while(Event_Receive(obj->evHandler, 1))
         {}
         while(Event_ReceiveExternal(obj->evHandler, 0))
         {}
-        vTaskDelay(1);
-        // error, event receive should not fail...
     }
 
 }
