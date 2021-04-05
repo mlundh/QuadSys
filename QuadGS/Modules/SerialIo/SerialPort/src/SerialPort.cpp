@@ -36,8 +36,7 @@ namespace QuadGS {
 
 SerialPort::SerialPort(  boost::asio::io_service &io_service, sendFunction_t logSendFcn) 
 : mName( "unnamed" )
-, mBaudRate( 115200 )
-//, mBaudRate( 57600 )
+, mBaudRate( 460800 )
 , mFlowControl( b_a_sp::flow_control::none )
 , mParity( b_a_sp::parity::none )
 , mStopBits( b_a_sp::stop_bits::one )
