@@ -324,7 +324,7 @@ namespace QuadGS
 			QGS_ModuleMsgBase::ptr msg = mOutgoingFifo.dequeue();
 			if (!msg)
 			{
-				break;
+				continue;
 			}
 			// Do not expect a result, and do not re-transmitt a transmission message.
 			if (msg->getType() != Msg_Transmission_e)

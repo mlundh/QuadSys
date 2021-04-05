@@ -280,6 +280,7 @@ void SerialPort::readCallback( const boost::system::error_code& error,
 		}
 		
 		SlipPacket tmpSlip((const uint8_t*)mReceivedData.c_str(), mReceivedData.length(), false);
+		
 		mReceivedData.erase();
 		QGS_ModuleMsgBase::ptr msg = mParser.parse(std::vector<unsigned char>(tmpSlip.GetPayload()));
 		if(!msg)

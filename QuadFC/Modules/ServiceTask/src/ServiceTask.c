@@ -21,7 +21,11 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 * THE SOFTWARE.
 */
+#define DEBUG
+
+
 #include <string.h>
+#include <stdio.h>
 #include "../inc/ServiceTask.h"
 #include "Parameters/inc/paramMasterHandler.h"
 #include "Debug/inc/debug_handler.h"
@@ -30,8 +34,35 @@
 #include "BoardConfig.h"
 #include "QuadFC/QuadFC_Memory.h"
 #include "Messages/inc/Msg_Log.h"
+#include "AppLog/inc/AppLog.h"
 
 
+void printBuffer(eventHandler_t *obj, uint8_t *packet)
+{ // TODO!!
+#ifdef DEBUG
+    uint8_t array[400] = {0};
+    uint32_t len = strlen((char*)packet);
+    if(len > 400)
+    {
+        len = 400;
+    }
+
+    LOG_DBG_ENTRY( obj, "Log payload length: %ld", len);
+
+    for (int i = 0; i < len; i++)
+    {
+        if ((packet[i] >= 33) && (packet[i] <= 127))
+        {
+            sprintf((char *)array + i, "%c", (char)packet[i]);
+        }
+        else
+        {
+            sprintf((char *)array + i, "%c", '0');
+        }
+    }
+    LOG_DBG_ENTRY( obj, "Packet: %.*s", (int)220, array);
+#endif
+}
 typedef struct serviceTask
 {
     eventHandler_t *evHandler;
@@ -140,10 +171,14 @@ uint8_t Service_HandleLog(eventHandler_t *obj, void *data, moduleMsg_t *msg)
     {
         result = 1;
         moduleMsg_t *reply = Msg_LogCreate(Msg_GetSource(msg), 0, log_entry, LOG_MSG_REPLY_LENGTH);
-
-        LogHandler_AppendSerializedlogs(logObj, Msg_LogGetPayload(reply), Msg_LogGetPayloadbufferlength(reply));
+        uint8_t* payload = Msg_LogGetPayload(reply);
+        payload[0]='\0';
+        
+        LogHandler_AppendSerializedlogs(logObj, payload, Msg_LogGetPayloadbufferlength(reply));
         uint16_t len = strlen((char *)Msg_LogGetPayload(reply));
         Msg_LogSetPayloadlength(reply, len);
+
+        printBuffer(obj, Msg_LogGetPayload(reply));
 
         Event_Send(obj, reply);
     }

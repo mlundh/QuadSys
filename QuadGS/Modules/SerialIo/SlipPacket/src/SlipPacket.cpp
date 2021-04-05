@@ -37,7 +37,7 @@ namespace QuadGS {
 
 bool SlipPacket::mCrcInit(false);
 
-
+#define SLIP_MAX_LENGTH (512)
 
 
 
@@ -47,7 +47,7 @@ SlipPacket::SlipPacket(const data_t& data, bool isPayload)
 	if(isPayload)
 	{
 		mPayload = data;
-		mPacket.reserve(255);
+		mPacket.reserve(SLIP_MAX_LENGTH);
 		Encode();
 	}
 	else
@@ -55,7 +55,7 @@ SlipPacket::SlipPacket(const data_t& data, bool isPayload)
 		if((data[0] == frame_boundary_octet) && (data[data.size() - 1] == frame_boundary_octet))
 		{
 			mPacket = data;
-			mPayload.reserve(255);
+			mPayload.reserve(SLIP_MAX_LENGTH);
 			Decode();
 		}
 		else
@@ -66,13 +66,13 @@ SlipPacket::SlipPacket(const data_t& data, bool isPayload)
 
 }
 
-SlipPacket::SlipPacket(const uint8_t* data, uint8_t dataLength, bool isPayload)
+SlipPacket::SlipPacket(const uint8_t* data, uint32_t dataLength, bool isPayload)
 {
 	initCrc();
 	if(isPayload)
 	{
 		mPayload.assign(data, data + dataLength);
-		mPacket.reserve(255);
+		mPacket.reserve(SLIP_MAX_LENGTH);
 		Encode();
 	}
 	else
@@ -80,7 +80,7 @@ SlipPacket::SlipPacket(const uint8_t* data, uint8_t dataLength, bool isPayload)
 		if((data[0] == frame_boundary_octet) && (data[dataLength - 1] == frame_boundary_octet))
 		{
 			mPacket.assign(data, data + dataLength);
-			mPayload.reserve(255);
+			mPayload.reserve(SLIP_MAX_LENGTH);
 			Decode();
 		}
 		else
@@ -103,9 +103,9 @@ void SlipPacket::initCrc()
 		mCrcInit = true;
 	}
 }
-SlipPacket::ptr SlipPacket::Create(const uint8_t* data, uint8_t dataLength, bool isPayload)
+SlipPacket::ptr SlipPacket::Create(const uint8_t* data, uint32_t dataLength, bool isPayload)
 {
-	if((!data) || !(dataLength > 0) || !(dataLength < 255))
+	if((!data) || !(dataLength > 0) || !(dataLength < SLIP_MAX_LENGTH))
 	{
 		throw std::runtime_error("Payload length out of reach.");
 	}

@@ -476,12 +476,12 @@ uint8_t LogHandler_AppendNodeString(logNameQueueItems_t *items, uint8_t *buffer,
         // append name and update buf_index.
         strncat( (char *) buffer , (const char *) items->logNames[i].name, (unsigned short) MAX_PARAM_NAME_LENGTH);
         // append id "[xxx]"
-        strncat( (char *) buffer, (const char *) "[", (unsigned short) 1);
+        strcat( (char *) buffer, (const char *) "[");
         uint8_t pTemp[MAX_LOG_ID_DIGITS_ID];
         snprintf((char *) pTemp, MAX_LOG_ID_DIGITS_ID, "%lu",(uint32_t)items->logNames[i].id);
         strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_LOG_ID_DIGITS_ID);
-        strncat( (char *) buffer, (const char *) "]", (unsigned short) 1);
-        strncat( (char *) buffer, (const char *) "/", (unsigned short) 1);
+        strcat( (char *) buffer, (const char *) "]");
+        strcat( (char *) buffer, (const char *) "/");
     }
 
     return 1;
@@ -493,7 +493,9 @@ uint8_t LogHandler_AppendSerializedlogs(LogHandler_t* obj, uint8_t* buffer, uint
     {
         return 0;
     }
-    if(size < MAX_LOG_ENTRY_LENGTH)
+    uint32_t length = strlen((const char*)buffer);
+    uint32_t remainingSize = size - length;
+    if(remainingSize < MAX_LOG_ENTRY_LENGTH)
     {
         return 1;
     }
@@ -501,28 +503,29 @@ uint8_t LogHandler_AppendSerializedlogs(LogHandler_t* obj, uint8_t* buffer, uint
     uint32_t nrLogs = 0;
 
     {
-        uint8_t nr_entries = size / MAX_LOG_ENTRY_LENGTH;
+
+        uint8_t nr_entries = remainingSize / MAX_LOG_ENTRY_LENGTH;
         logEntry_t entries[nr_entries];
 
         result &= LogHandler_Getlogs(obj, entries, nr_entries, &nrLogs);
         for(int i = 0; i < nrLogs; i++)
         {
             uint8_t pTemp[MAX_LOG_ENTRY_DIGITS_DATA];
-            strncat( (char *) buffer, (const char *) "[", (unsigned short) 1);
+            strcat( (char *) buffer, (const char *) "[");
             snprintf((char *) pTemp, MAX_LOG_ENTRY_DIGITS_ID, "%lu",(uint32_t)entries[i].id);
             strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_LOG_ENTRY_DIGITS_ID);
-            strncat( (char *) buffer, (const char *) "]", (unsigned short) 1);
+            strcat( (char *) buffer, (const char *) "]");
 
-            strncat( (char *) buffer, (const char *) "[", (unsigned short) 1);
+            strcat( (char *) buffer, (const char *) "[");
             snprintf((char *) pTemp, MAX_LOG_ENTRY_DIGITS_TIME, "%lu",(uint32_t)entries[i].time);
             strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_LOG_ENTRY_DIGITS_TIME);
-            strncat( (char *) buffer, (const char *) "]", (unsigned short) 1);
+            strcat( (char *) buffer, (const char *) "]");
 
-            strncat( (char *) buffer, (const char *) "[", (unsigned short) 1);
+            strcat( (char *) buffer, (const char *) "[");
             snprintf((char *) pTemp, MAX_LOG_ENTRY_DIGITS_DATA, "%lu",(uint32_t)entries[i].data);
             strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_LOG_ENTRY_DIGITS_DATA);
-            strncat( (char *) buffer, (const char *) "]", (unsigned short) 1);
-            strncat( (char *) buffer, (const char *) "/", (unsigned short) 1);
+            strcat( (char *) buffer, (const char *) "]");
+            strcat( (char *) buffer, (const char *) "/");
         }
     }
     // We might have used less than max length for the data fields, call the function
@@ -530,11 +533,10 @@ uint8_t LogHandler_AppendSerializedlogs(LogHandler_t* obj, uint8_t* buffer, uint
     // no more data to get.
     if(result && (nrLogs > 0))
     {
-        uint32_t length = strlen((const char*)buffer);
-        if(length < size)
+        uint32_t lengthAfter = strlen((const char*)buffer);
+        if(lengthAfter < size)
         {
-            uint32_t newSize = size - length;
-            result &= LogHandler_AppendSerializedlogs(obj, buffer, newSize);
+            result &= LogHandler_AppendSerializedlogs(obj, buffer, size);
         }
 
     }

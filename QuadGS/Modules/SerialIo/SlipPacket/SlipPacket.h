@@ -53,7 +53,7 @@ public:
      * @param PayloadLength The length of the packet.
      * @return A pointer to the Slip packet.
      */
-    static ptr Create(const uint8_t* data, uint8_t dataLength, bool isPayload);
+    static ptr Create(const uint8_t* data, uint32_t dataLength, bool isPayload);
 
     /**
      * @brief Create slip packet from data.
@@ -79,7 +79,7 @@ public:
      */
     virtual ~SlipPacket();
 
-    SlipPacket(const uint8_t* data, uint8_t dataLength, bool isPayload);
+    SlipPacket(const uint8_t* data, uint32_t dataLength, bool isPayload);
     
     SlipPacket(const data_t& data, bool isPayload);
 private:
