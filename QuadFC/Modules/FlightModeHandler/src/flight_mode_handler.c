@@ -23,6 +23,7 @@
  */
 #include "FlightModeHandler/inc/flight_mode_handler.h"
 #include "Messages/inc/msgAddr.h"
+#include "AppLog/inc/AppLog.h"
 
 #include "EventHandler/inc/event_handler.h"
 
@@ -176,6 +177,7 @@ uint8_t FMode_FaultCB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
 
 void FMode_SendEvent(FlightModeHandler_t*  obj)
 {
+    LOG_ENTRY(obj->eHandler, "New flight mode: %d", obj->current_mode );
     if(obj && obj->eHandler)
     {
         moduleMsg_t* msg = Msg_FlightModeCreate(Broadcast_e, 0,obj->current_mode);
