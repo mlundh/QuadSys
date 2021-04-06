@@ -116,6 +116,13 @@ uint8_t ParamMaster_HandleParamFcMsg(eventHandler_t *obj, void *data, moduleMsg_
  */
 uint8_t ParamMaster_HandleHasParamMsg(eventHandler_t *obj, void *data, moduleMsg_t *msg);
 
+/**
+ * @brief Report a serious faliure, such as not beeing able to load parameters.
+ * 
+ * @param obj event handler.
+ */
+void ParamMaster_ReportFailiure(eventHandler_t *obj);
+
 ParamMaster_t *ParamMaster_CreateObj(eventHandler_t *evHandler)
 {
     ParamMaster_t *obj = pvPortMalloc(sizeof(ParamMaster_t));
@@ -260,16 +267,17 @@ uint8_t ParamMaster_HandleParamMsg(eventHandler_t *obj, void *data, moduleMsg_t 
                 address++;
             }
 
-            if (read_status == SLIP_StatusNok)
+            if (read_status != SLIP_StatusOK)
             {
-                LOG_ENTRY(obj, "Param Load: Error. Parser failed.");
+                LOG_ENTRY(obj, "Param Load: Error. SLIP Parser failed.");
+                ParamMaster_ReportFailiure(handlerObj->evHandler);
+                result = 0;
+                handlerObj->actionOngoing = paramReady; // Reset.
+                break;
             }
 
             LOG_DBG_ENTRY( obj, "Param Load: Read %d at %d", (int)(address - startAddress), (int)startAddress);
             printPacket(obj, packet);
-
-            // Whole package or error...
-            result &= (read_status == SLIP_StatusOK);
 
             moduleMsg_t *loadedMsg = NULL;
 
@@ -280,15 +288,10 @@ uint8_t ParamMaster_HandleParamMsg(eventHandler_t *obj, void *data, moduleMsg_t 
                 uint8_t sequenceNo = Msg_ParamFcGetSequencenr(loadedMsg);
                 lastInSequence = Msg_ParamFcGetLastinsequence(loadedMsg);
                 result = (sequenceNo == EcpectedSequenceNo);
+                LOG_ENTRY(obj, "Param Load: Packet with sequence nr: %d loaded.", sequenceNo);
                 EcpectedSequenceNo++;
             }
-            else
-            {
-                LOG_ENTRY(obj, "Param Load: SLIP NOK");
-                handlerObj->actionOngoing = paramReady; // Reset.
-                break;
-            }
-
+            
             if (result) // if ok, send to self to handle the message.
             {
                 Event_Send(obj, loadedMsg);
@@ -297,13 +300,14 @@ uint8_t ParamMaster_HandleParamMsg(eventHandler_t *obj, void *data, moduleMsg_t 
             {
                 Msg_Delete(&loadedMsg);
                 Slip_Delete(packet);
-                LOG_ENTRY(obj, "Param Load: Error. Failed to read param, issue with sequenceNr?.");
+                ParamMaster_ReportFailiure(handlerObj->evHandler);
+                LOG_ENTRY(obj, "Param Load: Error. Failed to validate param, issue with sequenceNr?.");
                 handlerObj->actionOngoing = paramReady; // Reset.
                 break;
             }
             Slip_Delete(packet);
         }
-        LOG_DBG_ENTRY( obj, "Param Load: Finished.");
+        LOG_ENTRY(obj, "Param Load: Parameters loaded.");
         handlerObj->actionOngoing = paramReady; // Load is ready when all messages has been sent.
     }
     break;
@@ -449,10 +453,11 @@ uint8_t ParamMaster_HandleParamFcMsg(eventHandler_t *obj, void *data, moduleMsg_
             Event_Send(obj, msgParam);
             handlerObj->saveSequence++;
         }
-        else
+        else // Save done!
         {
             handlerObj->saveSequence = 0;
             handlerObj->setAddress = PARAM_MEM_START_ADDR;
+            LOG_ENTRY(obj, "Param Save: Parameters saved.");
         }       
     }
     break;
@@ -488,4 +493,15 @@ uint8_t ParamMaster_HandleHasParamMsg(eventHandler_t *obj, void *data, moduleMsg
     handlerObj->handlers[handlerObj->nrRegisteredHandlers++] = Msg_GetSource(msg);
 
     return 1;
+}
+
+void ParamMaster_ReportFailiure(eventHandler_t *obj)
+{
+    if(!obj)
+    {
+        return;
+    }
+    moduleMsg_t *msg = Msg_Create(Msg_FcFault_e, FC_Broadcast_e);
+    Event_Send(obj, msg);
+
 }

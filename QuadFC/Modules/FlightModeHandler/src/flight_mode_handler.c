@@ -39,6 +39,7 @@ void FMode_SendEvent(FlightModeHandler_t*  obj);
 
 uint8_t FMode_CB(eventHandler_t* obj, void* data, moduleMsg_t* eData);
 
+uint8_t FMode_FaultCB(eventHandler_t* obj, void* data, moduleMsg_t* eData);
 
 FlightModeHandler_t* FMode_CreateFmodeHandler(eventHandler_t* eHandler)
 {
@@ -47,6 +48,8 @@ FlightModeHandler_t* FMode_CreateFmodeHandler(eventHandler_t* eHandler)
     obj->current_mode = fmode_not_available;
     obj->eHandler = eHandler;
     Event_RegisterCallback(obj->eHandler, Msg_FlightModeReq_e, FMode_CB, obj);
+    Event_RegisterCallback(obj->eHandler, Msg_FcFault_e, FMode_FaultCB, obj);
+
     return obj;
 }
 
@@ -162,6 +165,12 @@ uint8_t FMode_CB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
         moduleMsg_t* msg = Msg_FlightModeCreate(eData->mSource, 0, FMobj->current_mode);
         Event_Send(FMobj->eHandler, msg);
     }
+    return 1;
+}
+uint8_t FMode_FaultCB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
+{
+    FlightModeHandler_t* FMobj = (FlightModeHandler_t*)data; // data should always be the current handler.
+    FMode_Fault(FMobj);
     return 1;
 }
 
