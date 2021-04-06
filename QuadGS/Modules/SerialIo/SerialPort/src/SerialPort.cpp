@@ -261,7 +261,6 @@ void SerialPort::readCallback( const boost::system::error_code& error,
 	{
 		if( error )
 		{
-			LOG_ERROR(asioLog, " Read_callback called with an error: " << error.message());
 			doClose( error );
 			return;
 		}

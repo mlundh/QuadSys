@@ -41,7 +41,19 @@ namespace QuadGS
 {
 
 	Serial_Manager::Serial_Manager(msgAddr_t name, msgAddr_t transmissionAddr)
-		: QGS_MessageHandlerBase(name), mPortReady(), mIo_service(), mWork(new boost::asio::io_service::work(mIo_service)), mTimeoutRead(mIo_service), mThread_io(NULL), mThreadWriter(NULL), mOutgoingFifo(40), mTransmissionAddr(transmissionAddr), mTransmittDone(), mTxSuccess(false), mRetries(0), writerLog("WriterThread", std::bind(&Serial_Manager::sendMsg, this, std::placeholders::_1))
+		: QGS_MessageHandlerBase(name)
+		, mPortReady()
+		, mIo_service()
+		, mWork(new boost::asio::io_service::work(mIo_service))
+		, mTimeoutRead(mIo_service)
+		, mThread_io(NULL)
+		, mThreadWriter(NULL)
+		, mOutgoingFifo(40)
+		, mTransmissionFifo(40)
+		, mTransmissionAddr(transmissionAddr)
+		, mDoResend(false)
+		, mRetries(0)
+		, writerLog("WriterThread", std::bind(&Serial_Manager::sendMsg, this, std::placeholders::_1))
 	{
 		mCommands.push_back(UiCommand("serialSetBaudRate", "Set the baud rate of the serial port.", std::bind(&Serial_Manager::setBaudRateCmd, this, std::placeholders::_1)));
 		mCommands.push_back(UiCommand("serialSetFlowControl", "Set the flow control of the serial port.", std::bind(&Serial_Manager::setFlowControlCmd, this, std::placeholders::_1)));
@@ -61,8 +73,8 @@ namespace QuadGS
 		stopProcessing();
 		mOutgoingFifo.stop();
 		mStop = true;
-		mTransmittDone.stop();
 		mPortReady.stop();
+		mDoSend.stop();
 		mWork.reset();
 		mPort.reset();
 		mIo_service.stop();
@@ -218,18 +230,17 @@ namespace QuadGS
 		if (mMsgNrTx != transMsg->getMsgNr())
 		{
 			LOG_ERROR(log, "Ack does not match expected message number: " << (int)transMsg->getMsgNr() << " expected: " << (int)mMsgNrTx);
-			transMsg->setStatus(transmission_NOK); // It is NOK to have missmatched message numbers.
 		}
 		if (transMsg->getStatus() == transmission_OK)
 		{
-			mTxSuccess = true;
-			mTransmittDone.notify();
+			mDoResend = false;
+			mLastMsg.release();
 		}
 		else
 		{
-			mTxSuccess = false;
-			mTransmittDone.notify();
+			mDoResend = true;
 		}
+		mDoSend.notify(); // Allways trigger a new transmission, either a new message or re-send.
 	}
 
 	void Serial_Manager::process(Msg_GsLogLevel *message)
@@ -249,6 +260,7 @@ namespace QuadGS
 		try
 		{
 			mOutgoingFifo.push(std::move(message));
+			mDoSend.notify();
 		}
 		catch (const std::exception &e)
 		{
@@ -287,11 +299,8 @@ namespace QuadGS
 			sendMsg(std::move(transmission));
 			return;
 		}
-		if (msg->getType() == messageTypes_t::Msg_Transmission_e)
-		{
-			LOG_MESSAGE_TRACE(logger, "Received OK/NOK msg nr: " << (int)msg->getMsgNr());
-		}
-		else // Respond transmission OK and forward the message.
+
+		if (msg->getType() != messageTypes_t::Msg_Transmission_e) // Respond transmission OK and send the message for processing.
 		{
 			LOG_MESSAGE_TRACE(logger, "Received msg nr: " << (int)msg->getMsgNr());
 
@@ -299,15 +308,23 @@ namespace QuadGS
 			Msg_Transmission::ptr transmission = std::make_unique<Msg_Transmission>(mTransmissionAddr, transmission_OK);
 			transmission->setMsgNr(msg->getMsgNr());
 
-			sendMsg(std::move(transmission));
+			mTransmissionFifo.push(std::move(transmission));
+			mDoSend.notify();
+
+			//Then send the incoming message for processing.
+			sendExternalMsg(std::move(msg));
 		}
-		// If we get a broadcast message, we should only handle it internally.
-		if (msg->getDestination() == msgAddr_t::Broadcast_e)
+		else // Print, trace and send the message for processing.
 		{
-			msg->setDestination(msgAddr_t::GS_Broadcast_e); // TODO make this dynamic based on name...
+			LOG_MESSAGE_TRACE(logger, "Received OK/NOK msg nr: " << (int)msg->getMsgNr());
+			// If we get a broadcast message, we should only handle it internally.
+			if (msg->getDestination() == msgAddr_t::Broadcast_e)
+			{
+				msg->setDestination(msgAddr_t::GS_Broadcast_e); // TODO make this dynamic based on name...
+			}
+			//Then send the incoming message for processing.
+			sendExternalMsg(std::move(msg));
 		}
-		// then send to the router.
-		sendExternalMsg(std::move(msg));
 	}
 
 	// Executed in its own thread. Will write what is in the outgoing FIFO to the serial port.
@@ -321,45 +338,57 @@ namespace QuadGS
 
 		while (!mStop)
 		{
-			QGS_ModuleMsgBase::ptr msg = mOutgoingFifo.dequeue();
-			if (!msg)
+			mDoSend.wait(); // Wait for any action to take place.
+			LOG_DEBUG(writerLog, "DoSend");
+			bool isTransmission = false;
+			QGS_ModuleMsgBase::ptr msg;
+			// We are the only consumer of both of these queues
+			// so if we have data we will not have to wait for data to arrive.
+			if (!mTransmissionFifo.empty()) // First check if we should ack a message from the other side.
+			{
+				isTransmission = true;
+				msg = mTransmissionFifo.dequeue();
+				LOG_DEBUG(writerLog, "Transmitting OK/NOK nr: " << (int)msg->getMsgNr());
+			}
+			else if (mLastMsg && mDoResend) // If not, then check if we need to re-send any message.
+			{
+				if (mRetries < NR_RETRIES)
+				{
+					LOG_WARNING(writerLog, "Transmission failed, resending msg nr: " << (int)mLastMsg->getMsgNr());
+					mRetries++;
+					msg = std::move(mLastMsg);
+					startTransmissionTimeout();
+				}
+				else
+				{
+					LOG_WARNING(writerLog, "Transmission failed, dropping msg nr: " << (int)mLastMsg->getMsgNr());
+					mDoResend = false;
+					mRetries = 0;
+					mLastMsg.release();
+					continue;
+				}
+			}
+			else if (!mOutgoingFifo.empty() && !mLastMsg) // if neither of the above, then send a new message.
+			{
+				msg = mOutgoingFifo.dequeue();
+				mMsgNrTx = ((mMsgNrTx + 1) % 256);
+				msg->setMsgNr(mMsgNrTx);
+				startTransmissionTimeout();
+				LOG_DEBUG(writerLog, "Transmitting msg nr: " << (int)msg->getMsgNr());
+			}
+			if (!msg) // Stop must have been called.
 			{
 				continue;
 			}
-			// Do not expect a result, and do not re-transmitt a transmission message.
-			if (msg->getType() != Msg_Transmission_e)
+			if (isTransmission)
 			{
-				mTxSuccess = false;
-				mRetries = 0;
-				mMsgNrTx = ((mMsgNrTx + 1) % 256);
-
-				msg->setMsgNr(mMsgNrTx);
-				LOG_MESSAGE_TRACE(writerLog, "Transmitting msg nr: " << (int)msg->getMsgNr());
-				startReadTimer();
-				msg = mPort->write(std::move(msg), writerLog);
-
-				mTransmittDone.wait();
-				while (!mTxSuccess && (mRetries < NR_RETRIES))
-				{
-					LOG_WARNING(writerLog, "Transmission failed, resending msg nr: " << (int)msg->getMsgNr());
-					mRetries++;
-					msg->setMsgNr(mMsgNrTx);
-					startReadTimer();
-					msg = mPort->write(std::move(msg), writerLog);
-					mTransmittDone.wait();
-					
-				}
-				if (!mTxSuccess)
-				{
-					LOG_WARNING(writerLog, "Transmission failed, dropping msg nr: " << (int)msg->getMsgNr());
-				}
+				// We should not save the transmission message, it will only be sent once.
+				mPort->write(std::move(msg), writerLog);
 			}
 			else
 			{
-				LOG_MESSAGE_TRACE(writerLog, "Transmitting OK/NOK nr: " << (int)msg->getMsgNr());
-
-				// Transmissions should not be re-sent.
-				mPort->write(std::move(msg), writerLog);
+				// All other message types will be re-sent if not acked properly.
+				mLastMsg = mPort->write(std::move(msg), writerLog);
 			}
 			mPortReady.wait();
 		}
@@ -370,7 +399,7 @@ namespace QuadGS
 		mPortReady.notify();
 	}
 
-	void Serial_Manager::startReadTimer(int timeout)
+	void Serial_Manager::startTransmissionTimeout(int timeout)
 	{
 		mTimeoutRead.expires_from_now(boost::posix_time::milliseconds(timeout));
 		mTimeoutRead.async_wait(
@@ -395,7 +424,8 @@ namespace QuadGS
 		}
 		else
 		{
-			mTransmittDone.notify();
+			mDoResend = true;
+			mDoSend.notify();
 			LOG_WARNING(log, " Read timeout fired.");
 		}
 		return;

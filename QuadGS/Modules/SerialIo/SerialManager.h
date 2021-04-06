@@ -173,7 +173,7 @@ private:
      * 
      * 
      */
-   void startReadTimer(int timeout = 1000);
+   void startTransmissionTimeout(int timeout = 1000);
 
 
    /**
@@ -194,10 +194,12 @@ private:
     std::thread *mThread_io;
     std::thread *mThreadWriter;
     ThreadSafeFifo<QGS_ModuleMsgBase::ptr> mOutgoingFifo;
+    ThreadSafeFifo<QGS_ModuleMsgBase::ptr> mTransmissionFifo;
     uint8_t mMsgNrTx = 0;
     msgAddr_t mTransmissionAddr;
-    Semaphore mTransmittDone;
-    std::atomic<bool> mTxSuccess;
+    Semaphore mDoSend;
+    std::atomic<bool> mDoResend;
+    QGS_ModuleMsgBase::ptr mLastMsg;
     int mRetries;
     bool mStop = false;
     AppLog writerLog;
