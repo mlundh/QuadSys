@@ -45,7 +45,7 @@
 #define PARAM_MEM_START_ADDR (0)
 #define PARAM_MEM_STOP_ADDR (16000)
 #define LOG_MEM_START_ADDR (16000)
-
+#define LOG_MEM_STOP_ADDR (256000)
 // PWM defines
 
 #define PWM_PIN_1 (0)

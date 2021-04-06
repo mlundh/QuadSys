@@ -30,7 +30,7 @@
 #include "Utilities/inc/serialization.h"
 
 #define LOG_BACKEND_ITEM_SIZE (12)
-#define LOG_BACKEND_SIZE (500000/LOG_BACKEND_ITEM_SIZE)
+#define LOG_BACKEND_SIZE ((LOG_MEM_STOP_ADDR - LOG_MEM_START_ADDR)/LOG_BACKEND_ITEM_SIZE)
 
 struct logBackEnd
 {
