@@ -196,10 +196,9 @@ uint8_t Event_InitHandler(eventHandler_t* master, eventHandler_t* obj)
     {
         return 0;
     }
-    // add self to the list.
 
     // Check if this message handler has been registered before.
-    for(int i = 0; i < NR_QUEUES_MAX; i++)
+    for(int i = 0; i < master->registeredHandlers; i++)
     {
         if((master->handlers[i] == obj) || (master->handlerIds[i] == obj->handlerId))
         {

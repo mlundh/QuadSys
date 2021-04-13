@@ -25,19 +25,85 @@
 #include "task.h"
 #include <stdio.h>
 
-#include "Log/src/logHandler_private.h"
+#include "Log/inc/log.h"
 #include "Log/src/log_private.h"
 #include "Utilities/inc/string_utils.h"
 #include "Messages/inc/Msg_FcLog.h"
 #include "Messages/inc/Msg_LogNameReq.h"
 
-LogHandler_t* LogHandler_CreateObj(uint8_t num_children, eventHandler_t* evHandler, param_obj_t* param, const char *obj_name, uint8_t isMaster)
+
+struct logHander
+{
+  QueueHandle_t         logQueue;
+  logNameQueueItems_t   logNameQueueItems;
+  eventHandler_t*       evHandler;
+  param_obj_t*          param;
+  uint32_t              topId;
+  uint32_t              lastTime;
+  param_obj_t *         paramObject;
+  Log_t**               children;
+  uint8_t               numChildrenAllocated;
+  uint8_t               registeredChildren;
+};
+
+
+/**
+ * This handler will serve all name requests. It will send all name-id mappings of the handler
+ * to the given queue (the masters name queue).
+ * @param obj     current handler.
+ * @param data    optional data, here it contains the current log handler.
+ * @param msg     message, the data field contains the response queue.
+ * @return        1 success, 0 otherwise.
+ */
+uint8_t LogHandler_HandleNameReqMsg(eventHandler_t* obj, void* data, moduleMsg_t* msg);
+
+/**
+ * This handler will stop all logs connected to the current handler.
+ * @param obj     current event handler.
+ * @param data    optional data. Here it is the current log handler.
+ * @param event   event data. Not used by this handler.
+ * @return
+ */
+uint8_t LogHandler_HandleStopMsg(eventHandler_t* obj, void* data, moduleMsg_t* msg);
+
+
+/**
+ * This handler will start all logs connected to the current handler.
+ * @param obj     current event handler.
+ * @param data    optional data. Here it is the current log handler.
+ * @param event   event data. Not used by this handler.
+ * @return
+ */
+uint8_t LogHandler_HandleStartMsg(eventHandler_t* obj, void* data, moduleMsg_t* msg);
+
+
+/**
+ * Send a log event. Only slave handlers should send log events, and only master handler
+ * should listen to the event.
+ * @param obj   current handler, must be slave.
+ * @return      1 if success, 0 otherwise.
+ */
+uint8_t LogHandler_SendLogEvent(LogHandler_t*  obj);
+
+/**
+ * Get the id-name mapping. This function will add all mappings into the array of logNames_t, but not
+ * serialize the objects for sending.
+ * @param obj       Current object.
+ * @param loggers   array of logName objects, this array will be filled by the function.
+ * @param size      Size of the array.
+ * @param arrIndex  Current index in the array.
+ * @return
+ */
+uint8_t LogHandler_GetMapping(LogHandler_t* obj, logNames_t* logs, uint32_t size, uint32_t* arrIndex);
+
+
+LogHandler_t* LogHandler_CreateObj(uint8_t num_children, eventHandler_t* evHandler, param_obj_t* param, const char *obj_name)
 {
 
     LogHandler_t *obj = pvPortMalloc( sizeof(LogHandler_t) );
 
     // only check obj, we are not required to have an event handler.
-    if(!obj)
+    if(!obj || !evHandler)
     {
         return NULL;
     }
@@ -47,7 +113,7 @@ LogHandler_t* LogHandler_CreateObj(uint8_t num_children, eventHandler_t* evHandl
         return NULL;
     }
     obj->logQueue = xQueueCreate( LOG_QUEUE_LENGTH, LOG_QUEUE_ITEM_SIZE );
-    obj->logNameQueueItems.logNames = pvPortMalloc(sizeof(logNames_t) * MAX_LOGGERS_PER_HANDLER); // TODO, fix memory consumption here.
+    obj->logNameQueueItems.logNames = pvPortMalloc(sizeof(logNames_t) * MAX_LOGGERS_PER_HANDLER); 
     obj->logNameQueueItems.nrLogNames = 0;
     obj->logNameQueueItems.originator = obj;
 
@@ -56,34 +122,12 @@ LogHandler_t* LogHandler_CreateObj(uint8_t num_children, eventHandler_t* evHandl
         return NULL;
     }
 
-    if(isMaster)
+    obj->logNameQueueItems.xMutex = xSemaphoreCreateMutex();
+    if( !obj->logNameQueueItems.xMutex )
     {
-        obj->logNameQueue = xQueueCreate( LOG_NAME_QUEUE_LENGTH, LOG_NAME_QUEUE_ITEM_SIZE );
-        obj->handlerArray = pvPortMalloc(sizeof(LogHandler_t*) * MAX_LOG_HANDLERS);
-        obj->backend = LogBackend_CreateObj();
-        obj->nrRegisteredHandlers = 1; // master is first.
-        obj->logNameQueueItems.xMutex = NULL;
-        if(!obj->backend || !obj->handlerArray )
-        {
-            return NULL;
-        }
-        obj->handlerArray[0] = obj;
+        return NULL;
     }
-    else
-    {
-        obj->logNameQueue = NULL;
-        obj->handlerArray = NULL;
-        obj->backend = NULL; // Only the master has a backend.
-        obj->nrRegisteredHandlers = 0;
-        obj->logNameQueueItems.xMutex = xSemaphoreCreateMutex();
-
-        if( !obj->logNameQueueItems.xMutex )
-        {
-            return NULL;
-        }
-    }
-
-    //OK to not have a parent even if it is not encouraged, this tree of Loggers will be orphaned.
+    
     param_obj_t * paramObj = Param_CreateObj(num_children, variable_type_NoType, readOnly, NULL, obj_name, param);
     if(!paramObj)
     {
@@ -103,26 +147,16 @@ LogHandler_t* LogHandler_CreateObj(uint8_t num_children, eventHandler_t* evHandl
         obj->children = NULL;
     }
 
-
     obj->numChildrenAllocated = num_children;
     obj->registeredChildren = 0;
     obj->topId = 0;
     obj->lastTime = 0;
     obj->paramObject = paramObj;
-    obj->evHandler = evHandler; // NULL if not using events
-    if(obj->evHandler)
-    {
-        if(isMaster)
-        {
-            Event_RegisterCallback(obj->evHandler, Msg_FcLog_e, LogHandler_HandleLogMsg, obj);
-        }
-        else
-        {
-            Event_RegisterCallback(obj->evHandler, Msg_LogNameReq_e, LogHandler_HandleNameReqMsg, obj);
-            Event_RegisterCallback(obj->evHandler, LogStop_e, LogHandler_HandleStopMsg, obj);
+    obj->evHandler = evHandler;
 
-        }
-    }
+    Event_RegisterCallback(obj->evHandler, Msg_LogNameReq_e, LogHandler_HandleNameReqMsg, obj);
+    Event_RegisterCallback(obj->evHandler, LogStop_e, LogHandler_HandleStopMsg, obj);
+
     return obj;
 }
 
@@ -134,16 +168,7 @@ void LogHandler_deleteHandler(LogHandler_t *obj)
     }
     vQueueDelete(obj->logQueue);
     vPortFree(obj->logNameQueueItems.logNames);
-    if(obj->logNameQueue)
-    {
-        vQueueDelete(obj->logNameQueue);
-        vPortFree(obj->handlerArray);
-        LogBackend_DeleteObj(obj->backend);
-    }
-    else
-    {
-        vSemaphoreDelete(obj->logNameQueueItems.xMutex);
-    }
+    vSemaphoreDelete(obj->logNameQueueItems.xMutex);
     if(obj->children)
     {
         vPortFree(obj->children);
@@ -151,6 +176,7 @@ void LogHandler_deleteHandler(LogHandler_t *obj)
     Param_DeleteObj(obj->paramObject);
     vPortFree(obj);
 }
+
 uint8_t LogHandler_setChild(LogHandler_t *current, Log_t *child)
 {
     if(!current || !child || !(current->registeredChildren < current->numChildrenAllocated))
@@ -182,23 +208,8 @@ uint8_t LogHandler_report(LogHandler_t* obj, Log_t* log_obj)
     // Send an event or write to the backend if needed.
     if(entry.time > obj->lastTime) // only send event if the RTOS tick has increased.
     {
-        if(obj->backend)
-        {
-            // TODO read multiple entries at the same time ( all available) before sending to backend.
-            logEntry_t queuedEntry = {0};
-            while(xQueueReceive(obj->logQueue,&queuedEntry, 0)  == pdPASS)
-            {
-                if(!LogHandler_SendToBackend(obj, &queuedEntry))
-                {
-                    result = 0;
-                }
-            }
-        }
-        else
-        {
-            obj->lastTime = entry.time;
-            result = LogHandler_SendLogEvent(obj);
-        }
+        obj->lastTime = entry.time;
+        result = LogHandler_SendLogEvent(obj);
     }
     return result;
 }
@@ -214,118 +225,11 @@ uint8_t LogHandler_RegisterLogger(LogHandler_t* obj, Log_t* logObj)
     return 1;
 }
 
-uint8_t LogHandler_SendLogEvent(LogHandler_t*  obj)
+param_obj_t* LogHandler_GetParameter(LogHandler_t* obj)
 {
-    if(!obj)
-    {
-        return 0;
-    }
-    if(!obj->evHandler)
-    {
-        return 1; // OK to not have an event handler.
-    }
-
-    moduleMsg_t* event = Msg_FcLogCreate(FC_Broadcast_e, 0, obj->logQueue);
-    return Event_Send(obj->evHandler, event);
-
+    return obj->paramObject;
 }
 
-uint8_t LogHandler_SendNameReqEvent(LogHandler_t*  obj)
-{
-    if(!obj)
-    {
-        return 0;
-    }
-    if(!obj->evHandler)
-    {
-        return 1; // OK to not have an event handler.
-    }
-    moduleMsg_t* event = Msg_LogNameReqCreate(FC_Broadcast_e, 0, obj->logNameQueue);
-    return Event_Send(obj->evHandler, event);
-
-    return 1;
-}
-
-uint8_t LogHandler_GetNameIdMapping(LogHandler_t*  obj, uint8_t* buffer, uint32_t buffer_length)
-{
-    if(!obj || !obj->backend)
-    {
-        return 0;//Only master is allowed to call this function.
-    }
-    uint8_t result = 1;
-
-    buffer[0] = '\0';
-    result &= LogHandler_GetMapping(obj, obj->logNameQueueItems.logNames, MAX_LOGGERS_PER_HANDLER, &obj->logNameQueueItems.nrLogNames );
-
-    result &= LogHandler_AppendNodeString(&obj->logNameQueueItems, buffer, buffer_length);
-
-    result &= LogHandler_SendNameReqEvent(obj);
-
-    if(!result)
-    {
-        return 0; // no need to go on if this failed.
-    }
-
-    if(!obj->evHandler)
-    {
-        return 1; // OK to not have an event handler.
-    }
-    result = 0; // reset result...
-    logNameQueueItems_t nameItems = {0};
-    while(xQueueReceive(obj->logNameQueue, &nameItems, LOG_NAME_REQ_BLOCK_TIME)  == pdPASS)
-    {
-        if( xSemaphoreTake( nameItems.xMutex, 0 ) == pdTRUE )
-        {
-            for(uint32_t i = 0; i < nameItems.nrLogNames; i++)
-            {
-                LogHandler_UpdateId(obj, nameItems.originator, &(nameItems.logNames[i].id));
-            }
-            // handlerObj->logNameQueueItems is the shared resource, use and then give the mutex.
-            result &= LogHandler_AppendNodeString(&nameItems, buffer, buffer_length);
-
-            //TODO serialize and send to QuadGS.
-            xSemaphoreGive( nameItems.xMutex );
-        }
-        else
-        {
-            result = 0;
-        }
-    }
-    return result;
-}
-
-
-uint8_t LogHandler_HandleLogMsg(eventHandler_t* obj, void* data, moduleMsg_t* msg)
-{
-    if(!obj || ! data || !msg)
-    {
-        return 0;
-    }
-    uint8_t result = 0;
-    QueueHandle_t logQueue = Msg_FcLogGetData(msg);
-    LogHandler_t* handlerObj = (LogHandler_t*)data; // The data should always be the handler object when a logEvent is received. The logHandler registers this properly iteself.
-    if(!logQueue || !handlerObj)
-    {
-        return 0;
-    }
-    result = LogHandler_ProcessDataInQueue(handlerObj, logQueue);
-    return result;
-}
-
-/**
- * @brief Handler for nameReq messages.
- * 
- * Will update the current handlers (non master) mapping and store it in handlerObj->logNameItems. 
- * This data field will then be sent to the master via a queue that the master sends in the req message,
- * therefore it is important to ensure thread safety. 
- * 
- * TODO possibly change behaviour to send the data in a message instead. 
- * 
- * @param obj 
- * @param data 
- * @param msg 
- * @return uint8_t 
- */
 uint8_t LogHandler_HandleNameReqMsg(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 {
     if(!obj || ! data || !msg)
@@ -370,80 +274,44 @@ uint8_t LogHandler_HandleStopMsg(eventHandler_t* obj, void* data, moduleMsg_t* m
     }
     uint8_t result = 1;
     LogHandler_t* handlerObj = (LogHandler_t*)data; // The data should always be the handler object when a logEvent is received. The logHandler registers this properly iteself.
-    result = LogHandler_StopAllLogs(handlerObj);
+    for(int i = 0; (i < handlerObj->registeredChildren); i++)
+    {
+        result &= Log_StopAllLogs(handlerObj->children[i]);
+    }
     return result;
 }
-uint8_t LogHandler_ProcessDataInQueue(LogHandler_t* obj, QueueHandle_t logQueue)
+
+
+uint8_t LogHandler_HandleStartMsg(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 {
-    if(!obj->backend)
+    if(!obj || ! data || !msg)
     {
         return 0;
     }
-    logEntry_t queuedEntry = {0};
-
-    while(xQueueReceive(logQueue, &queuedEntry, 0)  == pdPASS)
+    uint8_t result = 1;
+    LogHandler_t* handlerObj = (LogHandler_t*)data; // The data should always be the handler object when a logEvent is received. The logHandler registers this properly iteself.
+    for(int i = 0; (i < handlerObj->registeredChildren); i++)
     {
-        if(!LogHandler_SendToBackend(obj, &queuedEntry))
-        {
-            return 0;
-        }
+        result &= Log_StartAllLogs(handlerObj->children[i], 1);
     }
-    return 1;
+    return result;
 }
 
-param_obj_t* LogHandler_GetParameter(LogHandler_t* obj)
+uint8_t LogHandler_SendLogEvent(LogHandler_t*  obj)
 {
-    return obj->paramObject;
-}
-
-uint8_t LogHandler_SendToBackend(LogHandler_t* obj, logEntry_t* log)
-{
-    if(!obj->backend)
-    {
-        return 0; // Only the master has a backend.
-    }
-    //Find the index of the handler
-    if(!LogHandler_UpdateId(obj, log->handler, &log->id))
+    if(!obj)
     {
         return 0;
     }
+    if(!obj->evHandler)
+    {
+        return 0; 
+    }
 
-    return LogBackend_Report(obj->backend, log);
+    moduleMsg_t* event = Msg_FcLogCreate(FC_Broadcast_e, 0, obj->logQueue);
+    return Event_Send(obj->evHandler, event);
+
 }
-
-uint8_t LogHandler_UpdateId(LogHandler_t* obj, LogHandler_t* originator, uint32_t* id)
-{
-    if(!obj->backend)
-    {
-        return 0; // Only the master has a backend, and only master can update the id.
-    }
-    //Find the index of the handler
-    int found = 0;
-    int handlerIndex = 0;
-    for(; handlerIndex < obj->nrRegisteredHandlers; handlerIndex++)
-    {
-        if(obj->handlerArray[handlerIndex] == originator)
-        {
-            found = 1;
-            break;
-        }
-    }
-    if(!found)
-    {
-        if(obj->nrRegisteredHandlers < MAX_LOG_HANDLERS)
-        {
-            obj->handlerArray[obj->nrRegisteredHandlers] = originator;
-            obj->nrRegisteredHandlers++;
-        }
-        else
-        {
-            return 0;
-        }
-    }
-    (*id) =  handlerIndex * MAX_LOGGERS_PER_HANDLER + (*id);
-    return 1;
-}
-
 
 uint8_t LogHandler_GetMapping(LogHandler_t* obj, logNames_t* loggers, uint32_t size, uint32_t* arrIndex)
 {
@@ -457,132 +325,3 @@ uint8_t LogHandler_GetMapping(LogHandler_t* obj, logNames_t* loggers, uint32_t s
     }
     return 1;
 }
-
-uint8_t LogHandler_AppendNodeString(logNameQueueItems_t *items, uint8_t *buffer, uint32_t buffer_length)
-{
-    if(!buffer || !items)
-    {
-        return 0;
-    }
-    uint32_t buf_index = (uint32_t)strlen((const char *)buffer);
-
-    for(int i = 0; i < items->nrLogNames; i++)
-    {
-        //ensure that the name will fit in current buffer.
-        if((buf_index + MAX_LOG_NODE_LENGTH + 1) > buffer_length)
-        {
-            return 0;
-        }
-        // append name and update buf_index.
-        strncat( (char *) buffer , (const char *) items->logNames[i].name, (unsigned short) MAX_PARAM_NAME_LENGTH);
-        // append id "[xxx]"
-        strcat( (char *) buffer, (const char *) "[");
-        uint8_t pTemp[MAX_LOG_ID_DIGITS_ID];
-        snprintf((char *) pTemp, MAX_LOG_ID_DIGITS_ID, "%lu",(uint32_t)items->logNames[i].id);
-        strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_LOG_ID_DIGITS_ID);
-        strcat( (char *) buffer, (const char *) "]");
-        strcat( (char *) buffer, (const char *) "/");
-    }
-
-    return 1;
-}
-
-uint8_t LogHandler_AppendSerializedlogs(LogHandler_t* obj, uint8_t* buffer, uint32_t size)
-{
-    if(!obj || !buffer)
-    {
-        return 0;
-    }
-    uint32_t length = strlen((const char*)buffer);
-    uint32_t remainingSize = size - length;
-    if(remainingSize < MAX_LOG_ENTRY_LENGTH)
-    {
-        return 1;
-    }
-    uint8_t result = 1;
-    uint32_t nrLogs = 0;
-
-    {
-
-        uint8_t nr_entries = remainingSize / MAX_LOG_ENTRY_LENGTH;
-        logEntry_t entries[nr_entries];
-
-        result &= LogHandler_Getlogs(obj, entries, nr_entries, &nrLogs);
-        for(int i = 0; i < nrLogs; i++)
-        {
-            uint8_t pTemp[MAX_LOG_ENTRY_DIGITS_DATA];
-            strcat( (char *) buffer, (const char *) "[");
-            snprintf((char *) pTemp, MAX_LOG_ENTRY_DIGITS_ID, "%lu",(uint32_t)entries[i].id);
-            strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_LOG_ENTRY_DIGITS_ID);
-            strcat( (char *) buffer, (const char *) "]");
-
-            strcat( (char *) buffer, (const char *) "[");
-            snprintf((char *) pTemp, MAX_LOG_ENTRY_DIGITS_TIME, "%lu",(uint32_t)entries[i].time);
-            strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_LOG_ENTRY_DIGITS_TIME);
-            strcat( (char *) buffer, (const char *) "]");
-
-            strcat( (char *) buffer, (const char *) "[");
-            snprintf((char *) pTemp, MAX_LOG_ENTRY_DIGITS_DATA, "%lu",(uint32_t)entries[i].data);
-            strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_LOG_ENTRY_DIGITS_DATA);
-            strcat( (char *) buffer, (const char *) "]");
-            strcat( (char *) buffer, (const char *) "/");
-        }
-    }
-    // We might have used less than max length for the data fields, call the function
-    // recursively until there is either no more space left in the buffer, or there is
-    // no more data to get.
-    if(result && (nrLogs > 0))
-    {
-        uint32_t lengthAfter = strlen((const char*)buffer);
-        if(lengthAfter < size)
-        {
-            result &= LogHandler_AppendSerializedlogs(obj, buffer, size);
-        }
-
-    }
-    return result;
-}
-uint8_t LogHandler_Getlogs(LogHandler_t* obj, logEntry_t* logs, uint32_t size, uint32_t* nrLogs)
-{
-    if(!LogBackend_GetLog(obj->backend,logs,size,nrLogs))
-    {
-        return 0;
-    }
-    return 1;
-}
-
-uint8_t LogHandler_StopAllLogs(LogHandler_t* obj)
-{
-    if(!obj)
-    {
-        return 0; // only master is allowed to stop all!
-    }
-
-    uint8_t result = 1;
-    for(int i = 0; (i < obj->registeredChildren); i++)
-    {
-        result &= Log_StopAllLogs(obj->children[i]);
-    }
-    if(obj->backend && obj->evHandler)
-    {
-        moduleMsg_t* event = Msg_Create(LogStop_e, FC_Broadcast_e);
-        result &= Event_Send(obj->evHandler, event);
-    }
-    return result;
-}
-
-uint8_t LogHandler_StartAllLogs(LogHandler_t* obj)
-{
-    if(!obj)
-    {
-        return 0; // only master is allowed to stop all!
-    }
-
-    uint8_t result = 1;
-    for(int i = 0; (i < obj->registeredChildren); i++)
-    {
-        result &= Log_StartAllLogs(obj->children[i], 1);
-    }
-    return result;
-}
-

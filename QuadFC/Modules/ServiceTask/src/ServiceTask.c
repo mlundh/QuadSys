@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include "../inc/ServiceTask.h"
 #include "Parameters/inc/paramMasterHandler.h"
+#include "Log/inc/logMaster.h"
 #include "Debug/inc/debug_handler.h"
 #include "Log/inc/logHandler.h"
 #include "QuadFC/QuadFC_SPI.h"
@@ -66,7 +67,7 @@ void printBuffer(eventHandler_t *obj, uint8_t *packet)
 typedef struct serviceTask
 {
     eventHandler_t *evHandler;
-    LogHandler_t *logHandler;
+    LogMaster_t *logMaster;
     ParamMaster_t *paramMaster;
     debug_handler_t* debugHandler;
 } serviceTask_t;
@@ -86,17 +87,16 @@ void Service_CreateTask(eventHandler_t *eventHandler)
     
     taskParam->evHandler = eventHandler;
     taskParam->debugHandler = Debug_CreateHandler(taskParam->evHandler);
-    taskParam->logHandler = LogHandler_CreateObj(0, taskParam->evHandler, NULL, "LogM", 1);
+    taskParam->logMaster = LogMaster_CreateObj(taskParam->evHandler);
     taskParam->paramMaster = ParamMaster_CreateObj(taskParam->evHandler);
 
-    if (!taskParam->evHandler || !taskParam->logHandler || !taskParam->paramMaster)
+    if (!taskParam->evHandler || !taskParam->logMaster || !taskParam->paramMaster)
     {
         for (;;)
         {
         }
     }
 
-    Event_RegisterCallback(taskParam->evHandler, Msg_Log_e, Service_HandleLog, taskParam->logHandler);
 
     uint8_t rspSpi = SpiMaster_Init(FRAM_MEM_SPI_BUS);
     if (!rspSpi)
@@ -139,56 +139,4 @@ void Service_Task(void *pvParameters)
         {}
     }
     
-}
-
-#define LOG_MSG_REPLY_LENGTH (255)
-uint8_t Service_HandleLog(eventHandler_t *obj, void *data, moduleMsg_t *msg)
-{
-    if (!obj || !data || !msg)
-    {
-        return 0;
-    }
-
-    LogHandler_t *logObj = (LogHandler_t *)data;
-    uint8_t result = 0;
-
-    switch (Msg_LogGetControl(msg))
-    {
-    case log_name:
-    {
-        result = 1;
-        moduleMsg_t *reply = Msg_LogCreate(Msg_GetSource(msg), 0, log_name, LOG_MSG_REPLY_LENGTH);
-
-        LogHandler_GetNameIdMapping(logObj, Msg_LogGetPayload(reply), Msg_LogGetPayloadbufferlength(reply));
-
-        uint16_t len = strlen((char *)Msg_LogGetPayload(reply));
-        Msg_LogSetPayloadlength(reply, len);
-
-        Event_Send(obj, reply);
-    }
-    break;
-    case log_entry:
-    {
-        result = 1;
-        moduleMsg_t *reply = Msg_LogCreate(Msg_GetSource(msg), 0, log_entry, LOG_MSG_REPLY_LENGTH);
-        uint8_t* payload = Msg_LogGetPayload(reply);
-        payload[0]='\0';
-        
-        LogHandler_AppendSerializedlogs(logObj, payload, Msg_LogGetPayloadbufferlength(reply));
-        uint16_t len = strlen((char *)Msg_LogGetPayload(reply));
-        Msg_LogSetPayloadlength(reply, len);
-
-        printBuffer(obj, Msg_LogGetPayload(reply));
-
-        Event_Send(obj, reply);
-    }
-    break;
-    case log_stopAll:
-        LogHandler_StopAllLogs(logObj);
-        result = 0;
-        break;
-    default:
-        break;
-    }
-    return result;
 }

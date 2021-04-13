@@ -33,8 +33,8 @@
 
 #include "Test/Log/log_tester.h"
 #include "Log/inc/logHandler.h"
+#include "Log/inc/logMaster.h"
 #include "Log/src/log_private.h"
-#include "Log/src/logHandler_private.h"
 #include "Utilities/inc/string_utils.h"
 #include "Components/Parameters/inc/paramHandler.h"
 
@@ -52,6 +52,7 @@ typedef struct logEvTestTaskParams
 {
     eventHandler_t* evHandler;
     LogHandler_t*   logHObj;
+    LogMaster_t *   logMaster;
     paramHander_t*  paramHandler;
     SemaphoreHandle_t   xSemaphore;
     int32_t         logValue0;
@@ -80,12 +81,14 @@ uint8_t LogEv_createTestTasks(TestFw_t* obj, SemaphoreHandle_t semaphore, logEvT
     masterParam->xSemaphore = semaphore;
     masterParam->evHandler = Event_CreateHandler(FC_Ctrl_e, 1);
     masterParam->paramHandler = ParamHandler_CreateObj(1, masterParam->evHandler,"paramM");
-    masterParam->logHObj = LogHandler_CreateObj(2, masterParam->evHandler, ParamHandler_GetParam(masterParam->paramHandler), "logEvTM",1);
+    masterParam->logHObj = LogHandler_CreateObj(2, masterParam->evHandler, ParamHandler_GetParam(masterParam->paramHandler), "logEvTM");
+    masterParam->logMaster = LogMaster_CreateObj(masterParam->evHandler);
+
     masterParam->logValue0 = 0;
     masterParam->logValue1 = 0;
 
     uint8_t result = 1;
-    if(!masterParam->logHObj || !masterParam->evHandler )
+    if(!masterParam->logHObj || !masterParam->evHandler || !masterParam->logMaster)
     {
         char tmpstr[50] = {0};
         snprintf (tmpstr, 50,"Could not create the master task params.\n");
@@ -101,7 +104,7 @@ uint8_t LogEv_createTestTasks(TestFw_t* obj, SemaphoreHandle_t semaphore, logEvT
     slaveParam->xSemaphore = NULL;
     slaveParam->evHandler = Event_CreateHandler(FC_SerialIOrx_e,0);
     slaveParam->paramHandler = ParamHandler_CreateObj(2, slaveParam->evHandler,"paramH");
-    slaveParam->logHObj = LogHandler_CreateObj(2,slaveParam->evHandler, ParamHandler_GetParam(slaveParam->paramHandler), "logEvTS",0);
+    slaveParam->logHObj = LogHandler_CreateObj(2,slaveParam->evHandler, ParamHandler_GetParam(slaveParam->paramHandler), "logEvTS");
     slaveParam->logValue0 = 0;
     slaveParam->logValue1 = 0;
 
@@ -214,7 +217,7 @@ void LogEv_masterTask( void *pvParameters )
     // first, get name!
     uint8_t buffer[LOG_EV_TEST_STRING_LENGTH] = {0};
     buffer[0]='\0';
-    LogHandler_GetNameIdMapping(param->logHObj, buffer, LOG_EV_TEST_STRING_LENGTH);
+    LogMaster_GetNameIdMapping(param->logMaster, buffer, LOG_EV_TEST_STRING_LENGTH);
 
 
     uint8_t expected[LOG_EV_TEST_STRING_LENGTH] = {0};
@@ -232,7 +235,7 @@ void LogEv_masterTask( void *pvParameters )
 
     logEntry_t entry[4] = {0};
     uint32_t nrLogs = 0;
-    result &= LogHandler_Getlogs(param->logHObj,entry,4,&nrLogs);
+    result &= LogMaster_Getlogs(param->logMaster,entry,4,&nrLogs);
 
     logEntry_t* entryP = entry;
     if(entryP->data != 11 ||

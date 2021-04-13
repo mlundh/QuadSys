@@ -54,7 +54,7 @@ uint8_t Test_SerialInit()
 
   LL_USART_InitTypeDef  init = {0};
 
-  init.BaudRate = 115200;
+  init.BaudRate = 460800;
   init.DataWidth = LL_USART_DATAWIDTH_8B;
   init.StopBits = LL_USART_STOPBITS_1;
   init.Parity = LL_USART_PARITY_NONE;

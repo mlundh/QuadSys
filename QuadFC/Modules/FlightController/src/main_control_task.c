@@ -110,7 +110,7 @@ void create_main_control_task(eventHandler_t* evHandler)
     taskParam->spectrumSpHandler = SatSpHandler_CreateObj(evHandler, ParamHandler_GetParam(taskParam->paramHandler));
     taskParam->CtrlModeHandler = Ctrl_CreateModeHandler(evHandler);
     taskParam->evHandler = evHandler;
-    taskParam->logHandler = LogHandler_CreateObj(20,evHandler,ParamHandler_GetParam(taskParam->paramHandler),"LogHandler",0);
+    taskParam->logHandler = LogHandler_CreateObj(20,evHandler,ParamHandler_GetParam(taskParam->paramHandler),"LogHandler");
     taskParam->SetpointTimeoutCounter = 0;
     /*Ensure that all mallocs returned valid pointers*/
     if (   !taskParam                    || !taskParam->ctrl             || !taskParam->setpoint
