@@ -34,11 +34,10 @@
 typedef struct titan_test_uart_control {
   USART_TypeDef*        usart;
   uint32_t              initialized;
-  uint8_t*              TxBuffPtr;
 } titan_test_uart_control_t;
 
 static  titan_test_uart_control_t   uart = {
-  UART9,  0, NULL
+  UART9,  0
 };
 
 
@@ -58,7 +57,7 @@ uint8_t Test_SerialInit()
   init.DataWidth = LL_USART_DATAWIDTH_8B;
   init.StopBits = LL_USART_STOPBITS_1;
   init.Parity = LL_USART_PARITY_NONE;
-  init.TransferDirection = LL_USART_DIRECTION_TX_RX;
+  init.TransferDirection = LL_USART_DIRECTION_TX;
   init.OverSampling = LL_USART_OVERSAMPLING_16;
 
   init.HardwareFlowControl = LL_USART_HWCONTROL_NONE;

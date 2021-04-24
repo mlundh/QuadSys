@@ -81,12 +81,12 @@ void mainTester(void *pvParameters)
     TestFw_t* testFW = TestFW_Create("Components1");
 
     /**************Add test module instantiation here***************/
- //   ParamT_GetTCs(testFW);
+    ParamT_GetTCs(testFW);
     Log_GetTCs(testFW);
- //   LogEv_GetTCs(testFW);
-    //AppLog_GetTCs(testFW);
-    //Cbuff_GetTCs(testFW);
-    //Slip_GetTCs(testFW);
+    LogEv_GetTCs(testFW);
+    AppLog_GetTCs(testFW);
+    Cbuff_GetTCs(testFW);
+    Slip_GetTCs(testFW);
     /***************************************************************/
 
     uint8_t result = TestFW_ExecuteTests(testFW);

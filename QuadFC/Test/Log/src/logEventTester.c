@@ -221,7 +221,7 @@ void LogEv_masterTask( void *pvParameters )
 
 
     uint8_t expected[LOG_EV_TEST_STRING_LENGTH] = {0};
-    strcpy((char*)expected, "logM0[0]/logM1[1]/logS0[50]/logS1[51]/\0");
+    strcpy((char*)expected, "logS0[0]/logS1[1]/\0");
     uint8_t result = 0;
     if(strncmp((char*)buffer, (char*)expected, LOG_EV_TEST_STRING_LENGTH) == 0)
     {
@@ -239,25 +239,25 @@ void LogEv_masterTask( void *pvParameters )
 
     logEntry_t* entryP = entry;
     if(entryP->data != 11 ||
-            entryP->id != 50 )
+            entryP->id != 0 )
     {
         result = 0;
     }
     entryP++;
     if(entryP->data != 22 ||
-            entryP->id != 51)
+            entryP->id != 1)
     {
         result = 0;
     }
     entryP++;
     if(entryP->data != 55 ||
-            entryP->id != 50 )
+            entryP->id != 0 )
     {
         result = 0;
     }
     entryP++;
     if(entryP->data != 66 ||
-            entryP->id != 51)
+            entryP->id != 1)
     {
         result = 0;
     }

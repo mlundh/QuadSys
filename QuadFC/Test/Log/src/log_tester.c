@@ -35,15 +35,12 @@
 
 void Log_GetTCs(TestFw_t* obj)
 {
-//    TestFW_RegisterTest(obj, "Log C Handler", LogHandler_TestCreate);
-//    TestFW_RegisterTest(obj, "Log C Obj", Log_TestCreate);
-//    TestFW_RegisterTest(obj, "Log Set Child", Log_TestSetChild);
-//    TestFW_RegisterTest(obj, "Log Report", Log_TestReport);
-//    TestFW_RegisterTest(obj, "Log Test Multiple Loggers", Log_TestMultipleLoggers);
-//    TestFW_RegisterTest(obj, "Log Test Multiple Handlers", Log_TestMultipleHandlers);
-    TestFW_RegisterTest(obj, "Log Test Name", Log_TestGetName);
-//    TestFW_RegisterTest(obj, "Log Serialized", Log_TestGetNameSerialized);
-
+    TestFW_RegisterTest(obj, "Log C Handler", LogHandler_TestCreate);
+    TestFW_RegisterTest(obj, "Log C Obj", Log_TestCreate);
+    TestFW_RegisterTest(obj, "Log Set Child", Log_TestSetChild);
+    TestFW_RegisterTest(obj, "Log Report", Log_TestReport);
+    TestFW_RegisterTest(obj, "Log Test Multiple Loggers", Log_TestMultipleLoggers);
+    TestFW_RegisterTest(obj, "Log Test Multiple Handlers", Log_TestMultipleHandlers);
 }
 
 uint8_t Log_NameCB(eventHandler_t* obj, void* data, moduleMsg_t* msg);
@@ -382,7 +379,7 @@ uint8_t Log_TestMultipleHandlers(TestFw_t* obj)
 {
     eventHandler_t* evH= Event_CreateHandler(FC_Dbg_e, 0);
     eventHandler_t* evM= Event_CreateHandler(FC_Log_e, 1);
-
+    
     Event_InitHandler(evM, evH);
 
 
@@ -494,180 +491,4 @@ uint8_t Log_TestMultipleHandlers(TestFw_t* obj)
     Log_DeleteObj(logObjT2);
 
     return result;
-}
-
-uint8_t Log_TestGetName(TestFw_t* obj)
-{
-    uint8_t result = 1;
-
-    eventHandler_t* evH= Event_CreateHandler(FC_Dbg_e, 0);
-    eventHandler_t* evM= Event_CreateHandler(FC_Log_e, 1);
-    eventHandler_t* evTester= Event_CreateHandler(FC_eventSys_e, 0);
-
-    Event_InitHandler(evM, evH);
-    Event_InitHandler(evM, evTester);
-
-    uint8_t namesReply[255] = {0};
-    Event_RegisterCallback(evTester, Msg_Log_e, Log_NameCB, namesReply);
-
-    LogMaster_t* logMaster = LogMaster_CreateObj(evM);
-
-    LogHandler_t* logHObj = LogHandler_CreateObj(2,evH,NULL,"GetNameH"); // Not using event handler, but we are master.
-    
-    while(Event_Receive(evM,2));
-    while(Event_Receive(evH,2));
-    while(Event_Receive(evM,2));
-    while(Event_Receive(evTester,2));
-
-    int32_t data = 9;
-    //Create a bunch of loggers...
-    Log_t* logObj10 = Log_CreateObj(2,variable_type_int32, &data,NULL,logHObj,"1.0");
-    Log_t* logObj11 = Log_CreateObj(2,variable_type_int32, &data,logObj10,NULL,"1.1");
-    Log_t* logObj12 = Log_CreateObj(2,variable_type_int32, &data,logObj10,NULL,"1.2");
-
-
-    Log_t* logObj20 = Log_CreateObj(2,variable_type_int32, &data,NULL,logHObj,"2.0");
-    Log_t* logObj21 = Log_CreateObj(2,variable_type_int32, &data,logObj20,NULL,"2.1");
-    Log_t* logObj22 = Log_CreateObj(2,variable_type_int32, &data,logObj20,NULL,"2.2");
-    Log_t* logObj220 = Log_CreateObj(2,variable_type_int32, &data,logObj22,NULL,"2.2.0");
-
-
-    if(!logObj10 || !logObj11 || !logObj12 || !logObj20 || !logObj21 || !logObj22 || !logObj220)
-    {
-        char tmpstr[40] = {0};
-        snprintf (tmpstr, 40,"Could not create log objects.\n");
-        TestFW_Report(obj, tmpstr);
-        return 0;
-    }
-
-    moduleMsg_t *msg = Msg_LogCreate(FC_Log_e, 0, log_entry, 0);
-    Event_Send(evTester, msg);
-
-    while(Event_Receive(evM,2));
-    while(Event_Receive(evH,2));
-    while(Event_Receive(evM,2));
-    while(Event_Receive(evTester,2));
-
-    const char expected[255] = "temp\0";
-    if(strcmp((const char*)namesReply, expected)!= 0)
-    {
-        char tmpstr[255] = {0};
-        snprintf (tmpstr, 255,"Expected %s, got %s", namesReply, "dfgs");
-        TestFW_Report(obj, tmpstr);
-        result = 0;
-    }
-    LogHandler_deleteHandler(logHObj);
-    LogMaster_deleteHandler(logMaster);
-
-    Event_DeleteHandler(evH);
-    Event_DeleteHandler(evM);
-
-    Log_DeleteObj(logObj10);
-    Log_DeleteObj(logObj11);
-    Log_DeleteObj(logObj12);
-    Log_DeleteObj(logObj20);
-    Log_DeleteObj(logObj21);
-    Log_DeleteObj(logObj22);
-    Log_DeleteObj(logObj220);
-
-    return result;
-}
-
-#ifdef BKLDGSL
-
-
-#define BUFFER_LENGTH_TEST_GET_NAME_SERIALIZED MAX_LOG_NODE_LENGTH * 16
-uint8_t Log_TestGetNameSerialized(TestFw_t* obj)
-{
-    uint8_t result = 1;
-    LogHandler_t* logHObj = LogHandler_CreateObj(2,NULL,NULL,"GetNameH",1); // Not using event handler, but we are master.
-    int32_t data = 9;
-    //Create a bunch of loggers...
-    Log_t* logObj10 = Log_CreateObj(2,variable_type_int32, &data,NULL,logHObj,"1.0");
-    Log_t* logObj11 = Log_CreateObj(2,variable_type_int32, &data,logObj10,NULL,"1.1");
-    Log_t* logObj12 = Log_CreateObj(2,variable_type_int32, &data,logObj10,NULL,"1.2");
-
-
-    Log_t* logObj20 = Log_CreateObj(2,variable_type_int32, &data,NULL,logHObj,"2.0");
-    Log_t* logObj21 = Log_CreateObj(2,variable_type_int32, &data,logObj20,NULL,"2.1");
-    Log_t* logObj22 = Log_CreateObj(2,variable_type_int32, &data,logObj20,NULL,"2.2");
-    Log_t* logObj220 = Log_CreateObj(2,variable_type_int32, &data,logObj22,NULL,"2.2.0");
-
-
-    if(!logObj10 || !logObj11 || !logObj12 || !logObj20 || !logObj21 || !logObj22 || !logObj220)
-    {
-        char tmpstr[40] = {0};
-        snprintf (tmpstr, 40,"Could not create log objects.\n");
-        TestFW_Report(obj, tmpstr);
-        return 0;
-    }
-
-    logNameQueueItems_t logItems = {0};
-
-    logItems.logNames = pvPortMalloc(sizeof(logNames_t) * 7);
-    logItems.xMutex = xSemaphoreCreateMutex();
-    logItems.nrLogNames = 0;
-    if(!logItems.xMutex || !logItems.logNames)
-    {
-        return 0;
-    }
-    result &= LogHandler_GetMapping(logHObj, logItems.logNames, 7, &logItems.nrLogNames);
-
-    uint8_t buffer[BUFFER_LENGTH_TEST_GET_NAME_SERIALIZED];
-    buffer[0] = '\0';
-    result &= LogHandler_AppendNodeString(&logItems, buffer, BUFFER_LENGTH_TEST_GET_NAME_SERIALIZED);
-
-    uint8_t verify[7][MAX_LOG_NODE_LENGTH] = {};
-    strncpy((char*)verify[0], "1.0[0]", MAX_LOG_NODE_LENGTH);
-    strncpy((char*)verify[1], "1.1[1]", MAX_LOG_NODE_LENGTH);
-    strncpy((char*)verify[2], "1.2[2]", MAX_LOG_NODE_LENGTH);
-    strncpy((char*)verify[3], "2.0[3]", MAX_LOG_NODE_LENGTH);
-    strncpy((char*)verify[4], "2.1[4]", MAX_LOG_NODE_LENGTH);
-    strncpy((char*)verify[5], "2.2[5]", MAX_LOG_NODE_LENGTH);
-    strncpy((char*)verify[6], "2.2.0[6]", MAX_LOG_NODE_LENGTH);
-
-    uint8_t found[7] = {0};
-    uint8_t* bufferPtr = buffer;
-
-    for(int i = 0; i < logItems.nrLogNames; i++)
-    {
-        uint8_t moduleBuffer[MAX_LOG_NODE_LENGTH] = {0};
-        moduleBuffer[0] = '\0';
-        bufferPtr = FcString_GetModuleString(moduleBuffer, MAX_LOG_NODE_LENGTH, bufferPtr, BUFFER_LENGTH_TEST_GET_NAME_SERIALIZED);
-        for(int j = 0; j < 7; j++)
-        {
-            if(0 == strncmp((char*)verify[j], (char*)moduleBuffer, MAX_LOG_NODE_LENGTH))
-            {
-                found[i] = 1;
-                break;
-            }
-        }
-    }
-    for(int i = 0; i < logItems.nrLogNames; i++)
-    {
-        result &= found[i];
-    }
-
-    vPortFree(logItems.logNames);
-    vSemaphoreDelete(logItems.xMutex);
-    LogHandler_deleteHandler(logHObj);
-
-    Log_DeleteObj(logObj10);
-    Log_DeleteObj(logObj11);
-    Log_DeleteObj(logObj12);
-    Log_DeleteObj(logObj20);
-    Log_DeleteObj(logObj21);
-    Log_DeleteObj(logObj22);
-    Log_DeleteObj(logObj220);
-
-    return result;
-}
-#endif
-
-uint8_t Log_NameCB(eventHandler_t* obj, void* data, moduleMsg_t* msg)
-{
-    uint8_t* namesReply = (uint8_t*)data;
-    uint8_t* reply = Msg_LogGetPayload(msg);
-    strncpy((char*)namesReply, (char*)reply, 255);
-    return 0;
 }

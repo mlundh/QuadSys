@@ -44,8 +44,4 @@ uint8_t Log_TestMultipleLoggers(TestFw_t* obj);
 
 uint8_t Log_TestMultipleHandlers(TestFw_t* obj);
 
-uint8_t Log_TestGetName(TestFw_t* obj);
-
-uint8_t Log_TestGetNameSerialized(TestFw_t* obj);
-
 #endif /* TEST_LOG_LOG_TESTER_H_ */
