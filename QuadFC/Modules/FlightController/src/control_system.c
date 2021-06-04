@@ -332,20 +332,43 @@ void Ctrl_Off(CtrlObj_t * obj)
     }
 }
 
-void Ctrl_Allocate( control_signal_t *ctrl_signal, int32_t motor_setpoint[] )
+void Ctrl_Allocate( control_signal_t *ctrl_signal, uint32_t motor_setpoint[], uint32_t nrMotors)
 {
-    motor_setpoint[0] = ((int32_t) ( ctrl_signal->control_signal[u_thrust] -  ctrl_signal->control_signal[u_roll] / 4 - ctrl_signal->control_signal[u_pitch] / 4 - ctrl_signal->control_signal[u_yaw] / 4));
-    motor_setpoint[1] = ((int32_t) ( ctrl_signal->control_signal[u_thrust] +  ctrl_signal->control_signal[u_roll] / 4 - ctrl_signal->control_signal[u_pitch] / 4 + ctrl_signal->control_signal[u_yaw] / 4));
-    motor_setpoint[2] = ((int32_t) ( ctrl_signal->control_signal[u_thrust] +  ctrl_signal->control_signal[u_roll] / 4 + ctrl_signal->control_signal[u_pitch] / 4 - ctrl_signal->control_signal[u_yaw] / 4));
-    motor_setpoint[3] = ((int32_t) ( ctrl_signal->control_signal[u_thrust] -  ctrl_signal->control_signal[u_roll] / 4 + ctrl_signal->control_signal[u_pitch] / 4 + ctrl_signal->control_signal[u_yaw] / 4));
-
-    int i;
-    for ( i = 0; i < 4; i++ )
+    if(nrMotors < 4)
     {
-        if ( motor_setpoint[i] < 0 )
+        for (size_t i = 0; i < nrMotors; i++)
         {
-            motor_setpoint[i] = 0;
+            motor_setpoint[i] = 0; // error case. Turn off motors!
+        }
+        
+        return;
+    }
+    int32_t tmpSetpoint[4] = {0};
+
+    // Right hand coordinate system with X forward, Y to the left and Z up. Right hand rule for rotations as well.
+
+    // Motor numbering is index + 1.
+
+    tmpSetpoint[0] = ((int32_t) ( ctrl_signal->control_signal[u_thrust] -  ctrl_signal->control_signal[u_roll] / 4 - ctrl_signal->control_signal[u_pitch] / 4 - ctrl_signal->control_signal[u_yaw] / 4));
+    tmpSetpoint[1] = ((int32_t) ( ctrl_signal->control_signal[u_thrust] -  ctrl_signal->control_signal[u_roll] / 4 + ctrl_signal->control_signal[u_pitch] / 4 + ctrl_signal->control_signal[u_yaw] / 4));
+    tmpSetpoint[2] = ((int32_t) ( ctrl_signal->control_signal[u_thrust] +  ctrl_signal->control_signal[u_roll] / 4 + ctrl_signal->control_signal[u_pitch] / 4 - ctrl_signal->control_signal[u_yaw] / 4));
+    tmpSetpoint[3] = ((int32_t) ( ctrl_signal->control_signal[u_thrust] +  ctrl_signal->control_signal[u_roll] / 4 - ctrl_signal->control_signal[u_pitch] / 4 + ctrl_signal->control_signal[u_yaw] / 4));
+
+    for (size_t i = 0; i < nrMotors; i++ )
+    {
+        if ( tmpSetpoint[i] < 0 )
+        {
+            tmpSetpoint[i] = 0;
+        }
+        if(tmpSetpoint[i] > MAX_U_SIGNAL)
+        {
+            tmpSetpoint[i] = MAX_U_SIGNAL;
         }
     }
+    for (size_t i = 0; i < 4; i++)
+    {
+        motor_setpoint[i] = tmpSetpoint[i];
+    }
+    
 }
 

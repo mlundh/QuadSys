@@ -35,9 +35,10 @@
 #include "queue.h"
 
 
-#include "HAL/QuadFC/QuadFC_Gpio.h"
+#include "QuadFC/QuadFC_Gpio.h"
 #include "QuadFC/QuadFC_I2c.h"
 #include "StateEstimator/inc/signal_processing.h"
+
 
 #include "Components/AppLog/inc/AppLog.h"
 
@@ -57,8 +58,9 @@
 
 #include "Messages/inc/Msg_Param.h"
 
-
+#include "stm32f4xx_ll_gpio.h"
 const static unsigned int SpTimeoutMs = 500;
+#define NR_MOTORS 4
 
 // Struct only used here to pass parameters to the task.
 typedef struct mainTaskParams
@@ -67,7 +69,8 @@ typedef struct mainTaskParams
     state_data_t *setpoint;
     CtrlObj_t *ctrl;
     control_signal_t *control_signal;
-    MotorControlObj *motorControl;
+    MotorControl_t *motorControl;
+    uint32_t motorSetpoint[NR_MOTORS];
     FlightModeHandler_t* flightModeHandler;
     StateEst_t* stateEst;
     Imu_t * imu;
@@ -114,7 +117,7 @@ void create_main_control_task(eventHandler_t* evHandler)
     taskParam->SetpointTimeoutCounter = 0;
     /*Ensure that all mallocs returned valid pointers*/
     if (   !taskParam                    || !taskParam->ctrl             || !taskParam->setpoint
-            || !taskParam->state             || !taskParam->control_signal   // TODO!!|| !taskParam->motorControl
+            || !taskParam->state             || !taskParam->control_signal   || !taskParam->motorControl
             || !taskParam->flightModeHandler || !taskParam->stateEst         || !taskParam->setPointHandler
             || !taskParam->logHandler        || !taskParam->paramHandler || !taskParam->spectrumSpHandler)
     {
@@ -161,6 +164,8 @@ void create_main_control_task(eventHandler_t* evHandler)
 void main_control_task( void *pvParameters )
 {
 
+
+    
     MaintaskParams_t * param = (MaintaskParams_t*)(pvParameters);
 
 
@@ -304,8 +309,8 @@ void main_control_task( void *pvParameters )
                 LOG_ENTRY(param->evHandler, "Main: Error - Unable to execute the control loop.");
                 main_fault(param);
             }
-            Ctrl_Allocate(param->control_signal, param->motorControl->motorSetpoint);
-            MotorCtrl_UpdateSetpoint( param->motorControl);
+            Ctrl_Allocate(param->control_signal, param->motorSetpoint, NR_MOTORS);
+            MotorCtrl_UpdateSetpoint( param->motorControl, param->motorSetpoint, NR_MOTORS);
 
 
             Log_Report(logPitchRate);
@@ -364,12 +369,11 @@ void main_control_task( void *pvParameters )
         vTaskDelayUntil( &xLastWakeTime, CTRL_TIME );
 
         /*-------------------Heartbeat----------------------
-         * Toggle an led to indicate that the FC is operational.
+         * Toggle an led to indicate that the FC is operational. 
          */
         heartbeat_counter++;
         if ( heartbeat_counter >= 500 )
         {
-            //LOG_ENTRYparam->evHandler, "%s", "Heartbeat!");
             Led_Toggle( ledHeartBeat );
             heartbeat_counter = 0;
 

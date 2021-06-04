@@ -32,6 +32,16 @@
 #include <string.h>
 #include "Parameters/inc/parameters.h"
 
+
+
+struct MotorControl
+{
+  uint32_t nr_init_motors;
+  uint8_t armed;
+  int32_t *motorSetpoint;
+  void *controlInternals;
+};
+
 /**
  * control signal resolution 100% = 1 << 16.
  *
@@ -95,7 +105,7 @@ pwm_internals_t *pwm_create();
  * @param obj   Current motor control object.
  * @return      Pointer to internals struct.
  */
-pwm_internals_t *pwm_getInternals(MotorControlObj *obj);
+pwm_internals_t *pwm_getInternals(MotorControl_t *obj);
 
 /**
  * Convenience function to take the mutex assiciated with the current object.
@@ -172,7 +182,7 @@ pwm_internals_t *pwm_create()
 
 
 
-MotorControlObj * MotorCtrl_CreateAndInit(uint32_t nr_motors, param_obj_t * param)
+MotorControl_t * MotorCtrl_CreateAndInit(uint32_t nr_motors, param_obj_t * param)
 {
     /*make sure that the correct number of motors are used.*/
     if ( (nr_motors < 0) || (nr_motors > MAX_MOTORS) )
@@ -182,7 +192,7 @@ MotorControlObj * MotorCtrl_CreateAndInit(uint32_t nr_motors, param_obj_t * para
 
 
     //Create
-    MotorControlObj *obj = pvPortMalloc(sizeof(MotorControlObj));
+    MotorControl_t *obj = pvPortMalloc(sizeof(MotorControl_t));
     if(!obj)
     {
         return NULL;
@@ -273,7 +283,7 @@ MotorControlObj * MotorCtrl_CreateAndInit(uint32_t nr_motors, param_obj_t * para
     return obj;
 }
 
-uint8_t MotorCtrl_Enable(MotorControlObj *obj)
+uint8_t MotorCtrl_Enable(MotorControl_t *obj)
 {
     if(!obj)
     {
@@ -303,14 +313,14 @@ uint8_t MotorCtrl_Enable(MotorControlObj *obj)
     return 1;
 }
 
-uint8_t MotorCtrl_Disable(MotorControlObj *obj)
+uint8_t MotorCtrl_Disable(MotorControl_t *obj)
 {
     pwm_channel_disable( PWM, 0 );
     obj->armed = 0;
     return 1;
 }
 
-uint8_t MotorCtrl_UpdateSetpoint(MotorControlObj *obj)
+uint8_t MotorCtrl_UpdateSetpoint(MotorControl_t *obj)
 {
 
     pwm_internals_t *internals = pwm_getInternals(obj);
@@ -354,7 +364,7 @@ uint8_t MotorCtrl_UpdateSetpoint(MotorControlObj *obj)
     return 1;
 }
 
-pwm_internals_t *pwm_getInternals(MotorControlObj *obj)
+pwm_internals_t *pwm_getInternals(MotorControl_t *obj)
 {
     return (pwm_internals_t *)obj->controlInternals;
 }

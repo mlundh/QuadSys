@@ -49,12 +49,12 @@
 // PWM defines
 
 #define PWM_PIN_1 (0)
-#define PWM_PIN_2 (0)
-#define PWM_PIN_3 (0)
-#define PWM_PIN_4 (0)
-#define PWM_PIN_5 (0)
-#define PWM_PIN_6 (0)
-#define PWM_PIN_7 (0)
-#define PWM_PIN_8 (0)
+#define PWM_PIN_2 (1)
+#define PWM_PIN_3 (2)
+#define PWM_PIN_4 (3)
+#define PWM_PIN_5 (4)
+#define PWM_PIN_6 (5)
+#define PWM_PIN_7 (6)
+#define PWM_PIN_8 (7)
 
 #endif // __BOARDCONFIG_H__

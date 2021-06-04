@@ -57,8 +57,6 @@ void Board_SetupHardware( void )
   MX_ADC1_Init();
   MX_CRC_Init();
   MX_SPI2_Init();
-  MX_TIM1_Init(); 
-  MX_TIM3_Init();
   MX_SPI4_Init();
 }
 void SystemClock_Config(void)

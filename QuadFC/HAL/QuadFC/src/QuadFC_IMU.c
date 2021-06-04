@@ -58,8 +58,6 @@ Imu_t * Imu_Create(param_obj_t * param, uint32_t index)
   obj->Orient.r_0_0 = INT_TO_FIXED(1,FP_16_16_SHIFT);
   obj->Orient.r_1_1 = INT_TO_FIXED(1,FP_16_16_SHIFT);
   obj->Orient.r_2_2 = INT_TO_FIXED(1,FP_16_16_SHIFT);
-  obj->Orient.acc_sign = 1;
-  obj->Orient.gyro_sign = 1;
 
 
   param_obj_t * ImuOriRoot = Param_CreateObj(12, variable_type_NoType, readOnly, NULL, "IMU_Rot", param );
@@ -81,10 +79,6 @@ Imu_t * Imu_Create(param_obj_t * param, uint32_t index)
       &obj->Orient.r_2_1, "r_2_1", ImuOriRoot);
   Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &obj->Orient.r_2_2, "r_2_2", ImuOriRoot);
-  Param_CreateObj(0, variable_type_int8, readWrite,
-      &obj->Orient.acc_sign, "accSign", ImuOriRoot);
-  Param_CreateObj(0, variable_type_int8, readWrite,
-      &obj->Orient.gyro_sign, "gyroSign", ImuOriRoot);
 
   param_obj_t * ImuCurrent = Param_CreateObj(10, variable_type_NoType, readOnly, NULL, "IMU_Current", param);
   Param_CreateObj(0, variable_type_fp_16_16, readOnly,
@@ -144,10 +138,6 @@ uint8_t Imu_GetData(Imu_t *obj)
                                   my_mult(obj->tempData.imu_data[accl_y], obj->Orient.r_2_1, FP_16_16_SHIFT) +
                                   my_mult(obj->tempData.imu_data[accl_z], obj->Orient.r_2_2, FP_16_16_SHIFT);
 
-  obj->ImuData.imu_data[accl_x] *= SIGN(obj->Orient.acc_sign);
-  obj->ImuData.imu_data[accl_y] *= SIGN(obj->Orient.acc_sign);
-  obj->ImuData.imu_data[accl_z] *= SIGN(obj->Orient.acc_sign);
-
   obj->ImuData.imu_data[gyro_x] = my_mult(obj->tempData.imu_data[gyro_x], obj->Orient.r_0_0, FP_16_16_SHIFT) +
                                   my_mult(obj->tempData.imu_data[gyro_y], obj->Orient.r_0_1, FP_16_16_SHIFT) +
                                   my_mult(obj->tempData.imu_data[gyro_z], obj->Orient.r_0_2, FP_16_16_SHIFT);
@@ -160,9 +150,6 @@ uint8_t Imu_GetData(Imu_t *obj)
                                   my_mult(obj->tempData.imu_data[gyro_y], obj->Orient.r_2_1, FP_16_16_SHIFT) +
                                   my_mult(obj->tempData.imu_data[gyro_z], obj->Orient.r_2_2, FP_16_16_SHIFT);
 
-  obj->ImuData.imu_data[gyro_x] *= SIGN(obj->Orient.gyro_sign);
-  obj->ImuData.imu_data[gyro_y] *= SIGN(obj->Orient.gyro_sign);
-  obj->ImuData.imu_data[gyro_z] *= SIGN(obj->Orient.gyro_sign);
   return 1;
 
 }

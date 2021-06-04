@@ -24,10 +24,19 @@
 
 #include "QuadFC/QuadFC_MotorControl.h"
 #include "Messages/inc/common_types.h"
+#include "QuadFC/QuadFC_Pwm.h"
+#include "BoardConfig.h"
 
 #include "FreeRTOS.h"
 #include <string.h>
 #include "Parameters/inc/parameters.h"
+
+
+struct MotorControl
+{
+  uint32_t scaleFactor;
+};
+
 
 /**
  * control signal resolution 100% = 1 << 16.
@@ -42,119 +51,53 @@
  * y = x*2380/65536
  */
 
-
-/** Required resolution = 2000 usable steps. */
-
-/** PWM frequency in Hz */
-#define PWM_FREQUENCY  (400)
-/** PWM period value */
-#define PERIOD_VALUE   (7100)
-/** Initial duty cycle value */
-#define INIT_DUTY_VALUE  (3100)
-/** Initial dead time value */
-#define INIT_DEAD_TIME   (0)
-/** Maximum synchronous update period */
-#define MAX_SYNC_UPDATE_PERIOD  (0)
-/** Minimum input over INIT_DUTY_VALUE for the propellers to start rotating */
-#define MIN_START_DUTY (200)
-/**  Max allowed setponit */
-#define MAX_SETPOINT (5680)
-
-/**
- *  Contains identification information
- *  required for accessing a pwm channel.
- *
- */
-typedef struct quad_pwm_parameters
+MotorControl_t * MotorCtrl_CreateAndInit(uint32_t nr_motors, param_obj_t * param)
 {
-    uint32_t pwm_gipo; /*< The pin of the channel */
-    uint32_t pwm_flags; /*< The flags used to initialize the pin */
-    uint32_t pwm_channel; /*< The channel of the pwm. */
-} quad_pwm_parameters_t;
-
-typedef struct pwm_internals
-{
-    quad_pwm_parameters_t *pwm_parameters;
-//    pwm_channel_t pwm_channels;
-    int32_t arming_duty_value;
-    int32_t armed_duty_value;
-    SemaphoreHandle_t xMutex;
-} pwm_internals_t;
-
-/**
- * Create a pwm motor control object.
- * @return
- */
-pwm_internals_t *pwm_create();
-
-/**
- * Convenience function to get a pointer to the internals struct.
- * @param obj   Current motor control object.
- * @return      Pointer to internals struct.
- */
-pwm_internals_t *pwm_getInternals(MotorControlObj *obj);
-
-/**
- * Convenience function to take the mutex assiciated with the current object.
- * @param obj   Current internals object.
- * @return      0 if failed to aquire mutex(do not use resource) 1 otherwise.
- */
-uint8_t pwm_takeMutex(pwm_internals_t *obj);
-
-/**
- * Convenience function to release the mutex assiciated with the current object.
- * @param obj   Current internals object.
- * @return      0 if failed, 1 otherwise.
- */
-uint8_t pwm_giveMutex(pwm_internals_t *obj);
-
-
-#define MAX_MOTORS (8)
-
-pwm_internals_t *pwm_create()
-{
-    return NULL;
+    MotorControl_t* obj = pvPortMalloc(sizeof(MotorControl_t));
+    if(!obj)
+    {
+        return NULL;
+    }
+    PWM_Initialize(PWM_PIN_1, pwm_OneShot125);
+    PWM_Initialize(PWM_PIN_2, pwm_OneShot125);
+    PWM_Initialize(PWM_PIN_3, pwm_OneShot125);
+    PWM_Initialize(PWM_PIN_4, pwm_OneShot125);
+    return obj;
 }
 
-
-
-
-
-MotorControlObj * MotorCtrl_CreateAndInit(uint32_t nr_motors, param_obj_t * param)
+uint8_t MotorCtrl_Enable(MotorControl_t *obj)
 {
-    return NULL;
+    if(!obj)
+    {
+        return 0;
+    }
+    PWM_Enable(PWM_PIN_1);
+    return 1;
 }
 
-uint8_t MotorCtrl_Enable(MotorControlObj *obj)
+uint8_t MotorCtrl_Disable(MotorControl_t *obj)
 {
+    if(!obj)
+    {
+        return 0;
+    }
+    PWM_Disable(PWM_PIN_1);
     return 0;
 }
 
-uint8_t MotorCtrl_Disable(MotorControlObj *obj)
+uint8_t MotorCtrl_UpdateSetpoint(MotorControl_t *obj, uint32_t* motorSetpoints, uint32_t nrMotors)
 {
-    return 0;
+    if(!obj || nrMotors < 4)
+    {
+        MotorCtrl_Disable(obj);
+        return 0;
+    }
+    PWM_SetDutyCycle(PWM_PIN_1,motorSetpoints[0]);
+    PWM_SetDutyCycle(PWM_PIN_2,motorSetpoints[1]);
+    PWM_SetDutyCycle(PWM_PIN_3,motorSetpoints[2]);
+    PWM_SetDutyCycle(PWM_PIN_4,motorSetpoints[3]);
+
+    MotorCtrl_Enable(obj);
+    return 1;
 }
-
-uint8_t MotorCtrl_UpdateSetpoint(MotorControlObj *obj)
-{
-    return 0;
-}
-
-pwm_internals_t *pwm_getInternals(MotorControlObj *obj)
-{
-    return NULL;
-}
-
-
-uint8_t pwm_takeMutex(pwm_internals_t *obj)
-{
-    return 0;
-}
-
-
-uint8_t pwm_giveMutex(pwm_internals_t *obj)
-{
-    return 0;
-}
-
 

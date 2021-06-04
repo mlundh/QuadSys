@@ -29,7 +29,7 @@
 typedef enum{
     pwm_50,
     pwm_OneShot125,
-    pwm_OneShot45,
+    pwm_OneShot42,
 } Pwm_Mode_t;
 
 /**
@@ -55,10 +55,10 @@ uint8_t PWM_InitializeCustom(uint8_t pin, uint8_t bitsResolution, uint32_t frequ
  * @brief Set or update the duty cycle of the pin.
  * 
  * @param pin       A pin that has already been initialized.
- * @param duty      Duty cycle in percent. 16 bit value.
+ * @param duty      Duty cycle in percent. 16 bits are used
  * @return uint8_t 
  */
-uint8_t PWM_SetDutyCycle(uint8_t pin, uint16_t duty);
+uint8_t PWM_SetDutyCycle(uint8_t pin, uint32_t duty);
 
 /**
  * @brief Enable the output of the pin.

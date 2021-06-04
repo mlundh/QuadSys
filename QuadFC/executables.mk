@@ -50,7 +50,7 @@ QuadFC_DEPS+= $(addprefix Components/, Utilities SetpointHandler Parameters SLIP
 QuadFC_DEPS+= $(addprefix HwComponents/, SpectrumSatellite CY15B104Q_SX_spi_fram)
 QuadFC_DEPS+= $(addprefix HwComponents/, MB85RC_i2c_fram Sensors)
 QuadFC_DEPS+= $(addprefix OS/, $(PLATFORM))
-QuadFC_DEPS+= $(addprefix Boards/$(PLATFORM)/, Board Startup Mem Gpio)
+QuadFC_DEPS+= $(addprefix Boards/$(PLATFORM)/, Board Startup Mem Gpio Pwm)
 QuadFC_DEPS+= $(addprefix Drivers/, $(PLATFORM))
 
 Test_Utilities_DEPS:= Top/Test_Utilities

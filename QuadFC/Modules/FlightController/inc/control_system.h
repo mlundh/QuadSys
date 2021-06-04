@@ -74,12 +74,25 @@ void Ctrl_On(CtrlObj_t * obj);
 void Ctrl_Off(CtrlObj_t * obj);
 
 
-//TODO move to motor control block and use number of motors.
 /**
- * Allocate the control to different motors.
+ * Allocate the control to different motors. 
+ * Motor numbering: 
+ * 
+ * front
+ * 4    1
+ * 
+ * 3    2
+ *  back
+ * 
+ * motor rotation:
+ * cw ccv
+ * 
+ * ccv cv
+ * 
  * @param ctrl_signal     control signal to be allocated to motors.
  * @param motor_setpoint  Output, setpoint to each motor.
+ * @param nrMotors        number of motors to allocate the control signal on.
  */
-void Ctrl_Allocate( control_signal_t *ctrl_signal, int32_t motor_setpoint[] );
+void Ctrl_Allocate( control_signal_t *ctrl_signal, uint32_t motor_setpoint[], uint32_t nrMotors);
 
 #endif /* MODULES_FLIGHTCONTROLLER_INC_CONTROL_SYSTEM_H_ */

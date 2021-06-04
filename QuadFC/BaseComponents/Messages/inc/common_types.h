@@ -55,8 +55,8 @@ typedef enum LedName
 
 // Update both macros at the same time!
 /*main_control_task execute at 500Hz, period of 2ms*/
-#define CTRL_TIME    (2UL / portTICK_PERIOD_MS )
-#define CTRL_TIME_FP (TWO_MS_FP)
+#define CTRL_TIME    (1UL / portTICK_PERIOD_MS )
+#define CTRL_TIME_FP (ONE_MS_FP)
 
 
 /**
@@ -143,13 +143,23 @@ typedef enum state_names_inertial_frame
  *
  * Angular velocity: 16.16 signed fixed point with 1 as pi rad / second.
  * pi rad/(2^(16)) = 0.0000479368997 rad/s/LSB, gives that 1 LSB shifted
- * up by 14 will correspond to pi rad per second.
+ * up by 16 will correspond to pi rad per second.
  *
  *
  * Thrust:
  * Thrust is not a real state, but is added here for simplicity.
- * Scaling: 16.16 fixed point, 100% = 1<<30
-
+ * Scaling: 16.16 fixed point, 100% = 1<<16
+ * 
+ * 
+ * The system uses a right-hand coordinate system with:
+ * X pointing forward.
+ * Y pointing to the left.
+ * Z pointing up.
+ * 
+ * This means that:
+ * Yaw is a rotation around Z in the counter-clockwise direction viewd from above
+ * Pitch is a rotation around Y leaning forward.
+ * Roll is a rotation around X to the right.
  */
 
 typedef enum state_names_body_frame
@@ -178,7 +188,7 @@ typedef struct state_data
  * Control signal struct. Values in 16.16 fixed point.
  * 100% = 1<<16. Resolution = 0,0000015259
  */
-#define MAX_U_SIGNAL INT_TO_FIXED(2, FP_16_16_SHIFT)
+#define MAX_U_SIGNAL INT_TO_FIXED(1, FP_16_16_SHIFT)
 typedef enum control_signal_names
 {
   u_pitch = 0,
@@ -244,8 +254,6 @@ typedef struct ImuOrientation
   int32_t r_2_0;
   int32_t r_2_1;
   int32_t r_2_2;
-  int8_t acc_sign;
-  int8_t gyro_sign;
 
 }ImuOrientation_t;
 
