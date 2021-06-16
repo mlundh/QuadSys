@@ -104,22 +104,133 @@
 *********************** Starting Testsuite: Components1 *********************** 
 
 **** Starting Test: Param Get ****
-Expected:
-/PH1<0>/param1<6>[0]/param11<6>[0]/../param12<6>[0]/../../ 
-Got:
-/PH1<0>/param1<6>[0]/param11<6>[0]/../param12<6>[0]/../..
 
-**** RESULT Param Get: [31mFAIL[0m **** 
+**** RESULT Param Get: [32mPASS[0m **** 
 
 **** Starting Test: Param SetGet ****
-Expected:
-/PH1<0>/param1<6>[700]/param11<6>[1024]/../param12<6>[1038]/../../ 
-Got:
-/PH1<0>/param1<6>[700]/param11<6>[1024]/../param12<6>[1038]/../..
 
-**** RESULT Param SetGet: [31mFAIL[0m **** 
+**** RESULT Param SetGet: [32mPASS[0m **** 
 
 **** Starting Test: Param SetGetSearch ****
-Expected:
-/PH1<0>/param1<6>[700]/param11<6>[1024]/../param12<6>[1038]/../../ 
-Got:
+
+**** RESULT Param SetGetSearch: [32mPASS[0m **** 
+
+**** Starting Test: Param Save ****
+
+**** RESULT Param Save: [32mPASS[0m **** 
+
+**** Starting Test: Param SaveLoad ****
+
+**** RESULT Param SaveLoad: [32mPASS[0m **** 
+
+**** Starting Test: Param GetTwoHandlers ****
+
+**** RESULT Param GetTwoHandlers: [32mPASS[0m **** 
+
+**** Starting Test: Param SetGetTwoHandlers ****
+
+**** RESULT Param SetGetTwoHandlers: [32mPASS[0m **** 
+
+**** Starting Test: Log C Handler ****
+LogMaster uses 512 bytes of heap.
+LogHandler slave uses 1392 bytes of heap.
+
+**** RESULT Log C Handler: [32mPASS[0m **** 
+
+**** Starting Test: Log C Obj ****
+A log obj uses 144 bytes of heap.
+
+**** RESULT Log C Obj: [32mPASS[0m **** 
+
+**** Starting Test: Log Set Child ****
+
+**** RESULT Log Set Child: [32mPASS[0m **** 
+
+**** Starting Test: Log Report ****
+
+**** RESULT Log Report: [32mPASS[0m **** 
+
+**** Starting Test: Log Test Multiple Loggers ****
+
+**** RESULT Log Test Multiple Loggers: [32mPASS[0m **** 
+
+**** Starting Test: Log Test Multiple Handlers ****
+
+**** RESULT Log Test Multiple Handlers: [32mPASS[0m **** 
+
+**** Starting Test: Log Event ****
+[31mMemory leak in test case Log Event! Lost 512 bytes.[0m
+
+**** RESULT Log Event: [32mPASS[0m **** 
+
+**** Starting Test: AppLog Create ****
+
+**** RESULT AppLog Create: [32mPASS[0m **** 
+
+**** Starting Test: AppLog Report ****
+
+**** RESULT AppLog Report: [32mPASS[0m **** 
+
+**** Starting Test: AppLog ReportM ****
+
+**** RESULT AppLog ReportM: [32mPASS[0m **** 
+
+**** Starting Test: Cbuff Create Delete ****
+
+**** RESULT Cbuff Create Delete: [32mPASS[0m **** 
+
+**** Starting Test: Cbuff Push Pop ****
+
+**** RESULT Cbuff Push Pop: [32mPASS[0m **** 
+
+**** Starting Test: Cbuff Circular ****
+[37mINFO: Filling the whole buffer.[0m
+[37mINFO: Read half of the buffer.[0m
+[37mINFO: Re-fill the buffer.[0m
+[37mINFO: Read the whole buffer.[0m
+[37mINFO: Verify first half.[0m
+[37mINFO: Verify second half.[0m
+
+**** RESULT Cbuff Circular: [32mPASS[0m **** 
+
+**** Starting Test: Cbuff Count ****
+
+**** RESULT Cbuff Count: [32mPASS[0m **** 
+
+**** Starting Test: Cbuff Full ****
+
+**** RESULT Cbuff Full: [32mPASS[0m **** 
+
+**** Starting Test: Cbuff Push Pop String ****
+
+**** RESULT Cbuff Push Pop String: [32mPASS[0m **** 
+
+**** Starting Test: Cbuff Push Pop String boundary ****
+[37mINFO: Filling the whole buffer.[0m
+[37mINFO: Reading half the buffer.[0m
+[37mINFO: re-filling the buffer.[0m
+[37mINFO: Reading the complete buffer.[0m
+
+**** RESULT Cbuff Push Pop String boundary: [32mPASS[0m **** 
+
+**** Starting Test: Cbuff Read more than is availib ****
+
+**** RESULT Cbuff Read more than is availib: [32mPASS[0m **** 
+
+**** Starting Test: Slip Create Delete ****
+
+**** RESULT Slip Create Delete: [32mPASS[0m **** 
+
+**** Starting Test: SlipParser Create Delete ****
+
+**** RESULT SlipParser Create Delete: [32mPASS[0m **** 
+
+**** Starting Test: SlipParser parse ****
+
+**** RESULT SlipParser parse: [32mPASS[0m **** 
+
+**** Starting Test: SlipParser parse chunks ****
+
+**** RESULT SlipParser parse chunks: [32mPASS[0m **** 
+
+********************** Testsuite Components1 RESULT: [32mPASS[0m ********************** 

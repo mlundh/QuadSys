@@ -11,7 +11,7 @@ Firmware: J-Link EDU Mini V1 compiled Nov 12 2020 13:31:42
 Hardware version: V1.00
 S/N: 801013584
 License(s): FlashBP, GDB
-VTref=3.271V
+VTref=3.280V
 Target connection not established yet but required for command.
 Device "STM32F413VG" selected.
 
@@ -45,8 +45,67 @@ Reset: Reset device via AIRCR.SYSRESETREQ.
 
 Downloading file [../../out/Titan/Test_Modules1.bin]...
 J-Link: Flash download: Bank 0 @ 0x08000000: 2 ranges affected (131072 bytes)
-J-Link: Flash download: Total: 3.176s (Prepare: 0.032s, Compare: 0.015s, Erase: 2.410s, Program & Verify: 0.705s, Restore: 0.011s)
-J-Link: Flash download: Program & Verify speed: 181 KB/s
+J-Link: Flash download: Total: 3.164s (Prepare: 0.062s, Compare: 0.019s, Erase: 2.380s, Program & Verify: 0.690s, Restore: 0.011s)
+J-Link: Flash download: Program & Verify speed: 185 KB/s
+O.K.
+
+Reset delay: 0 ms
+Reset type NORMAL: Resets core & peripherals via SYSRESETREQ & VECTRESET bit.
+Reset: Halt core after reset via DEMCR.VC_CORERESET.
+Reset: Reset device via AIRCR.SYSRESETREQ.
+
+
+Script processing completed.
+
+SEGGER J-Link Commander V6.88a (Compiled Nov 18 2020 16:08:22)
+DLL version V6.88a, compiled Nov 18 2020 16:08:10
+
+
+J-Link Command File read successfully.
+Processing script file...
+
+J-Link connection not established yet but required for command.
+Connecting to J-Link via USB...O.K.
+Firmware: J-Link EDU Mini V1 compiled Nov 12 2020 13:31:42
+Hardware version: V1.00
+S/N: 801013584
+License(s): FlashBP, GDB
+VTref=3.278V
+Target connection not established yet but required for command.
+Device "STM32F413VG" selected.
+
+
+Connecting to target via SWD
+Found SW-DP with ID 0x2BA01477
+Found SW-DP with ID 0x2BA01477
+DPIDR: 0x2BA01477
+Scanning AP map to find all available APs
+AP[1]: Stopped AP scan as end of AP map has been reached
+AP[0]: AHB-AP (IDR: 0x24770011)
+Iterating through AP map to find AHB-AP to use
+AP[0]: Core found
+AP[0]: AHB-AP ROM base: 0xE00FF000
+CPUID register: 0x410FC241. Implementer code: 0x41 (ARM)
+Found Cortex-M4 r0p1, Little endian.
+FPUnit: 6 code (BP) slots and 2 literal slots
+CoreSight components:
+ROMTbl[0] @ E00FF000
+ROMTbl[0][0]: E000E000, CID: B105E00D, PID: 000BB00C SCS-M7
+ROMTbl[0][1]: E0001000, CID: B105E00D, PID: 003BB002 DWT
+ROMTbl[0][2]: E0002000, CID: B105E00D, PID: 002BB003 FPB
+ROMTbl[0][3]: E0000000, CID: B105E00D, PID: 003BB001 ITM
+ROMTbl[0][4]: E0040000, CID: B105900D, PID: 000BB9A1 TPIU
+ROMTbl[0][5]: E0041000, CID: B105900D, PID: 000BB925 ETM
+Cortex-M4 identified.
+Reset delay: 0 ms
+Reset type NORMAL: Resets core & peripherals via SYSRESETREQ & VECTRESET bit.
+Reset: Halt core after reset via DEMCR.VC_CORERESET.
+Reset: Reset device via AIRCR.SYSRESETREQ.
+
+Downloading file [../../out/Titan/Test_Modules2.bin]...
+J-Link: Flash download: Bank 0 @ 0x08000000: 1 range affected (49152 bytes)
+J-Link: Flash download: Total: 1.628s (Prepare: 0.037s, Compare: 0.009s, Erase: 1.008s, Program & Verify: 0.562s, Restore: 0.011s)
+J-Link: Flash download: Program & Verify speed: 85 KB/s
 O.K.
 
 Reset delay: 0 ms
@@ -102,68 +161,9 @@ Reset type NORMAL: Resets core & peripherals via SYSRESETREQ & VECTRESET bit.
 Reset: Halt core after reset via DEMCR.VC_CORERESET.
 Reset: Reset device via AIRCR.SYSRESETREQ.
 
-Downloading file [../../out/Titan/Test_Modules2.bin]...
-J-Link: Flash download: Bank 0 @ 0x08000000: 1 range affected (49152 bytes)
-J-Link: Flash download: Total: 1.530s (Prepare: 0.030s, Compare: 0.016s, Erase: 1.011s, Program & Verify: 0.463s, Restore: 0.008s)
-J-Link: Flash download: Program & Verify speed: 104 KB/s
-O.K.
-
-Reset delay: 0 ms
-Reset type NORMAL: Resets core & peripherals via SYSRESETREQ & VECTRESET bit.
-Reset: Halt core after reset via DEMCR.VC_CORERESET.
-Reset: Reset device via AIRCR.SYSRESETREQ.
-
-
-Script processing completed.
-
-SEGGER J-Link Commander V6.88a (Compiled Nov 18 2020 16:08:22)
-DLL version V6.88a, compiled Nov 18 2020 16:08:10
-
-
-J-Link Command File read successfully.
-Processing script file...
-
-J-Link connection not established yet but required for command.
-Connecting to J-Link via USB...O.K.
-Firmware: J-Link EDU Mini V1 compiled Nov 12 2020 13:31:42
-Hardware version: V1.00
-S/N: 801013584
-License(s): FlashBP, GDB
-VTref=3.277V
-Target connection not established yet but required for command.
-Device "STM32F413VG" selected.
-
-
-Connecting to target via SWD
-Found SW-DP with ID 0x2BA01477
-Found SW-DP with ID 0x2BA01477
-DPIDR: 0x2BA01477
-Scanning AP map to find all available APs
-AP[1]: Stopped AP scan as end of AP map has been reached
-AP[0]: AHB-AP (IDR: 0x24770011)
-Iterating through AP map to find AHB-AP to use
-AP[0]: Core found
-AP[0]: AHB-AP ROM base: 0xE00FF000
-CPUID register: 0x410FC241. Implementer code: 0x41 (ARM)
-Found Cortex-M4 r0p1, Little endian.
-FPUnit: 6 code (BP) slots and 2 literal slots
-CoreSight components:
-ROMTbl[0] @ E00FF000
-ROMTbl[0][0]: E000E000, CID: B105E00D, PID: 000BB00C SCS-M7
-ROMTbl[0][1]: E0001000, CID: B105E00D, PID: 003BB002 DWT
-ROMTbl[0][2]: E0002000, CID: B105E00D, PID: 002BB003 FPB
-ROMTbl[0][3]: E0000000, CID: B105E00D, PID: 003BB001 ITM
-ROMTbl[0][4]: E0040000, CID: B105900D, PID: 000BB9A1 TPIU
-ROMTbl[0][5]: E0041000, CID: B105900D, PID: 000BB925 ETM
-Cortex-M4 identified.
-Reset delay: 0 ms
-Reset type NORMAL: Resets core & peripherals via SYSRESETREQ & VECTRESET bit.
-Reset: Halt core after reset via DEMCR.VC_CORERESET.
-Reset: Reset device via AIRCR.SYSRESETREQ.
-
 Downloading file [../../out/Titan/Test_Utilities.bin]...
 J-Link: Flash download: Bank 0 @ 0x08000000: 1 range affected (49152 bytes)
-J-Link: Flash download: Total: 1.612s (Prepare: 0.037s, Compare: 0.015s, Erase: 1.010s, Program & Verify: 0.537s, Restore: 0.011s)
+J-Link: Flash download: Total: 1.617s (Prepare: 0.039s, Compare: 0.015s, Erase: 1.014s, Program & Verify: 0.535s, Restore: 0.012s)
 J-Link: Flash download: Program & Verify speed: 89 KB/s
 O.K.
 
@@ -222,8 +222,8 @@ Reset: Reset device via AIRCR.SYSRESETREQ.
 
 Downloading file [../../out/Titan/Test_Components1.bin]...
 J-Link: Flash download: Bank 0 @ 0x08000000: 2 ranges affected (131072 bytes)
-J-Link: Flash download: Total: 3.379s (Prepare: 0.039s, Compare: 0.028s, Erase: 2.356s, Program & Verify: 0.943s, Restore: 0.012s)
-J-Link: Flash download: Program & Verify speed: 135 KB/s
+J-Link: Flash download: Total: 3.147s (Prepare: 0.029s, Compare: 0.014s, Erase: 2.367s, Program & Verify: 0.726s, Restore: 0.007s)
+J-Link: Flash download: Program & Verify speed: 176 KB/s
 O.K.
 
 Reset delay: 0 ms

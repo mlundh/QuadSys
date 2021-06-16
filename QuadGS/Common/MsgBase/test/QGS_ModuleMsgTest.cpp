@@ -31,5 +31,7 @@ TEST(QGSModuleMsgTest, StreamInOut)
 	EXPECT_EQ(msgVerify->getType(), msg->getType());
 	EXPECT_EQ(msgVerify->getDestination(), msg->getDestination());
 	EXPECT_EQ(msgVerify->getSource(), msg->getSource());
+	EXPECT_EQ(msgVerify->getMsgNr(), msg->getMsgNr());
+	EXPECT_EQ(msgVerify->getRequireAck(), msg->getRequireAck());
 
 }

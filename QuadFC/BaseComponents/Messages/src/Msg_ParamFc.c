@@ -50,6 +50,7 @@ moduleMsg_t* Msg_ParamFcCreate(uint32_t destination, uint8_t msgNr
         msg->mDestination = destination;
         msg->mSource = Unassigned_e;
         msg->mMsgNr = msgNr;
+        msg->mRequireAck = 1;
         msg->type = Msg_ParamFc_e;
         msg->mAllocatedSize = mallocSize;
 

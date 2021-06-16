@@ -45,6 +45,7 @@ typedef struct
     uint32_t            mSource;
     uint32_t            mDestination;
     uint8_t             mMsgNr;
+    uint8_t             mRequireAck;
     uint32_t            mAllocatedSize;
     uint8_t             mDelete;
 }moduleMsg_t;
@@ -63,6 +64,9 @@ void Msg_SetDestination(moduleMsg_t* msg, uint32_t desitnation);
 
 uint32_t Msg_GetMsgNr(moduleMsg_t* msg);
 void Msg_SetMsgNr(moduleMsg_t* msg, uint32_t msgNr);
+
+uint8_t Msg_GetRequireAck(moduleMsg_t* msg);
+void Msg_SetRequireAck(moduleMsg_t* msg, uint8_t requireAck);
 
 uint8_t* Msg_Serialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 uint8_t* Msg_DeSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);

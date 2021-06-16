@@ -46,6 +46,7 @@ moduleMsg_t* Msg_TestMemRegCreate(uint32_t destination, uint8_t msgNr
         msg->mDestination = destination;
         msg->mSource = Unassigned_e;
         msg->mMsgNr = msgNr;
+        msg->mRequireAck = 1;
         msg->type = Msg_TestMemReg_e;
         msg->mAllocatedSize = mallocSize;
 

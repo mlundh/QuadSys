@@ -32,13 +32,14 @@ QGS_ModuleMsgBase::QGS_ModuleMsgBase()
 :mType(0),
  mSource(msgAddr_t::Unassigned_e),
  mDestination(msgAddr_t::Unassigned_e),
- mMsgNr(0)
+ mMsgNr(0),
+ mRequireAck(1)
 {
 
 }
 
 QGS_ModuleMsgBase::QGS_ModuleMsgBase(messageTypes type, const msgAddr_t desination)
-:mType(type), mSource(), mDestination(desination), mMsgNr(0)
+:mType(type), mSource(), mDestination(desination), mMsgNr(0),mRequireAck(1)
 {
 
 }
@@ -48,6 +49,7 @@ QGS_ModuleMsgBase::QGS_ModuleMsgBase(const QGS_ModuleMsgBase& msg)
 , mSource(msg.getSource())
 , mDestination(msg.getDestination())
 , mMsgNr(msg.getMsgNr())
+, mRequireAck(msg.getRequireAck())
 {
 
 }
@@ -95,6 +97,17 @@ uint8_t QGS_ModuleMsgBase::getMsgNr() const
 	return mMsgNr;
 }
 
+
+void QGS_ModuleMsgBase::setRequireAck(uint8_t requireAck)
+{
+	mRequireAck = requireAck;
+}
+
+uint8_t QGS_ModuleMsgBase::getRequireAck() const
+{
+	return mRequireAck;
+}
+
 void QGS_ModuleMsgBase::setSkipStreamHeader()
 {
 	mSkipStreamHeader = true;
@@ -119,6 +132,7 @@ BinaryIStream& QGS_ModuleMsgBase::stream(BinaryIStream& is)
 		is >> mDestination;
 		is >> mSource;
 		is >> mMsgNr;
+		is >> mRequireAck;
 		mSkipStreamHeader = false;
 	}
 	return is;
@@ -130,6 +144,7 @@ BinaryOStream& QGS_ModuleMsgBase::stream(BinaryOStream& os) const
 	os << mDestination;
 	os << mSource;
 	os << mMsgNr;
+	os << mRequireAck;
 	return os;
 }
 

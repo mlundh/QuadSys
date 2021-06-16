@@ -38,7 +38,8 @@ uint8_t msgCmp(moduleMsg_t* msg, moduleMsg_t* msg2)
     if((msg->mDestination == msg2->mDestination) &&
         (msg->mMsgNr == msg2->mMsgNr) &&
         (msg->mSource == msg2->mSource) &&
-        (msg->type == msg2->type))
+        (msg->type == msg2->type) &&
+        (msg->mRequireAck == msg2->mRequireAck))
     {
         result = 1;
     }

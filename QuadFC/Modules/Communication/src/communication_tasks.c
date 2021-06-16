@@ -346,8 +346,8 @@ uint8_t Com_TxSend(eventHandler_t* obj, void* data, moduleMsg_t* msg)
                 //TODO error led?
                 //Try retransmitt.
             }
-            // We should not wait for an answer on a transmission message.
-            if(Msg_GetType(msg) == Msg_Transmission_e)
+            // We should only wait for an answer if requested. An example where this is not requested is transmission messages.
+            if(Msg_GetRequireAck(msg) == 0)
             {   
                 break; // TODO ugly...
             }
@@ -442,12 +442,11 @@ void Com_RxTask( void *pvParameters )
             {
             	Msg_SetDestination(msg, GS_Broadcast_e);
             }
-
-
-            if(Msg_GetType(msg) != Msg_Transmission_e) // we ack all messages except for transmission messages.
+            if(Msg_GetRequireAck(msg) == 1) // we ack all messages that reqire it.
             {
                 uint8_t msgNr = Msg_GetMsgNr(msg);
                 moduleMsg_t* reply = Msg_TransmissionCreate(GS_SerialIO_e, msgNr, transmission_OK);
+                Msg_SetRequireAck(reply, 0);
                 Event_Send(obj->evHandler, reply);
             }
             if(Msg_Transmission_e == Msg_GetType(msg))
@@ -478,6 +477,7 @@ void Com_RxTask( void *pvParameters )
         {
             
             moduleMsg_t* reply = Msg_TransmissionCreate(GS_SerialIO_e, 0, transmission_NOK);
+            Msg_SetRequireAck(reply, 0);
             Event_Send(obj->evHandler, reply);
         }
         break;

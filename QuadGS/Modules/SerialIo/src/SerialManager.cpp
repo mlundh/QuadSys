@@ -169,6 +169,7 @@ namespace QuadGS
 	std::string Serial_Manager::testSerial(std::string path)
 	{
 		Msg_TestTransmission::ptr msg = std::make_unique<Msg_TestTransmission>(msgAddr_t::FC_Param_e, 0xDEADBEEF, "Test string\0");
+		msg->setRequireAck(0);
 		std::string result = "Test message sent!";
 		sendMsg(std::move(msg));
 		return result;
@@ -296,17 +297,19 @@ namespace QuadGS
 		{
 			//Received NOK message, trigger a re-try!
 			Msg_Transmission::ptr transmission = std::make_unique<Msg_Transmission>(mTransmissionAddr, transmission_NOK);
+			transmission->setRequireAck(0);
 			sendMsg(std::move(transmission));
 			return;
 		}
 
-		if (msg->getType() != messageTypes_t::Msg_Transmission_e) // Respond transmission OK and send the message for processing.
+		if (msg->getRequireAck() == 1) // Respond transmission OK and send the message for processing.
 		{
 			LOG_MESSAGE_TRACE(logger, "Received msg nr: " << (int)msg->getMsgNr());
 
 			//Received message OK, return transmission OK!
 			Msg_Transmission::ptr transmission = std::make_unique<Msg_Transmission>(mTransmissionAddr, transmission_OK);
 			transmission->setMsgNr(msg->getMsgNr());
+			transmission->setRequireAck(0);
 
 			mTransmissionFifo.push(std::move(transmission));
 			mDoSend.notify();
@@ -316,7 +319,7 @@ namespace QuadGS
 		}
 		else // Print, trace and send the message for processing.
 		{
-			LOG_MESSAGE_TRACE(logger, "Received OK/NOK msg nr: " << (int)msg->getMsgNr());
+			LOG_MESSAGE_TRACE(logger, "Received message without ack request msg nr: " << (int)msg->getMsgNr());
 			// If we get a broadcast message, we should only handle it internally.
 			if (msg->getDestination() == msgAddr_t::Broadcast_e)
 			{
@@ -340,13 +343,11 @@ namespace QuadGS
 		{
 			mDoSend.wait(); // Wait for any action to take place.
 			LOG_DEBUG(writerLog, "DoSend");
-			bool isTransmission = false;
 			QGS_ModuleMsgBase::ptr msg;
 			// We are the only consumer of both of these queues
 			// so if we have data we will not have to wait for data to arrive.
 			if (!mTransmissionFifo.empty()) // First check if we should ack a message from the other side.
 			{
-				isTransmission = true;
 				msg = mTransmissionFifo.dequeue();
 				LOG_DEBUG(writerLog, "Transmitting OK/NOK nr: " << (int)msg->getMsgNr());
 			}
@@ -373,16 +374,19 @@ namespace QuadGS
 				msg = mOutgoingFifo.dequeue();
 				mMsgNrTx = ((mMsgNrTx + 1) % 256);
 				msg->setMsgNr(mMsgNrTx);
-				startTransmissionTimeout();
+				if(msg->getRequireAck())
+				{
+					startTransmissionTimeout();
+				}
 				LOG_DEBUG(writerLog, "Transmitting msg nr: " << (int)msg->getMsgNr());
 			}
 			if (!msg) // Stop must have been called.
 			{
 				continue;
 			}
-			if (isTransmission)
+			if (!msg->getRequireAck())
 			{
-				// We should not save the transmission message, it will only be sent once.
+				// We should not save the message, it will only be sent once.
 				mPort->write(std::move(msg), writerLog);
 			}
 			else

@@ -40,6 +40,7 @@ moduleMsg_t* Msg_Create(uint32_t type, uint32_t destination)
         msg->mDestination = destination;
         msg->mSource = Unassigned_e;
         msg->mMsgNr = 0;
+        msg->mRequireAck = 1;
         msg->type = type;
         msg->mAllocatedSize = sizeof(moduleMsg_t);
     }
@@ -121,6 +122,26 @@ void Msg_SetMsgNr(moduleMsg_t* msg, uint32_t msgNr)
     }
 }
 
+uint8_t Msg_GetRequireAck(moduleMsg_t* msg)
+{
+    uint8_t result = 0;
+    if(msg)
+    {
+        result = msg->mRequireAck;
+    }
+    return result;
+
+}
+
+void Msg_SetRequireAck(moduleMsg_t* msg, uint8_t requireAck)
+{
+    if(msg)
+    {
+        msg->mRequireAck = requireAck;
+    }
+
+}
+
 uint8_t* Msg_Serialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size)
 {
     if(!msg || !buffer)
@@ -131,6 +152,7 @@ uint8_t* Msg_Serialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size)
     buffer = serialize_uint32_t(buffer, &buffer_size, &msg->mDestination);
     buffer = serialize_uint32_t(buffer, &buffer_size, &msg->mSource);
     buffer = serialize_uint8_t(buffer, &buffer_size, &msg->mMsgNr);
+    buffer = serialize_uint8_t(buffer, &buffer_size, &msg->mRequireAck);
 
     return buffer;
 }
@@ -145,6 +167,8 @@ uint8_t* Msg_DeSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size
     buffer = deserialize_uint32_t(buffer, &buffer_size, &msg->mDestination);
     buffer = deserialize_uint32_t(buffer, &buffer_size, &msg->mSource);
     buffer = deserialize_uint8_t(buffer, &buffer_size, &msg->mMsgNr);
+    buffer = deserialize_uint8_t(buffer, &buffer_size, &msg->mRequireAck);
+
     return buffer;
 }
 moduleMsg_t* Msg_Clone(moduleMsg_t* msg)

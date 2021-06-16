@@ -66,6 +66,10 @@ public:
 
 	uint8_t getMsgNr() const;
 
+	void setRequireAck(uint8_t nr);
+
+	uint8_t getRequireAck() const;
+
 	void setSkipStreamHeader();
 
 	std::string toString() const;
@@ -80,7 +84,8 @@ private:
 	uint32_t mType;
 	uint32_t mSource;
 	uint32_t mDestination;
-	std::uint8_t mMsgNr;
+	uint8_t mMsgNr;
+	uint8_t mRequireAck;
 	bool mSkipStreamHeader = false;
 };
 

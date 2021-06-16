@@ -81,6 +81,7 @@ uint8_t Com_TestTransmission(eventHandler_t* obj, void* data, moduleMsg_t* msg)
     if(result)
     {
         moduleMsg_t* reply = Msg_TestTransmissionCreate(Msg_GetSource(msg),0,1,10);
+        Msg_SetRequireAck(reply, 0);
         strncpy((char*)Msg_TestTransmissionGetPayload(reply), "Test OK\0",8);
         Msg_TestTransmissionSetPayloadlength(reply, 8);
         LOG_ENTRY(obj, "SerialTest: Passed, sending reply.");
