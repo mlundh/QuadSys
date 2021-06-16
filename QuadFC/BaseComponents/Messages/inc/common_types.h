@@ -54,9 +54,11 @@ typedef enum LedName
 #define TWO_MS_FP (33)
 
 // Update both macros at the same time!
-/*main_control_task execute at 500Hz, period of 2ms*/
+/*main_control_task execute at 1000Hz, period of 1ms*/
 #define CTRL_TIME    (1UL / portTICK_PERIOD_MS )
 #define CTRL_TIME_FP (ONE_MS_FP)
+#define CTRL_FREQ    ((1 / CTRL_TIME) * ( TickType_t )1000) // CTRL_TIME is expressed in ms therefore we multiply by 1000
+
 
 
 /**

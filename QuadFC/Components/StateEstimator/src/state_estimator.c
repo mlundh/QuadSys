@@ -34,6 +34,9 @@ struct StateEst
 {
   Imu_t * imu;
   state_data_t * gyroState;
+  butterWorth_t *filterPitch;
+  butterWorth_t *filterRoll;
+  butterWorth_t *filterYaw;
 };
 
 
@@ -46,7 +49,12 @@ StateEst_t *StateEst_Create()
   }
   stateEstObj->imu = NULL;
   stateEstObj->gyroState = pvPortMalloc(sizeof(state_data_t));
-  if(stateEstObj->imu || !stateEstObj->gyroState)
+  stateEstObj->filterPitch = Signal_initButterworth(100, CTRL_FREQ);
+  stateEstObj->filterRoll  = Signal_initButterworth(100, CTRL_FREQ);
+  stateEstObj->filterYaw   = Signal_initButterworth(100, CTRL_FREQ);
+  if(stateEstObj->imu || !stateEstObj->gyroState || 
+  !stateEstObj->filterPitch || !stateEstObj->filterRoll || 
+  !stateEstObj->filterYaw)
   {
     return NULL;
   }
@@ -78,6 +86,9 @@ uint8_t StateEst_getState(StateEst_t *obj, state_data_t *state_vector, CtrlMode_
   {
   case Control_mode_rate:
     Signal_getRateGyro( state_vector, &obj->imu->ImuData );
+    state_vector->state_bf[pitch_rate_bf] = Signal_filterButterworth(obj->filterPitch, state_vector->state_bf[pitch_rate_bf]);
+    state_vector->state_bf[roll_rate_bf] = Signal_filterButterworth(obj->filterRoll, state_vector->state_bf[roll_rate_bf]);
+    state_vector->state_bf[yaw_rate_bf] = Signal_filterButterworth(obj->filterYaw, state_vector->state_bf[yaw_rate_bf]);
     break;
   case Control_mode_attitude:
   {

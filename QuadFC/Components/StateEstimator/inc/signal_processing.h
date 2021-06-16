@@ -66,5 +66,24 @@ void Signal_getRateGyro( state_data_t *state, ImuData_t *measurments );
  * @param state
  */
 void Signal_complemetaryFilter( state_data_t *state_accel, state_data_t *state_gyro, state_data_t *state );
+
+
+typedef struct butterWorth
+{
+    int32_t b0;
+    int32_t b1;
+    int32_t b2;
+    int32_t a1;
+    int32_t a2;
+    int32_t x[2];
+    int32_t y[2];
+}butterWorth_t;
+
+
+butterWorth_t* Signal_initButterworth(uint32_t cutOffFrequency, uint32_t samplingFrequency);
+
+int32_t Signal_filterButterworth(butterWorth_t* filter, int32_t input);
+
+
 #endif /* IMU_SIGNAL_PROCESSING_H_ */
 

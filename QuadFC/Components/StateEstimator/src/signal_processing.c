@@ -22,8 +22,9 @@
  * THE SOFTWARE.
  */
 #include "../inc/signal_processing.h"
-
+#include "math.h"
 #include "Utilities/inc/my_math.h"
+#include "FreeRTOS.h"
 
 #define SIGN(x) ((x > 0) - (x < 0))
 
@@ -105,4 +106,52 @@ void Signal_complemetaryFilter( state_data_t *state_accel, state_data_t *state_g
   // Indicate which fields are updated and valid.
   state->state_valid_bf |= 1 << pitch_bf;
   state->state_valid_bf |= 1 << roll_bf;
+}
+
+
+butterWorth_t* Signal_initButterworth(uint32_t cutOffFrequency, uint32_t samplingFrequency)
+{
+  butterWorth_t* filter = pvPortMalloc(sizeof(butterWorth_t));
+  const double ff = (double)cutOffFrequency/(double)samplingFrequency;
+  const double ita =1.0/ tan(M_PI*ff);
+  const double q=sqrt(2.0);
+  double b0 = 1.0 / (1.0 + q*ita + ita*ita);
+  double b1= 2*b0;
+  double b2= b0;
+  double a1 = 2.0 * (ita*ita - 1.0) * b0;
+  double a2 = -(1.0 - q*ita + ita*ita) * b0;
+
+  filter->b0 = DOUBLE_TO_FIXED(b0, MAX16f);
+  filter->b1 = DOUBLE_TO_FIXED(b1, MAX16f);
+  filter->b2 = DOUBLE_TO_FIXED(b2, MAX16f);
+  filter->a1 = DOUBLE_TO_FIXED(a1, MAX16f);
+  filter->a2 = DOUBLE_TO_FIXED(a2, MAX16f);
+
+  filter->x[0] = 0;
+  filter->x[1] = 0;
+
+  filter->y[0] = 0;
+  filter->y[1] = 0;
+
+   // y(n)  =  b0*x(n) + b1*x(n-1) + b2*x(n-2) + a1*y(n-1) + a2*y(n-2)
+   return filter;
+}
+
+int32_t Signal_filterButterworth(butterWorth_t* filter, int32_t input)
+{
+  // y(n)  =  b0*x(n) + b1*x(n-1) + b2*x(n-2) + a1*y(n-1) + a2*y(n-2)
+
+  // calculate the output
+  int32_t y  =   my_mult(filter->b0, input, FP_16_16_SHIFT) + 
+                 my_mult(filter->b1, filter->x[0], FP_16_16_SHIFT) + 
+                 my_mult(filter->b2, filter->x[1], FP_16_16_SHIFT) + 
+                 my_mult(filter->a1, filter->y[0], FP_16_16_SHIFT) + 
+                 my_mult(filter->a2, filter->y[1], FP_16_16_SHIFT);
+  // update the saved values
+  filter->y[1] = filter->y[0];
+  filter->y[0] = y;
+
+  filter->x[1] = filter->x[0];
+  filter->x[0] = input;
+  return y;
 }
