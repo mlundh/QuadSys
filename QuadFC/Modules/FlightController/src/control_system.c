@@ -61,15 +61,12 @@ uint8_t Ctrl_InitializeRate(CtrlObj_t *obj, param_obj_t* param)
      * The constants (Kp, Ki and Kd) does not have a unit, but are expressed as 16.16 fixed point.
      * Output of the controller should lie in [0, 1<<16] where 1<<16 represent 100% control signal.
      */
-    int32_t KpInitial  = 8 << 12;
-    int32_t KiInitial  = 0 << (FP_16_16_SHIFT-2);
-    int32_t KDInitial  = 0 << (FP_16_16_SHIFT-4);
     int32_t maxOutputInit = MAX_U_SIGNAL;
     int32_t minOutputInit = -MAX_U_SIGNAL;
 
-    obj->RatePitch = Pid_Create(KpInitial, KiInitial, KDInitial, minOutputInit, maxOutputInit, FP_16_16_SHIFT, CTRL_TIME_FP);
-    obj->RateRoll  = Pid_Create(KpInitial, KiInitial, KDInitial, minOutputInit, maxOutputInit, FP_16_16_SHIFT, CTRL_TIME_FP);
-    obj->RateYaw   = Pid_Create(KpInitial, KiInitial, KDInitial, minOutputInit, maxOutputInit, FP_16_16_SHIFT, CTRL_TIME_FP);
+    obj->RatePitch = Pid_Create(DOUBLE_TO_FIXED(0.6, MAX16f), DOUBLE_TO_FIXED(0.4, MAX16f), DOUBLE_TO_FIXED(0.01, MAX16f), minOutputInit, maxOutputInit, FP_16_16_SHIFT, CTRL_TIME_FP);
+    obj->RateRoll  = Pid_Create(DOUBLE_TO_FIXED(0.6, MAX16f), DOUBLE_TO_FIXED(0.4, MAX16f), DOUBLE_TO_FIXED(0.01, MAX16f), minOutputInit, maxOutputInit, FP_16_16_SHIFT, CTRL_TIME_FP);
+    obj->RateYaw   = Pid_Create(DOUBLE_TO_FIXED(1.2, MAX16f), DOUBLE_TO_FIXED(0.6, MAX16f), DOUBLE_TO_FIXED(0.01, MAX16f), minOutputInit, maxOutputInit, FP_16_16_SHIFT, CTRL_TIME_FP);
 
     if(!obj->RatePitch || !obj->RateRoll || !obj->RateYaw)
     {
