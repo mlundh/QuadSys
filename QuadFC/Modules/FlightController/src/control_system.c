@@ -64,9 +64,9 @@ uint8_t Ctrl_InitializeRate(CtrlObj_t *obj, param_obj_t* param)
     int32_t maxOutputInit = MAX_U_SIGNAL;
     int32_t minOutputInit = -MAX_U_SIGNAL;
 
-    obj->RatePitch = Pid_Create(DOUBLE_TO_FIXED(0.6, MAX16f), DOUBLE_TO_FIXED(0.4, MAX16f), DOUBLE_TO_FIXED(0.01, MAX16f), minOutputInit, maxOutputInit, FP_16_16_SHIFT, CTRL_TIME_FP);
-    obj->RateRoll  = Pid_Create(DOUBLE_TO_FIXED(0.6, MAX16f), DOUBLE_TO_FIXED(0.4, MAX16f), DOUBLE_TO_FIXED(0.01, MAX16f), minOutputInit, maxOutputInit, FP_16_16_SHIFT, CTRL_TIME_FP);
-    obj->RateYaw   = Pid_Create(DOUBLE_TO_FIXED(1.2, MAX16f), DOUBLE_TO_FIXED(0.6, MAX16f), DOUBLE_TO_FIXED(0.01, MAX16f), minOutputInit, maxOutputInit, FP_16_16_SHIFT, CTRL_TIME_FP);
+    obj->RatePitch = Pid_Create(DOUBLE_TO_FIXED(0.4, MAX16f), DOUBLE_TO_FIXED(0.6, MAX16f), DOUBLE_TO_FIXED(0.001, MAX16f), minOutputInit, maxOutputInit, FP_16_16_SHIFT, CTRL_TIME_FP);
+    obj->RateRoll  = Pid_Create(DOUBLE_TO_FIXED(0.4, MAX16f), DOUBLE_TO_FIXED(0.6, MAX16f), DOUBLE_TO_FIXED(0.001, MAX16f), minOutputInit, maxOutputInit, FP_16_16_SHIFT, CTRL_TIME_FP);
+    obj->RateYaw   = Pid_Create(DOUBLE_TO_FIXED(1.2, MAX16f), DOUBLE_TO_FIXED(0.6, MAX16f), DOUBLE_TO_FIXED(0.001, MAX16f), minOutputInit, maxOutputInit, FP_16_16_SHIFT, CTRL_TIME_FP);
 
     if(!obj->RatePitch || !obj->RateRoll || !obj->RateYaw)
     {

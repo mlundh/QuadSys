@@ -269,7 +269,7 @@ uint8_t ParamMaster_HandleParamMsg(eventHandler_t *obj, void *data, moduleMsg_t 
 
             if (read_status != SLIP_StatusOK)
             {
-                LOG_ENTRY(obj, "Param Load: Error. SLIP Parser failed.");
+                LOG_ENTRY(obj, "Param Load: Error. SLIP Parser failed with error: %d.", read_status);
                 ParamMaster_ReportFailiure(handlerObj->evHandler);
                 result = 0;
                 handlerObj->actionOngoing = paramReady; // Reset.
