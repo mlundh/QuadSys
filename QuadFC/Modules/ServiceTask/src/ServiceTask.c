@@ -84,11 +84,10 @@ void Service_CreateTask(eventHandler_t *eventHandler)
         {
         }
     }
-    
     taskParam->evHandler = eventHandler;
-    taskParam->debugHandler = Debug_CreateHandler(taskParam->evHandler);
-    taskParam->logMaster = LogMaster_CreateObj(taskParam->evHandler);
     taskParam->paramMaster = ParamMaster_CreateObj(taskParam->evHandler);
+    taskParam->debugHandler = Debug_CreateHandler(taskParam->evHandler);
+    taskParam->logMaster = LogMaster_CreateObj(taskParam->evHandler, NULL);
 
     if (!taskParam->evHandler || !taskParam->logMaster || !taskParam->paramMaster)
     {

@@ -62,7 +62,7 @@ typedef struct logNames logNames_t;
  * @param evHandler       Event handler object.
  * @return
  */
-LogMaster_t* LogMaster_CreateObj(eventHandler_t* evHandler);
+LogMaster_t* LogMaster_CreateObj(eventHandler_t* evHandler, param_obj_t* param);
 
 /**
  * Free all memory created by the LogMaster_CreateObj function. No de-regestring is happening, so use with care.
@@ -122,6 +122,16 @@ uint8_t LogMaster_UpdateId(LogMaster_t* obj, LogHandler_t* originator, uint32_t*
  * @return              1 indicates success, 0 faliure.
  */
 uint8_t LogMaster_AppendNodeString(logNameQueueItems_t *items, uint8_t *buffer, uint32_t buffer_length);
+
+/**
+ * @brief Serialize the log entry given
+ * 
+ * @param entry     entry to be serialized
+ * @param buffer    buffer to write the serialization to.
+ * @param size      size of the buffer.
+ * @return uint8_t  1 indicates success, 0 faliure.
+ */
+uint8_t LogMaster_Serializelog(logEntry_t* entry, uint8_t* buffer, uint32_t size);
 
 /**
  * Get the serialized version of the log. Will fill the buffer with a null terminated string.

@@ -161,11 +161,6 @@ void LogHandler::process(Msg_Log* message)
 	case LogCtrl_t::Entry:
 	{
 		std::string payloadStr = message->getPayload();
-		bool end = false;
-		if(payloadStr.empty())
-		{
-			end = true;
-		}
 		while(!payloadStr.empty())
 		{
 			std::string module = QGS_Tree::RemoveModuleString(payloadStr);
@@ -181,12 +176,7 @@ void LogHandler::process(Msg_Log* message)
 				{
 					mLogFile << std::endl;
 				}
-
 			}
-		}
-		if(!end)
-		{
-			getLogEntries("");
 		}
 	}
 	break;

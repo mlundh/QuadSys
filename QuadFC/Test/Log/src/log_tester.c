@@ -52,7 +52,7 @@ uint8_t LogHandler_TestCreate(TestFw_t* obj)
     eventHandler_t* evH= Event_CreateHandler(FC_Log_e, 1);
 
     size_t heapSize = xPortGetFreeHeapSize();
-    LogMaster_t* logMaster = LogMaster_CreateObj(evH);
+    LogMaster_t* logMaster = LogMaster_CreateObj(evH, NULL);
 
     uint8_t result = 1;
     if(!logMaster)
@@ -190,7 +190,7 @@ uint8_t Log_TestReport(TestFw_t* obj)
     paramHander_t* paramHandler = ParamHandler_CreateObj(1, NULL,"paramM");
 
     LogHandler_t* logHObj = LogHandler_CreateObj(2,evH,ParamHandler_GetParam(paramHandler),"Report");
-    LogMaster_t* logMaster = LogMaster_CreateObj(evM);
+    LogMaster_t* logMaster = LogMaster_CreateObj(evM, NULL);
 
     while(Event_Receive(evM,2));
     while(Event_Receive(evH,2));
@@ -297,7 +297,7 @@ uint8_t Log_TestMultipleLoggers(TestFw_t* obj)
 
     uint8_t result = 1;
     LogHandler_t* logHObj = LogHandler_CreateObj(2,evH,NULL,"Report1"); // Not using event handler, but we are master.
-    LogMaster_t* logMaster = LogMaster_CreateObj(evM);
+    LogMaster_t* logMaster = LogMaster_CreateObj(evM, NULL);
 
     while(Event_Receive(evM,2));
     while(Event_Receive(evH,2));
@@ -391,7 +391,7 @@ uint8_t Log_TestMultipleHandlers(TestFw_t* obj)
     LogHandler_t* logHObjT2 = LogHandler_CreateObj(2,evH,NULL,"TH2"); 
     int32_t data2 = 800;
     Log_t* logObjT2 = Log_CreateObj(2,variable_type_int32, &data2,NULL,logHObjT2,"LogT2");
-    LogMaster_t* logMaster = LogMaster_CreateObj(evM);
+    LogMaster_t* logMaster = LogMaster_CreateObj(evM, NULL);
 
     if(!logObjT1 || !logObjT2 || !logHObjT1 ||! logHObjT2 ||!logMaster)
     {

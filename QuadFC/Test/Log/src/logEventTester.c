@@ -82,7 +82,7 @@ uint8_t LogEv_createTestTasks(TestFw_t* obj, SemaphoreHandle_t semaphore, logEvT
     masterParam->evHandler = Event_CreateHandler(FC_Ctrl_e, 1);
     masterParam->paramHandler = ParamHandler_CreateObj(1, masterParam->evHandler,"paramM");
     masterParam->logHObj = LogHandler_CreateObj(2, masterParam->evHandler, ParamHandler_GetParam(masterParam->paramHandler), "logEvTM");
-    masterParam->logMaster = LogMaster_CreateObj(masterParam->evHandler);
+    masterParam->logMaster = LogMaster_CreateObj(masterParam->evHandler, NULL);
 
     masterParam->logValue0 = 0;
     masterParam->logValue1 = 0;
