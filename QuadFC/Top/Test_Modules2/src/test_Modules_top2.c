@@ -33,6 +33,7 @@
 
 #include "Test/TestFW/test_framework.h"
 #include "Test/Messages/message_tester.h"
+#include "Test/MessagePool/messagePoolTester.h"
 
 /**
  * @file Top used for regression testing. This top uses freeRTOS and
@@ -79,6 +80,7 @@ void mainTester(void *pvParameters)
 
   /**************Add test module instantiation here***************/
   MessageT_GetTCs(testFW);
+  MessagePoolTester_GetTCs(testFW);
   /***************************************************************/
 
   uint8_t result = TestFW_ExecuteTests(testFW);

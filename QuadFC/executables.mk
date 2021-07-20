@@ -44,7 +44,7 @@ endif
 
 QuadFC_DEPS:= Top/QuadFC HAL/QuadFC
 QuadFC_DEPS+= $(addprefix Modules/, Communication FlightController HMI FlightModeHandler ServiceTask AppLogTask) 
-QuadFC_DEPS+= $(addprefix BaseComponents/, EventHandler Messages MsgBase)
+QuadFC_DEPS+= $(addprefix BaseComponents/, EventHandler Messages MsgBase MessagePool)
 QuadFC_DEPS+= $(addprefix Components/, AppLog AppLogSerialBackend Log LogMemBackend PidController StateEstimator)
 QuadFC_DEPS+= $(addprefix Components/, Utilities SetpointHandler Parameters SLIP CharCircularBuffer Debug)
 QuadFC_DEPS+= $(addprefix HwComponents/, SpectrumSatellite CY15B104Q_SX_spi_fram)
@@ -71,8 +71,8 @@ Test_Modules1_DEPS+= $(addprefix Boards/$(PLATFORM)/, Startup Gpio Mem Test)
 Test_Modules1_DEPS+= $(addprefix Drivers/, $(PLATFORM))
 
 Test_Modules2_DEPS:= Top/Test_Modules2 HAL/QuadFC 
-Test_Modules2_DEPS+= $(addprefix Test/,TestFW  FakeMemory Messages)
-Test_Modules2_DEPS+= $(addprefix BaseComponents/, Messages MsgBase)
+Test_Modules2_DEPS+= $(addprefix Test/,TestFW  FakeMemory Messages MessagePool)
+Test_Modules2_DEPS+= $(addprefix BaseComponents/, Messages MsgBase MessagePool)
 Test_Modules2_DEPS+= $(addprefix Components/, SLIP Utilities)
 Test_Modules2_DEPS+= $(addprefix OS/, $(PLATFORM))
 Test_Modules2_DEPS+= $(addprefix Boards/$(PLATFORM)/, Startup Gpio Test)
