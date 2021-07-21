@@ -106,7 +106,7 @@ uint8_t MessagePoolTester_TestAquireReleaseAll(TestFw_t* Tobj)
     }
     for(int i = 0; i < 4; i++)
     {
-        messagePool_release(pool, messages[i]);
+        messagePool_release(messages[i]);
     }
     uint8_t* messagesAfterRelease[8];
     for(int i = 0; i < 6; i++)
@@ -161,7 +161,7 @@ uint8_t MessagePoolTester_TestAquireAllReleaseOne(TestFw_t* Tobj)
         }
     }
 
-    messagePool_release(pool, messages[3]);
+    messagePool_release(messages[3]);
 
     uint8_t* messageAfterRelease;
 
@@ -204,7 +204,7 @@ uint8_t MessagePoolTester_TestAquireAndFill(TestFw_t* Tobj)
 
     for(int i = 0; i < 6; i++)
     {
-        messagePool_release(pool, messages[i]);
+        messagePool_release(messages[i]);
     }
     uint8_t* messagesAfterRelease[8];
     for(int i = 0; i < 6; i++)

@@ -68,13 +68,13 @@ messagePool_t* messagePool_create(uint32_t itemSize, uint32_t itemCount)
     return pool;
 }
 
-uint8_t* messagePool_aquire(messagePool_t* pool, uint32_t size)
+void* messagePool_aquire(messagePool_t* pool, uint32_t size)
 {
     if(!pool || size > pool->itemSize)
     {
         return NULL;
     }
-    uint8_t* result = NULL;
+    void* result = NULL;
     uint32_t index = 0;
     while(!result && index < pool->numberOfMessages)
     {
@@ -89,9 +89,9 @@ uint8_t* messagePool_aquire(messagePool_t* pool, uint32_t size)
     return result;
 }
 
-void messagePool_release(messagePool_t* pool, uint8_t* memory)
+void messagePool_release(void* memory)
 {
-    if(!pool || !memory)
+    if(!memory)
     {
         return;
     }

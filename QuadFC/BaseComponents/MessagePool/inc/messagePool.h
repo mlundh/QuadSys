@@ -33,9 +33,9 @@ typedef struct messagePool messagePool_t;
 
 messagePool_t* messagePool_create(uint32_t itemSize, uint32_t itemCount);
 
-uint8_t* messagePool_aquire(messagePool_t* pool, uint32_t size);
+void* messagePool_aquire(messagePool_t* pool, uint32_t size);
 
-void messagePool_release(messagePool_t* pool, uint8_t* memory);
+void messagePool_release(void* memory);
 
 void messagePool_delete(messagePool_t* pool);
 
