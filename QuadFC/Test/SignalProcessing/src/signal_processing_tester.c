@@ -52,7 +52,7 @@ uint8_t SigProsses_InitMpu6050(TestFw_t* obj);
 #define REPORT_STR_LEN (50)
 void SigProsses_GetTCs(TestFw_t* obj)
 {
-  TestFW_RegisterTest(obj, "ImuToRate", SigProsses_TestImuToRate);
+//  TestFW_RegisterTest(obj, "ImuToRate", SigProsses_TestImuToRate); // This test is not valid when using butterworth filtering.
   TestFW_RegisterTest(obj, "RateGyro", SigProsses_TestRateGyro);
   TestFW_RegisterTest(obj, "EulerGyro", SigProsses_TestEulerAngleGyro);
   TestFW_RegisterTest(obj, "EulerAccel", SigProsses_TestEulerAngleAccl);
@@ -224,7 +224,7 @@ uint8_t SigProsses_InitMpu6050(TestFw_t* obj)
   TestFW_Report(obj, tmpstr);
   return 1;
 }
-
+#if 0 
 uint8_t SigProsses_TestImuToRate(TestFw_t* obj)
 {
   SigProcessTester_t* SigProcessTester =  (SigProcessTester_t*)TestFW_GetTestSuiteInternal(obj, SIG_PROCESS_INTENRNAL_IDX);
@@ -290,7 +290,7 @@ uint8_t SigProsses_TestImuToRate(TestFw_t* obj)
   SigProcess_DeleteI2cPtr(i2c_data);
   return result;
 }
-
+#endif
 
 uint8_t SigProsses_TestRateGyro(TestFw_t* obj)
 {

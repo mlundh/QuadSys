@@ -29,7 +29,7 @@
 
 void SigProsses_GetTCs(TestFw_t* obj);
 
-uint8_t SigProsses_TestImuToRate(TestFw_t* obj);
+//uint8_t SigProsses_TestImuToRate(TestFw_t* obj);
 uint8_t SigProsses_TestRateGyro(TestFw_t* obj);
 uint8_t SigProsses_TestEulerAngleGyro(TestFw_t* obj);
 uint8_t SigProsses_TestEulerAngleAccl(TestFw_t* obj);
