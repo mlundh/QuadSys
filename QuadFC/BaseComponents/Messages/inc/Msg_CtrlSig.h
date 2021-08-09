@@ -32,7 +32,9 @@
 
 
 
-moduleMsg_t* Msg_CtrlSigCreate(uint32_t destination, uint8_t msgNr
+#define Msg_CtrlSigCreate(destination, msgNr , signal) Msg_CtrlSigCreatePool(NULL, destination, msgNr , signal)
+
+moduleMsg_t* Msg_CtrlSigCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , control_signal_t signal);
 
 control_signal_t Msg_CtrlSigGetSignal(moduleMsg_t* msg);
@@ -43,6 +45,9 @@ void Msg_CtrlSigSetSignal(moduleMsg_t* msg, control_signal_t signal);
 uint8_t* Msg_CtrlSigSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* Msg_CtrlSigDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t Msg_CtrlSigGetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_MSG_CTRLSIG_H_ */
 

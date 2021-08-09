@@ -32,13 +32,18 @@
 
 
 
-moduleMsg_t* Msg_HasParamCreate(uint32_t destination, uint8_t msgNr
+#define Msg_HasParamCreate(destination, msgNr ) Msg_HasParamCreatePool(NULL, destination, msgNr )
+
+moduleMsg_t* Msg_HasParamCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     );
 
 
 uint8_t* Msg_HasParamSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* Msg_HasParamDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t Msg_HasParamGetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_MSG_HASPARAM_H_ */
 

@@ -32,7 +32,9 @@
 
 
 
-moduleMsg_t* Msg_DebugCreate(uint32_t destination, uint8_t msgNr
+#define Msg_DebugCreate(destination, msgNr , control, Payloadbufferlength) Msg_DebugCreatePool(NULL, destination, msgNr , control, Payloadbufferlength)
+
+moduleMsg_t* Msg_DebugCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , uint8_t control, uint32_t Payloadbufferlength);
 
 uint8_t Msg_DebugGetControl(moduleMsg_t* msg);
@@ -55,6 +57,9 @@ void Msg_DebugSetPayloadbufferlength(moduleMsg_t* msg, uint32_t Payloadbufferlen
 uint8_t* Msg_DebugSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* Msg_DebugDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t Msg_DebugGetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_MSG_DEBUG_H_ */
 

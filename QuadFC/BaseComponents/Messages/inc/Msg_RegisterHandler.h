@@ -35,7 +35,9 @@
 #include "task.h"
 
 
-moduleMsg_t* Msg_RegisterHandlerCreate(uint32_t destination, uint8_t msgNr
+#define Msg_RegisterHandlerCreate(destination, msgNr , data) Msg_RegisterHandlerCreatePool(NULL, destination, msgNr , data)
+
+moduleMsg_t* Msg_RegisterHandlerCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , QueueHandle_t data);
 
 QueueHandle_t Msg_RegisterHandlerGetData(moduleMsg_t* msg);
@@ -46,6 +48,9 @@ void Msg_RegisterHandlerSetData(moduleMsg_t* msg, QueueHandle_t data);
 uint8_t* Msg_RegisterHandlerSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* Msg_RegisterHandlerDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t Msg_RegisterHandlerGetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_MSG_REGISTERHANDLER_H_ */
 

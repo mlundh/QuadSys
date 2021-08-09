@@ -32,7 +32,9 @@
 
 
 
-moduleMsg_t* Msg_TestTransmissionCreate(uint32_t destination, uint8_t msgNr
+#define Msg_TestTransmissionCreate(destination, msgNr , test, Payloadbufferlength) Msg_TestTransmissionCreatePool(NULL, destination, msgNr , test, Payloadbufferlength)
+
+moduleMsg_t* Msg_TestTransmissionCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , uint32_t test, uint32_t Payloadbufferlength);
 
 uint32_t Msg_TestTransmissionGetTest(moduleMsg_t* msg);
@@ -55,6 +57,9 @@ void Msg_TestTransmissionSetPayloadbufferlength(moduleMsg_t* msg, uint32_t Paylo
 uint8_t* Msg_TestTransmissionSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* Msg_TestTransmissionDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t Msg_TestTransmissionGetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_MSG_TESTTRANSMISSION_H_ */
 

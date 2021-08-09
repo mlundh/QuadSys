@@ -32,13 +32,18 @@
 
 
 
-moduleMsg_t* Msg_FcFaultCreate(uint32_t destination, uint8_t msgNr
+#define Msg_FcFaultCreate(destination, msgNr ) Msg_FcFaultCreatePool(NULL, destination, msgNr )
+
+moduleMsg_t* Msg_FcFaultCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     );
 
 
 uint8_t* Msg_FcFaultSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* Msg_FcFaultDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t Msg_FcFaultGetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_MSG_FCFAULT_H_ */
 

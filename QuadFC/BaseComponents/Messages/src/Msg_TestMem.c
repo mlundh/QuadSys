@@ -37,12 +37,23 @@
 }Msg_TestMem_t;
 
 
-moduleMsg_t* Msg_TestMemCreate(uint32_t destination, uint8_t msgNr
+moduleMsg_t* Msg_TestMemCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , uint8_t write, uint32_t startAddr, uint8_t startNumber, uint8_t size)
 {
     size_t mallocSize = sizeof(moduleMsg_t) + sizeof(Msg_TestMem_t) ;
-    moduleMsg_t* msg = pvPortMalloc(mallocSize);
+    moduleMsg_t* msg = NULL;
+    if(pool)
+    {
+        msg = messagePool_aquire(pool, mallocSize);
+        msg->mStatus = 0;
+        msg->mStatus |= 0x01;
+    }
+    else
+    {
+        msg = pvPortMalloc(mallocSize);
+        msg->mStatus = 0;
 
+    }
     if(msg)
     {
         msg->mDestination = destination;
@@ -236,4 +247,10 @@ moduleMsg_t* Msg_TestMemDeserialize(uint8_t* buffer, uint32_t buffer_size)
     }
     return msg;
 }
+
+uint32_t Msg_TestMemGetMessageSize()
+{
+    return sizeof(moduleMsg_t) + sizeof(Msg_TestMem_t);
+}
+
 

@@ -32,13 +32,18 @@
 
 {includes}
 
-moduleMsg_t* {msgName}Create(uint32_t destination, uint8_t msgNr
+#define {msgName}Create(destination, msgNr {createArgsDefine}) {msgName}CreatePool(NULL, destination, msgNr {createArgsDefine})
+
+moduleMsg_t* {msgName}CreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     {createArgs});
 
 {memberFcnHeader}
 uint8_t* {msgName}Serialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* {msgName}Deserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t {msgName}GetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_{msgNameUpper}_H_ */
 

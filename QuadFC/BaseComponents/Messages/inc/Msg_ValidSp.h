@@ -32,7 +32,9 @@
 
 
 
-moduleMsg_t* Msg_ValidSpCreate(uint32_t destination, uint8_t msgNr
+#define Msg_ValidSpCreate(destination, msgNr , valid) Msg_ValidSpCreatePool(NULL, destination, msgNr , valid)
+
+moduleMsg_t* Msg_ValidSpCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , uint8_t valid);
 
 uint8_t Msg_ValidSpGetValid(moduleMsg_t* msg);
@@ -43,6 +45,9 @@ void Msg_ValidSpSetValid(moduleMsg_t* msg, uint8_t valid);
 uint8_t* Msg_ValidSpSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* Msg_ValidSpDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t Msg_ValidSpGetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_MSG_VALIDSP_H_ */
 

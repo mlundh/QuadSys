@@ -32,7 +32,9 @@
 
 
 
-moduleMsg_t* Msg_NewSetpointCreate(uint32_t destination, uint8_t msgNr
+#define Msg_NewSetpointCreate(destination, msgNr , setpoint, priority, validFor) Msg_NewSetpointCreatePool(NULL, destination, msgNr , setpoint, priority, validFor)
+
+moduleMsg_t* Msg_NewSetpointCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , state_data_t setpoint, uint8_t priority, uint8_t validFor);
 
 state_data_t Msg_NewSetpointGetSetpoint(moduleMsg_t* msg);
@@ -51,6 +53,9 @@ void Msg_NewSetpointSetValidfor(moduleMsg_t* msg, uint8_t validFor);
 uint8_t* Msg_NewSetpointSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* Msg_NewSetpointDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t Msg_NewSetpointGetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_MSG_NEWSETPOINT_H_ */
 

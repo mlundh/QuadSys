@@ -32,7 +32,9 @@
 
 
 
-moduleMsg_t* Msg_ParamCreate(uint32_t destination, uint8_t msgNr
+#define Msg_ParamCreate(destination, msgNr , control, sequenceNr, lastInSequence, Payloadbufferlength) Msg_ParamCreatePool(NULL, destination, msgNr , control, sequenceNr, lastInSequence, Payloadbufferlength)
+
+moduleMsg_t* Msg_ParamCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , uint8_t control, uint8_t sequenceNr, uint8_t lastInSequence, uint32_t Payloadbufferlength);
 
 uint8_t Msg_ParamGetControl(moduleMsg_t* msg);
@@ -63,6 +65,9 @@ void Msg_ParamSetPayloadbufferlength(moduleMsg_t* msg, uint32_t Payloadbufferlen
 uint8_t* Msg_ParamSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* Msg_ParamDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t Msg_ParamGetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_MSG_PARAM_H_ */
 

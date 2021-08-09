@@ -34,12 +34,23 @@
 }Msg_FcLog_t;
 
 
-moduleMsg_t* Msg_FcLogCreate(uint32_t destination, uint8_t msgNr
+moduleMsg_t* Msg_FcLogCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , QueueHandle_t data)
 {
     size_t mallocSize = sizeof(moduleMsg_t) + sizeof(Msg_FcLog_t) ;
-    moduleMsg_t* msg = pvPortMalloc(mallocSize);
+    moduleMsg_t* msg = NULL;
+    if(pool)
+    {
+        msg = messagePool_aquire(pool, mallocSize);
+        msg->mStatus = 0;
+        msg->mStatus |= 0x01;
+    }
+    else
+    {
+        msg = pvPortMalloc(mallocSize);
+        msg->mStatus = 0;
 
+    }
     if(msg)
     {
         msg->mDestination = destination;
@@ -123,4 +134,10 @@ moduleMsg_t* Msg_FcLogDeserialize(uint8_t* buffer, uint32_t buffer_size)
     }
     return msg;
 }
+
+uint32_t Msg_FcLogGetMessageSize()
+{
+    return sizeof(moduleMsg_t) + sizeof(Msg_FcLog_t);
+}
+
 

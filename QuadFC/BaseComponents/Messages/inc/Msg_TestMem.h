@@ -32,7 +32,9 @@
 
 
 
-moduleMsg_t* Msg_TestMemCreate(uint32_t destination, uint8_t msgNr
+#define Msg_TestMemCreate(destination, msgNr , write, startAddr, startNumber, size) Msg_TestMemCreatePool(NULL, destination, msgNr , write, startAddr, startNumber, size)
+
+moduleMsg_t* Msg_TestMemCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , uint8_t write, uint32_t startAddr, uint8_t startNumber, uint8_t size);
 
 uint8_t Msg_TestMemGetWrite(moduleMsg_t* msg);
@@ -55,6 +57,9 @@ void Msg_TestMemSetSize(moduleMsg_t* msg, uint8_t size);
 uint8_t* Msg_TestMemSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* Msg_TestMemDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t Msg_TestMemGetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_MSG_TESTMEM_H_ */
 

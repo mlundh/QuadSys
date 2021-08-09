@@ -32,7 +32,9 @@
 
 
 
-moduleMsg_t* Msg_ChangeComPortCreate(uint32_t destination, uint8_t msgNr
+#define Msg_ChangeComPortCreate(destination, msgNr , uartNr) Msg_ChangeComPortCreatePool(NULL, destination, msgNr , uartNr)
+
+moduleMsg_t* Msg_ChangeComPortCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , uint32_t uartNr);
 
 uint32_t Msg_ChangeComPortGetUartnr(moduleMsg_t* msg);
@@ -43,6 +45,9 @@ void Msg_ChangeComPortSetUartnr(moduleMsg_t* msg, uint32_t uartNr);
 uint8_t* Msg_ChangeComPortSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* Msg_ChangeComPortDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t Msg_ChangeComPortGetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_MSG_CHANGECOMPORT_H_ */
 

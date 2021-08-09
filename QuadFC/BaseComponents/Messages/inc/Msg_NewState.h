@@ -32,7 +32,9 @@
 
 
 
-moduleMsg_t* Msg_NewStateCreate(uint32_t destination, uint8_t msgNr
+#define Msg_NewStateCreate(destination, msgNr , state) Msg_NewStateCreatePool(NULL, destination, msgNr , state)
+
+moduleMsg_t* Msg_NewStateCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , state_data_t state);
 
 state_data_t Msg_NewStateGetState(moduleMsg_t* msg);
@@ -43,6 +45,9 @@ void Msg_NewStateSetState(moduleMsg_t* msg, state_data_t state);
 uint8_t* Msg_NewStateSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* Msg_NewStateDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t Msg_NewStateGetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_MSG_NEWSTATE_H_ */
 

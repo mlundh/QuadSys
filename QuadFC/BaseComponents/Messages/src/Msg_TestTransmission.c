@@ -37,12 +37,23 @@
 }Msg_TestTransmission_t;
 
 
-moduleMsg_t* Msg_TestTransmissionCreate(uint32_t destination, uint8_t msgNr
+moduleMsg_t* Msg_TestTransmissionCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , uint32_t test, uint32_t Payloadbufferlength)
 {
     size_t mallocSize = sizeof(moduleMsg_t) + sizeof(Msg_TestTransmission_t)  + (Payloadbufferlength);
-    moduleMsg_t* msg = pvPortMalloc(mallocSize);
+    moduleMsg_t* msg = NULL;
+    if(pool)
+    {
+        msg = messagePool_aquire(pool, mallocSize);
+        msg->mStatus = 0;
+        msg->mStatus |= 0x01;
+    }
+    else
+    {
+        msg = pvPortMalloc(mallocSize);
+        msg->mStatus = 0;
 
+    }
     if(msg)
     {
         msg->mDestination = destination;
@@ -234,4 +245,10 @@ moduleMsg_t* Msg_TestTransmissionDeserialize(uint8_t* buffer, uint32_t buffer_si
     }
     return msg;
 }
+
+uint32_t Msg_TestTransmissionGetMessageSize()
+{
+    return sizeof(moduleMsg_t) + sizeof(Msg_TestTransmission_t);
+}
+
 

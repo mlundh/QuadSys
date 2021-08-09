@@ -32,7 +32,9 @@
 
 
 
-moduleMsg_t* Msg_LogCreate(uint32_t destination, uint8_t msgNr
+#define Msg_LogCreate(destination, msgNr , control, Payloadbufferlength) Msg_LogCreatePool(NULL, destination, msgNr , control, Payloadbufferlength)
+
+moduleMsg_t* Msg_LogCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , uint8_t control, uint32_t Payloadbufferlength);
 
 uint8_t Msg_LogGetControl(moduleMsg_t* msg);
@@ -55,6 +57,9 @@ void Msg_LogSetPayloadbufferlength(moduleMsg_t* msg, uint32_t Payloadbufferlengt
 uint8_t* Msg_LogSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* Msg_LogDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t Msg_LogGetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_MSG_LOG_H_ */
 

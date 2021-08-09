@@ -35,7 +35,9 @@
 #include "task.h"
 
 
-moduleMsg_t* Msg_FcLogCreate(uint32_t destination, uint8_t msgNr
+#define Msg_FcLogCreate(destination, msgNr , data) Msg_FcLogCreatePool(NULL, destination, msgNr , data)
+
+moduleMsg_t* Msg_FcLogCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , QueueHandle_t data);
 
 QueueHandle_t Msg_FcLogGetData(moduleMsg_t* msg);
@@ -46,6 +48,9 @@ void Msg_FcLogSetData(moduleMsg_t* msg, QueueHandle_t data);
 uint8_t* Msg_FcLogSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* Msg_FcLogDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t Msg_FcLogGetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_MSG_FCLOG_H_ */
 

@@ -26,8 +26,10 @@
 #include "task.h"
 #include <stdio.h>
 
+#include "AppLog/inc/AppLog.h"
 #include "Log/inc/logMaster.h"
 #include "Log/src/log_private.h"
+#include "MessagePool/inc/messagePool.h"
 #include "Utilities/inc/string_utils.h"
 #include "Messages/inc/Msg_FcLog.h"
 #include "Messages/inc/Msg_LogNameReq.h"
@@ -43,8 +45,11 @@ struct logMaster
   uint32_t              nrRegisteredHandlers;
   uint32_t              streamLogs;
   param_obj_t *         streamLogsParam;
+  messagePool_t*        messagePool;
+  uint32_t              nrFailedPoolAqu;
 };
-
+#define NR_LOG_ENTRIES (10)
+#define LOG_MSG_SIZE (NR_LOG_ENTRIES * MAX_LOG_ENTRY_LENGTH)
 LogMaster_t* LogMaster_CreateObj(eventHandler_t* evHandler, param_obj_t* param)
 {
 
@@ -61,7 +66,9 @@ LogMaster_t* LogMaster_CreateObj(eventHandler_t* evHandler, param_obj_t* param)
     obj->backend = LogBackend_CreateObj();
     obj->nrRegisteredHandlers = 0;
     obj->streamLogs = 1;
-    if(!obj->backend || !obj->handlerArray )
+    obj->nrFailedPoolAqu = 0;
+    obj->messagePool = messagePool_create(Msg_LogGetMessageSize() + LOG_MSG_SIZE, 4 );
+    if(!obj->backend || !obj->handlerArray || !obj->messagePool)
     {
         return NULL;
     }
@@ -85,7 +92,6 @@ void LogMaster_deleteHandler(LogMaster_t *obj)
     vPortFree(obj);
 }
 
-#define NR_LOG_ENTRIES (10)
 uint8_t LogMaster_HandleLogMsg(eventHandler_t* obj, void* data, moduleMsg_t* msg)
 {
     if(!obj || ! data || !msg )
@@ -123,7 +129,17 @@ uint8_t LogMaster_HandleLogMsg(eventHandler_t* obj, void* data, moduleMsg_t* msg
         }
         if(handlerObj->streamLogs)
         {
-            moduleMsg_t *logMsg = Msg_LogCreate(GS_Log_e, 0, log_entry, NR_LOG_ENTRIES * MAX_LOG_ENTRY_LENGTH);
+            moduleMsg_t *logMsg = Msg_LogCreatePool(handlerObj->messagePool, GS_Log_e, 0, log_entry, LOG_MSG_SIZE);
+            if(!logMsg)
+            {
+                handlerObj->nrFailedPoolAqu++;
+                if((handlerObj->nrFailedPoolAqu % 30) == 0)
+                {
+                    LOG_ENTRY(handlerObj->evHandler, "Log handler has failed to get %lu mesasges  from the pool.", handlerObj->nrFailedPoolAqu)
+                }
+                
+                break; // did not get a log message from the pool. This is a back pressure situation.
+            }
             Msg_SetRequireAck(logMsg, 0);
             uint8_t* payload = Msg_LogGetPayload(logMsg);
             payload[0] = '\0';

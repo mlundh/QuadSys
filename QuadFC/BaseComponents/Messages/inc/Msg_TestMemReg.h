@@ -32,7 +32,9 @@
 
 
 
-moduleMsg_t* Msg_TestMemRegCreate(uint32_t destination, uint8_t msgNr
+#define Msg_TestMemRegCreate(destination, msgNr , deviceId, rdsr) Msg_TestMemRegCreatePool(NULL, destination, msgNr , deviceId, rdsr)
+
+moduleMsg_t* Msg_TestMemRegCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , uint8_t deviceId, uint8_t rdsr);
 
 uint8_t Msg_TestMemRegGetDeviceid(moduleMsg_t* msg);
@@ -47,6 +49,9 @@ void Msg_TestMemRegSetRdsr(moduleMsg_t* msg, uint8_t rdsr);
 uint8_t* Msg_TestMemRegSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* Msg_TestMemRegDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t Msg_TestMemRegGetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_MSG_TESTMEMREG_H_ */
 

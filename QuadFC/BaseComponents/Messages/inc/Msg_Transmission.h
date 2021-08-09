@@ -32,7 +32,9 @@
 
 
 
-moduleMsg_t* Msg_TransmissionCreate(uint32_t destination, uint8_t msgNr
+#define Msg_TransmissionCreate(destination, msgNr , status) Msg_TransmissionCreatePool(NULL, destination, msgNr , status)
+
+moduleMsg_t* Msg_TransmissionCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , uint8_t status);
 
 uint8_t Msg_TransmissionGetStatus(moduleMsg_t* msg);
@@ -43,6 +45,9 @@ void Msg_TransmissionSetStatus(moduleMsg_t* msg, uint8_t status);
 uint8_t* Msg_TransmissionSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* Msg_TransmissionDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t Msg_TransmissionGetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_MSG_TRANSMISSION_H_ */
 

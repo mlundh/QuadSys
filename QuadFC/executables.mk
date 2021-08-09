@@ -62,7 +62,7 @@ Test_Utilities_DEPS+= $(addprefix Drivers/, $(PLATFORM))
 
 Test_Modules1_DEPS:= Top/Test_Modules1 HAL/QuadFC 
 Test_Modules1_DEPS+= $(addprefix Test/,TestFW DummyI2C SignalProcessing EventHandler)
-Test_Modules1_DEPS+= $(addprefix BaseComponents/, EventHandler Messages MsgBase)
+Test_Modules1_DEPS+= $(addprefix BaseComponents/, EventHandler Messages MsgBase MessagePool)
 Test_Modules1_DEPS+= $(addprefix Components/, Utilities CharCircularBuffer StateEstimator Parameters)
 Test_Modules1_DEPS+= $(addprefix Modules/, FlightController)
 Test_Modules1_DEPS+= $(addprefix HwComponents/, SpectrumSatellite Sensors)
@@ -87,7 +87,7 @@ Test_Board_DEPS+= $(addprefix Boards/$(PLATFORM)/, Board Startup Mem Gpio Test)
 Test_Board_DEPS+= $(addprefix Drivers/, $(PLATFORM))
 
 Test_Components1_DEPS:= Top/Test_Components1 HAL/QuadFC
-Test_Components1_DEPS+= $(addprefix BaseComponents/, EventHandler Messages MsgBase)
+Test_Components1_DEPS+= $(addprefix BaseComponents/, EventHandler Messages MsgBase MessagePool)
 Test_Components1_DEPS+= $(addprefix Components/, Log Parameters SLIP AppLog Utilities CharCircularBuffer)
 Test_Components1_DEPS+= $(addprefix Test/,TestFW Parameters FakeMemory Log AppLog LogTestBackend AppLogMemBackend CharCircularBuffer SlipPacket)
 Test_Components1_DEPS+= $(addprefix OS/, $(PLATFORM))

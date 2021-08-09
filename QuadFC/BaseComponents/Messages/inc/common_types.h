@@ -59,8 +59,6 @@ typedef enum LedName
 #define CTRL_TIME_FP (ONE_MS_FP)
 #define CTRL_FREQ    ((1 / CTRL_TIME) * ( TickType_t )1000) // CTRL_TIME is expressed in ms therefore we multiply by 1000
 
-
-
 /**
  * @brief Time scaling used in the project.
  *
@@ -162,6 +160,8 @@ typedef enum state_names_inertial_frame
  * Yaw is a rotation around Z in the counter-clockwise direction viewd from above
  * Pitch is a rotation around Y leaning forward.
  * Roll is a rotation around X to the right.
+
+
  */
 
 typedef enum state_names_body_frame

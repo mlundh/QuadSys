@@ -30,6 +30,7 @@
 #include "Messages/inc/messageTypes.h"
 #include "Messages/inc/msg_enums.h"
 #include "Utilities/inc/serialization.h"
+#include "MessagePool/inc/messagePool.h"
 
 /**
  * Struct describing a message. This is the structure that will be
@@ -47,10 +48,12 @@ typedef struct
     uint8_t             mMsgNr;
     uint8_t             mRequireAck;
     uint32_t            mAllocatedSize;
-    uint8_t             mDelete;
+    uint8_t             mStatus; // Status, [i,i,i,i,i,i,i,message pool]
 }moduleMsg_t;
 
-moduleMsg_t* Msg_Create(uint32_t type, uint32_t destination);
+#define Msg_Create(type, destination) Msg_CreateFromPool(NULL, type, destination)
+
+moduleMsg_t* Msg_CreateFromPool(messagePool_t* pool, uint32_t type, uint32_t destination);
 
 uint8_t Msg_Delete(moduleMsg_t** msg);
 
@@ -67,6 +70,8 @@ void Msg_SetMsgNr(moduleMsg_t* msg, uint32_t msgNr);
 
 uint8_t Msg_GetRequireAck(moduleMsg_t* msg);
 void Msg_SetRequireAck(moduleMsg_t* msg, uint8_t requireAck);
+
+uint8_t Msg_GetPoolStorage(moduleMsg_t* msg);
 
 uint8_t* Msg_Serialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 uint8_t* Msg_DeSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);

@@ -5,7 +5,7 @@
 
 **** Starting Test: ImuToRate ****
 
-**** RESULT ImuToRate: [32mPASS[0m **** 
+**** RESULT ImuToRate: [31mFAIL[0m **** 
 
 **** Starting Test: RateGyro ****
 
@@ -55,7 +55,7 @@
 
 **** RESULT Event: [32mPASS[0m **** 
 
-********************** Testsuite Sig, event, log RESULT: [32mPASS[0m ********************** 
+********************** Testsuite Sig, event, log RESULT: [31mFAIL[0m ********************** 
 
 *********************** Starting Testsuite: Messages *********************** 
 
@@ -70,6 +70,26 @@
 **** Starting Test: Msg Test Transmission serializa ****
 
 **** RESULT Msg Test Transmission serializa: [32mPASS[0m **** 
+
+**** Starting Test: MsgPool Test Create ****
+
+**** RESULT MsgPool Test Create: [32mPASS[0m **** 
+
+**** Starting Test: MsgPool Test Aquire  ****
+
+**** RESULT MsgPool Test Aquire : [32mPASS[0m **** 
+
+**** Starting Test: MsgPool Test Aquire Release  ****
+
+**** RESULT MsgPool Test Aquire Release : [32mPASS[0m **** 
+
+**** Starting Test: MsgPool Test Aquire all Release ****
+
+**** RESULT MsgPool Test Aquire all Release: [32mPASS[0m **** 
+
+**** Starting Test: MsgPool Test Aquire And Fill ****
+
+**** RESULT MsgPool Test Aquire And Fill: [32mPASS[0m **** 
 
 ********************** Testsuite Messages RESULT: [32mPASS[0m ********************** 
 
@@ -132,7 +152,7 @@
 **** RESULT Param SetGetTwoHandlers: [32mPASS[0m **** 
 
 **** Starting Test: Log C Handler ****
-LogMaster uses 512 bytes of heap.
+LogMaster uses 584 bytes of heap.
 LogHandler slave uses 1392 bytes of heap.
 
 **** RESULT Log C Handler: [32mPASS[0m **** 
@@ -147,19 +167,38 @@ A log obj uses 144 bytes of heap.
 **** RESULT Log Set Child: [32mPASS[0m **** 
 
 **** Starting Test: Log Report ****
+First log entry not correct. 
+ Expected data: 9, id: 0, time: 122
+ Got: data: 0, id: 0, time: 0
 
-**** RESULT Log Report: [32mPASS[0m **** 
+**** RESULT Log Report: [31mFAIL[0m **** 
 
 **** Starting Test: Log Test Multiple Loggers ****
+First log entry not correct. 
+ Expected data: 9, id: 0, time: 140
+ Got: data: 0, id: 0, time: 0
+Second log entry not correct. 
+ Expected data: 9, id: 0, time: 140
+ Got: data: 0, id: 0, time: 0
 
-**** RESULT Log Test Multiple Loggers: [32mPASS[0m **** 
+**** RESULT Log Test Multiple Loggers: [31mFAIL[0m **** 
 
 **** Starting Test: Log Test Multiple Handlers ****
+First log entry not correct. 
+ Expected data: 9, id: 0, time: 155
+ Got: data: 0, id: 0, time: 0
+Second log entry not correct. 
+ Expected data: 9, id: 0, time: 155
+ Got: data: 0, id: 0, time: 0
+Third log entry not correct. 
+ Expected data: 9, id: 0, time: 155
+ Got: data: 0, id: 0, time: 0
+fourth log entry not correct.
 
-**** RESULT Log Test Multiple Handlers: [32mPASS[0m **** 
+**** RESULT Log Test Multiple Handlers: [31mFAIL[0m **** 
 
 **** Starting Test: Log Event ****
-[31mMemory leak in test case Log Event! Lost 512 bytes.[0m
+[31mMemory leak in test case Log Event! Lost 976 bytes.[0m
 
 **** RESULT Log Event: [32mPASS[0m **** 
 
@@ -233,4 +272,4 @@ A log obj uses 144 bytes of heap.
 
 **** RESULT SlipParser parse chunks: [32mPASS[0m **** 
 
-********************** Testsuite Components1 RESULT: [32mPASS[0m ********************** 
+********************** Testsuite Components1 RESULT: [31mFAIL[0m ********************** 

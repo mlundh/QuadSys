@@ -32,7 +32,9 @@
 
 
 
-moduleMsg_t* Msg_ErrorCreate(uint32_t destination, uint8_t msgNr
+#define Msg_ErrorCreate(destination, msgNr , Errorbufferlength) Msg_ErrorCreatePool(NULL, destination, msgNr , Errorbufferlength)
+
+moduleMsg_t* Msg_ErrorCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , uint32_t Errorbufferlength);
 
 uint8_t* Msg_ErrorGetError(moduleMsg_t* msg);
@@ -51,6 +53,9 @@ void Msg_ErrorSetErrorbufferlength(moduleMsg_t* msg, uint32_t Errorbufferlength)
 uint8_t* Msg_ErrorSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* Msg_ErrorDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t Msg_ErrorGetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_MSG_ERROR_H_ */
 

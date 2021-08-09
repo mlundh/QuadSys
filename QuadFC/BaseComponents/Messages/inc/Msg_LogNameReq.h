@@ -35,7 +35,9 @@
 #include "task.h"
 
 
-moduleMsg_t* Msg_LogNameReqCreate(uint32_t destination, uint8_t msgNr
+#define Msg_LogNameReqCreate(destination, msgNr , data) Msg_LogNameReqCreatePool(NULL, destination, msgNr , data)
+
+moduleMsg_t* Msg_LogNameReqCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , QueueHandle_t data);
 
 QueueHandle_t Msg_LogNameReqGetData(moduleMsg_t* msg);
@@ -46,6 +48,9 @@ void Msg_LogNameReqSetData(moduleMsg_t* msg, QueueHandle_t data);
 uint8_t* Msg_LogNameReqSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* Msg_LogNameReqDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t Msg_LogNameReqGetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_MSG_LOGNAMEREQ_H_ */
 

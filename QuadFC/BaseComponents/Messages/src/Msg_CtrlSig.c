@@ -34,12 +34,23 @@
 }Msg_CtrlSig_t;
 
 
-moduleMsg_t* Msg_CtrlSigCreate(uint32_t destination, uint8_t msgNr
+moduleMsg_t* Msg_CtrlSigCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , control_signal_t signal)
 {
     size_t mallocSize = sizeof(moduleMsg_t) + sizeof(Msg_CtrlSig_t) ;
-    moduleMsg_t* msg = pvPortMalloc(mallocSize);
+    moduleMsg_t* msg = NULL;
+    if(pool)
+    {
+        msg = messagePool_aquire(pool, mallocSize);
+        msg->mStatus = 0;
+        msg->mStatus |= 0x01;
+    }
+    else
+    {
+        msg = pvPortMalloc(mallocSize);
+        msg->mStatus = 0;
 
+    }
     if(msg)
     {
         msg->mDestination = destination;
@@ -123,4 +134,10 @@ moduleMsg_t* Msg_CtrlSigDeserialize(uint8_t* buffer, uint32_t buffer_size)
     }
     return msg;
 }
+
+uint32_t Msg_CtrlSigGetMessageSize()
+{
+    return sizeof(moduleMsg_t) + sizeof(Msg_CtrlSig_t);
+}
+
 

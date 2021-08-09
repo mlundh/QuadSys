@@ -32,7 +32,9 @@
 
 
 
-moduleMsg_t* Msg_FlightModeCreate(uint32_t destination, uint8_t msgNr
+#define Msg_FlightModeCreate(destination, msgNr , mode) Msg_FlightModeCreatePool(NULL, destination, msgNr , mode)
+
+moduleMsg_t* Msg_FlightModeCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , uint8_t mode);
 
 uint8_t Msg_FlightModeGetMode(moduleMsg_t* msg);
@@ -43,6 +45,9 @@ void Msg_FlightModeSetMode(moduleMsg_t* msg, uint8_t mode);
 uint8_t* Msg_FlightModeSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* Msg_FlightModeDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t Msg_FlightModeGetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_MSG_FLIGHTMODE_H_ */
 

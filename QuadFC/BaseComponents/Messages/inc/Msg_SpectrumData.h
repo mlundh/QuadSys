@@ -33,7 +33,9 @@
 #include "SpectrumSatellite/inc/satellite_receiver_public.h"
 
 
-moduleMsg_t* Msg_SpectrumDataCreate(uint32_t destination, uint8_t msgNr
+#define Msg_SpectrumDataCreate(destination, msgNr , data) Msg_SpectrumDataCreatePool(NULL, destination, msgNr , data)
+
+moduleMsg_t* Msg_SpectrumDataCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , spektrum_data_t data);
 
 spektrum_data_t Msg_SpectrumDataGetData(moduleMsg_t* msg);
@@ -44,6 +46,9 @@ void Msg_SpectrumDataSetData(moduleMsg_t* msg, spektrum_data_t data);
 uint8_t* Msg_SpectrumDataSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* Msg_SpectrumDataDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t Msg_SpectrumDataGetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_MSG_SPECTRUMDATA_H_ */
 

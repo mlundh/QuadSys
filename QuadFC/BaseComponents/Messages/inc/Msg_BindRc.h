@@ -32,7 +32,9 @@
 
 
 
-moduleMsg_t* Msg_BindRcCreate(uint32_t destination, uint8_t msgNr
+#define Msg_BindRcCreate(destination, msgNr , quit) Msg_BindRcCreatePool(NULL, destination, msgNr , quit)
+
+moduleMsg_t* Msg_BindRcCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , uint8_t quit);
 
 uint8_t Msg_BindRcGetQuit(moduleMsg_t* msg);
@@ -43,6 +45,9 @@ void Msg_BindRcSetQuit(moduleMsg_t* msg, uint8_t quit);
 uint8_t* Msg_BindRcSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* Msg_BindRcDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t Msg_BindRcGetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_MSG_BINDRC_H_ */
 

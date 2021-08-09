@@ -32,7 +32,9 @@
 
 
 
-moduleMsg_t* Msg_SubscriptionsCreate(uint32_t destination, uint8_t msgNr
+#define Msg_SubscriptionsCreate(destination, msgNr , Subscriptionsbufferlength) Msg_SubscriptionsCreatePool(NULL, destination, msgNr , Subscriptionsbufferlength)
+
+moduleMsg_t* Msg_SubscriptionsCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , uint32_t Subscriptionsbufferlength);
 
 uint8_t* Msg_SubscriptionsGetSubscriptions(moduleMsg_t* msg);
@@ -51,6 +53,9 @@ void Msg_SubscriptionsSetSubscriptionsbufferlength(moduleMsg_t* msg, uint32_t Su
 uint8_t* Msg_SubscriptionsSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* Msg_SubscriptionsDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t Msg_SubscriptionsGetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_MSG_SUBSCRIPTIONS_H_ */
 

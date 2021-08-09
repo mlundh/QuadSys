@@ -32,13 +32,18 @@
 
 
 
-moduleMsg_t* LogStopCreate(uint32_t destination, uint8_t msgNr
+#define LogStopCreate(destination, msgNr ) LogStopCreatePool(NULL, destination, msgNr )
+
+moduleMsg_t* LogStopCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     );
 
 
 uint8_t* LogStopSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* LogStopDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t LogStopGetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_LOGSTOP_H_ */
 

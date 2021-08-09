@@ -154,6 +154,7 @@ def genCMessage( lineIn, outputDirC):
 	mFcnImpl = ''
 	mDecl = ''
 	createArgs = ''
+	createArgsDefine = ''
 	createCpyInit  = ''
 	createArgsInit = ''
 	serialize = ''
@@ -219,6 +220,7 @@ def genCMessage( lineIn, outputDirC):
 			mDecl += type + ' ' + name + ';\n	'
 			if(value[2] == StringStatus.notString or value[2] == StringStatus.BufferLength): #this is not a string
 				createArgs += ', ' + type + ' ' + value[1]
+				createArgsDefine += ', ' + value[1]
 				createArgsInit +=  '        ' + 'internal_data->'+name + ' = ' + nameinput + ';\n'
 			elif(value[2] == StringStatus.PayloadLength):
 				createArgsInit +=  '        ' + 'internal_data->'+name + ' = ' + '0;\n'
@@ -234,6 +236,7 @@ def genCMessage( lineIn, outputDirC):
 	subst['msgName'] = args.className
 	subst['msgNameUpper'] = args.className.upper()
 	subst['createArgs'] = createArgs
+	subst['createArgsDefine'] = createArgsDefine
 	subst['createArgsInit'] = createArgsInit
 	subst['members'] = mDecl
 	subst['memberFcnHeader'] = mFcnHeader

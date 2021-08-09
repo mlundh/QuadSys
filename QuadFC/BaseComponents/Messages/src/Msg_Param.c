@@ -39,12 +39,23 @@
 }Msg_Param_t;
 
 
-moduleMsg_t* Msg_ParamCreate(uint32_t destination, uint8_t msgNr
+moduleMsg_t* Msg_ParamCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , uint8_t control, uint8_t sequenceNr, uint8_t lastInSequence, uint32_t Payloadbufferlength)
 {
     size_t mallocSize = sizeof(moduleMsg_t) + sizeof(Msg_Param_t)  + (Payloadbufferlength);
-    moduleMsg_t* msg = pvPortMalloc(mallocSize);
+    moduleMsg_t* msg = NULL;
+    if(pool)
+    {
+        msg = messagePool_aquire(pool, mallocSize);
+        msg->mStatus = 0;
+        msg->mStatus |= 0x01;
+    }
+    else
+    {
+        msg = pvPortMalloc(mallocSize);
+        msg->mStatus = 0;
 
+    }
     if(msg)
     {
         msg->mDestination = destination;
@@ -308,4 +319,10 @@ moduleMsg_t* Msg_ParamDeserialize(uint8_t* buffer, uint32_t buffer_size)
     }
     return msg;
 }
+
+uint32_t Msg_ParamGetMessageSize()
+{
+    return sizeof(moduleMsg_t) + sizeof(Msg_Param_t);
+}
+
 

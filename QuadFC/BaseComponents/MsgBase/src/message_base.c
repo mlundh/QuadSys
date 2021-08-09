@@ -30,11 +30,24 @@
 #include <string.h>
 
 
-moduleMsg_t* Msg_Create(uint32_t type, uint32_t destination)
+moduleMsg_t* Msg_CreateFromPool(messagePool_t* pool, uint32_t type, uint32_t destination)
 {
     size_t size = sizeof(moduleMsg_t);
-    moduleMsg_t* msg = pvPortMalloc(size);
+    moduleMsg_t* msg = NULL;
 
+    if(pool)
+    {
+        msg = messagePool_aquire(pool, size);
+        msg->mStatus = 0;
+        msg->mStatus &= 0x01;
+    }
+    else
+    {
+        msg = pvPortMalloc(size);
+        msg->mStatus = 0;
+
+    }
+    
     if(msg)
     {
         msg->mDestination = destination;
@@ -53,7 +66,15 @@ uint8_t Msg_Delete(moduleMsg_t** msg)
     uint8_t result = 0;
     if(*msg)
     {
-        vPortFree(*msg);
+        if(Msg_GetPoolStorage(*msg))
+        {
+            messagePool_release(*msg);
+        }
+        else
+        {
+            vPortFree(*msg);
+        }
+        
         result = 1;
         *msg = NULL;
     }
@@ -141,6 +162,17 @@ void Msg_SetRequireAck(moduleMsg_t* msg, uint8_t requireAck)
     }
 
 }
+
+uint8_t Msg_GetPoolStorage(moduleMsg_t* msg)
+{
+    uint8_t result = 0;
+    if(msg)
+    {
+        result = msg->mStatus & 0x01; 
+    }
+    return result;
+}
+
 
 uint8_t* Msg_Serialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size)
 {

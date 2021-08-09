@@ -32,7 +32,9 @@
 
 
 
-moduleMsg_t* Msg_CtrlModeCreate(uint32_t destination, uint8_t msgNr
+#define Msg_CtrlModeCreate(destination, msgNr , mode) Msg_CtrlModeCreatePool(NULL, destination, msgNr , mode)
+
+moduleMsg_t* Msg_CtrlModeCreatePool(messagePool_t* pool, uint32_t destination, uint8_t msgNr
     , uint8_t mode);
 
 uint8_t Msg_CtrlModeGetMode(moduleMsg_t* msg);
@@ -43,6 +45,9 @@ void Msg_CtrlModeSetMode(moduleMsg_t* msg, uint8_t mode);
 uint8_t* Msg_CtrlModeSerialize(moduleMsg_t* msg, uint8_t* buffer, uint32_t buffer_size);
 
 moduleMsg_t* Msg_CtrlModeDeserialize(uint8_t* buffer, uint32_t buffer_size);
+
+uint32_t Msg_CtrlModeGetMessageSize();
+
 
 #endif /* MODULES_MESSAGES_INC_MSG_CTRLMODE_H_ */
 
