@@ -38,11 +38,8 @@
 #define MAX_LOG_TYPE_DIGITS (2)
 #define MAX_LOG_NODE_LENGTH (MAX_LOG_NAME_LENGTH +  MAX_LOG_TYPE_DIGITS +MAX_LOG_NAME_EXTRA + MAX_LOG_ID_DIGITS_ID)
 
-#define MAX_LOG_ENTRY_DIGITS_ID (4)
-#define MAX_LOG_ENTRY_DIGITS_TIME (11)
-#define MAX_LOG_ENTRY_DIGITS_DATA (11)
-#define LOG_ENTRY_EXTRA (8)
-#define MAX_LOG_ENTRY_LENGTH (MAX_LOG_ENTRY_DIGITS_ID + MAX_LOG_ENTRY_DIGITS_TIME + MAX_LOG_ENTRY_DIGITS_DATA + LOG_ENTRY_EXTRA)
+#define MAX_LOG_ENTRY_LENGTH_BIN (sizeof(uint32_t)*3)
+
 
 #define LOG_NAME_REQ_BLOCK_TIME    (2UL / portTICK_PERIOD_MS )
 
@@ -124,23 +121,24 @@ uint8_t LogMaster_UpdateId(LogMaster_t* obj, LogHandler_t* originator, uint32_t*
 uint8_t LogMaster_AppendNodeString(logNameQueueItems_t *items, uint8_t *buffer, uint32_t buffer_length);
 
 /**
- * @brief Serialize the log entry given
+ * @brief Serialize the log entry given to a binary form. Each log entry will be 32*3 bits.
  * 
  * @param entry     entry to be serialized
  * @param buffer    buffer to write the serialization to.
  * @param size      size of the buffer.
- * @return uint8_t  1 indicates success, 0 faliure.
+ * @return uint8_t* the updated buffer
  */
-uint8_t LogMaster_Serializelog(logEntry_t* entry, uint8_t* buffer, uint32_t size);
+uint8_t* LogMaster_SerializelogBin(logEntry_t* entry, uint8_t* buffer, uint32_t* size);
+
 
 /**
  * Get the serialized version of the log. Will fill the buffer with a null terminated string.
  * @param obj     LogMaster obj. Must be master.
  * @param buffer  Buffer to write the log entries into.
- * @param size    size of the buffer.
+ * @param size    size of the buffer. This size will shrink to reflect the returned buffer.
  * @return        1 if success, 0 otherwise.
  */
-uint8_t LogMaster_AppendSerializedlogs(LogMaster_t* obj, uint8_t* buffer, uint32_t size);
+uint8_t LogMaster_AppendSerializedlogs(LogMaster_t* obj, uint8_t* buffer, uint32_t* size);
 
 /**
  * Get logs from the log backend.

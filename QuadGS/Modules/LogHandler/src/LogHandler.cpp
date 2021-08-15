@@ -80,7 +80,7 @@ std::string LogHandler::FormatLogMapping(std::string)
 	std::stringstream          ss;
 	std::vector<std::string>   parts;
 	for (auto it = mNames.begin(); it != mNames.end(); ++it) {
-		ss << std::left << std::setw(12) <<  it->first << std::setw(12) << it->second << std::endl;
+		ss << std::left << std::setw(4) <<  it->first << std::setw(15) << it->second.first << std::setw(15) << it->second.second << std::endl;
 	}
 	return ss.str();
 }
@@ -127,21 +127,21 @@ void LogHandler::process(Msg_Log* message)
 				std::string name = QGS_Tree::GetModuleName(module);
 				std::string valueType = QGS_Tree::GetValueTypeString(module);
 				std::string id_str = QGS_Tree::GetValueString(module);
-				if(!id_str.empty() && valueType.empty())
+				if(!id_str.empty() && !valueType.empty() && !name.empty())
 				{
 					int id = std::stoi(id_str);
-					//int type = std::stoi(valueType); TODO add value type as well?
-					auto search = mNames.find(name);
+					int type = std::stoi(valueType);
+					auto search = mNames.find(id);
 					if(search == mNames.end())
 					{
-						mNames[name] = id;
-						mMapFile << name << "," << id << "," << std::endl;
+						mNames.insert(std::make_pair(id, std::make_pair(name, type)));
+						mMapFile << name << "," << id << "," << type << "," << std::endl;
 
 					}
 					else
 					{
 						// already have this, lets make sure it is the same.
-						if(mNames[name] != id)
+						if(mNames[id].first != name)
 						{
 							// TODO clear the file!
 							mNames.clear();
@@ -161,22 +161,23 @@ void LogHandler::process(Msg_Log* message)
 	case LogCtrl_t::Entry:
 	{
 		std::string payloadStr = message->getPayload();
-		while(!payloadStr.empty())
+		BinaryIStream is((uint8_t*)payloadStr.c_str(), payloadStr.size());
+		while(!is.eof())
 		{
-			std::string module = QGS_Tree::RemoveModuleString(payloadStr);
-			for(int i = 0; i < NR_LOG_FIELDS; i++)
-			{
-				std::string value = QGS_Tree::RemoveValueString(module);
-				mLogFile << value;
-				if(i < NR_LOG_FIELDS - 1)
-				{
-					mLogFile << ",";
-				}
-				else
-				{
-					mLogFile << std::endl;
-				}
-			}
+			uint32_t id;
+			is >> id;
+			mLogFile << id;
+			mLogFile << ",";
+
+			uint32_t time;
+			is >> time;
+			mLogFile << time;
+			mLogFile << ",";
+
+			int32_t data;
+			is >> data;
+			mLogFile << data;
+			mLogFile << std::endl;
 		}
 	}
 	break;

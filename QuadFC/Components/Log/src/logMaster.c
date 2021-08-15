@@ -49,7 +49,7 @@ struct logMaster
   uint32_t              nrFailedPoolAqu;
 };
 #define NR_LOG_ENTRIES (10)
-#define LOG_MSG_SIZE (NR_LOG_ENTRIES * MAX_LOG_ENTRY_LENGTH)
+#define LOG_MSG_SIZE (NR_LOG_ENTRIES * MAX_LOG_ENTRY_LENGTH_BIN)
 LogMaster_t* LogMaster_CreateObj(eventHandler_t* evHandler, param_obj_t* param)
 {
 
@@ -143,7 +143,7 @@ uint8_t LogMaster_HandleLogMsg(eventHandler_t* obj, void* data, moduleMsg_t* msg
             Msg_SetRequireAck(logMsg, 0);
             uint8_t* payload = Msg_LogGetPayload(logMsg);
             payload[0] = '\0';
-            uint32_t nr_entries = Msg_LogGetPayloadbufferlength(logMsg) / MAX_LOG_ENTRY_LENGTH;
+            uint32_t nr_entries = Msg_LogGetPayloadbufferlength(logMsg) / MAX_LOG_ENTRY_LENGTH_BIN;
 
             //sanity check
             if(nrLogs > nr_entries)
@@ -151,12 +151,13 @@ uint8_t LogMaster_HandleLogMsg(eventHandler_t* obj, void* data, moduleMsg_t* msg
                 //error.
                 break;
             }
-
+            uint8_t* buffer = Msg_LogGetPayload(logMsg);
+            uint32_t size = Msg_LogGetPayloadbufferlength(logMsg);
             for(int j = 0; j < nrLogs; j++)
             {
-                LogMaster_Serializelog(&queuedEntry[j], Msg_LogGetPayload(logMsg), Msg_LogGetPayloadbufferlength(logMsg));
+                buffer = LogMaster_SerializelogBin(&queuedEntry[j], buffer, &size);
             }
-            uint16_t len = strlen((char *)Msg_LogGetPayload(logMsg));
+            uint16_t len = buffer - Msg_LogGetPayload(logMsg);
             Msg_LogSetPayloadlength(logMsg, len);
             Event_Send(handlerObj->evHandler, logMsg);
         }
@@ -257,80 +258,59 @@ uint8_t LogMaster_AppendNodeString(logNameQueueItems_t *items, uint8_t *buffer, 
         }
         // append name and update buf_index.
         strncat( (char *) buffer , (const char *) items->logNames[i].name, (unsigned short) MAX_PARAM_NAME_LENGTH);
+        // append type "[xxx]"
+        strcat( (char *) buffer, (const char *) "<");
+        uint8_t pTempType[MAX_LOG_TYPE_DIGITS];
+        snprintf((char *) pTempType, MAX_LOG_TYPE_DIGITS, "%lu",(uint32_t)items->logNames[i].type);
+        strncat( (char *) buffer, (const char *) pTempType, (unsigned short) MAX_LOG_TYPE_DIGITS);
+        strcat( (char *) buffer, (const char *) ">");
         // append id "[xxx]"
         strcat( (char *) buffer, (const char *) "[");
         uint8_t pTemp[MAX_LOG_ID_DIGITS_ID];
         snprintf((char *) pTemp, MAX_LOG_ID_DIGITS_ID, "%lu",(uint32_t)items->logNames[i].id);
         strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_LOG_ID_DIGITS_ID);
         strcat( (char *) buffer, (const char *) "]");
+
         strcat( (char *) buffer, (const char *) "/");
     }
 
     return 1;
 }
-uint8_t LogMaster_Serializelog(logEntry_t* entry, uint8_t* buffer, uint32_t size)
+
+uint8_t* LogMaster_SerializelogBin(logEntry_t* entry, uint8_t* buffer, uint32_t* size)
 {
-    uint32_t length = strlen((const char*)buffer);
-    uint32_t remainingSize = size - length;
-    if(remainingSize < MAX_LOG_ENTRY_LENGTH)
+    if(*size < sizeof(uint32_t)*3)
     {
-        return 1;
+        return buffer;
     }
-    uint8_t pTemp[MAX_LOG_ENTRY_DIGITS_DATA];
-    strcat( (char *) buffer, (const char *) "[");
-    snprintf((char *) pTemp, MAX_LOG_ENTRY_DIGITS_ID, "%lu",(uint32_t)entry->id);
-    strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_LOG_ENTRY_DIGITS_ID);
-    strcat( (char *) buffer, (const char *) "]");
-    strcat( (char *) buffer, (const char *) "[");
-    snprintf((char *) pTemp, MAX_LOG_ENTRY_DIGITS_TIME, "%lu",(uint32_t)entry->time);
-    strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_LOG_ENTRY_DIGITS_TIME);
-    strcat( (char *) buffer, (const char *) "]");
-    strcat( (char *) buffer, (const char *) "[");
-    snprintf((char *) pTemp, MAX_LOG_ENTRY_DIGITS_DATA, "%lu",(uint32_t)entry->data);
-    strncat( (char *) buffer, (const char *) pTemp, (unsigned short) MAX_LOG_ENTRY_DIGITS_DATA);
-    strcat( (char *) buffer, (const char *) "]");
-    strcat( (char *) buffer, (const char *) "/");
-    return 1;
+    buffer = serialize_uint32_t(buffer, size, &entry->id);
+    buffer = serialize_uint32_t(buffer, size, &entry->time);
+    buffer = serialize_int32_t(buffer, size, &entry->data);
+    return buffer;
 }
 
-uint8_t LogMaster_AppendSerializedlogs(LogMaster_t* obj, uint8_t* buffer, uint32_t size)
+uint8_t LogMaster_AppendSerializedlogs(LogMaster_t* obj, uint8_t* buffer, uint32_t* size)
 {
     if(!obj || !buffer)
     {
         return 0;
     }
-    uint32_t length = strlen((const char*)buffer);
-    uint32_t remainingSize = size - length;
-    if(remainingSize < MAX_LOG_ENTRY_LENGTH)
+    if(*size < MAX_LOG_ENTRY_LENGTH_BIN)
     {
         return 1;
     }
     uint8_t result = 1;
     uint32_t nrLogs = 0;
 
+    uint8_t nr_entries = *size / MAX_LOG_ENTRY_LENGTH_BIN;
+    logEntry_t entries[nr_entries];
+
+    result &= LogMaster_Getlogs(obj, entries, nr_entries, &nrLogs);
+    for(int i = 0; i < nrLogs; i++)
     {
-
-        uint8_t nr_entries = remainingSize / MAX_LOG_ENTRY_LENGTH;
-        logEntry_t entries[nr_entries];
-
-        result &= LogMaster_Getlogs(obj, entries, nr_entries, &nrLogs);
-        for(int i = 0; i < nrLogs; i++)
-        {
-            LogMaster_Serializelog(&entries[i], buffer, size);
-        }
+        buffer = LogMaster_SerializelogBin(&entries[i], buffer, size);
     }
-    // We might have used less than max length for the data fields, call the function
-    // recursively until there is either no more space left in the buffer, or there is
-    // no more data to get.
-    if(result && (nrLogs > 0))
-    {
-        uint32_t lengthAfter = strlen((const char*)buffer);
-        if(lengthAfter < size)
-        {
-            result &= LogMaster_AppendSerializedlogs(obj, buffer, size);
-        }
 
-    }
     return result;
 }
 
@@ -390,10 +370,10 @@ uint8_t LogMaster_HandleLog(eventHandler_t *obj, void *data, moduleMsg_t *msg)
         result = 1;
         moduleMsg_t *reply = Msg_LogCreate(Msg_GetSource(msg), 0, log_entry, LOG_MSG_REPLY_LENGTH);
         uint8_t* payload = Msg_LogGetPayload(reply);
-        payload[0]='\0';
-        
-        LogMaster_AppendSerializedlogs(logObj, payload, Msg_LogGetPayloadbufferlength(reply));
-        uint16_t len = strlen((char *)Msg_LogGetPayload(reply));
+
+        uint32_t size = Msg_LogGetPayloadbufferlength(reply);
+        LogMaster_AppendSerializedlogs(logObj, payload, &size);
+        uint16_t len = payload - Msg_LogGetPayload(reply);
         Msg_LogSetPayloadlength(reply, len);
 
         Event_Send(obj, reply);

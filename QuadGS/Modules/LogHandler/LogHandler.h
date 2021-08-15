@@ -91,7 +91,7 @@ public:
 
     std::ofstream mLogFile;
     std::ofstream mMapFile;
-    std::map<std::string, int> mNames;
+    std::map<int, std::pair<std::string, int>> mNames;
 	std::vector<UiCommand> mCommands;
     msgAddr_t mLoggerAddr;
 
