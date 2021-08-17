@@ -33,6 +33,7 @@ LogHandler::LogHandler(msgAddr_t name, msgAddr_t loggerAddr)
 	mLogFile.open ("LogFile.txt", std::ios_base::app);
 	mMapFile.open ("MapFile.txt", std::ios_base::app);
 
+	mLogFile << std::fixed << std::setprecision(9);
 	mCommands.push_back(UiCommand("logGetNames","Get name id mapping of logs.",std::bind(&LogHandler::getLogNames, this, std::placeholders::_1)));
 	mCommands.push_back(UiCommand("logPrintNameMapping","Print name id mapping of logs.",std::bind(&LogHandler::FormatLogMapping, this, std::placeholders::_1)));
 	mCommands.push_back(UiCommand("logGetEntries","Get runtime logs from QuadFC.",std::bind(&LogHandler::getLogEntries, this, std::placeholders::_1)));
@@ -174,10 +175,22 @@ void LogHandler::process(Msg_Log* message)
 			mLogFile << time;
 			mLogFile << ",";
 
-			int32_t data;
-			is >> data;
-			mLogFile << data;
-			mLogFile << std::endl;
+			if( mNames[id].second == QGS_TreeValue::NodeType_t::fp_16_16_variable_type)
+			{
+				int32_t data;
+				is >> data;
+				double dVal = FIXED_TO_DOUBLE(data, MAX16f);
+
+				mLogFile << dVal;
+				mLogFile << std::endl;	
+			}
+			else
+			{
+				int32_t data;
+				is >> data;
+				mLogFile << data;
+				mLogFile << std::endl;
+			}
 		}
 	}
 	break;
