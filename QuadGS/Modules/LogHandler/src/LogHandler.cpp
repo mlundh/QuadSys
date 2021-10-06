@@ -30,8 +30,8 @@ LogHandler::LogHandler(msgAddr_t name, msgAddr_t loggerAddr)
 ,mNames()
 ,mLoggerAddr(loggerAddr)
 {
-	mLogFile.open ("LogFile.txt", std::ios_base::app);
-	mMapFile.open ("MapFile.txt", std::ios_base::app);
+	mLogFile.open ("LogFile.txt", std::ios_base::out);
+	mMapFile.open ("MapFile.txt", std::ios_base::out);
 
 	mLogFile << std::fixed << std::setprecision(9);
 	mCommands.push_back(UiCommand("logGetNames","Get name id mapping of logs.",std::bind(&LogHandler::getLogNames, this, std::placeholders::_1)));
@@ -136,7 +136,7 @@ void LogHandler::process(Msg_Log* message)
 					if(search == mNames.end())
 					{
 						mNames.insert(std::make_pair(id, std::make_pair(name, type)));
-						mMapFile << name << "," << id << "," << type << "," << std::endl;
+						mMapFile << name << "," << id << "," << type << std::endl;
 
 					}
 					else
