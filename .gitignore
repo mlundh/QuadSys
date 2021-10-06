@@ -12,6 +12,8 @@ Mapfile.txt
 *.project
 *.settings
 *.vscode
+*.venv
+*.pydevproject
 desktop.ini
 *.gdb_history
 *~

@@ -10,12 +10,6 @@ def init():
     del xdata[:]
     del ydata[:]
     line.set_data(xdata, ydata)
-    #for fileLine in file:
-    #    pass
-    #if len(fileLine) > 1:
-    #    idStr, timeStr, valueStr = fileLine.split(',')
-    #    startTime = int(timeStr)
-    #line.set_data(xdata, ydata)
     return line,
 
 
@@ -23,7 +17,6 @@ def init():
 def update(frame_number):
     # update the data
     global xdata, ydata, ax, line
-    #with open(os.getcwd()+'/../QuadGS/build/top/gs_cli/LogFile.txt') as f:
     try:
         fileLines = file.readlines() # read all of the remaining lines at once...
     except:
@@ -66,7 +59,7 @@ xdata, ydata = [], []
 startTime = 0
 try:
     file = open(os.getcwd()+'/../QuadGS/build/top/gs_cli/LogFile.txt')
-    ani = animation.FuncAnimation(fig, update, interval=10, init_func=init, blit=True)
+    ani = animation.FuncAnimation(fig, update, interval=25, init_func=init, blit=True)
     plt.show()
     file.close()
 except Exception as e:
