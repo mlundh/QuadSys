@@ -8,6 +8,7 @@ Mapfile.txt
 /*.o
 /*.elf
 /*.bin
+__pycache__/
 *.cproject
 *.project
 *.settings
