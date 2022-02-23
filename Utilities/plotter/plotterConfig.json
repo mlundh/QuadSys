@@ -2,6 +2,6 @@
     "PathLog":"/../QuadGS/build/top/gs_cli/LogFile.txt",
     "PathMap":"/../QuadGS/build/top/gs_cli/MapFile.txt",
     "SubPlots": [2,1],
-    "idInPlots": [9, 10]
+    "idInPlots": [0, 1]
   }
   

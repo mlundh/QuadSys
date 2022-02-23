@@ -1,5 +1,6 @@
 from ast import Return
 import os
+import os.path
 import json
 #import logging
 import matplotlib.pyplot as plt
@@ -45,10 +46,25 @@ try:
         exit()
     #Map ax id to variable name.
     idToName = {}
+    if not os.path.isfile(filePathLog):
+        print("Log file not found." + filePathLog)
+        exit()
+    if not os.path.isfile(filePathMap):
+        print("map file not found." + filePathMap)
     with open(filePathMap) as map:
         for line in map:
             name, id, type = line.split(',')
             idToName[int(id)] = name
+
+    for id in idInPlots:
+        found = False
+        for key in list(idToName.keys()):
+            if(key == id):
+                found = True
+                break
+        if not found:
+            print("Please check that mapfile contains all configured IDs. Did not find: " + str(id))
+            exit()
     #global varable used to store all data related to the graphs
     data = []
     fig, axs = plt.subplots(SubPlots[0],SubPlots[1], squeeze=False) # create the axs needed.
@@ -56,6 +72,7 @@ try:
     axsFlat = [item for sublist in axsList for item in sublist]
     IdToPlot = {}
     for idx, ax in enumerate(axsFlat):
+        print("{} {} {}".format("Plotting", idx, idToName[idInPlots[idx]]))
         data.append(axContatiner(5000, ax, idToName[idInPlots[idx]])) #create a data object per subplot
         IdToPlot[idInPlots[idx]] = idx
     startTime = 0
@@ -64,6 +81,6 @@ try:
     ani = animation.FuncAnimation(fig, update, interval=25, blit=False)
     plt.show()
 except Exception as e:
-    print(e)
+    print("error " + str(e))
 
 
