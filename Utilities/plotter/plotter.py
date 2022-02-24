@@ -25,7 +25,10 @@ def update(frame_number):
                 id=int(idStr)
                 time=(int(timeStr) - startTime)/1000 # divide by the tick rate of the fc.
                 value=float(valueStr)
-                data[IdToPlot[id]].updateData(time, value)
+                if id in IdToPlot:
+                    data[IdToPlot[id]].updateData(time, value)
+                else:
+                    continue
             else:
                 return lines,
     for line in data:
