@@ -198,10 +198,10 @@ void main_control_task( void *pvParameters )
     Log_t* logRollRate = Log_CreateObj(0,variable_type_fp_16_16, &param->state->state_bf[roll_rate_bf],NULL, param->logHandler, "m_RollRate");
     Log_t* logYawRate = Log_CreateObj(0,variable_type_fp_16_16, &param->state->state_bf[yaw_rate_bf],NULL, param->logHandler, "m_YawRate");
 
-    Log_t* logUPitch = Log_CreateObj(0,variable_type_fp_16_16,  &param->control_signal[u_pitch],NULL, param->logHandler, "u_Pitch");
-    Log_t* logURoll = Log_CreateObj(0,variable_type_fp_16_16, &param->control_signal[u_roll],NULL, param->logHandler, "u_Roll");
-    Log_t* logUYaw = Log_CreateObj(0,variable_type_fp_16_16, &param->control_signal[u_yaw],NULL, param->logHandler, "u_Yaw");
-    Log_t* logUThrust = Log_CreateObj(0,variable_type_fp_16_16, &param->control_signal[u_thrust],NULL, param->logHandler, "u_Throttle");
+    Log_t* logUPitch = Log_CreateObj(0,variable_type_fp_16_16,  &param->control_signal->control_signal[u_pitch],NULL, param->logHandler, "u_Pitch");
+    Log_t* logURoll = Log_CreateObj(0,variable_type_fp_16_16, &param->control_signal->control_signal[u_roll],NULL, param->logHandler, "u_Roll");
+    Log_t* logUYaw = Log_CreateObj(0,variable_type_fp_16_16, &param->control_signal->control_signal[u_yaw],NULL, param->logHandler, "u_Yaw");
+    Log_t* logUThrust = Log_CreateObj(0,variable_type_fp_16_16, &param->control_signal->control_signal[u_thrust],NULL, param->logHandler, "u_Throttle");
 
     Log_t* logSpPitchRate = Log_CreateObj(0,variable_type_fp_16_16,  &param->setpoint->state_bf[pitch_rate_bf],NULL, param->logHandler, "sp_PitchRate");
     Log_t* logSpRollRate = Log_CreateObj(0,variable_type_fp_16_16, &param->setpoint->state_bf[roll_rate_bf],NULL, param->logHandler, "sp_RollRate");
