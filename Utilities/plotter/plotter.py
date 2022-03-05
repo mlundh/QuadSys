@@ -12,7 +12,7 @@ import numpy as np
 
 def update(frame_number):
     # update the data
-    lines = []
+    artists = []
     with fh: 
         fileLines = fh.readlines() # read all of the remaining lines at once...
         for fileLine in fileLines:
@@ -21,7 +21,7 @@ def update(frame_number):
                     idStr, timeStr, valueStr = fileLine.split(',')
                 except ValueError as err:
                     print("line malformatted: " + fileLine)
-                    return lines
+                    return artists
                 id=int(idStr)
                 time=(int(timeStr) - startTime)/1000 # divide by the tick rate of the fc.
                 value=float(valueStr)
@@ -30,10 +30,11 @@ def update(frame_number):
                 else:
                     continue
             else:
-                return lines,
+                return artists,
     for line in data:
         line.updateFig()
-    return lines,
+        artists.append(line.line)
+    return artists
 
 try:
     #read configuration
@@ -81,7 +82,7 @@ try:
     startTime = 0
 
     fh = fileReader(filePathLog, True)
-    ani = animation.FuncAnimation(fig, update, interval=25, blit=False)
+    ani = animation.FuncAnimation(fig, update, interval=25, blit=True)
     plt.show()
 except Exception as e:
     print("error " + str(e))

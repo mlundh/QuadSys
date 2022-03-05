@@ -10,6 +10,12 @@ class axContatiner:
         self.ax.set_ylim(0, 70)
         self.ax.set_xlim(0, 3)
         self.ax.set_title(name)
+        self.ax.tick_params(
+            axis='x',          # changes apply to the x-axis
+            which='major',      # both major and minor ticks are affected
+            bottom=False,      # ticks along the bottom edge are off
+            top=False,         # ticks along the top edge are off
+            labelbottom=False) # labels along the bottom edge are off
         self.line, = self.ax.plot([], [], lw=2)
         self.xdata = []
         self.ydata = []
@@ -44,4 +50,5 @@ class axContatiner:
         self.ax.set_ylim(self.ymin, self.ymax)
         self.ax.figure.canvas.draw()
         self.line.set_data(self.xdata, self.ydata)
+        return
 

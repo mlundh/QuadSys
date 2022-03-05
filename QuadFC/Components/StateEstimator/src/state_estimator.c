@@ -49,9 +49,9 @@ StateEst_t *StateEst_Create()
   }
   stateEstObj->imu = NULL;
   stateEstObj->gyroState = pvPortMalloc(sizeof(state_data_t));
-  stateEstObj->filterPitch = Signal_initButterworth(100, CTRL_FREQ);
-  stateEstObj->filterRoll  = Signal_initButterworth(100, CTRL_FREQ);
-  stateEstObj->filterYaw   = Signal_initButterworth(100, CTRL_FREQ);
+  stateEstObj->filterPitch = Signal_initButterworth(5, CTRL_FREQ);
+  stateEstObj->filterRoll  = Signal_initButterworth(5, CTRL_FREQ);
+  stateEstObj->filterYaw   = Signal_initButterworth(5, CTRL_FREQ);
   if(stateEstObj->imu || !stateEstObj->gyroState || 
   !stateEstObj->filterPitch || !stateEstObj->filterRoll || 
   !stateEstObj->filterYaw)
