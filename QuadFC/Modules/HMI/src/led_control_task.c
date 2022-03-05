@@ -30,7 +30,7 @@
 #include "queue.h"
 #include "EventHandler/inc/event_handler.h"
 #include "FlightModeHandler/inc/flight_mode_handler.h"
-#include "FlightController/inc/control_mode_handler.h"
+#include "ControlModeHandler/inc/control_mode_handler.h"
 #include "Messages/inc/Msg_CtrlMode.h"
 #include "HAL/QuadFC/QuadFC_Gpio.h"
 #include "Messages/inc/Msg_ValidSp.h"

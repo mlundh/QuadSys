@@ -40,7 +40,7 @@
 #include "Messages/inc/common_types.h"
 
 /*Include task communication modules*/
-#include "FlightController/inc/control_mode_handler.h"
+#include "Components/ControlModeHandler/inc/control_mode_handler.h"
 #include "EventHandler/inc/event_handler.h"
 
 /*

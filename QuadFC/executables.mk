@@ -43,10 +43,10 @@ else
 endif
 
 QuadFC_DEPS:= Top/QuadFC HAL/QuadFC
-QuadFC_DEPS+= $(addprefix Modules/, Communication FlightController HMI FlightModeHandler ServiceTask AppLogTask) 
+QuadFC_DEPS+= $(addprefix Modules/, Communication FlightController HMI ServiceTask AppLogTask) 
 QuadFC_DEPS+= $(addprefix BaseComponents/, EventHandler Messages MsgBase MessagePool)
-QuadFC_DEPS+= $(addprefix Components/, AppLog AppLogSerialBackend Log LogMemBackend PidController StateEstimator)
-QuadFC_DEPS+= $(addprefix Components/, Utilities SetpointHandler Parameters SLIP CharCircularBuffer Debug)
+QuadFC_DEPS+= $(addprefix Components/, AppLog AppLogSerialBackend Log LogMemBackend PidController StateEstimator Utilities)
+QuadFC_DEPS+= $(addprefix Components/,  SetpointHandler Parameters SLIP CharCircularBuffer Debug ControlModeHandler ControlSystem FlightModeHandler)
 QuadFC_DEPS+= $(addprefix HwComponents/, SpectrumSatellite CY15B104Q_SX_spi_fram)
 QuadFC_DEPS+= $(addprefix HwComponents/, MB85RC_i2c_fram Sensors)
 QuadFC_DEPS+= $(addprefix OS/, $(PLATFORM))
@@ -63,7 +63,7 @@ Test_Utilities_DEPS+= $(addprefix Drivers/, $(PLATFORM))
 Test_Modules1_DEPS:= Top/Test_Modules1 HAL/QuadFC 
 Test_Modules1_DEPS+= $(addprefix Test/,TestFW DummyI2C SignalProcessing EventHandler)
 Test_Modules1_DEPS+= $(addprefix BaseComponents/, EventHandler Messages MsgBase MessagePool)
-Test_Modules1_DEPS+= $(addprefix Components/, Utilities CharCircularBuffer StateEstimator Parameters)
+Test_Modules1_DEPS+= $(addprefix Components/, Utilities CharCircularBuffer StateEstimator Parameters ControlModeHandler)
 Test_Modules1_DEPS+= $(addprefix Modules/, FlightController)
 Test_Modules1_DEPS+= $(addprefix HwComponents/, SpectrumSatellite Sensors)
 Test_Modules1_DEPS+= $(addprefix OS/, $(PLATFORM))

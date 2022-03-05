@@ -36,7 +36,7 @@
 #include "SpectrumSatellite/inc/satellite_receiver_public.h"
 #include "SpectrumSatellite/inc/Satellite_SetpointHandler.h"
 #include "StateEstimator/inc/signal_processing.h"
-#include "FlightController/inc/control_mode_handler.h"
+#include "ControlModeHandler/inc/control_mode_handler.h"
 
 typedef struct SigProcessTester
 {

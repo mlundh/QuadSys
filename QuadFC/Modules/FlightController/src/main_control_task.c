@@ -29,7 +29,7 @@
 
 #include "FlightController/inc/main_control_task.h"
 
-#include "FlightModeHandler/inc/flight_mode_handler.h"
+#include "Components/FlightModeHandler/inc/flight_mode_handler.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
@@ -43,7 +43,7 @@
 #include "Components/AppLog/inc/AppLog.h"
 
 /* Modules */
-#include "FlightController/inc/control_system.h"
+#include "ControlSystem/inc/control_system.h"
 #include "EventHandler/inc/event_handler.h"
 #include "StateEstimator/inc/state_estimator.h"
 #include "QuadFC/QuadFC_MotorControl.h"
@@ -51,7 +51,7 @@
 #include "Parameters/inc/parameters.h"
 #include "SetpointHandler/inc/setpoint_handler.h"
 #include "SpectrumSatellite/inc/Satellite_SetpointHandler.h"
-#include "FlightController/inc/control_mode_handler.h"
+#include "ControlModeHandler/inc/control_mode_handler.h"
 #include "FlightModeHandler/inc/flight_mode_handler.h"
 #include "Log/inc/logHandler.h"
 #include "Log/inc/log.h"
