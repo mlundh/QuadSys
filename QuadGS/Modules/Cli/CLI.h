@@ -38,6 +38,7 @@
 #include "Msg_Stop.h"
 #include "Msg_Display.h"
 #include "Msg_FlightMode.h"
+#include "Msg_CtrlMode.h"
 #include "msg_enums.h"
 
 
@@ -50,9 +51,18 @@ class CLI
 		, public QGS_MessageHandler<Msg_FindParam>
 		, public QGS_MessageHandler<Msg_Display>
 		, public QGS_MessageHandler<Msg_FlightMode>
+		, public QGS_MessageHandler<Msg_CtrlMode>
+
 
 {
 private:
+
+	std::map<CtrlMode_t, std::string> mapCtrlModeToString =
+	{
+		{ CtrlMode_t::Control_mode_rate, "Rate" },
+		{ CtrlMode_t::Control_mode_attitude, "Attitude" },
+		{ CtrlMode_t::Control_mode_not_available, "N/A" },
+	};
 
 	std::map<FlightMode_t, std::string> mapFlightModeToString =
 	{
@@ -65,7 +75,6 @@ private:
 		{ FlightMode_t::fmode_fault, "fault" },
 		{ FlightMode_t::fmode_not_available, "Not availible"},
 	};
-
 	class UiCommand
 	{
 	public:
@@ -109,6 +118,7 @@ public:
 	virtual void process(Msg_FindParam* message);
 	virtual void process(Msg_Display* message);
 	virtual void process(Msg_FlightMode* message);
+	virtual void process(Msg_CtrlMode* message);
 
 	void waitForUiResult();
 
@@ -116,6 +126,7 @@ public:
 	std::vector<UiCommand> mCommands;
 	bool mIsInitilized = false;
 	std::string mPromptStatus;
+	std::string mPromptCtrlMode;
 	std::string mPromptPath;
 	std::string mPromptBase;
 	std::string mPrompt;

@@ -53,6 +53,7 @@ CLI::CLI(msgAddr_t name)
 :QGS_MessageHandlerBase(name)
 ,mCommands()
 ,mPromptStatus("N/A")
+,mPromptCtrlMode("N/A")
 ,mPromptPath("")
 ,mPromptBase("QuadGS")
 ,mPrompt()
@@ -151,7 +152,7 @@ void CLI::Display(std::string str)
 
 void CLI::BuildPrompt()
 {
-	mPrompt = mPromptBase + "-[" + mPromptStatus + "]" + ": ";
+	mPrompt = mPromptBase + "-[" + mPromptStatus + "][" + mPromptCtrlMode + "]" + ": ";
 	updatePrompt = true;
 }
 
@@ -585,6 +586,22 @@ void CLI::process(Msg_FlightMode* message)
 	mPromptStatus = flightMode;
 	BuildPrompt();
 }
+void CLI::process(Msg_CtrlMode* message)
+{
+	std::string controlMode;
+	try
+	{
+		controlMode = mapCtrlModeToString.at(static_cast<CtrlMode_t>(message->getMode()));
+	}
+	catch(const std::out_of_range & e)
+	{
+		LOG_ERROR(log, "Received unknown control mode.");
+		return;
+	}
+	mPromptCtrlMode = controlMode;
+	BuildPrompt();
+}
+
 
 } /* namespace QuadGS */
 
