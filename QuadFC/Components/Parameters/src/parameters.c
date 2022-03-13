@@ -46,6 +46,8 @@ param_obj_t *Param_CreateObj(uint8_t num_children, Log_variable_type_t type,
     log_obj->group_name = pvPortMalloc( sizeof( unsigned char ) * MAX_PARAM_NAME_LENGTH );
     log_obj->parent = parent;
     log_obj->registered_children = 0;
+    log_obj->callback = NULL;
+    log_obj->cbData = NULL;
     if(num_children)
     {
         log_obj->children = pvPortMalloc(sizeof( param_obj_t *) * num_children);
@@ -87,6 +89,16 @@ void Param_DeleteObj(param_obj_t* obj)
     }
     vPortFree(obj);
 
+}
+
+void Param_SetCB(param_obj_t* obj, paramCB cb, void* cbData)
+{
+    if(!obj || !cb)
+    {
+        return;
+    }
+    obj->callback = cb;
+    obj->cbData = cbData;
 }
 
 
@@ -279,7 +291,14 @@ uint8_t Param_SettNodeValue(param_obj_t *current, uint8_t *buffer)
     default:
         break;
     }
-
+    // If we updated the value, then we should call the optional callback.
+    if(result)
+    {
+        if(current->callback)
+        {
+            current->callback(current->cbData);
+        }
+    }
     return result;
 }
 uint8_t Param_AppendNodeString(param_obj_t *current, uint8_t *buffer, uint32_t buffer_length)

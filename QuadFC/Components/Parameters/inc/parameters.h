@@ -98,6 +98,12 @@ typedef enum variable_access
 }Log_variable_access_t;
 
 /**
+ * @brief Callback for any param write operation.
+ * 
+ */
+typedef void (*paramCB)(void* data);
+
+/**
  * @struct log_obj_t
  * @brief The log objects.
  *
@@ -113,6 +119,8 @@ struct param_obj_t
     struct param_obj_t *parent;
     struct param_obj_t **children;
     uint8_t registered_children;
+    paramCB callback;
+    void* cbData;
 } ;
 typedef struct param_obj_t param_obj_t;
 
@@ -145,9 +153,7 @@ typedef struct param_helper param_helper_t;
  * @param value				  Pointer to the value that will become a parameter.
  * @param obj_name		  Name of the object/parameter.
  * @param parent			  Parent of object, NULL if object does not have a parent.
- * @param xMutex        Optional mutex. User has to garentee the the application does
- *                      not use the param value without taking the mutex if the mutex
- *                      is to be used.
+
  * @return					    A handle to the newly created log object. NULL if
  * 							something went wrong.
  */
@@ -160,6 +166,9 @@ param_obj_t *Param_CreateObj(uint8_t num_children, Log_variable_type_t type,
  * @param obj
  */
 void Param_DeleteObj(param_obj_t* obj);
+
+void Param_SetCB(param_obj_t* obj, paramCB cb, void* cbData);
+
 
 /**
  * @brief Append dump of current to buffer.

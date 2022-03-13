@@ -11,7 +11,7 @@ Firmware: J-Link EDU Mini V1 compiled Nov 12 2020 13:31:42
 Hardware version: V1.00
 S/N: 801013584
 License(s): FlashBP, GDB
-VTref=3.299V
+VTref=3.284V
 Target connection not established yet but required for command.
 Device "STM32F413VG" selected.
 
@@ -45,8 +45,8 @@ Reset: Reset device via AIRCR.SYSRESETREQ.
 
 Downloading file [../../out/Titan/Test_Modules1.bin]...
 J-Link: Flash download: Bank 0 @ 0x08000000: 2 ranges affected (131072 bytes)
-J-Link: Flash download: Total: 3.158s (Prepare: 0.031s, Compare: 0.021s, Erase: 2.405s, Program & Verify: 0.689s, Restore: 0.010s)
-J-Link: Flash download: Program & Verify speed: 186 KB/s
+J-Link: Flash download: Total: 3.106s (Prepare: 0.063s, Compare: 0.019s, Erase: 2.335s, Program & Verify: 0.681s, Restore: 0.006s)
+J-Link: Flash download: Program & Verify speed: 188 KB/s
 O.K.
 
 Reset delay: 0 ms
@@ -70,7 +70,7 @@ Firmware: J-Link EDU Mini V1 compiled Nov 12 2020 13:31:42
 Hardware version: V1.00
 S/N: 801013584
 License(s): FlashBP, GDB
-VTref=3.299V
+VTref=3.288V
 Target connection not established yet but required for command.
 Device "STM32F413VG" selected.
 
@@ -104,8 +104,8 @@ Reset: Reset device via AIRCR.SYSRESETREQ.
 
 Downloading file [../../out/Titan/Test_Modules2.bin]...
 J-Link: Flash download: Bank 0 @ 0x08000000: 1 range affected (49152 bytes)
-J-Link: Flash download: Total: 1.636s (Prepare: 0.035s, Compare: 0.008s, Erase: 1.004s, Program & Verify: 0.579s, Restore: 0.007s)
-J-Link: Flash download: Program & Verify speed: 82 KB/s
+J-Link: Flash download: Total: 1.701s (Prepare: 0.036s, Compare: 0.009s, Erase: 1.024s, Program & Verify: 0.620s, Restore: 0.010s)
+J-Link: Flash download: Program & Verify speed: 77 KB/s
 O.K.
 
 Reset delay: 0 ms
@@ -129,7 +129,7 @@ Firmware: J-Link EDU Mini V1 compiled Nov 12 2020 13:31:42
 Hardware version: V1.00
 S/N: 801013584
 License(s): FlashBP, GDB
-VTref=3.297V
+VTref=3.285V
 Target connection not established yet but required for command.
 Device "STM32F413VG" selected.
 
@@ -163,8 +163,8 @@ Reset: Reset device via AIRCR.SYSRESETREQ.
 
 Downloading file [../../out/Titan/Test_Utilities.bin]...
 J-Link: Flash download: Bank 0 @ 0x08000000: 1 range affected (49152 bytes)
-J-Link: Flash download: Total: 1.555s (Prepare: 0.031s, Compare: 0.010s, Erase: 1.004s, Program & Verify: 0.499s, Restore: 0.009s)
-J-Link: Flash download: Program & Verify speed: 96 KB/s
+J-Link: Flash download: Total: 1.589s (Prepare: 0.037s, Compare: 0.015s, Erase: 1.054s, Program & Verify: 0.472s, Restore: 0.009s)
+J-Link: Flash download: Program & Verify speed: 102 KB/s
 O.K.
 
 Reset delay: 0 ms
@@ -188,7 +188,7 @@ Firmware: J-Link EDU Mini V1 compiled Nov 12 2020 13:31:42
 Hardware version: V1.00
 S/N: 801013584
 License(s): FlashBP, GDB
-VTref=3.295V
+VTref=3.288V
 Target connection not established yet but required for command.
 Device "STM32F413VG" selected.
 
@@ -222,8 +222,8 @@ Reset: Reset device via AIRCR.SYSRESETREQ.
 
 Downloading file [../../out/Titan/Test_Components1.bin]...
 J-Link: Flash download: Bank 0 @ 0x08000000: 2 ranges affected (131072 bytes)
-J-Link: Flash download: Total: 3.381s (Prepare: 0.035s, Compare: 0.012s, Erase: 2.402s, Program & Verify: 0.920s, Restore: 0.010s)
-J-Link: Flash download: Program & Verify speed: 139 KB/s
+J-Link: Flash download: Total: 3.379s (Prepare: 0.038s, Compare: 0.013s, Erase: 2.343s, Program & Verify: 0.972s, Restore: 0.011s)
+J-Link: Flash download: Program & Verify speed: 131 KB/s
 O.K.
 
 Reset delay: 0 ms

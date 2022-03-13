@@ -102,6 +102,8 @@ void ParamT_DeleteTwoHandlers(ParamTestTwoHandlers_t* obj);
 uint8_t ParamT_TestGetOneHandler(TestFw_t* Tobj);
 uint8_t ParamT_TestGetTwoOneHandler(TestFw_t* Tobj);
 uint8_t ParamT_TestSetGetOneHandler(TestFw_t* Tobj);
+void ParamT_TestCB(void* data);
+uint8_t ParamT_TestCallback(TestFw_t* Tobj);
 uint8_t ParamT_TestSetGetOneHandlerSearch(TestFw_t* Tobj);
 uint8_t ParamT_TestSaveOneHandler(TestFw_t* Tobj);
 uint8_t ParamT_TestSaveLoadOneHandler(TestFw_t* Tobj);
@@ -116,6 +118,7 @@ void ParamT_GetTCs(TestFw_t* Tobj)
     TestFW_RegisterTest(Tobj, "Param Get", ParamT_TestGetOneHandler);
     //TestFW_RegisterTest(Tobj, "GetShortMsg", ParamT_TestGetTwoOneHandler);// Does not work. Set internal length of messages in param handler to 60 to verify function.
     TestFW_RegisterTest(Tobj, "Param SetGet", ParamT_TestSetGetOneHandler);
+    TestFW_RegisterTest(Tobj, "Param TestCB", ParamT_TestCallback);
     TestFW_RegisterTest(Tobj, "Param SetGetSearch", ParamT_TestSetGetOneHandlerSearch);
     TestFW_RegisterTest(Tobj, "Param Save", ParamT_TestSaveOneHandler);
     TestFW_RegisterTest(Tobj, "Param SaveLoad", ParamT_TestSaveLoadOneHandler);
@@ -436,6 +439,66 @@ uint8_t ParamT_TestSetGetOneHandler(TestFw_t* Tobj)
     {
         char tmpstr[REPORT_LONG] = {0};
         snprintf (tmpstr, REPORT_LONG,"Expected:\n%s \nGot:\n%s\n", expected, obj->response);
+        TestFW_Report(Tobj, tmpstr);
+    }
+
+    ParamT_DeleteOneHandler(obj);
+    return result;
+
+}
+
+#define CB_CALLED 512
+
+void ParamT_TestCB(void* data)
+{
+    uint32_t* dataPtr = (uint32_t*)data;
+    *dataPtr = CB_CALLED;
+}
+
+
+uint8_t ParamT_TestCallback(TestFw_t* Tobj)
+{
+    // initialize all objects used in the test.
+    ParamTestOneHandler_t* obj = ParamT_InitializeOneHandler(PAYLOAD_LENGTH);
+
+    uint32_t cb_data= 0;
+
+    Param_SetCB(obj->param11, ParamT_TestCB, &cb_data);
+
+    uint8_t payloadSet[PAYLOAD_LENGTH] = "/PH1/param1[700]/param11[1024]/../param12[1038]/\0";
+
+    moduleMsg_t* msgSet = Msg_ParamCreate(FC_Param_e, 0, param_set, 0, 0, PAYLOAD_LENGTH);
+    uint8_t* payload = Msg_ParamGetPayload(msgSet);
+
+    payload = memcpy(payload, payloadSet, PAYLOAD_LENGTH);
+    uint32_t payloadLength = strlen((char*)payload);
+
+    Msg_ParamSetPayloadlength(msgSet, payloadLength);
+
+    Event_Send(obj->evHandlerTester, msgSet);
+
+    //We are only using one thread, so now we have to poll the param master.
+    Event_Receive(obj->evHandlerMaster, 2);
+
+    //The param master forwards the message to the paramHandler.
+    Event_Receive(obj->evHandlerPH1, 2);
+
+    // The handler will reply the master, process that.
+    Event_Receive(obj->evHandlerMaster, 2);
+
+    
+
+    //Setting the parameter should have caused a callback. In this test the callback should have updated the variable cb_data
+    uint8_t result = 0;
+    
+    if(cb_data == CB_CALLED)
+    {
+        result = 1;
+    }
+    else
+    {
+        char tmpstr[REPORT_LONG] = {0};
+        snprintf (tmpstr, REPORT_LONG,"Callback not called.");
         TestFW_Report(Tobj, tmpstr);
     }
 

@@ -3,10 +3,6 @@
 
 *********************** Starting Testsuite: Sig, event, log *********************** 
 
-**** Starting Test: ImuToRate ****
-
-**** RESULT ImuToRate: [31mFAIL[0m **** 
-
 **** Starting Test: RateGyro ****
 
 **** RESULT RateGyro: [32mPASS[0m **** 
@@ -55,7 +51,7 @@
 
 **** RESULT Event: [32mPASS[0m **** 
 
-********************** Testsuite Sig, event, log RESULT: [31mFAIL[0m ********************** 
+********************** Testsuite Sig, event, log RESULT: [32mPASS[0m ********************** 
 
 *********************** Starting Testsuite: Messages *********************** 
 
@@ -131,6 +127,10 @@
 
 **** RESULT Param SetGet: [32mPASS[0m **** 
 
+**** Starting Test: Param TestCB ****
+
+**** RESULT Param TestCB: [32mPASS[0m **** 
+
 **** Starting Test: Param SetGetSearch ****
 
 **** RESULT Param SetGetSearch: [32mPASS[0m **** 
@@ -152,13 +152,14 @@
 **** RESULT Param SetGetTwoHandlers: [32mPASS[0m **** 
 
 **** Starting Test: Log C Handler ****
-LogMaster uses 584 bytes of heap.
-LogHandler slave uses 1392 bytes of heap.
+LogMaster uses 1640 bytes of heap.
+LogHandler slave uses 1400 bytes of heap.
+[31mMemory leak in test case Log C Handler! Lost 1040 bytes.[0m
 
 **** RESULT Log C Handler: [32mPASS[0m **** 
 
 **** Starting Test: Log C Obj ****
-A log obj uses 144 bytes of heap.
+A log obj uses 152 bytes of heap.
 
 **** RESULT Log C Obj: [32mPASS[0m **** 
 
@@ -168,39 +169,37 @@ A log obj uses 144 bytes of heap.
 
 **** Starting Test: Log Report ****
 First log entry not correct. 
- Expected data: 9, id: 0, time: 122
+ Expected data: 9, id: 0, time: 136
  Got: data: 0, id: 0, time: 0
+[31mMemory leak in test case Log Report! Lost 1040 bytes.[0m
 
 **** RESULT Log Report: [31mFAIL[0m **** 
 
 **** Starting Test: Log Test Multiple Loggers ****
-First log entry not correct. 
- Expected data: 9, id: 0, time: 140
- Got: data: 0, id: 0, time: 0
-Second log entry not correct. 
- Expected data: 9, id: 0, time: 140
- Got: data: 0, id: 0, time: 0
+[31mMemory leak in test case Log Test Multiple Loggers! Lost 1040 bytes.[0m
 
-**** RESULT Log Test Multiple Loggers: [31mFAIL[0m **** 
+**** RESULT Log Test Multiple Loggers: [32mPASS[0m **** 
 
 **** Starting Test: Log Test Multiple Handlers ****
 First log entry not correct. 
- Expected data: 9, id: 0, time: 155
+ Expected data: 9, id: 0, time: 169
  Got: data: 0, id: 0, time: 0
 Second log entry not correct. 
- Expected data: 9, id: 0, time: 155
+ Expected data: 9, id: 0, time: 169
  Got: data: 0, id: 0, time: 0
 Third log entry not correct. 
- Expected data: 9, id: 0, time: 155
+ Expected data: 9, id: 0, time: 169
  Got: data: 0, id: 0, time: 0
 fourth log entry not correct.
+[31mMemory leak in test case Log Test Multiple Handlers! Lost 1040 bytes.[0m
 
 **** RESULT Log Test Multiple Handlers: [31mFAIL[0m **** 
 
 **** Starting Test: Log Event ****
-[31mMemory leak in test case Log Event! Lost 976 bytes.[0m
+Master task did not release the mutex in time.
+[31mMemory leak in test case Log Event! Lost 1648 bytes.[0m
 
-**** RESULT Log Event: [32mPASS[0m **** 
+**** RESULT Log Event: [31mFAIL[0m **** 
 
 **** Starting Test: AppLog Create ****
 
