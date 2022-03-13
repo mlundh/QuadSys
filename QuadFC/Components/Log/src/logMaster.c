@@ -89,6 +89,7 @@ void LogMaster_deleteHandler(LogMaster_t *obj)
     vQueueDelete(obj->logNameQueue);
     vPortFree(obj->handlerArray);
     LogBackend_DeleteObj(obj->backend);
+    messagePool_delete(obj->messagePool);
     vPortFree(obj);
 }
 
