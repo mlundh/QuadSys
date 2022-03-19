@@ -168,3 +168,8 @@ void Pid_SetMode(pidConfig_t *pidConfig, Pid_mode_t Mode, int32_t output, int32_
     pidConfig->internal->mode = Mode;
 }
 
+void Pid_UpdateLimits(pidConfig_t *pidConfig, int32_t min, int32_t max)
+{
+  pidConfig->OutMax = max;
+  pidConfig->OutMin = min;
+}

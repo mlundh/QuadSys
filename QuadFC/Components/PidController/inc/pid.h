@@ -90,4 +90,15 @@ void Pid_Compute(pidConfig_t *pidConfig, int32_t Measurement, int32_t Setpoint, 
  */
 void Pid_SetMode(pidConfig_t *pidConfig, Pid_mode_t Mode, int32_t output, int32_t Measurement);
 
+
+/**
+ * @brief update the limits of the controller.
+ * 
+ * @param pidConfig       pid controller object
+ * @param min             new min limit
+ * @param max             new max limit 
+ */
+void Pid_UpdateLimits(pidConfig_t *pidConfig, int32_t min, int32_t max);
+
+
 #endif /* MODULES_FLIGHTCONTROLLER_INC_PID_H_ */

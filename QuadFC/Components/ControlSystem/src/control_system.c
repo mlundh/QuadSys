@@ -35,13 +35,14 @@ struct CtrlObj
     pidConfig_t* AttitudePitch;
     pidConfig_t* AttitudeRoll;
     pidConfig_t* AttitudeYaw;
+    uint32_t minCtrlSig;
+    uint32_t maxCtrlSig;
     CtrlMode_t current_mode;
 };
 
 uint8_t Ctrl_InitializeRate(CtrlObj_t *obj, param_obj_t* param);
 uint8_t Ctrl_InitializeAttitude(CtrlObj_t *obj, param_obj_t* param);
-
-
+void Ctrl_ParamCB(void* data);
 
 CtrlObj_t* Ctrl_Create(param_obj_t* param)
 {
@@ -52,7 +53,35 @@ CtrlObj_t* Ctrl_Create(param_obj_t* param)
     {
         return NULL;
     }
+
+    obj->maxCtrlSig = MAX_U_SIGNAL;
+    obj->minCtrlSig = -MAX_U_SIGNAL;
+    param_obj_t * ctrlSigParam = Param_CreateObj(5, variable_type_NoType, readOnly, NULL, "uLimit", param);
+
+
+    param_obj_t * limitMaxParam = Param_CreateObj(0, variable_type_fp_16_16, readWrite,
+            &obj->maxCtrlSig, "maxU", ctrlSigParam);
+    param_obj_t * limitMinParam = Param_CreateObj(0, variable_type_fp_16_16, readWrite,
+            &obj->minCtrlSig, "minU", ctrlSigParam);
+
+    Param_SetCB(limitMaxParam, Ctrl_ParamCB, obj);
+    Param_SetCB(limitMinParam, Ctrl_ParamCB, obj);
+
+
+
     return obj;
+}
+
+void Ctrl_ParamCB(void* data)
+{
+    CtrlObj_t* obj = (CtrlObj_t*)data;
+    Pid_UpdateLimits(obj->AttitudePitch, obj->minCtrlSig, obj->maxCtrlSig);
+    Pid_UpdateLimits(obj->AttitudeRoll, obj->minCtrlSig, obj->maxCtrlSig);
+    Pid_UpdateLimits(obj->AttitudeYaw, obj->minCtrlSig, obj->maxCtrlSig);
+    Pid_UpdateLimits(obj->RatePitch, obj->minCtrlSig, obj->maxCtrlSig);
+    Pid_UpdateLimits(obj->RateRoll, obj->minCtrlSig, obj->maxCtrlSig);
+    Pid_UpdateLimits(obj->RateYaw, obj->minCtrlSig, obj->maxCtrlSig);
+
 }
 
 uint8_t Ctrl_InitializeRate(CtrlObj_t *obj, param_obj_t* param)
@@ -61,12 +90,10 @@ uint8_t Ctrl_InitializeRate(CtrlObj_t *obj, param_obj_t* param)
      * The constants (Kp, Ki and Kd) does not have a unit, but are expressed as 16.16 fixed point.
      * Output of the controller should lie in [0, 1<<16] where 1<<16 represent 100% control signal.
      */
-    int32_t maxOutputInit = MAX_U_SIGNAL;
-    int32_t minOutputInit = -MAX_U_SIGNAL;
 
-    obj->RatePitch = Pid_Create(DOUBLE_TO_FIXED(0.4, MAX16f), DOUBLE_TO_FIXED(0.6, MAX16f), DOUBLE_TO_FIXED(0.001, MAX16f), minOutputInit, maxOutputInit, FP_16_16_SHIFT, CTRL_TIME_FP);
-    obj->RateRoll  = Pid_Create(DOUBLE_TO_FIXED(0.4, MAX16f), DOUBLE_TO_FIXED(0.6, MAX16f), DOUBLE_TO_FIXED(0.001, MAX16f), minOutputInit, maxOutputInit, FP_16_16_SHIFT, CTRL_TIME_FP);
-    obj->RateYaw   = Pid_Create(DOUBLE_TO_FIXED(1.2, MAX16f), DOUBLE_TO_FIXED(0.6, MAX16f), DOUBLE_TO_FIXED(0.001, MAX16f), minOutputInit, maxOutputInit, FP_16_16_SHIFT, CTRL_TIME_FP);
+    obj->RatePitch = Pid_Create(DOUBLE_TO_FIXED(0.4, MAX16f), DOUBLE_TO_FIXED(0.6, MAX16f), DOUBLE_TO_FIXED(0.001, MAX16f), obj->minCtrlSig, obj->maxCtrlSig, FP_16_16_SHIFT, CTRL_TIME_FP);
+    obj->RateRoll  = Pid_Create(DOUBLE_TO_FIXED(0.4, MAX16f), DOUBLE_TO_FIXED(0.6, MAX16f), DOUBLE_TO_FIXED(0.001, MAX16f), obj->minCtrlSig, obj->maxCtrlSig, FP_16_16_SHIFT, CTRL_TIME_FP);
+    obj->RateYaw   = Pid_Create(DOUBLE_TO_FIXED(1.2, MAX16f), DOUBLE_TO_FIXED(0.6, MAX16f), DOUBLE_TO_FIXED(0.001, MAX16f), obj->minCtrlSig, obj->maxCtrlSig, FP_16_16_SHIFT, CTRL_TIME_FP);
 
     if(!obj->RatePitch || !obj->RateRoll || !obj->RateYaw)
     {
