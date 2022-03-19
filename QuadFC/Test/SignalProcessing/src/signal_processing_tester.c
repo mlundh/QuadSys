@@ -37,12 +37,14 @@
 #include "SpectrumSatellite/inc/Satellite_SetpointHandler.h"
 #include "StateEstimator/inc/signal_processing.h"
 #include "ControlModeHandler/inc/control_mode_handler.h"
+#include "Parameters/inc/parameters.h"
 
 typedef struct SigProcessTester
 {
   CtrlModeHandler_t* CtrlModeHandler;
   StateEst_t* stateEst;
   Imu_t* imu;
+  param_obj_t *param;
 } SigProcessTester_t;
 
 #define SIG_PROCESS_INTENRNAL_IDX (1)
@@ -83,7 +85,8 @@ void SigProsses_GetTCs(TestFw_t* obj)
     TestFW_Report(obj, tmpstr);
     return;
   }
-  SigProcessTester->stateEst = StateEst_Create();
+  SigProcessTester->param = Param_CreateObj(4, variable_type_NoType, readOnly, NULL, "tmp", NULL);
+  SigProcessTester->stateEst = StateEst_Create(SigProcessTester->param);
   if(!SigProcessTester->stateEst)
   {
     snprintf (tmpstr, REPORT_STR_LEN,"Failed to create stateEst.\n");

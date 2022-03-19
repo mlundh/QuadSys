@@ -42,6 +42,7 @@
 #include "EventHandler/inc/event_handler.h"
 #include "Parameters/inc/parameters.h"
 #include "QuadFC/QuadFC_IMU.h"
+#include "Parameters/inc/parameters.h"
 
 
 typedef struct StateEst StateEst_t;
@@ -56,7 +57,7 @@ typedef enum etstimation_types
   type_not_availible = 4
 } estimation_types_t;
 
-StateEst_t *StateEst_Create();
+StateEst_t *StateEst_Create(param_obj_t* param);
 
 /**
  * Initialize the state estimator. This causes all connected and configured

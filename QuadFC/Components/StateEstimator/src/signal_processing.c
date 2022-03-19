@@ -112,6 +112,12 @@ void Signal_complemetaryFilter( state_data_t *state_accel, state_data_t *state_g
 butterWorth_t* Signal_initButterworth(uint32_t cutOffFrequency, uint32_t samplingFrequency)
 {
   butterWorth_t* filter = pvPortMalloc(sizeof(butterWorth_t));
+  Signal_calcButterworthCoef(filter, cutOffFrequency, samplingFrequency);
+  return filter;
+}
+
+uint8_t Signal_calcButterworthCoef(butterWorth_t* obj, uint32_t cutOffFrequency, uint32_t samplingFrequency)
+{
   const double ff = (double)cutOffFrequency/(double)samplingFrequency;
   const double ita =1.0/ tan(M_PI*ff);
   const double q=sqrt(2.0);
@@ -121,21 +127,22 @@ butterWorth_t* Signal_initButterworth(uint32_t cutOffFrequency, uint32_t samplin
   double a1 = 2.0 * (ita*ita - 1.0) * b0;
   double a2 = -(1.0 - q*ita + ita*ita) * b0;
 
-  filter->b0 = DOUBLE_TO_FIXED(b0, MAX16f);
-  filter->b1 = DOUBLE_TO_FIXED(b1, MAX16f);
-  filter->b2 = DOUBLE_TO_FIXED(b2, MAX16f);
-  filter->a1 = DOUBLE_TO_FIXED(a1, MAX16f);
-  filter->a2 = DOUBLE_TO_FIXED(a2, MAX16f);
+  obj->b0 = DOUBLE_TO_FIXED(b0, MAX16f);
+  obj->b1 = DOUBLE_TO_FIXED(b1, MAX16f);
+  obj->b2 = DOUBLE_TO_FIXED(b2, MAX16f);
+  obj->a1 = DOUBLE_TO_FIXED(a1, MAX16f);
+  obj->a2 = DOUBLE_TO_FIXED(a2, MAX16f);
 
-  filter->x[0] = 0;
-  filter->x[1] = 0;
+  obj->x[0] = 0;
+  obj->x[1] = 0;
 
-  filter->y[0] = 0;
-  filter->y[1] = 0;
+  obj->y[0] = 0;
+  obj->y[1] = 0;
 
    // y(n)  =  b0*x(n) + b1*x(n-1) + b2*x(n-2) + a1*y(n-1) + a2*y(n-2)
-   return filter;
+   return 1;
 }
+
 
 int32_t Signal_filterButterworth(butterWorth_t* filter, int32_t input)
 {

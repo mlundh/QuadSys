@@ -82,6 +82,8 @@ typedef struct butterWorth
 
 butterWorth_t* Signal_initButterworth(uint32_t cutOffFrequency, uint32_t samplingFrequency);
 
+uint8_t Signal_calcButterworthCoef(butterWorth_t* obj, uint32_t cutOffFrequency, uint32_t samplingFrequency);
+
 int32_t Signal_filterButterworth(butterWorth_t* filter, int32_t input);
 
 
