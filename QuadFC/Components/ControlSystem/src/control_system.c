@@ -35,14 +35,16 @@ struct CtrlObj
     pidConfig_t* AttitudePitch;
     pidConfig_t* AttitudeRoll;
     pidConfig_t* AttitudeYaw;
-    uint32_t minCtrlSig;
-    uint32_t maxCtrlSig;
+    int32_t minCtrlSig;
+    int32_t maxCtrlSig;
+    int32_t minMotorSig;
+    int32_t maxMotorSig;
     CtrlMode_t current_mode;
 };
 
 uint8_t Ctrl_InitializeRate(CtrlObj_t *obj, param_obj_t* param);
 uint8_t Ctrl_InitializeAttitude(CtrlObj_t *obj, param_obj_t* param);
-void Ctrl_ParamCB(void* data);
+void Ctrl_LimitPidCB(void* data);
 
 CtrlObj_t* Ctrl_Create(param_obj_t* param)
 {
@@ -56,23 +58,28 @@ CtrlObj_t* Ctrl_Create(param_obj_t* param)
 
     obj->maxCtrlSig = MAX_U_SIGNAL;
     obj->minCtrlSig = -MAX_U_SIGNAL;
-    param_obj_t * ctrlSigParam = Param_CreateObj(5, variable_type_NoType, readOnly, NULL, "uLimit", param);
+    obj->minMotorSig = 0;
+    obj->maxMotorSig = MAX_U_SIGNAL;
 
+    param_obj_t * ctrlSigParam = Param_CreateObj(4, variable_type_NoType, readOnly, NULL, "uLimits", param);
 
     param_obj_t * limitMaxParam = Param_CreateObj(0, variable_type_fp_16_16, readWrite,
             &obj->maxCtrlSig, "maxU", ctrlSigParam);
     param_obj_t * limitMinParam = Param_CreateObj(0, variable_type_fp_16_16, readWrite,
             &obj->minCtrlSig, "minU", ctrlSigParam);
 
-    Param_SetCB(limitMaxParam, Ctrl_ParamCB, obj);
-    Param_SetCB(limitMinParam, Ctrl_ParamCB, obj);
+    Param_SetCB(limitMaxParam, Ctrl_LimitPidCB, obj);
+    Param_SetCB(limitMinParam, Ctrl_LimitPidCB, obj);
 
-
+    Param_CreateObj(0, variable_type_fp_16_16, readWrite,
+            &obj->maxMotorSig, "maxMotor", ctrlSigParam);
+    Param_CreateObj(0, variable_type_fp_16_16, readWrite,
+            &obj->minMotorSig, "minMotor", ctrlSigParam);
 
     return obj;
 }
 
-void Ctrl_ParamCB(void* data)
+void Ctrl_LimitPidCB(void* data)
 {
     CtrlObj_t* obj = (CtrlObj_t*)data;
     Pid_UpdateLimits(obj->AttitudePitch, obj->minCtrlSig, obj->maxCtrlSig);
@@ -84,9 +91,10 @@ void Ctrl_ParamCB(void* data)
 
 }
 
+
 uint8_t Ctrl_InitializeRate(CtrlObj_t *obj, param_obj_t* param)
 {
-    /**
+    /** 
      * The constants (Kp, Ki and Kd) does not have a unit, but are expressed as 16.16 fixed point.
      * Output of the controller should lie in [0, 1<<16] where 1<<16 represent 100% control signal.
      */
@@ -356,7 +364,7 @@ void Ctrl_Off(CtrlObj_t * obj)
     }
 }
 
-void Ctrl_Allocate( control_signal_t *ctrl_signal, uint32_t motor_setpoint[], uint32_t nrMotors)
+void Ctrl_Allocate(CtrlObj_t *obj, control_signal_t *ctrl_signal, uint32_t motor_setpoint[], uint32_t nrMotors)
 {
     if(nrMotors < 4)
     {
@@ -380,13 +388,13 @@ void Ctrl_Allocate( control_signal_t *ctrl_signal, uint32_t motor_setpoint[], ui
 
     for (size_t i = 0; i < nrMotors; i++ )
     {
-        if ( tmpSetpoint[i] < 0 )
+        if ( tmpSetpoint[i] < obj->minMotorSig )
         {
-            tmpSetpoint[i] = 0;
+            tmpSetpoint[i] = obj->minMotorSig;
         }
-        if(tmpSetpoint[i] > MAX_U_SIGNAL)
+        if(tmpSetpoint[i] > obj->maxMotorSig)
         {
-            tmpSetpoint[i] = MAX_U_SIGNAL;
+            tmpSetpoint[i] = obj->maxMotorSig;
         }
     }
     for (size_t i = 0; i < 4; i++)

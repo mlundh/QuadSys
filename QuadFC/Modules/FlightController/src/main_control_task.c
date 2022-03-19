@@ -309,7 +309,7 @@ void main_control_task( void *pvParameters )
                 LOG_ENTRY(param->evHandler, "Main: Error - Unable to execute the control loop.");
                 main_fault(param);
             }
-            Ctrl_Allocate(param->control_signal, param->motorSetpoint, NR_MOTORS);
+            Ctrl_Allocate(param->ctrl, param->control_signal, param->motorSetpoint, NR_MOTORS);
             MotorCtrl_UpdateSetpoint( param->motorControl, param->motorSetpoint, NR_MOTORS);
 
 

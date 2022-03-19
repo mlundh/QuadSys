@@ -88,11 +88,11 @@ void Ctrl_Off(CtrlObj_t * obj);
  * cw ccv
  * 
  * ccv cv
- * 
+ * @param param           obj control object.
  * @param ctrl_signal     control signal to be allocated to motors.
  * @param motor_setpoint  Output, setpoint to each motor.
  * @param nrMotors        number of motors to allocate the control signal on.
  */
-void Ctrl_Allocate( control_signal_t *ctrl_signal, uint32_t motor_setpoint[], uint32_t nrMotors);
+void Ctrl_Allocate(CtrlObj_t *obj, control_signal_t *ctrl_signal, uint32_t motor_setpoint[], uint32_t nrMotors);
 
 #endif /* MODULES_FLIGHTCONTROLLER_INC_CONTROL_SYSTEM_H_ */
