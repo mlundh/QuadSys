@@ -35,6 +35,10 @@ class axContatiner:
         self.xdata = self.xdata[-self.size:]
         self.ydata = self.ydata[-self.size:]
         if  len(self.xdata) > 0:
+            if(self.xmax > xdata): # if new data has a time smaller than old data. This means that FC time has been reset.
+                self.xmax = xdata
+                self.xdata.clear()
+                self.ydata.clear()
             if(self.xmax < xdata):
                 self.xmax = xdata
             self.xmin = self.xmax - 9
