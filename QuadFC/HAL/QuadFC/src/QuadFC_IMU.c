@@ -80,21 +80,6 @@ Imu_t * Imu_Create(param_obj_t * param, uint32_t index)
   Param_CreateObj(0, variable_type_fp_16_16, readWrite,
       &obj->Orient.r_2_2, "r_2_2", ImuOriRoot);
 
-  param_obj_t * ImuCurrent = Param_CreateObj(10, variable_type_NoType, readOnly, NULL, "IMU_Current", param);
-  Param_CreateObj(0, variable_type_fp_16_16, readOnly,
-      &obj->ImuData.imu_data[accl_x], "accl_x", ImuCurrent);
-  Param_CreateObj(0, variable_type_fp_16_16, readOnly,
-      &obj->ImuData.imu_data[accl_y], "accl_y", ImuCurrent);
-  Param_CreateObj(0, variable_type_fp_16_16, readOnly,
-      &obj->ImuData.imu_data[accl_z], "accl_z", ImuCurrent);
-
-  Param_CreateObj(0, variable_type_fp_16_16, readOnly,
-      &obj->ImuData.imu_data[gyro_x], "gyro_x", ImuCurrent);
-  Param_CreateObj(0, variable_type_fp_16_16, readOnly,
-      &obj->ImuData.imu_data[gyro_y], "gyro_y", ImuCurrent);
-  Param_CreateObj(0, variable_type_fp_16_16, readOnly,
-      &obj->ImuData.imu_data[gyro_z], "gyro_z", ImuCurrent);
-
   param_obj_t * ImuOffsetRoot = Param_CreateObj(6, variable_type_NoType, readOnly, NULL, "IMU_Off", param);
   Param_CreateObj(0, variable_type_int16, readOnly,
       &obj->ImuOffset.imu_data[accl_x], "accl_x", ImuOffsetRoot);
