@@ -34,10 +34,6 @@ struct StateEst
 {
   Imu_t * imu;
   state_data_t  *gyroState;
-  butterWorth_t *rateFilterPitch;
-  butterWorth_t *rateFilterRoll;
-  butterWorth_t *rateFilterYaw;
-  uint32_t      cutOffFrequency;
 };
 void StateEst_recalcButterworth(void* data);
 
@@ -51,33 +47,15 @@ StateEst_t *StateEst_Create(param_obj_t* param)
   }
   stateEstObj->imu = NULL;
   stateEstObj->gyroState = pvPortMalloc(sizeof(state_data_t));
-  stateEstObj->cutOffFrequency = 5;
-  stateEstObj->rateFilterPitch = Signal_initButterworth(stateEstObj->cutOffFrequency, CTRL_FREQ);
-  stateEstObj->rateFilterRoll  = Signal_initButterworth(stateEstObj->cutOffFrequency, CTRL_FREQ);
-  stateEstObj->rateFilterYaw   = Signal_initButterworth(stateEstObj->cutOffFrequency, CTRL_FREQ);
 
-  if(stateEstObj->imu || !stateEstObj->gyroState || 
-  !stateEstObj->rateFilterPitch || !stateEstObj->rateFilterRoll || 
-  !stateEstObj->rateFilterYaw)
+  if(stateEstObj->imu || !stateEstObj->gyroState )
   {
     return NULL;
   }
   state_data_t stateTmp = {{0}};
   *stateEstObj->gyroState = stateTmp;
 
-  param_obj_t * sigProcess = Param_CreateObj(1, variable_type_NoType, readOnly, NULL, "SigProcess", param);
-  param_obj_t * cutOff = Param_CreateObj(0, variable_type_uint32, readWrite, &stateEstObj->cutOffFrequency, "cutOff", sigProcess);
-  Param_SetCB(cutOff, StateEst_recalcButterworth, stateEstObj);
-
   return stateEstObj;
-}
-
-void StateEst_recalcButterworth(void* data)
-{
-    StateEst_t* obj = (StateEst_t*)data;
-    Signal_calcButterworthCoef(obj->rateFilterPitch, obj->cutOffFrequency, CTRL_FREQ);
-    Signal_calcButterworthCoef(obj->rateFilterRoll, obj->cutOffFrequency, CTRL_FREQ);
-    Signal_calcButterworthCoef(obj->rateFilterYaw, obj->cutOffFrequency, CTRL_FREQ);
 }
 
 uint8_t StateEst_init(StateEst_t *obj, Imu_t* imu)
@@ -101,9 +79,6 @@ uint8_t StateEst_getState(StateEst_t *obj, state_data_t *state_vector, CtrlMode_
   {
   case Control_mode_rate:
     Signal_getRateGyro( state_vector, &obj->imu->ImuData );
-    state_vector->state_bf[pitch_rate_bf] = Signal_filterButterworth(obj->rateFilterPitch, state_vector->state_bf[pitch_rate_bf]);
-    state_vector->state_bf[roll_rate_bf] = Signal_filterButterworth(obj->rateFilterRoll, state_vector->state_bf[roll_rate_bf]);
-    state_vector->state_bf[yaw_rate_bf] = Signal_filterButterworth(obj->rateFilterYaw, state_vector->state_bf[yaw_rate_bf]);
     break;
   case Control_mode_attitude:
   {

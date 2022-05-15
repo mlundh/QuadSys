@@ -72,7 +72,30 @@
  * leads to the following define:
  *
  */
-#define MPU6050_RATE_TO_FP (728178)
+#define MPU6050_RATE_TO_FP_1000 (728178)
+
+/**
+ * Resolution of mpu6050:
+ * (250deg/s/(2^(15))) = 0.007629395 deg/s resolution.
+ * This equals: 0.00013315806268486 rad/s
+ *
+ *(250*pi/180/(2^15)) / (pi/(2^16))
+ *
+ * Resolution for state vector rate:
+ * pi rad/(2^(16)) = 0.0000479368997 rad/s resolution.
+ *
+ * (mpu6050 resolution)/(state resolution) =
+ * = (250*pi/180/(2^15)) / (pi/(2^16))  = 2.77777...
+ *
+ * this is the quote used to scale between imu and state. State
+ * uses a 16:16 fixed point, converting the quote:
+ * (int32_t)2.777777777 * 65536 + 0.5 = 182044
+ * leads to the following define:
+ *
+ */
+
+#define MPU6050_RATE_TO_FP_250 (182044)
+
 
 /**
  * Resolution of mpu6050:
@@ -147,16 +170,16 @@ uint8_t Imu_InitInternal(Imu_t *obj)
 
   mpu6050_setSleepEnabled(obj, 0);
   mpu6050_setClockSource(obj, MPU6050_CLOCK_PLL_XGYRO);
-  mpu6050_setFullScaleGyroRange(obj, MPU6050_GYRO_FS_1000);
+  mpu6050_setFullScaleGyroRange(obj, MPU6050_GYRO_FS_250);
   mpu6050_setFullScaleAccelRange(obj, MPU6050_ACCEL_FS_8);
-  mpu6050_setDLPFMode(obj, MPU6050_DLPF_BW_20);
+  mpu6050_setDLPFMode(obj, MPU6050_DLPF_BW_10);
 
   uint8_t tmpGyroRange = 0;
   uint8_t tmpAcclRange = 0;
   mpu6050_getFullScaleGyroRange(obj, &tmpGyroRange);
   mpu6050_getFullScaleAccelRange(obj, &tmpAcclRange);
 
-  if(tmpGyroRange != MPU6050_GYRO_FS_1000 ||
+  if(tmpGyroRange != MPU6050_GYRO_FS_250 ||
       tmpAcclRange != MPU6050_ACCEL_FS_8 )
   {
     return 0;
@@ -212,9 +235,9 @@ uint8_t Imu_GetRawData(Imu_t *obj)
   obj->tempData.imu_data[accl_y]      = (int16_t) (((int16_t)i2c_data.buffer[2]     << 8) | i2c_data.buffer[3]);
   obj->tempData.imu_data[accl_z]      = (int16_t) (((int16_t)i2c_data.buffer[4]     << 8) | i2c_data.buffer[5]);
   obj->tempData.imu_data[temp_imu]    = (int16_t) (((int16_t)i2c_data.buffer[6]     << 8) | i2c_data.buffer[7]);
-  obj->tempData.imu_data[gyro_x]      = (int16_t) (((int16_t)i2c_data.buffer[8]     << 8) | i2c_data.buffer[9])   - obj->ImuOffset.imu_data[gyro_x];
-  obj->tempData.imu_data[gyro_y]      = (int16_t) (((int16_t)i2c_data.buffer[10]    << 8) | i2c_data.buffer[11])  - obj->ImuOffset.imu_data[gyro_y];
-  obj->tempData.imu_data[gyro_z]      = (int16_t) (((int16_t)i2c_data.buffer[12]    << 8) | i2c_data.buffer[13])  - obj->ImuOffset.imu_data[gyro_z];
+  obj->tempData.imu_data[gyro_x]      = (int16_t) (((int16_t)i2c_data.buffer[8]     << 8) | i2c_data.buffer[9])  - obj->ImuOffset.imu_data[gyro_x];
+  obj->tempData.imu_data[gyro_y]      = (int16_t) (((int16_t)i2c_data.buffer[10]    << 8) | i2c_data.buffer[11]) - obj->ImuOffset.imu_data[gyro_y];
+  obj->tempData.imu_data[gyro_z]      = (int16_t) (((int16_t)i2c_data.buffer[12]    << 8) | i2c_data.buffer[13]) - obj->ImuOffset.imu_data[gyro_z];
   return 1;
 }
 uint8_t Imu_ScaleData(Imu_t *obj)
@@ -222,9 +245,9 @@ uint8_t Imu_ScaleData(Imu_t *obj)
   obj->tempData.imu_data[accl_x] = my_mult(obj->tempData.imu_data[accl_x], MPU6050_ACC_TO_FP, FP_16_16_SHIFT);
   obj->tempData.imu_data[accl_y] = my_mult(obj->tempData.imu_data[accl_y], MPU6050_ACC_TO_FP, FP_16_16_SHIFT);
   obj->tempData.imu_data[accl_z] = my_mult(obj->tempData.imu_data[accl_z], MPU6050_ACC_TO_FP, FP_16_16_SHIFT);
-  obj->tempData.imu_data[gyro_x] = my_mult(obj->tempData.imu_data[gyro_x], MPU6050_RATE_TO_FP, FP_16_16_SHIFT);
-  obj->tempData.imu_data[gyro_y] = my_mult(obj->tempData.imu_data[gyro_y], MPU6050_RATE_TO_FP, FP_16_16_SHIFT);
-  obj->tempData.imu_data[gyro_z] = my_mult(obj->tempData.imu_data[gyro_z], MPU6050_RATE_TO_FP, FP_16_16_SHIFT);
+  obj->tempData.imu_data[gyro_x] = my_mult(obj->tempData.imu_data[gyro_x], MPU6050_RATE_TO_FP_250, FP_16_16_SHIFT);
+  obj->tempData.imu_data[gyro_y] = my_mult(obj->tempData.imu_data[gyro_y], MPU6050_RATE_TO_FP_250, FP_16_16_SHIFT);
+  obj->tempData.imu_data[gyro_z] = my_mult(obj->tempData.imu_data[gyro_z], MPU6050_RATE_TO_FP_250, FP_16_16_SHIFT);
   return 1;
 }
 
@@ -298,7 +321,7 @@ uint8_t mpu6050_calc_offset(Imu_t * obj)
   int64_t temp_gyro_y = 0;
   int64_t temp_gyro_z = 0;
 
-  int end = 1000;
+  int end = 250;
   for (int i = 0; i < end; i++)
   {
     if(!Imu_GetRawData(obj))
@@ -330,7 +353,7 @@ uint8_t mpu6050_calc_offset(Imu_t * obj)
 uint8_t mpu6050_SelfTestGyro(Imu_t *obj)
 {
   uint8_t testStatus = 0;
-  const TickType_t xPeriod = (20UL / portTICK_PERIOD_MS);
+  const TickType_t xPeriod = (160UL / portTICK_PERIOD_MS);
   ImuData_t First = {{0}};
   ImuData_t Second = {{0}};
 
@@ -422,7 +445,7 @@ uint8_t mpu6050_SelfTestGyro(Imu_t *obj)
 uint8_t mpu6050_SelfTestAcc(Imu_t *obj)
 {
   uint8_t testStatus = 0;
-  const TickType_t xPeriod = (20UL / portTICK_PERIOD_MS);
+  const TickType_t xPeriod = (160UL / portTICK_PERIOD_MS);
   ImuData_t First = {{0}};
   ImuData_t Second = {{0}};
 

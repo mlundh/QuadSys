@@ -100,7 +100,7 @@ void create_main_control_task(eventHandler_t* evHandler)
     /*Create the task*/
 
     MaintaskParams_t * taskParam = pvPortMalloc(sizeof(MaintaskParams_t));
-    taskParam->paramHandler = ParamHandler_CreateObj(8,evHandler, "QuadFC"); // Master handles all communication, we do not want to be master!
+    taskParam->paramHandler = ParamHandler_CreateObj(10,evHandler, "QuadFC"); // Master handles all communication, we do not want to be master!
     taskParam->ctrl = Ctrl_Create(ParamHandler_GetParam(taskParam->paramHandler));
     taskParam->setpoint = pvPortMalloc( sizeof(state_data_t) );
     taskParam->state = pvPortMalloc( sizeof(state_data_t) );
@@ -192,6 +192,7 @@ void main_control_task( void *pvParameters )
     }
     /*Utility variables*/
     TickType_t arming_counter = 0;
+    TickType_t disarming_counter = 0;
     uint32_t heartbeat_counter = 0;
     /* Loggers for rate mode */
     Log_t* logPitchRate = Log_CreateObj(0,variable_type_fp_16_16,  &param->state->state_bf[pitch_rate_bf],NULL, param->logHandler, "m_PitchRate");
@@ -207,6 +208,12 @@ void main_control_task( void *pvParameters )
     Log_t* logSpRollRate = Log_CreateObj(0,variable_type_fp_16_16, &param->setpoint->state_bf[roll_rate_bf],NULL, param->logHandler, "sp_RollRate");
     Log_t* logSpYawRate = Log_CreateObj(0,variable_type_fp_16_16, &param->setpoint->state_bf[yaw_rate_bf],NULL, param->logHandler, "sp_YawRate");
     Log_t* logSpThrustRate = Log_CreateObj(0,variable_type_fp_16_16, &param->setpoint->state_bf[thrust_sp],NULL, param->logHandler, "sp_Throttle");
+
+    Log_t* logM1 = Log_CreateObj(0,variable_type_fp_16_16, &param->motorSetpoint[0],NULL, param->logHandler, "m1");
+    Log_t* logM2 = Log_CreateObj(0,variable_type_fp_16_16, &param->motorSetpoint[1],NULL, param->logHandler, "m2");
+    Log_t* logM3 = Log_CreateObj(0,variable_type_fp_16_16, &param->motorSetpoint[2],NULL, param->logHandler, "m3");
+    Log_t* logM4 = Log_CreateObj(0,variable_type_fp_16_16, &param->motorSetpoint[3],NULL, param->logHandler, "m4");
+
 
     /*The main control loop*/
 
@@ -255,6 +262,11 @@ void main_control_task( void *pvParameters )
              * than sleeping to allow external communication.
              */
             MotorCtrl_Enable( param->motorControl );
+            param->motorSetpoint[0] = 0;
+            param->motorSetpoint[1] = 0;
+            param->motorSetpoint[2] = 0;
+            param->motorSetpoint[3] = 0;
+            MotorCtrl_UpdateSetpoint( param->motorControl, param->motorSetpoint, NR_MOTORS);
             Ctrl_On(param->ctrl);
 
             if ( arming_counter >= ( 1000 / CTRL_TIME ) ) // Be in arming state for 1s.
@@ -327,19 +339,38 @@ void main_control_task( void *pvParameters )
             Log_Report(logSpYawRate);
             Log_Report(logSpThrustRate);
 
+            Log_Report(logM1);
+            Log_Report(logM2);
+            Log_Report(logM3);
+            Log_Report(logM4);
+
             break;
         case fmode_disarming:
             /*---------------------------------------Disarming mode--------------------------
              * Transitional state. Only executed once.
              */
-            MotorCtrl_Disable(param->motorControl);
+            param->motorSetpoint[0] = 0;
+            param->motorSetpoint[1] = 0;
+            param->motorSetpoint[2] = 0;
+            param->motorSetpoint[3] = 0;
+            MotorCtrl_UpdateSetpoint( param->motorControl, param->motorSetpoint, NR_MOTORS);
             Ctrl_Off(param->ctrl);
-            if( !FMode_ChangeFMode(param->flightModeHandler, fmode_disarmed) )
-            {
-                LOG_ENTRY(param->evHandler, "Main: Error - Failed to change flight mode to disarmed.");
-                main_fault(param);
-            }
 
+            if ( disarming_counter >= ( 200 / CTRL_TIME ) ) // Be in disarming state for 0.2s.
+            {
+                MotorCtrl_Disable(param->motorControl);
+                disarming_counter = 0;
+                if( !FMode_ChangeFMode(param->flightModeHandler, fmode_disarmed) )
+                {
+                    LOG_ENTRY(param->evHandler, "Main: Error - Failed to change flight mode to disarmed.");
+                    main_fault(param);
+                }
+                
+            }
+            else
+            {
+                disarming_counter++;
+            }
             break;
         case fmode_fault:
             /*-----------------------------------------fault mode---------------------------
