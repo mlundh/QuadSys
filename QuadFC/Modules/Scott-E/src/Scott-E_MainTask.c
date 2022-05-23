@@ -27,7 +27,7 @@
  * This is the main task in the QuadFC.
  */
 
-#include "FlightController/inc/main_control_task.h"
+#include "Scott-E/inc/Scott-E_MainTask.h"
 
 #include "Components/FlightModeHandler/inc/flight_mode_handler.h"
 #include "FreeRTOS.h"
@@ -37,53 +37,39 @@
 
 #include "QuadFC/QuadFC_Gpio.h"
 #include "QuadFC/QuadFC_I2c.h"
-#include "StateEstimator/inc/signal_processing.h"
-
 
 #include "Components/AppLog/inc/AppLog.h"
 
 /* Modules */
-#include "ControlSystem/inc/control_system.h"
 #include "EventHandler/inc/event_handler.h"
-#include "StateEstimator/inc/state_estimator.h"
-#include "QuadFC/QuadFC_MotorControl.h"
-#include "QuadFC/QuadFC_IMU.h"
 #include "Parameters/inc/parameters.h"
 #include "SetpointHandler/inc/setpoint_handler.h"
 #include "SpectrumSatellite/inc/Satellite_SetpointHandler.h"
-#include "ControlModeHandler/inc/control_mode_handler.h"
 #include "FlightModeHandler/inc/flight_mode_handler.h"
 #include "Log/inc/logHandler.h"
 #include "Log/inc/log.h"
 
 #include "Messages/inc/Msg_Param.h"
 
-#include "stm32f4xx_ll_gpio.h"
 const static unsigned int SpTimeoutMs = 500;
-#define NR_MOTORS 4
+#define NR_MOTORS 6
 
 // Struct only used here to pass parameters to the task.
 typedef struct mainTaskParams
 {
     state_data_t *state;
     state_data_t *setpoint;
-    CtrlObj_t *ctrl;
-    control_signal_t *control_signal;
-    MotorControl_t *motorControl;
     uint32_t motorSetpoint[NR_MOTORS];
     FlightModeHandler_t* flightModeHandler;
-    StateEst_t* stateEst;
-    Imu_t * imu;
     SpHandler_t* setPointHandler;
     spectrumSpHandler_t* spectrumSpHandler;
-    CtrlModeHandler_t * CtrlModeHandler;
     eventHandler_t* evHandler;
     LogHandler_t* logHandler;
     paramHander_t* paramHandler;
     int32_t SetpointTimeoutCounter;
 }MaintaskParams_t;
 
-void main_control_task( void *pvParameters );
+void Scott_e_Task( void *pvParameters );
 /**
  * Puts FC into a fault state, motors are stopped and control system is
  * shut off.
@@ -95,31 +81,23 @@ void main_fault(MaintaskParams_t *param);
  * void create_main_control_task(void)
  */
 
-void QuadFC_CreateMainControlTask(eventHandler_t* evHandler)
+void Scott_e_CreateTask(eventHandler_t* evHandler)
 {
     /*Create the task*/
 
     MaintaskParams_t * taskParam = pvPortMalloc(sizeof(MaintaskParams_t));
-    taskParam->paramHandler = ParamHandler_CreateObj(10,evHandler, "QuadFC"); // Master handles all communication, we do not want to be master!
-    taskParam->ctrl = Ctrl_Create(ParamHandler_GetParam(taskParam->paramHandler));
+    taskParam->paramHandler = ParamHandler_CreateObj(10,evHandler, "Scott-E"); // Master handles all communication, we do not want to be master!
     taskParam->setpoint = pvPortMalloc( sizeof(state_data_t) );
     taskParam->state = pvPortMalloc( sizeof(state_data_t) );
-    taskParam->control_signal = pvPortMalloc( sizeof(control_signal_t) );
-    taskParam->motorControl = MotorCtrl_CreateAndInit(4,ParamHandler_GetParam(taskParam->paramHandler));
     taskParam->flightModeHandler = FMode_CreateFmodeHandler(evHandler); // registers event handler for flight mode requests.
-    taskParam->stateEst = StateEst_Create(ParamHandler_GetParam(taskParam->paramHandler));
-    taskParam->imu = Imu_Create(ParamHandler_GetParam(taskParam->paramHandler),0);
     taskParam->setPointHandler = SpHandl_Create(evHandler);
     taskParam->spectrumSpHandler = SatSpHandler_CreateObj(evHandler, ParamHandler_GetParam(taskParam->paramHandler));
-    taskParam->CtrlModeHandler = Ctrl_CreateModeHandler(evHandler);
     taskParam->evHandler = evHandler;
     taskParam->logHandler = LogHandler_CreateObj(20,evHandler,ParamHandler_GetParam(taskParam->paramHandler),"LogHandler");
     taskParam->SetpointTimeoutCounter = 0;
     /*Ensure that all mallocs returned valid pointers*/
-    if (   !taskParam                    || !taskParam->ctrl             || !taskParam->setpoint
-            || !taskParam->state             || !taskParam->control_signal   || !taskParam->motorControl
-            || !taskParam->flightModeHandler || !taskParam->stateEst         || !taskParam->setPointHandler
-            || !taskParam->logHandler        || !taskParam->paramHandler || !taskParam->spectrumSpHandler)
+    if (   !taskParam                   || !taskParam->setpoint     || !taskParam->state        || !taskParam->flightModeHandler || 
+         !taskParam->setPointHandler    || !taskParam->logHandler   || !taskParam->paramHandler || !taskParam->spectrumSpHandler)
     {
         for ( ;; )
         {
@@ -131,8 +109,8 @@ void QuadFC_CreateMainControlTask(eventHandler_t* evHandler)
     // Event_RegisterCallback(taskParam->evHandler, ePeripheralError  ,Led_HandlePeripheralError);
 
     portBASE_TYPE create_result;
-    create_result = xTaskCreate( main_control_task,   /* The function that implements the task.  */
-            (const char *const) "Main_Ctrl",              /* The name of the task. This is not used by the kernel, only aids in debugging*/
+    create_result = xTaskCreate( Scott_e_Task,   /* The function that implements the task.  */
+            (const char *const) "Scott_e",              /* The name of the task. This is not used by the kernel, only aids in debugging*/
             500,                                         /* The stack size for the task*/
             taskParam,                                    /* pass params to task.*/
             configMAX_PRIORITIES-1,                       /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
@@ -145,75 +123,34 @@ void QuadFC_CreateMainControlTask(eventHandler_t* evHandler)
         {
         }
     }
-
-    if(!QuadFC_i2cInit(0, 400000)) // IMUs are connected to the first I2C bus.
-    {
-        /*Error - Could initialize I2C bus.*/
-        for ( ;; )
-        {
-        }
-    }
-
-
 }
 
 /*
  *Task writing whatever is in the queue to the a serial port. The serial port is 
  *passed as an argument to the task. 
  */
-void main_control_task( void *pvParameters )
+void Scott_e_Task( void *pvParameters )
 {
-
-
-    
     MaintaskParams_t * param = (MaintaskParams_t*)(pvParameters);
-
-
-
 
     /*Initialize modules*/
     FMode_InitFModeHandler(param->flightModeHandler);
-    Ctrl_InitModeHandler(param->CtrlModeHandler);
 
+    // Load saved parameters.
     moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_load, 0, 0, 0);
     Event_Send(param->evHandler, msg);
 
-    //This takes some time due to calibration.
-    if(!Imu_Init(param->imu))
-    {
-        LOG_ENTRY(param->evHandler, "Main: Error - Failed to initialize IMU!");
-        main_fault(param);      
-    }
-
-    if(!StateEst_init(param->stateEst, param->imu))
-    {
-        LOG_ENTRY(param->evHandler, "Main: Error - Failed to initialize stateEstimator!");
-        main_fault(param);
-    }
     /*Utility variables*/
     TickType_t arming_counter = 0;
     TickType_t disarming_counter = 0;
     uint32_t heartbeat_counter = 0;
-    /* Loggers for rate mode */
-    Log_t* logPitchRate = Log_CreateObj(0,variable_type_fp_16_16,  &param->state->state_bf[pitch_rate_bf],NULL, param->logHandler, "m_PitchRate");
-    Log_t* logRollRate = Log_CreateObj(0,variable_type_fp_16_16, &param->state->state_bf[roll_rate_bf],NULL, param->logHandler, "m_RollRate");
-    Log_t* logYawRate = Log_CreateObj(0,variable_type_fp_16_16, &param->state->state_bf[yaw_rate_bf],NULL, param->logHandler, "m_YawRate");
-
-    Log_t* logUPitch = Log_CreateObj(0,variable_type_fp_16_16,  &param->control_signal->control_signal[u_pitch],NULL, param->logHandler, "u_Pitch");
-    Log_t* logURoll = Log_CreateObj(0,variable_type_fp_16_16, &param->control_signal->control_signal[u_roll],NULL, param->logHandler, "u_Roll");
-    Log_t* logUYaw = Log_CreateObj(0,variable_type_fp_16_16, &param->control_signal->control_signal[u_yaw],NULL, param->logHandler, "u_Yaw");
-    Log_t* logUThrust = Log_CreateObj(0,variable_type_fp_16_16, &param->control_signal->control_signal[u_thrust],NULL, param->logHandler, "u_Throttle");
-
-    Log_t* logSpPitchRate = Log_CreateObj(0,variable_type_fp_16_16,  &param->setpoint->state_bf[pitch_rate_bf],NULL, param->logHandler, "sp_PitchRate");
-    Log_t* logSpRollRate = Log_CreateObj(0,variable_type_fp_16_16, &param->setpoint->state_bf[roll_rate_bf],NULL, param->logHandler, "sp_RollRate");
-    Log_t* logSpYawRate = Log_CreateObj(0,variable_type_fp_16_16, &param->setpoint->state_bf[yaw_rate_bf],NULL, param->logHandler, "sp_YawRate");
-    Log_t* logSpThrustRate = Log_CreateObj(0,variable_type_fp_16_16, &param->setpoint->state_bf[thrust_sp],NULL, param->logHandler, "sp_Throttle");
 
     Log_t* logM1 = Log_CreateObj(0,variable_type_fp_16_16, &param->motorSetpoint[0],NULL, param->logHandler, "m1");
     Log_t* logM2 = Log_CreateObj(0,variable_type_fp_16_16, &param->motorSetpoint[1],NULL, param->logHandler, "m2");
     Log_t* logM3 = Log_CreateObj(0,variable_type_fp_16_16, &param->motorSetpoint[2],NULL, param->logHandler, "m3");
     Log_t* logM4 = Log_CreateObj(0,variable_type_fp_16_16, &param->motorSetpoint[3],NULL, param->logHandler, "m4");
-
+    Log_t* logM5 = Log_CreateObj(0,variable_type_fp_16_16, &param->motorSetpoint[4],NULL, param->logHandler, "m5");
+    Log_t* logM6 = Log_CreateObj(0,variable_type_fp_16_16, &param->motorSetpoint[5],NULL, param->logHandler, "m6");
 
     /*The main control loop*/
 
@@ -261,13 +198,10 @@ void main_control_task( void *pvParameters )
              * ensure that all systems are available and ready. Use the counter method rather
              * than sleeping to allow external communication.
              */
-            MotorCtrl_Enable( param->motorControl );
             param->motorSetpoint[0] = 0;
             param->motorSetpoint[1] = 0;
             param->motorSetpoint[2] = 0;
             param->motorSetpoint[3] = 0;
-            MotorCtrl_UpdateSetpoint( param->motorControl, param->motorSetpoint, NR_MOTORS);
-            Ctrl_On(param->ctrl);
 
             if ( arming_counter >= ( 1000 / CTRL_TIME ) ) // Be in arming state for 1s.
             {
@@ -308,41 +242,12 @@ void main_control_task( void *pvParameters )
                 main_fault(param);
             }
 
-            // Get the estimated physical state of the copter.
-            if(!StateEst_getState(param->stateEst, param->state, Ctrl_GetCurrentMode(param->CtrlModeHandler)))
-            {
-                LOG_ENTRY(param->evHandler, "Main: Error - Not able to get the current state.");
-                main_fault(param);
-            }
-            //Execute the control, allocate the control signals to the different
-            // motors, and then update the motor setpoint.
-            if(!Ctrl_Execute(param->ctrl, param->state, param->setpoint, param->control_signal, Ctrl_GetCurrentMode(param->CtrlModeHandler)))
-            {
-                LOG_ENTRY(param->evHandler, "Main: Error - Unable to execute the control loop.");
-                main_fault(param);
-            }
-            Ctrl_Allocate(param->ctrl, param->control_signal, param->motorSetpoint, NR_MOTORS);
-            MotorCtrl_UpdateSetpoint( param->motorControl, param->motorSetpoint, NR_MOTORS);
-
-
-            Log_Report(logPitchRate);
-            Log_Report(logRollRate);
-            Log_Report(logYawRate);
-
-            Log_Report(logUPitch);
-            Log_Report(logURoll);
-            Log_Report(logUYaw);
-            Log_Report(logUThrust);
-
-            Log_Report(logSpPitchRate);
-            Log_Report(logSpRollRate);
-            Log_Report(logSpYawRate);
-            Log_Report(logSpThrustRate);
-
             Log_Report(logM1);
             Log_Report(logM2);
             Log_Report(logM3);
             Log_Report(logM4);
+            Log_Report(logM5);
+            Log_Report(logM6);
 
             break;
         case fmode_disarming:
@@ -353,12 +258,11 @@ void main_control_task( void *pvParameters )
             param->motorSetpoint[1] = 0;
             param->motorSetpoint[2] = 0;
             param->motorSetpoint[3] = 0;
-            MotorCtrl_UpdateSetpoint( param->motorControl, param->motorSetpoint, NR_MOTORS);
-            Ctrl_Off(param->ctrl);
+
 
             if ( disarming_counter >= ( 200 / CTRL_TIME ) ) // Be in disarming state for 0.2s.
             {
-                MotorCtrl_Disable(param->motorControl);
+                //MotorCtrl_Disable(param->motorControl);
                 disarming_counter = 0;
                 if( !FMode_ChangeFMode(param->flightModeHandler, fmode_disarmed) )
                 {
@@ -415,8 +319,7 @@ void main_control_task( void *pvParameters )
 
 void main_fault(MaintaskParams_t *param)
 {
-    MotorCtrl_Disable(param->motorControl);
+    //MotorCtrl_Disable(param->motorControl);
     FMode_Fault(param->flightModeHandler);
-    Ctrl_Off(param->ctrl);
 }
 

@@ -205,6 +205,6 @@ clean:
 
 print:
 	@echo "BUILD_DIR:" $(ThirdParty_BUILD_DIR)
-
+	@echo "TOP:" $(Scott-E_DEPS)
 
 

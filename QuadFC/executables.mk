@@ -32,7 +32,7 @@
 # <nameOfExec>_DEPS. Add all dependencies to this variable.
 #
 
-EXECUTABLES := QuadFC Test_Modules1 Test_Modules2 Test_Utilities Test_Components1
+EXECUTABLES := QuadFC Scott-E Test_Modules1 Test_Modules2 Test_Utilities Test_Components1
 
 ifeq ($(PLATFORM),Due)
 	EXECUTABLES += Test_Board
@@ -52,6 +52,17 @@ QuadFC_DEPS+= $(addprefix HwComponents/, MB85RC_i2c_fram Sensors)
 QuadFC_DEPS+= $(addprefix OS/, $(PLATFORM))
 QuadFC_DEPS+= $(addprefix Boards/$(PLATFORM)/, Board Startup Mem Gpio Pwm)
 QuadFC_DEPS+= $(addprefix Drivers/, $(PLATFORM))
+
+Scott-E_DEPS:= Top/Scott-E HAL/QuadFC
+Scott-E_DEPS+= $(addprefix Modules/, Communication Scott-E HMI ServiceTask AppLogTask) 
+Scott-E_DEPS+= $(addprefix BaseComponents/, EventHandler Messages MsgBase MessagePool)
+Scott-E_DEPS+= $(addprefix Components/, AppLog AppLogSerialBackend Log LogMemBackend Utilities)
+Scott-E_DEPS+= $(addprefix Components/,  SetpointHandler Parameters SLIP CharCircularBuffer Debug FlightModeHandler)
+Scott-E_DEPS+= $(addprefix HwComponents/, SpectrumSatellite CY15B104Q_SX_spi_fram)
+Scott-E_DEPS+= $(addprefix HwComponents/, MB85RC_i2c_fram)
+Scott-E_DEPS+= $(addprefix OS/, $(PLATFORM))
+Scott-E_DEPS+= $(addprefix Boards/$(PLATFORM)/, Board Startup Mem Gpio Pwm)
+Scott-E_DEPS+= $(addprefix Drivers/, $(PLATFORM))
 
 Test_Utilities_DEPS:= Top/Test_Utilities
 Test_Utilities_DEPS+= $(addprefix Test/, TestFW Math Utilities)

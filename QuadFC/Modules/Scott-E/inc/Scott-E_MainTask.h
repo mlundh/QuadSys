@@ -22,11 +22,12 @@
  * THE SOFTWARE.
  */
 
-#ifndef MAIN_CONTROL_TASK_H_
-#define MAIN_CONTROL_TASK_H_
+#ifndef __SCOTT_E_MAINTASK_H__
+#define __SCOTT_E_MAINTASK_H__
+
 #include "Messages/inc/common_types.h"
 #include "EventHandler/inc/event_handler.h"
 
-void QuadFC_CreateMainControlTask(eventHandler_t* evHandler);
+void Scott_e_CreateTask(eventHandler_t* evHandler);
 
-#endif /* MAIN_CONTROL_TASK_H_ */
+#endif // __SCOTT_E_MAINTASK_H__

@@ -80,7 +80,7 @@ int main( void )
 
 
 
-  create_main_control_task(evHandlerM);
+  QuadFC_CreateMainControlTask(evHandlerM);
   Satellite_CreateReceiverTask(evHandlerSatelliteInternal, RC1_SERIAL_BUS, rc1PwrCtrl, '1');
   Satellite_CreateReceiverTask(evHandlerSatelliteExternal, RC2_SERIAL_BUS, rc2PwrCtrl, '2');
   Led_CreateLedControlTask(evHandlerLed);
