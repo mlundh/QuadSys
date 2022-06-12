@@ -1,5 +1,5 @@
 /*
- * PWM_motor_control
+ * PwmMotorControl
  *
  * Copyright (C) 2014  Martin Lundh
  *
@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-#include "QuadFC/QuadFC_MotorControl.h"
+#include "PwmMotorControl/inc/PwmMotorControl.h"
 #include "Messages/inc/common_types.h"
 #include "QuadFC/QuadFC_Pwm.h"
 #include "BoardConfig.h"
@@ -32,7 +32,7 @@
 #include "Parameters/inc/parameters.h"
 
 
-struct MotorControl
+struct PwmMotorControl
 {
   uint32_t scaleFactor;
 };
@@ -51,9 +51,9 @@ struct MotorControl
  * y = x*2380/65536
  */
 
-MotorControl_t * MotorCtrl_CreateAndInit(uint32_t nr_motors, param_obj_t * param)
+PwmMotorControl_t * PwmMotorControl_CreateAndInit(uint32_t nr_motors, param_obj_t * param)
 {
-    MotorControl_t* obj = pvPortMalloc(sizeof(MotorControl_t));
+    PwmMotorControl_t* obj = pvPortMalloc(sizeof(PwmMotorControl_t));
     if(!obj)
     {
         return NULL;
@@ -65,7 +65,7 @@ MotorControl_t * MotorCtrl_CreateAndInit(uint32_t nr_motors, param_obj_t * param
     return obj;
 }
 
-uint8_t MotorCtrl_Enable(MotorControl_t *obj)
+uint8_t PwmMotorControl_Enable(PwmMotorControl_t *obj)
 {
     if(!obj)
     {
@@ -75,7 +75,7 @@ uint8_t MotorCtrl_Enable(MotorControl_t *obj)
     return 1;
 }
 
-uint8_t MotorCtrl_Disable(MotorControl_t *obj)
+uint8_t PwmMotorControl_Disable(PwmMotorControl_t *obj)
 {
     if(!obj)
     {
@@ -85,11 +85,11 @@ uint8_t MotorCtrl_Disable(MotorControl_t *obj)
     return 0;
 }
 
-uint8_t MotorCtrl_UpdateSetpoint(MotorControl_t *obj, uint32_t* motorSetpoints, uint32_t nrMotors)
+uint8_t PwmMotorControl_UpdateSetpoint(PwmMotorControl_t *obj, uint32_t* motorSetpoints, uint32_t nrMotors)
 {
     if(!obj || nrMotors < 4)
     {
-        MotorCtrl_Disable(obj);
+        PwmMotorControl_Disable(obj);
         return 0;
     }
     PWM_SetDutyCycle(PWM_PIN_1,motorSetpoints[0]);
@@ -97,7 +97,7 @@ uint8_t MotorCtrl_UpdateSetpoint(MotorControl_t *obj, uint32_t* motorSetpoints, 
     PWM_SetDutyCycle(PWM_PIN_3,motorSetpoints[2]);
     PWM_SetDutyCycle(PWM_PIN_4,motorSetpoints[3]);
 
-    MotorCtrl_Enable(obj);
+    PwmMotorControl_Enable(obj);
     return 1;
 }
 

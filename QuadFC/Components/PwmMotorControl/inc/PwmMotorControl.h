@@ -32,7 +32,7 @@
  * should have a max value of 1<<16.
  */
 
-typedef struct MotorControl MotorControl_t;
+typedef struct PwmMotorControl PwmMotorControl_t;
 
 /**
  * Initialize the motor controller.
@@ -41,29 +41,29 @@ typedef struct MotorControl MotorControl_t;
  * @param param     Parameter root to be used if the motor controller has parameters.
  * @return          1 of success, 0 otherwise.
  */
-MotorControl_t * MotorCtrl_CreateAndInit(uint32_t nrMotors, param_obj_t * param);
+PwmMotorControl_t * PwmMotorControl_CreateAndInit(uint32_t nrMotors, param_obj_t * param);
 
 /**
  * Enable all motors. This arms the motors, waiting for a setpoint.
  * @param obj       Pointer to the current motor control object.
  * @return          1 of success, 0 otherwise.
  */
-uint8_t MotorCtrl_Enable(MotorControl_t *obj);
+uint8_t PwmMotorControl_Enable(PwmMotorControl_t *obj);
 
 /**
  * Disable all motors. The motors will not respond to setpoint.
  * @param obj       Pointer to the current motor control object.
  * @return          1 of success, 0 otherwise.
  */
-uint8_t MotorCtrl_Disable(MotorControl_t *obj);
+uint8_t PwmMotorControl_Disable(PwmMotorControl_t *obj);
 
 /**
  * Update setpoint of motors.  Motors will only run if a call to
- * MotorCtrl_Enable has been done first.
+ * PwmMotorControl_Enable has been done first.
  * @param obj       Pointer to the current motor control object.
  * @param setpoint  Array of setpoints. Must be as long as nr_motors.
  * @return          1 of success, 0 otherwise.
  */
-uint8_t MotorCtrl_UpdateSetpoint(MotorControl_t *obj, uint32_t* motorSetpoints, uint32_t nrMotors);
+uint8_t PwmMotorControl_UpdateSetpoint(PwmMotorControl_t *obj, uint32_t* motorSetpoints, uint32_t nrMotors);
 
 #endif /* HAL_INC_QUADFC_MOTORCONTROL_H_ */

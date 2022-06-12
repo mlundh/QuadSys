@@ -46,7 +46,7 @@
 #include "ControlSystem/inc/control_system.h"
 #include "EventHandler/inc/event_handler.h"
 #include "StateEstimator/inc/state_estimator.h"
-#include "QuadFC/QuadFC_MotorControl.h"
+#include "PwmMotorControl/inc/PwmMotorControl.h"
 #include "QuadFC/QuadFC_IMU.h"
 #include "Parameters/inc/parameters.h"
 #include "SetpointHandler/inc/setpoint_handler.h"
@@ -69,7 +69,7 @@ typedef struct mainTaskParams
     state_data_t *setpoint;
     CtrlObj_t *ctrl;
     control_signal_t *control_signal;
-    MotorControl_t *motorControl;
+    PwmMotorControl_t *motorControl;
     uint32_t motorSetpoint[NR_MOTORS];
     FlightModeHandler_t* flightModeHandler;
     StateEst_t* stateEst;
@@ -105,7 +105,7 @@ void QuadFC_CreateMainControlTask(eventHandler_t* evHandler)
     taskParam->setpoint = pvPortMalloc( sizeof(state_data_t) );
     taskParam->state = pvPortMalloc( sizeof(state_data_t) );
     taskParam->control_signal = pvPortMalloc( sizeof(control_signal_t) );
-    taskParam->motorControl = MotorCtrl_CreateAndInit(4,ParamHandler_GetParam(taskParam->paramHandler));
+    taskParam->motorControl = PwmMotorControl_CreateAndInit(4,ParamHandler_GetParam(taskParam->paramHandler));
     taskParam->flightModeHandler = FMode_CreateFmodeHandler(evHandler); // registers event handler for flight mode requests.
     taskParam->stateEst = StateEst_Create(ParamHandler_GetParam(taskParam->paramHandler));
     taskParam->imu = Imu_Create(ParamHandler_GetParam(taskParam->paramHandler),0);
@@ -261,12 +261,12 @@ void main_control_task( void *pvParameters )
              * ensure that all systems are available and ready. Use the counter method rather
              * than sleeping to allow external communication.
              */
-            MotorCtrl_Enable( param->motorControl );
+            PwmMotorControl_Enable( param->motorControl );
             param->motorSetpoint[0] = 0;
             param->motorSetpoint[1] = 0;
             param->motorSetpoint[2] = 0;
             param->motorSetpoint[3] = 0;
-            MotorCtrl_UpdateSetpoint( param->motorControl, param->motorSetpoint, NR_MOTORS);
+            PwmMotorControl_UpdateSetpoint( param->motorControl, param->motorSetpoint, NR_MOTORS);
             Ctrl_On(param->ctrl);
 
             if ( arming_counter >= ( 1000 / CTRL_TIME ) ) // Be in arming state for 1s.
@@ -322,7 +322,7 @@ void main_control_task( void *pvParameters )
                 main_fault(param);
             }
             Ctrl_Allocate(param->ctrl, param->control_signal, param->motorSetpoint, NR_MOTORS);
-            MotorCtrl_UpdateSetpoint( param->motorControl, param->motorSetpoint, NR_MOTORS);
+            PwmMotorControl_UpdateSetpoint( param->motorControl, param->motorSetpoint, NR_MOTORS);
 
 
             Log_Report(logPitchRate);
@@ -353,12 +353,12 @@ void main_control_task( void *pvParameters )
             param->motorSetpoint[1] = 0;
             param->motorSetpoint[2] = 0;
             param->motorSetpoint[3] = 0;
-            MotorCtrl_UpdateSetpoint( param->motorControl, param->motorSetpoint, NR_MOTORS);
+            PwmMotorControl_UpdateSetpoint( param->motorControl, param->motorSetpoint, NR_MOTORS);
             Ctrl_Off(param->ctrl);
 
             if ( disarming_counter >= ( 200 / CTRL_TIME ) ) // Be in disarming state for 0.2s.
             {
-                MotorCtrl_Disable(param->motorControl);
+                PwmMotorControl_Disable(param->motorControl);
                 disarming_counter = 0;
                 if( !FMode_ChangeFMode(param->flightModeHandler, fmode_disarmed) )
                 {
@@ -415,7 +415,7 @@ void main_control_task( void *pvParameters )
 
 void main_fault(MaintaskParams_t *param)
 {
-    MotorCtrl_Disable(param->motorControl);
+    PwmMotorControl_Disable(param->motorControl);
     FMode_Fault(param->flightModeHandler);
     Ctrl_Off(param->ctrl);
 }

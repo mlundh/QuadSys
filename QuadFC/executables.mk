@@ -45,7 +45,7 @@ endif
 QuadFC_DEPS:= Top/QuadFC HAL/QuadFC
 QuadFC_DEPS+= $(addprefix Modules/, Communication FlightController HMI ServiceTask AppLogTask) 
 QuadFC_DEPS+= $(addprefix BaseComponents/, EventHandler Messages MsgBase MessagePool)
-QuadFC_DEPS+= $(addprefix Components/, AppLog AppLogSerialBackend Log LogMemBackend PidController StateEstimator Utilities)
+QuadFC_DEPS+= $(addprefix Components/, AppLog AppLogSerialBackend Log LogMemBackend PidController StateEstimator Utilities PwmMotorControl)
 QuadFC_DEPS+= $(addprefix Components/,  SetpointHandler Parameters SLIP CharCircularBuffer Debug ControlModeHandler ControlSystem FlightModeHandler)
 QuadFC_DEPS+= $(addprefix HwComponents/, SpectrumSatellite CY15B104Q_SX_spi_fram)
 QuadFC_DEPS+= $(addprefix HwComponents/, MB85RC_i2c_fram Sensors)
