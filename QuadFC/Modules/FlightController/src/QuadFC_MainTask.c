@@ -27,7 +27,7 @@
  * This is the main task in the QuadFC.
  */
 
-#include "FlightController/inc/main_control_task.h"
+#include "FlightController/inc/QuadFC_MainTask.h"
 
 #include "Components/FlightModeHandler/inc/flight_mode_handler.h"
 #include "FreeRTOS.h"

@@ -30,7 +30,7 @@
 #include "HAL/QuadFC/QuadFC_Board.h"
 #include "BoardConfig.h"
 /*Include tasks to start*/
-#include "FlightController/inc/main_control_task.h"
+#include "FlightController/inc/QuadFC_MainTask.h"
 #include "Communication/inc/communication_tasks.h"
 #include "HMI/inc/led_control_task.h"
 #include "SpectrumSatellite/inc/satellite_receiver_public.h"
