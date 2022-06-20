@@ -36,7 +36,7 @@
 
 
 #include "Components/SLIP/inc/slip_packet.h"
-#include "Components/SLIP/inc/crc.h"
+#include "Components/CRC16/inc/crc.h"
 #include "Components/AppLog/inc/AppLogHandler.h"
 #include "Components/AppLog/inc/AppLog.h"
 #include "QuadFC/QuadFC_Serial.h"
