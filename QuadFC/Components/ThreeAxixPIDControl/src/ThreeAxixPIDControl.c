@@ -24,7 +24,7 @@
 
 
 #include <stddef.h>
-#include "../inc/control_system.h"
+#include "../inc/ThreeAxixPIDControl.h"
 #include "Components/PidController/inc/pid.h"
 
 struct CtrlObj

@@ -43,7 +43,7 @@
 #include "Components/AppLog/inc/AppLog.h"
 
 /* Modules */
-#include "ControlSystem/inc/control_system.h"
+#include "ThreeAxixPIDControl/inc/ThreeAxixPIDControl.h"
 #include "EventHandler/inc/event_handler.h"
 #include "StateEstimator/inc/state_estimator.h"
 #include "PwmMotorControl/inc/PwmMotorControl.h"
