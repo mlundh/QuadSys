@@ -38,8 +38,8 @@
 #define COM_SERIAL_BUS (1)
 #define APPLOG_SERIAL_BUS (3)
 #define COM_WIRELESS_SERIAL_BUS (4)
-#define MOTOR_2_SERIAL_BUS (5)
-#define MOTOR_1_SERIAL_BUS (6)
+#define EXT_2_SERIAL_BUS (5)
+#define EXT_1_SERIAL_BUS (6)
 
 // mem area defines
 #define PARAM_MEM_START_ADDR (0)

@@ -22,7 +22,7 @@
  */
 
 /* QuadFC - A quadcopter flight controller.
- * 
+ *
  *
  * This is the main task in the QuadFC.
  */
@@ -34,9 +34,8 @@
 #include "task.h"
 #include "queue.h"
 
-
 #include "QuadFC/QuadFC_Gpio.h"
-#include "QuadFC/QuadFC_I2c.h"
+#include "QuadFC/QuadFC_Serial.h"
 
 #include "Components/AppLog/inc/AppLog.h"
 
@@ -48,28 +47,42 @@
 #include "FlightModeHandler/inc/flight_mode_handler.h"
 #include "Log/inc/logHandler.h"
 #include "Log/inc/log.h"
-
+#include "SabertoothSerial/inc/SabertoothSerial.h"
 #include "Messages/inc/Msg_Param.h"
 
+#define LOOP_TIME (CTRL_TIME * 50) // CTRL_TIME is 1ms, run this each 50 ms.
 const static unsigned int SpTimeoutMs = 500;
-#define NR_MOTORS 6
 
+typedef struct Scott_E
+{
+    int32_t drive;
+    int32_t turn;
+    int32_t tool_1;
+    int32_t tool_2;
+    int32_t tool_pitch;
+    int32_t tool_yaw;
+} Scott_E_t;
 // Struct only used here to pass parameters to the task.
 typedef struct mainTaskParams
 {
-    state_data_t *state;
     state_data_t *setpoint;
-    uint32_t motorSetpoint[NR_MOTORS];
-    FlightModeHandler_t* flightModeHandler;
-    SpHandler_t* setPointHandler;
-    spectrumSpHandler_t* spectrumSpHandler;
-    eventHandler_t* evHandler;
-    LogHandler_t* logHandler;
-    paramHander_t* paramHandler;
+    Scott_E_t motors;
+    FlightModeHandler_t *flightModeHandler;
+    SpHandler_t *setPointHandler;
+    spectrumSpHandler_t *spectrumSpHandler;
+    eventHandler_t *evHandler;
+    LogHandler_t *logHandler;
+    paramHander_t *paramHandler;
     int32_t SetpointTimeoutCounter;
-}MaintaskParams_t;
+    Sabertooth_t *SaberToothDrive;
+    Sabertooth_t *SaberToothTool;
+    Sabertooth_t *SaberToothArticulation;
 
-void Scott_e_Task( void *pvParameters );
+} MaintaskParams_t;
+
+void Scott_E_SpToSaber(state_data_t *setpoint, Scott_E_t *obj);
+
+void Scott_e_Task(void *pvParameters);
 /**
  * Puts FC into a fault state, motors are stopped and control system is
  * shut off.
@@ -81,63 +94,88 @@ void main_fault(MaintaskParams_t *param);
  * void create_main_control_task(void)
  */
 
-void Scott_e_CreateTask(eventHandler_t* evHandler)
+void Scott_e_CreateTask(eventHandler_t *evHandler, uint32_t uartNrSabertooth)
 {
     /*Create the task*/
 
-    MaintaskParams_t * taskParam = pvPortMalloc(sizeof(MaintaskParams_t));
-    taskParam->paramHandler = ParamHandler_CreateObj(10,evHandler, "Scott-E"); // Master handles all communication, we do not want to be master!
-    taskParam->setpoint = pvPortMalloc( sizeof(state_data_t) );
-    taskParam->state = pvPortMalloc( sizeof(state_data_t) );
+    MaintaskParams_t *taskParam = pvPortMalloc(sizeof(MaintaskParams_t));
+    taskParam->paramHandler = ParamHandler_CreateObj(10, evHandler, "Scott-E"); // Master handles all communication, we do not want to be master!
+    taskParam->setpoint = pvPortMalloc(sizeof(state_data_t));
     taskParam->flightModeHandler = FMode_CreateFmodeHandler(evHandler); // registers event handler for flight mode requests.
     taskParam->setPointHandler = SpHandl_Create(evHandler);
     taskParam->spectrumSpHandler = SatSpHandler_CreateObj(evHandler, ParamHandler_GetParam(taskParam->paramHandler));
     taskParam->evHandler = evHandler;
-    taskParam->logHandler = LogHandler_CreateObj(20,evHandler,ParamHandler_GetParam(taskParam->paramHandler),"LogHandler");
+    taskParam->logHandler = LogHandler_CreateObj(20, evHandler, ParamHandler_GetParam(taskParam->paramHandler), "LogHandler");
+    taskParam->SaberToothDrive = Sabertooth_Create(128, uartNrSabertooth);
+    taskParam->SaberToothTool = Sabertooth_Create(129, uartNrSabertooth);
+    taskParam->SaberToothArticulation = Sabertooth_Create(130, uartNrSabertooth);
+
     taskParam->SetpointTimeoutCounter = 0;
+
+
     /*Ensure that all mallocs returned valid pointers*/
-    if (   !taskParam                   || !taskParam->setpoint     || !taskParam->state        || !taskParam->flightModeHandler || 
-         !taskParam->setPointHandler    || !taskParam->logHandler   || !taskParam->paramHandler || !taskParam->spectrumSpHandler)
+    if (!taskParam || !taskParam->paramHandler || !taskParam->setpoint || !taskParam->flightModeHandler ||
+        !taskParam->setPointHandler || !taskParam->spectrumSpHandler || !taskParam->evHandler || !taskParam->logHandler ||
+        !taskParam->SaberToothDrive || !taskParam->SaberToothTool || !taskParam->SaberToothArticulation)
+
     {
-        for ( ;; )
+        for (;;)
         {
             // TODO error handling!
         }
     }
+    static uint8_t buffer[8] = {0};
+    QuadFC_SerialOptions_t opt = {
+        9600,
+        EightDataBits,
+        NoParity,
+        OneStopBit,
+        NoFlowControl,
+        buffer,
+        8};
+//38400
+    uint8_t rsp = QuadFC_SerialInit(uartNrSabertooth, &opt);
+    if (!rsp)
+    {
+        /*Error - Could not create serial interface.*/
 
+        for (;;)
+        {
+        }
+    }
 
     // Event_RegisterCallback(taskParam->evHandler, ePeripheralError  ,Led_HandlePeripheralError);
 
     portBASE_TYPE create_result;
-    create_result = xTaskCreate( Scott_e_Task,   /* The function that implements the task.  */
-            (const char *const) "Scott_e",              /* The name of the task. This is not used by the kernel, only aids in debugging*/
-            500,                                         /* The stack size for the task*/
-            taskParam,                                    /* pass params to task.*/
-            configMAX_PRIORITIES-1,                       /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
-            NULL );                                       /* Handle to the task. Not used here and therefore NULL*/
+    create_result = xTaskCreate(Scott_e_Task,                 /* The function that implements the task.  */
+                                (const char *const)"Scott_e", /* The name of the task. This is not used by the kernel, only aids in debugging*/
+                                500,                          /* The stack size for the task*/
+                                taskParam,                    /* pass params to task.*/
+                                configMAX_PRIORITIES - 1,     /* The priority of the task, never higher than configMAX_PRIORITIES -1*/
+                                NULL);                        /* Handle to the task. Not used here and therefore NULL*/
 
-    if ( create_result != pdTRUE )
+    if (create_result != pdTRUE)
     {
         /*Error - Could not create task.*/
-        for ( ;; )
+        for (;;)
         {
         }
     }
 }
 
 /*
- *Task writing whatever is in the queue to the a serial port. The serial port is 
- *passed as an argument to the task. 
+ *Task writing whatever is in the queue to the a serial port. The serial port is
+ *passed as an argument to the task.
  */
-void Scott_e_Task( void *pvParameters )
+void Scott_e_Task(void *pvParameters)
 {
-    MaintaskParams_t * param = (MaintaskParams_t*)(pvParameters);
+    MaintaskParams_t *param = (MaintaskParams_t *)(pvParameters);
 
     /*Initialize modules*/
     FMode_InitFModeHandler(param->flightModeHandler);
 
     // Load saved parameters.
-    moduleMsg_t* msg = Msg_ParamCreate(FC_Param_e, 0, param_load, 0, 0, 0);
+    moduleMsg_t *msg = Msg_ParamCreate(FC_Param_e, 0, param_load, 0, 0, 0);
     Event_Send(param->evHandler, msg);
 
     /*Utility variables*/
@@ -145,17 +183,17 @@ void Scott_e_Task( void *pvParameters )
     TickType_t disarming_counter = 0;
     uint32_t heartbeat_counter = 0;
 
-    Log_t* logM1 = Log_CreateObj(0,variable_type_fp_16_16, &param->motorSetpoint[0],NULL, param->logHandler, "m1");
-    Log_t* logM2 = Log_CreateObj(0,variable_type_fp_16_16, &param->motorSetpoint[1],NULL, param->logHandler, "m2");
-    Log_t* logM3 = Log_CreateObj(0,variable_type_fp_16_16, &param->motorSetpoint[2],NULL, param->logHandler, "m3");
-    Log_t* logM4 = Log_CreateObj(0,variable_type_fp_16_16, &param->motorSetpoint[3],NULL, param->logHandler, "m4");
-    Log_t* logM5 = Log_CreateObj(0,variable_type_fp_16_16, &param->motorSetpoint[4],NULL, param->logHandler, "m5");
-    Log_t* logM6 = Log_CreateObj(0,variable_type_fp_16_16, &param->motorSetpoint[5],NULL, param->logHandler, "m6");
+    Log_t *Drive = Log_CreateObj(0, variable_type_fp_16_16, &param->motors.drive, NULL, param->logHandler, "Drive");
+    Log_t *Turn = Log_CreateObj(0, variable_type_fp_16_16, &param->motors.turn, NULL, param->logHandler, "Turn");
+    Log_t *ToolPitch = Log_CreateObj(0, variable_type_fp_16_16, &param->motors.tool_pitch, NULL, param->logHandler, "ToolPitch");
+    Log_t *ToolYaw = Log_CreateObj(0, variable_type_fp_16_16, &param->motors.tool_yaw, NULL, param->logHandler, "ToolYaw");
+    Log_t *Tool_1 = Log_CreateObj(0, variable_type_fp_16_16, &param->motors.tool_1, NULL, param->logHandler, "Tool_1");
+    Log_t *Tool_2 = Log_CreateObj(0, variable_type_fp_16_16, &param->motors.tool_2, NULL, param->logHandler, "Tool_2");
 
     /*The main control loop*/
 
     unsigned portBASE_TYPE xLastWakeTime = xTaskGetTickCount();
-    for ( ;; )
+    for (;;)
     {
         /*
          * Main state machine. Controls the state of the flight controller.
@@ -166,11 +204,13 @@ void Scott_e_Task( void *pvParameters )
             /*---------------------------------------Initialize mode------------------------
              * Initialize all modules then set the fc to disarmed state.
              */
-
+            Sabertooth_SetTimeout(param->SaberToothDrive, 1);
+            Sabertooth_SetTimeout(param->SaberToothArticulation, 1);
+            Sabertooth_SetTimeout(param->SaberToothTool, 1);
             // StateEst_init Might take time, reset the last wake time to avoid errors.
             xLastWakeTime = xTaskGetTickCount();
 
-            if(pdTRUE != FMode_ChangeFMode(param->flightModeHandler, fmode_disarming))
+            if (pdTRUE != FMode_ChangeFMode(param->flightModeHandler, fmode_disarming))
             {
                 LOG_ENTRY(param->evHandler, "Main: Error - Failed to change flight mode to disarming!");
                 main_fault(param);
@@ -198,20 +238,15 @@ void Scott_e_Task( void *pvParameters )
              * ensure that all systems are available and ready. Use the counter method rather
              * than sleeping to allow external communication.
              */
-            param->motorSetpoint[0] = 0;
-            param->motorSetpoint[1] = 0;
-            param->motorSetpoint[2] = 0;
-            param->motorSetpoint[3] = 0;
 
-            if ( arming_counter >= ( 1000 / CTRL_TIME ) ) // Be in arming state for 1s.
+            if (arming_counter >= (1000 / LOOP_TIME)) // Be in arming state for 1s.
             {
                 arming_counter = 0;
-                if( !FMode_ChangeFMode(param->flightModeHandler, fmode_armed) )
+                if (!FMode_ChangeFMode(param->flightModeHandler, fmode_armed))
                 {
                     LOG_ENTRY(param->evHandler, "Main: Error - Failed to change flight mode to armed!");
                     main_fault(param);
                 }
-                
             }
             else
             {
@@ -227,7 +262,7 @@ void Scott_e_Task( void *pvParameters )
              * that will disarm the copter when it expires. If a valid setpoint
              * is received before the counter expires, then it is stopped.
              * */
-            if(SpHandl_GetSetpoint(param->setPointHandler, param->setpoint, 0 )) // We have an active setpoint!
+            if (SpHandl_GetSetpoint(param->setPointHandler, param->setpoint, 0)) // We have an active setpoint!
             {
                 param->SetpointTimeoutCounter = 0;
             }
@@ -236,40 +271,47 @@ void Scott_e_Task( void *pvParameters )
                 param->SetpointTimeoutCounter++;
             }
 
-            if(param->SetpointTimeoutCounter >= SpTimeoutMs/CTRL_TIME)
+            if (param->SetpointTimeoutCounter >= SpTimeoutMs / LOOP_TIME)
             {
                 LOG_ENTRY(param->evHandler, "Main: Error - Setpoint timeout!");
                 main_fault(param);
             }
+            Scott_E_SpToSaber(param->setpoint, &param->motors);
+            Sabertooth_DriveMixed(param->SaberToothDrive, param->motors.drive);
+            Sabertooth_TurnMixed(param->SaberToothDrive, param->motors.turn);
+            Sabertooth_DriveM1(param->SaberToothArticulation, param->motors.tool_pitch);
+            Sabertooth_DriveM2(param->SaberToothArticulation, param->motors.tool_yaw);
+            Sabertooth_DriveM1(param->SaberToothTool, param->motors.tool_1);
+            Sabertooth_DriveM2(param->SaberToothTool, param->motors.tool_2);
 
-            Log_Report(logM1);
-            Log_Report(logM2);
-            Log_Report(logM3);
-            Log_Report(logM4);
-            Log_Report(logM5);
-            Log_Report(logM6);
+            Log_Report(Drive);
+            Log_Report(Turn);
+            Log_Report(ToolPitch);
+            Log_Report(ToolYaw);
+            Log_Report(Tool_1);
+            Log_Report(Tool_2);
 
             break;
         case fmode_disarming:
             /*---------------------------------------Disarming mode--------------------------
              * Transitional state. Only executed once.
              */
-            param->motorSetpoint[0] = 0;
-            param->motorSetpoint[1] = 0;
-            param->motorSetpoint[2] = 0;
-            param->motorSetpoint[3] = 0;
 
-
-            if ( disarming_counter >= ( 200 / CTRL_TIME ) ) // Be in disarming state for 0.2s.
+            if (disarming_counter >= (200 / LOOP_TIME)) // Be in disarming state for 0.2s.
             {
-                //MotorCtrl_Disable(param->motorControl);
+                Sabertooth_DriveMixed(param->SaberToothDrive, 0);
+                Sabertooth_TurnMixed(param->SaberToothDrive, 0);
+                Sabertooth_DriveM1(param->SaberToothArticulation, 0);
+                Sabertooth_DriveM2(param->SaberToothArticulation, 0);
+                Sabertooth_DriveM1(param->SaberToothTool, 0);
+                Sabertooth_DriveM2(param->SaberToothTool, 0);
+                // MotorCtrl_Disable(param->motorControl);
                 disarming_counter = 0;
-                if( !FMode_ChangeFMode(param->flightModeHandler, fmode_disarmed) )
+                if (!FMode_ChangeFMode(param->flightModeHandler, fmode_disarmed))
                 {
                     LOG_ENTRY(param->evHandler, "Main: Error - Failed to change flight mode to disarmed.");
                     main_fault(param);
                 }
-                
             }
             else
             {
@@ -283,11 +325,11 @@ void Scott_e_Task( void *pvParameters )
              *
              *  TODO save reason for fault mode.
              */
-        {
-            static int i = 0;
-            i++;
-        }
-        break;
+            {
+                static int i = 0;
+                i++;
+            }
+            break;
         case fmode_not_available:
             /*-----------------------------------------state not available mode----------------
              * Something is very wrong if the FC is in state_not_available.
@@ -297,21 +339,22 @@ void Scott_e_Task( void *pvParameters )
             break;
         }
 
-        //Process incoming events.
-        while(Event_Receive(param->evHandler, 0) == 1)
-        {}
+        // Process incoming events.
+        while (Event_Receive(param->evHandler, 0) == 1)
+        {
+        }
 
-        vTaskDelayUntil( &xLastWakeTime, CTRL_TIME );
+        // TODO change CTRL_TIME to be applicaiton local.
+        vTaskDelayUntil(&xLastWakeTime, LOOP_TIME);
 
         /*-------------------Heartbeat----------------------
-         * Toggle an led to indicate that the FC is operational. 
+         * Toggle an led to indicate that the Controller is operational.
          */
         heartbeat_counter++;
-        if ( heartbeat_counter >= 500 )
+        if (heartbeat_counter >= 10)
         {
-            Led_Toggle( ledHeartBeat );
+            Led_Toggle(ledHeartBeat);
             heartbeat_counter = 0;
-
         }
     }
     /* The task should never escape the for-loop and therefore never return.*/
@@ -319,7 +362,22 @@ void Scott_e_Task( void *pvParameters )
 
 void main_fault(MaintaskParams_t *param)
 {
-    //MotorCtrl_Disable(param->motorControl);
+    // MotorCtrl_Disable(param->motorControl);
+    Sabertooth_DriveMixed(param->SaberToothDrive, 0);
+    Sabertooth_TurnMixed(param->SaberToothDrive, 0);
+    Sabertooth_DriveM1(param->SaberToothArticulation, 0);
+    Sabertooth_DriveM2(param->SaberToothArticulation, 0);
+    Sabertooth_DriveM1(param->SaberToothTool, 0);
+    Sabertooth_DriveM2(param->SaberToothTool, 0);
     FMode_Fault(param->flightModeHandler);
 }
 
+void Scott_E_SpToSaber(state_data_t *setpoint, Scott_E_t *obj)
+{
+    obj->drive = setpoint->state_bf[pitch_rate_bf];
+    obj->turn = setpoint->state_bf[roll_rate_bf];
+    obj->tool_pitch = setpoint->state_bf[thrust_sp];
+    obj->tool_yaw = setpoint->state_bf[yaw_rate_bf];
+    obj->tool_1 = setpoint->state_bf[pitch_bf];
+    obj->tool_2 = setpoint->state_bf[pitch_bf];
+}

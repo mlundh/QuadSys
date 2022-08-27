@@ -77,7 +77,7 @@ int main(void)
             ; // Error!
     }
 
-    Scott_e_CreateTask(evHandlerM);
+    Scott_e_CreateTask(evHandlerM, EXT_2_SERIAL_BUS);
     Satellite_CreateReceiverTask(evHandlerSatelliteInternal, RC1_SERIAL_BUS, rc1PwrCtrl, '1');
     Satellite_CreateReceiverTask(evHandlerSatelliteExternal, RC2_SERIAL_BUS, rc2PwrCtrl, '2');
     Led_CreateLedControlTask(evHandlerLed);

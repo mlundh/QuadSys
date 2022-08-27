@@ -28,6 +28,6 @@
 #include "Messages/inc/common_types.h"
 #include "EventHandler/inc/event_handler.h"
 
-void Scott_e_CreateTask(eventHandler_t* evHandler);
+void Scott_e_CreateTask(eventHandler_t* evHandler, uint32_t uartNrSabertooth);
 
 #endif // __SCOTT_E_MAINTASK_H__

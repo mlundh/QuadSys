@@ -88,7 +88,6 @@ void Ctrl_LimitPidCB(void* data)
     Pid_UpdateLimits(obj->RatePitch, obj->minCtrlSig, obj->maxCtrlSig);
     Pid_UpdateLimits(obj->RateRoll, obj->minCtrlSig, obj->maxCtrlSig);
     Pid_UpdateLimits(obj->RateYaw, obj->minCtrlSig, obj->maxCtrlSig);
-
 }
 
 
