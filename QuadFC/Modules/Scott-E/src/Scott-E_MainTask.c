@@ -50,6 +50,8 @@
 #include "SabertoothSerial/inc/SabertoothSerial.h"
 #include "Messages/inc/Msg_Param.h"
 
+#include "Messages/inc/Msg_InitExternal.h"
+
 #define LOOP_TIME (CTRL_TIME * 50) // CTRL_TIME is 1ms, run this each 50 ms.
 const static unsigned int SpTimeoutMs = 500;
 
@@ -77,8 +79,11 @@ typedef struct mainTaskParams
     Sabertooth_t *SaberToothDrive;
     Sabertooth_t *SaberToothTool;
     Sabertooth_t *SaberToothArticulation;
+    uint32_t uartNrSabertooth;
 
 } MaintaskParams_t;
+
+uint8_t Scott_E_InitExternal(eventHandler_t *obj, void *data, moduleMsg_t *msg);
 
 void Scott_E_SpToSaber(state_data_t *setpoint, Scott_E_t *obj);
 
@@ -111,7 +116,10 @@ void Scott_e_CreateTask(eventHandler_t *evHandler, uint32_t uartNrSabertooth)
     taskParam->SaberToothArticulation = Sabertooth_Create(130, uartNrSabertooth);
 
     taskParam->SetpointTimeoutCounter = 0;
+    taskParam->uartNrSabertooth = uartNrSabertooth;
 
+
+    Event_RegisterCallback(taskParam->evHandler, Msg_InitExternal_e, Scott_E_InitExternal, taskParam);
 
     /*Ensure that all mallocs returned valid pointers*/
     if (!taskParam || !taskParam->paramHandler || !taskParam->setpoint || !taskParam->flightModeHandler ||
@@ -124,16 +132,15 @@ void Scott_e_CreateTask(eventHandler_t *evHandler, uint32_t uartNrSabertooth)
             // TODO error handling!
         }
     }
-    static uint8_t buffer[8] = {0};
     QuadFC_SerialOptions_t opt = {
-        9600,
+        38400,
         EightDataBits,
         NoParity,
         OneStopBit,
         NoFlowControl,
-        buffer,
-        8};
-//38400
+        NULL,
+        1};
+        
     uint8_t rsp = QuadFC_SerialInit(uartNrSabertooth, &opt);
     if (!rsp)
     {
@@ -371,6 +378,66 @@ void main_fault(MaintaskParams_t *param)
     Sabertooth_DriveM2(param->SaberToothTool, 0);
     FMode_Fault(param->flightModeHandler);
 }
+
+uint8_t Scott_E_InitExternal(eventHandler_t *obj, void *data, moduleMsg_t *msg)
+{
+    if (!obj || !data || !msg)
+    {
+        return 0;
+    }
+
+    MaintaskParams_t* taskParam = (MaintaskParams_t*)data;
+
+    QuadFC_SerialOptions_t opt = {
+        9600,
+        EightDataBits,
+        NoParity,
+        OneStopBit,
+        NoFlowControl,
+        NULL,
+        1};
+    // set baud to sabertooth default
+    QuadFC_SerialDeInit(taskParam->uartNrSabertooth);
+    uint8_t rsp = QuadFC_SerialInit(taskParam->uartNrSabertooth, &opt);
+    if (!rsp)
+    {
+        /*Error - Could not create serial interface.*/
+        LOG_ENTRY(obj, "Not able to initialize serial port in InitExternal call. Unknown status of external units.")
+        return 0;
+    }
+
+    Sabertooth_SetTimeout(taskParam->SaberToothDrive, 1);
+    Sabertooth_SetTimeout(taskParam->SaberToothArticulation, 1);
+    Sabertooth_SetTimeout(taskParam->SaberToothTool, 1);
+
+
+    // update the sabertooth baud on the connected units.
+    Sabertooth_SetBaud(taskParam->SaberToothArticulation, 4);
+    Sabertooth_SetBaud(taskParam->SaberToothDrive, 4);
+    Sabertooth_SetBaud(taskParam->SaberToothTool, 4);
+
+    QuadFC_SerialOptions_t opt1 = {
+        38400,
+        EightDataBits,
+        NoParity,
+        OneStopBit,
+        NoFlowControl,
+        NULL,
+        1};
+    // set the baud to the newly updated value. This should be persistant. 
+    QuadFC_SerialDeInit(taskParam->uartNrSabertooth);
+    uint8_t rsp1 = QuadFC_SerialInit(taskParam->uartNrSabertooth, &opt1);
+    if (!rsp1)
+    {
+        /*Error - Could not create serial interface.*/
+        LOG_ENTRY(obj, "Not able to initialize serial port in InitExternal call. Unknown status of external units.")
+        return 0;
+    }
+
+
+    return 1;
+}
+
 
 void Scott_E_SpToSaber(state_data_t *setpoint, Scott_E_t *obj)
 {

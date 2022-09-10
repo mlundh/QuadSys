@@ -50,6 +50,7 @@
 #include "Msg_FcFault.h"
 #include "Msg_Error.h"
 #include "Msg_BindRc.h"
+#include "Msg_InitExternal.h"
 #include "Msg_FlightModeReq.h"
 #include "Msg_CtrlModeReq.h"
 #include "Msg_NewSetpoint.h"
@@ -278,6 +279,14 @@ QGS_ModuleMsgBase::ptr Parser::parse( std::vector<unsigned char>  data)
 	case messageTypes_t::Msg_BindRc_e:
 	{
 		Msg_BindRc::ptr ptr = std::make_unique<Msg_BindRc>(msgBase);
+		ptr->setSkipStreamHeader();
+		is >> *ptr;
+		returnPtr = std::move(ptr);
+		break;
+	}
+	case messageTypes_t::Msg_InitExternal_e:
+	{
+		Msg_InitExternal::ptr ptr = std::make_unique<Msg_InitExternal>(msgBase);
 		ptr->setSkipStreamHeader();
 		is >> *ptr;
 		returnPtr = std::move(ptr);

@@ -129,6 +129,15 @@ uint8_t Test_SerialWrite(QuadFC_Serial_t *serial_data);
 uint8_t QuadFC_SerialInit(int busIndex, QuadFC_SerialOptions_t* opt);
 
 /**
+ * @brief Deinitialize a serial interface. Will not re-set the pin configuration. 
+ * 
+ * @param busIndex    Index of the serial port the device is connected to.
+ * @return uint8_t    1 if success, 0 otherwise.
+ */
+uint8_t QuadFC_SerialDeInit(int busIndex);
+
+
+/**
  * @brief Reconfigure the pins used by the serial bus identified by busIndex.
  * 
  * @param busIndex    Index of the serial port the device is connected to.

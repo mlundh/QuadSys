@@ -66,6 +66,8 @@ public:
 	std::string getRuntimeStats(std::string);
 
 	std::string BindRc(std::string);
+
+	std::string InitExternal(std::string param);
 	
 	std::string printStateStrings();
 

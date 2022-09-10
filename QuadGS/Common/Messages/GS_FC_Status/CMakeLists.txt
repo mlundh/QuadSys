@@ -3,6 +3,7 @@ list(APPEND src "Msg_FlightMode.cpp"
 				"Msg_FcFault.cpp"
 				"Msg_Error.cpp"
 				"Msg_BindRc.cpp"
+				"Msg_InitExternal.cpp"
 				)
                 
 list(APPEND dep "BinaryStream"

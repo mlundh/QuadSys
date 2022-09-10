@@ -47,6 +47,7 @@ Msg_CtrlMode --member uint8_t mode
 Msg_FcFault
 Msg_Error --member std::string error
 Msg_BindRc --member uint8_t quit
+Msg_InitExternal --member std::string init
 *
 
 *GS_FC_Control

@@ -101,6 +101,15 @@ void TitanUART_GPIOInit(USART_TypeDef* usart);
 uint8_t TitanUART_GPIOinitOutput(USART_TypeDef* usart);
 
 
+uint8_t QuadFC_SerialDeInit(int busIndex)
+{
+    LL_USART_Disable(uart[busIndex].usart);
+    vStreamBufferDelete(uart[busIndex].RxBuff);
+    uart[busIndex].initialized = 0;
+    return 1;
+}
+
+
 uint8_t QuadFC_SerialInit(int busIndex, QuadFC_SerialOptions_t* opt)
 {
   if(busIndex > (num_uart) || uart[busIndex].initialized)

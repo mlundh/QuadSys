@@ -32,6 +32,7 @@
 #include "Msg_FlightModeReq.h"
 #include "Msg_TestMem.h"
 #include "Msg_TestMemReg.h"
+#include "Msg_InitExternal.h"
 #include <sstream>
 #include <array>
 
@@ -45,6 +46,7 @@ dbgModule::dbgModule(msgAddr_t name, msgAddr_t dbgAddr):QGS_MessageHandlerBase(n
 	mCommands.push_back(UiCommand("stateChange","Request a state change from the FC.",std::bind(&dbgModule::StateChangeReq, this, std::placeholders::_1)));
 	mCommands.push_back(UiCommand("memTest","Test the memory on the FC.",std::bind(&dbgModule::MemTest, this, std::placeholders::_1)));
 	mCommands.push_back(UiCommand("memReadReg","Read Status and/or device id registers.",std::bind(&dbgModule::MemReadReg, this, std::placeholders::_1)));
+	mCommands.push_back(UiCommand("InitExternal","Initialize the external units.",std::bind(&dbgModule::InitExternal, this, std::placeholders::_1)));
 
 }
 
@@ -163,6 +165,15 @@ std::string dbgModule::BindRc(std::string param)
 		}
 	}
 	Msg_BindRc::ptr ptr = std::make_unique<Msg_BindRc>(FC_Broadcast_e, quitBind);
+	sendMsg(std::move(ptr));
+
+	return "";
+}
+
+std::string dbgModule::InitExternal(std::string param)
+{
+	
+	Msg_InitExternal::ptr ptr = std::make_unique<Msg_InitExternal>(FC_Broadcast_e, "");
 	sendMsg(std::move(ptr));
 
 	return "";

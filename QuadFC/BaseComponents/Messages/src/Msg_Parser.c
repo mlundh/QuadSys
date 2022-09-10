@@ -35,6 +35,7 @@
 #include "../../Messages/inc/Msg_FcFault.h"
 #include "../../Messages/inc/Msg_Error.h"
 #include "../../Messages/inc/Msg_BindRc.h"
+#include "../../Messages/inc/Msg_InitExternal.h"
 #include "../../Messages/inc/Msg_FlightModeReq.h"
 #include "../../Messages/inc/Msg_CtrlModeReq.h"
 #include "../../Messages/inc/Msg_NewSetpoint.h"
@@ -139,6 +140,12 @@ moduleMsg_t* Msg_Parse(uint8_t* buffer, uint32_t bufferLength)
     case Msg_BindRc_e:
     {
         msgResult = Msg_BindRcDeserialize(buffer, bufferLength);
+        break;
+    }
+    
+    case Msg_InitExternal_e:
+    {
+        msgResult = Msg_InitExternalDeserialize(buffer, bufferLength);
         break;
     }
     
@@ -310,6 +317,11 @@ uint8_t* Msg_Serializer(moduleMsg_t* msg, uint8_t* buffer, uint32_t bufferLength
         case Msg_BindRc_e:
     {
         result = Msg_BindRcSerialize(msg, buffer, bufferLength);
+        break;
+    }
+        case Msg_InitExternal_e:
+    {
+        result = Msg_InitExternalSerialize(msg, buffer, bufferLength);
         break;
     }
         case Msg_FlightModeReq_e:
