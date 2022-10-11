@@ -102,6 +102,7 @@ void main_fault(MaintaskParams_t *param);
 void Scott_e_CreateTask(eventHandler_t *evHandler, uint32_t uartNrSabertooth)
 {
     /*Create the task*/
+    Gpio_Init(HEARTBEAT, Gpio_OutputOpenDrain, Gpio_NoPull);
 
     MaintaskParams_t *taskParam = pvPortMalloc(sizeof(MaintaskParams_t));
     taskParam->paramHandler = ParamHandler_CreateObj(10, evHandler, "Scott-E"); // Master handles all communication, we do not want to be master!
@@ -360,7 +361,7 @@ void Scott_e_Task(void *pvParameters)
         heartbeat_counter++;
         if (heartbeat_counter >= 10)
         {
-            Led_Toggle(ledHeartBeat);
+            Gpio_TogglePin(HEARTBEAT);
             heartbeat_counter = 0;
         }
     }

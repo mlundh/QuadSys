@@ -78,8 +78,8 @@ int main(void)
     }
 
     Scott_e_CreateTask(evHandlerM, EXT_2_SERIAL_BUS);
-    Satellite_CreateReceiverTask(evHandlerSatelliteInternal, RC1_SERIAL_BUS, rc1PwrCtrl, '1');
-    Satellite_CreateReceiverTask(evHandlerSatelliteExternal, RC2_SERIAL_BUS, rc2PwrCtrl, '2');
+    Satellite_CreateReceiverTask(evHandlerSatelliteInternal, RC1_SERIAL_BUS, Gpio_Rc1PwrCtrl, '1');
+    Satellite_CreateReceiverTask(evHandlerSatelliteExternal, RC2_SERIAL_BUS, Gpio_Rc1PwrCtrl, '2');
     Led_CreateLedControlTask(evHandlerLed);
     Com_CreateTasks(evHandlerComRx, evHandlerComTx, COM_SERIAL_BUS, COM_WIRELESS_SERIAL_BUS); // Creates two tasks, RX and TX.
 

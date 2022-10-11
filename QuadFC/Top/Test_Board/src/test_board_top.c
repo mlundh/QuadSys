@@ -71,6 +71,7 @@ int main( void )
 void mainTester(void *pvParameters)
 {
   TestFw_t* testFW = TestFW_Create("Peripherals");
+  Gpio_Init(HEARTBEAT, Gpio_OutputOpenDrain, Gpio_NoPull);
   //Mem_Init();
   /**************Add test module instantiation here***************/
   Board_GetTCs(testFW);

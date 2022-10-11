@@ -28,27 +28,6 @@
 #define mainDONT_BLOCK                          (0)
 
 
-typedef enum GpioName
-{
-  rc1PwrCtrl,
-  rc2PwrCtrl,
-  adcBat,
-  adc1,
-  adc2,
-  adc3,
-}GpioName_t;
-
-typedef enum LedName
-{
-  ledHeartBeat,
-  ledSetPoint,
-  ledStatus,
-  ledmode,
-  ledError,
-  ledFatal,
-  ledNrGpio,
-}LedName_t;
-
 #define TIME_SHIFT_FACTOR (14)
 #define ONE_MS_FP (16)
 #define TWO_MS_FP (33)

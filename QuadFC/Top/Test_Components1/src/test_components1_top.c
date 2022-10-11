@@ -79,7 +79,7 @@ int main( void )
 void mainTester(void *pvParameters)
 {
     TestFw_t* testFW = TestFW_Create("Components1");
-
+    Gpio_Init(HEARTBEAT, Gpio_OutputOpenDrain, Gpio_NoPull);
     /**************Add test module instantiation here***************/
     ParamT_GetTCs(testFW);
     Log_GetTCs(testFW);
@@ -91,10 +91,10 @@ void mainTester(void *pvParameters)
 
     uint8_t result = TestFW_ExecuteTests(testFW);
 
-    uint32_t pin = (result ? ledHeartBeat : ledFatal);
+    uint32_t pin = (result ? HEARTBEAT : LED_FATAL);
     while ( 1 )
     {
-        Led_Toggle( pin );
+        Gpio_TogglePin( pin );
         vTaskDelay(1000 / portTICK_PERIOD_MS );
     }
 }

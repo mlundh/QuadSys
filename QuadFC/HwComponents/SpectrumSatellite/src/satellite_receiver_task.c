@@ -208,7 +208,8 @@ Satellite_t* Satellite_Create(eventHandler_t* eventHandler, uint32_t uartNr, Gpi
     }
 
     // Turn on the power to the module.
-    Gpio_SetPinLow(taskParam->pwrCtrl);
+    Gpio_Init(pwrCtrl, Gpio_OutputPullPush, Gpio_NoPull);
+    Gpio_PinReset(taskParam->pwrCtrl);
 
     return taskParam;
 }
@@ -527,9 +528,9 @@ uint8_t Satellite_BindCB(eventHandler_t* obj, void* data, moduleMsg_t* eData)
             if(QuadFC_SerialReconfigPin(satellite->uartNr, pinConfigOutput))
             {
                 QuadFC_SerialSetPin(satellite->uartNr, stateSet, rx);
-                Gpio_SetPinHigh(satellite->pwrCtrl);
+                Gpio_PinSet(satellite->pwrCtrl);
                 vTaskDelay(pdMS_TO_TICKS(500));
-                Gpio_SetPinLow(satellite->pwrCtrl);
+                Gpio_PinReset(satellite->pwrCtrl);
                 vTaskDelay(pdMS_TO_TICKS(100));
 
                 if(quitBind != 1)

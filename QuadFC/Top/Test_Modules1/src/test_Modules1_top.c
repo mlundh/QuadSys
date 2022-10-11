@@ -77,7 +77,7 @@ int main( void )
 void mainTester(void *pvParameters)
 {
   TestFw_t* testFW = TestFW_Create("Sig, event, log");
-
+  Gpio_Init(HEARTBEAT, Gpio_OutputOpenDrain, Gpio_NoPull);
   /**************Add test module instantiation here***************/
   SigProsses_GetTCs(testFW);
   EventHandler_GetTCs(testFW);
@@ -86,7 +86,7 @@ void mainTester(void *pvParameters)
   uint8_t result = TestFW_ExecuteTests(testFW);
   uint32_t heartbeat_counter = 0;
 
-  uint32_t pin = (result ? ledHeartBeat : ledFatal);
+  uint32_t pin = (result ? HEARTBEAT : LED_FATAL);
   taskENTER_CRITICAL();
 
   while ( 1 )
@@ -94,7 +94,7 @@ void mainTester(void *pvParameters)
     heartbeat_counter++;
     if ( heartbeat_counter >= 1000000 )
     {
-      Led_Toggle( pin );
+      Gpio_TogglePin( pin );
       heartbeat_counter = 0;
     }
   }

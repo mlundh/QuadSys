@@ -154,7 +154,7 @@ void QuadFC_CreateMainControlTask(eventHandler_t* evHandler)
         }
     }
 
-
+    Gpio_Init(HEARTBEAT, Gpio_OutputOpenDrain, Gpio_NoPull);
 }
 
 /*
@@ -405,7 +405,7 @@ void main_control_task( void *pvParameters )
         heartbeat_counter++;
         if ( heartbeat_counter >= 500 )
         {
-            Led_Toggle( ledHeartBeat );
+            Gpio_TogglePin( HEARTBEAT );
             heartbeat_counter = 0;
 
         }

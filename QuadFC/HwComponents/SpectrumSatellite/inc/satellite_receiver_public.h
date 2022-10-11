@@ -25,7 +25,7 @@
 #define PORTLAYER_COMMUNICATION_INC_SATELLITE_RECEIVER_PUBLIC_H_
 #include "Messages/inc/common_types.h"
 #include "EventHandler/inc/event_handler.h"
-
+#include "HAL/QuadFC/QuadFC_Gpio.h"
 
 #define NUMBER_OF_CHANNELS (15)
 

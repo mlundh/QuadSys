@@ -65,13 +65,13 @@ int main( void )
 
   uint8_t result = TestFW_ExecuteTests(testFW);
   uint32_t heartbeat_counter = 0;
-  uint32_t pin = (result ? ledHeartBeat : ledFatal);
+  uint32_t pin = (result ? HEARTBEAT : LED_FATAL);
   while ( 1 )
   {
     heartbeat_counter++;
     if ( heartbeat_counter >= 1000000 )
     {
-      Led_Toggle( pin );
+      Gpio_TogglePin( pin );
       heartbeat_counter = 0;
     }
   }

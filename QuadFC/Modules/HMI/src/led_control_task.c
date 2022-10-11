@@ -38,6 +38,16 @@
 #define NR_LEDS (6)
 #define LED_TASK_DELAY (20UL / portTICK_PERIOD_MS)
 
+typedef enum LedName
+{
+  ledSetPoint,
+  ledStatus,
+  ledmode,
+  ledError,
+  ledFatal,
+  ledNrGpio,
+}led_control_t;
+
 typedef enum led_mode
 {
   led_Off,
@@ -57,6 +67,7 @@ typedef enum ledBlinkState
 
 typedef struct ledState
 {
+  GpioName_t    gpio;
   led_mode_t    mode;
   uint32_t      counter;
   ledBlinkState currentState;
@@ -66,10 +77,17 @@ typedef struct ledState
 
 typedef struct ledTaskParams
 {
-  ledState_t      ledState[NR_LEDS];
   eventHandler_t* evHandler;
 }ledTaskParams;
 
+static ledState_t ledState[] = 
+{
+  {LED_SETPOINT,  led_Off, 0, first},
+  {LED_STATUS,    led_Off, 0, first},
+  {LED_CTRL_MODE, led_Off, 0, first},
+  {LED_ERROR,     led_Off, 0, first},
+  {LED_FATAL,     led_Off, 0, first},
+};
 
 /**
  * The control task.
@@ -78,16 +96,16 @@ typedef struct ledTaskParams
 void Led_ControlTask( void *pvParameters );
 
 
-void Led_update( ledState_t* ledState, LedName_t pin);
+void Led_update( ledState_t* ledState);
 
 uint8_t Led_HandleFlightMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
 uint8_t Led_HandleCtrltMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
 uint8_t Led_HandlePeripheralError(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
 uint8_t Led_HandleValidSp(eventHandler_t* obj, void* taskParam, moduleMsg_t* data);
 
-void Led_toggleLed(ledState_t* ledState, LedName_t pin);
+void Led_toggleLed(ledState_t* ledState);
 
-void Led_resetLeds(ledTaskParams * param);
+void Led_resetLeds();
 
 void Led_CreateLedControlTask(eventHandler_t* evHandler )
 {
@@ -103,13 +121,13 @@ void Led_CreateLedControlTask(eventHandler_t* evHandler )
   {
     for(;;); //Error!
   }
-
-  ledState_t tmp = {0};
-  for(int i = 0; i < NR_LEDS; i++)
-  {
-    ledParams->ledState[i] = tmp;
-  }
-
+  Gpio_Init(LED_SETPOINT, Gpio_OutputOpenDrain, Gpio_NoPull);
+  Gpio_Init(LED_STATUS, Gpio_OutputOpenDrain, Gpio_NoPull);
+  Gpio_Init(LED_CTRL_MODE, Gpio_OutputOpenDrain, Gpio_NoPull);
+  Gpio_Init(LED_ERROR, Gpio_OutputOpenDrain, Gpio_NoPull);
+  Gpio_Init(LED_FATAL, Gpio_OutputOpenDrain, Gpio_NoPull);
+  Led_resetLeds();
+  
   Event_RegisterCallback(ledParams->evHandler, Msg_FlightMode_e,    Led_HandleFlightMode,      ledParams);
   Event_RegisterCallback(ledParams->evHandler, Msg_CtrlMode_e,      Led_HandleCtrltMode,       ledParams);
   Event_RegisterCallback(ledParams->evHandler, Msg_Error_e,         Led_HandlePeripheralError, ledParams);
@@ -146,83 +164,81 @@ void Led_ControlTask( void *pvParameters )
     vTaskDelayUntil( &xLastWakeTime, LED_TASK_DELAY );
     while(Event_Receive(param->evHandler, 0) == 1)
     {}
-    for(int i = 0; i < NR_LEDS; i++)
+    for(int i = 0; i < ledNrGpio; i++)
     {
-      if(i != ledHeartBeat) // ledHeartBeat is heart beat, controlled by main task.
-      {
-        Led_update(&param->ledState[i], i);
-      }
+
+        Led_update(&ledState[i]);
     }
   }
 
 }
 
-void Led_update( ledState_t* ledState, LedName_t pin)
+void Led_update( ledState_t* state)
 {
-  ledState->counter++;
-  switch ( ledState->mode )
+  state->counter++;
+  switch ( state->mode )
   {
   case led_Off:
-    Led_Off( pin );
-    ledState->counter = 0;
+    Gpio_PinSet( state->gpio );
+    state->counter = 0;
     break;
 
   case led_const_on:
-    Led_On( pin );
-    ledState->counter = 0;
+    Gpio_PinReset( state->gpio );
+    state->counter = 0;
     break;
 
   case led_blink_fast:
-    if ( ledState->counter >= 2 )
+    if ( state->counter >= 2 )
     {
-      Led_toggleLed( ledState, pin );
-      ledState->counter = 0;
+      Led_toggleLed( state );
+      state->counter = 0;
     }
     break;
   case led_blink_slow:
 
-    if ( ledState->counter >= 10 )
+    if ( state->counter >= 10 )
     {
-      Led_toggleLed( ledState, pin );
-      ledState->counter = 0;
+      Led_toggleLed( state );
+      state->counter = 0;
     }
     break;
 
   case led_double_blink:
-    if ( ledState->currentState == first )
+    if ( state->currentState == first )
     {
-      if ( ledState->counter >= 20 )
+      if ( state->counter >= 20 )
       {
-        Led_On( pin );
-        ledState->counter = 0;
-        ledState->currentState = second;
+        Gpio_PinReset( state->gpio );
+        state->counter = 0;
+        state->currentState = second;
       }
     }
-    else if ( ledState->currentState == second )
+    else if ( state->currentState == second )
     {
-      if ( ledState->counter >= 4 )
+      if ( state->counter >= 4 )
       {
-        Led_Off( pin );
-        ledState->counter = 0;
-        ledState->currentState = third;
+        Gpio_PinSet( state->gpio );
+        state->counter = 0;
+        state->currentState = third;
       }
     }
-    else if ( ledState->currentState == third )
+    else if ( state->currentState == third )
     {
-      if ( ledState->counter >= 2 )
+      if ( state->counter >= 2 )
       {
-        Led_On( pin );
-        ledState->counter = 0;
-        ledState->currentState = fourth;
+        Gpio_PinReset( state->gpio );
+        state->counter = 0;
+        state->currentState = fourth;
       }
     }
     else
     {
-      if ( ledState->counter >= fourth )
+      if ( state->counter >= fourth )
       {
-        Led_Off( pin );
-        ledState->counter = 0;
-        ledState->currentState = first;
+        Gpio_PinSet( state->gpio );
+        state->counter = 0;
+        state->currentState = first;
       }
     }
     break;
@@ -232,52 +248,51 @@ void Led_update( ledState_t* ledState, LedName_t pin)
   }
 }
 
-void Led_toggleLed(ledState_t* ledState, LedName_t pin )
+void Led_toggleLed(ledState_t* state )
 {
 
-  if ( ledState->currentState != first )
+  if ( state->currentState != first )
   {
-    Led_On( pin );
-    ledState->currentState = first;
+    Gpio_PinReset( state->gpio );
+    state->currentState = first;
   }
   else
   {
-    Led_Off( pin );
-    ledState->currentState = second;
+    Gpio_PinSet( state->gpio );
+    state->currentState = second;
   }
 }
 
 uint8_t Led_HandleFlightMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* data)
 {
-  ledTaskParams * param = (ledTaskParams*)(taskParam);
   FlightMode_t flightMode = Msg_FlightModeGetMode(data);
 
   switch(flightMode)
   {
   case fmode_init:
-    param->ledState[ledStatus].mode = led_blink_slow;
+    ledState[ledStatus].mode = led_blink_slow;
     break;
   case fmode_disarmed:
-    param->ledState[ledError].mode    = led_Off;
-    param->ledState[ledFatal].mode    = led_Off;
-    param->ledState[ledStatus].mode   = led_Off;
+    ledState[ledError].mode    = led_Off;
+    ledState[ledFatal].mode    = led_Off;
+    ledState[ledStatus].mode   = led_Off;
     break;
   case fmode_config:
-    param->ledState[ledStatus].mode = led_double_blink;
+    ledState[ledStatus].mode = led_double_blink;
     break;
   case fmode_arming:
-    param->ledState[ledStatus].mode = led_blink_fast;
+    ledState[ledStatus].mode = led_blink_fast;
     break;
   case fmode_armed:
-    param->ledState[ledStatus].mode = led_const_on;
+    ledState[ledStatus].mode = led_const_on;
     break;
   case fmode_disarming:
-    param->ledState[ledStatus].mode = led_blink_fast;
+    ledState[ledStatus].mode = led_blink_fast;
     break;
   case fmode_fault:
-    param->ledState[ledError].mode    = led_const_on;
-    param->ledState[ledFatal].mode    = led_const_on;
-    param->ledState[ledStatus].mode   = led_const_on;
+    ledState[ledError].mode    = led_const_on;
+    ledState[ledFatal].mode    = led_const_on;
+    ledState[ledStatus].mode   = led_const_on;
 
     break;
   case fmode_not_available:
@@ -289,18 +304,17 @@ uint8_t Led_HandleFlightMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* 
 }
 uint8_t Led_HandleCtrltMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* data)
 {
-  ledTaskParams * param = (ledTaskParams*)(taskParam);
   CtrlMode_t flightState = Msg_CtrlModeGetMode(data);
   switch(flightState)
   {
   case Control_mode_not_available:
-    param->ledState[ledmode].mode = led_Off;
+    ledState[ledmode].mode = led_Off;
     break;
   case Control_mode_rate:
-    param->ledState[ledmode].mode = led_const_on;
+    ledState[ledmode].mode = led_const_on;
     break;
   case Control_mode_attitude:
-    param->ledState[ledmode].mode = led_blink_slow;
+    ledState[ledmode].mode = led_blink_slow;
     break;
   default:
     break;
@@ -310,33 +324,30 @@ uint8_t Led_HandleCtrltMode(eventHandler_t* obj, void* taskParam, moduleMsg_t* d
 
 uint8_t Led_HandlePeripheralError(eventHandler_t* obj, void* taskParam, moduleMsg_t* data)
 {
-  ledTaskParams * param = (ledTaskParams*)(taskParam);
-  param->ledState[ledFatal].mode    = led_const_on;
+  ledState[ledFatal].mode    = led_const_on;
   return 0;
 }
 
-void Led_resetLeds(ledTaskParams * param)
+void Led_resetLeds()
 {
-  param->ledState[ledError].mode    = led_Off;
-  param->ledState[ledFatal].mode    = led_Off;
-  param->ledState[ledStatus].mode = led_Off;
-  param->ledState[ledmode].mode = led_Off;
-  param->ledState[ledHeartBeat].mode  = led_Off;
-  param->ledState[ledSetPoint].mode  = led_Off;
+  ledState[ledError].mode = led_Off;
+  ledState[ledFatal].mode = led_Off;
+  ledState[ledStatus].mode = led_Off;
+  ledState[ledmode].mode = led_Off;
+  ledState[ledSetPoint].mode = led_Off;
 }
 
 uint8_t Led_HandleValidSp(eventHandler_t* obj, void* taskParam, moduleMsg_t* data)
 {
-  ledTaskParams * param = (ledTaskParams*)(taskParam);
   uint32_t validSp = Msg_ValidSpGetValid(data);
 
   if(validSp)
   {
-    param->ledState[ledSetPoint].mode    = led_const_on;
+    ledState[ledSetPoint].mode = led_const_on;
   }
   else
   {
-    param->ledState[ledSetPoint].mode    = led_Off;
+    ledState[ledSetPoint].mode = led_Off;
   }
   
   return 1;

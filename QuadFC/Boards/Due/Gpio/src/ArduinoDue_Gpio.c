@@ -40,14 +40,14 @@ uint8_t pins[] = {
 const static int nrPins = sizeof(pins)/sizeof(pins[0]);
 const static int nrLeds = sizeof(leds)/sizeof(leds[0]);
 
-void Gpio_SetPinLow(GpioName_t pin)
+void Gpio_PinReset(GpioName_t pin)
 {
   if(pin < nrPins)
   {
     gpio_set_pin_low( pins[pin] );
   }
 }
-void Gpio_SetPinHigh(GpioName_t pin)
+void Gpio_PinSet(GpioName_t pin)
 {
   if(pin < nrPins)
   {

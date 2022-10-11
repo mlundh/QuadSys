@@ -52,7 +52,7 @@ void Board_SetupHardware( void )
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  MX_GPIO_Init();
+  //MX_GPIO_Init();
   MX_DMA_Init();
   MX_ADC1_Init();
   MX_CRC_Init();
