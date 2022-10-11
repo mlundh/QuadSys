@@ -53,6 +53,9 @@
 #include "Messages/inc/Msg_InitExternal.h"
 
 #define LOOP_TIME (CTRL_TIME * 50) // CTRL_TIME is 1ms, run this each 50 ms.
+
+#define E_STOP_PIN (Gpio_Pwm1)
+
 const static unsigned int SpTimeoutMs = 500;
 
 typedef struct Scott_E
@@ -103,6 +106,8 @@ void Scott_e_CreateTask(eventHandler_t *evHandler, uint32_t uartNrSabertooth)
 {
     /*Create the task*/
     Gpio_Init(HEARTBEAT, Gpio_OutputOpenDrain, Gpio_NoPull);
+    Gpio_Init(E_STOP_PIN, Gpio_OutputOpenDrain, Gpio_NoPull); // used as e-stop.
+    Gpio_PinSet(E_STOP_PIN); // start in e-stop.
 
     MaintaskParams_t *taskParam = pvPortMalloc(sizeof(MaintaskParams_t));
     taskParam->paramHandler = ParamHandler_CreateObj(10, evHandler, "Scott-E"); // Master handles all communication, we do not want to be master!
@@ -249,6 +254,7 @@ void Scott_e_Task(void *pvParameters)
 
             if (arming_counter >= (1000 / LOOP_TIME)) // Be in arming state for 1s.
             {
+                Gpio_PinSet(E_STOP_PIN);
                 arming_counter = 0;
                 if (!FMode_ChangeFMode(param->flightModeHandler, fmode_armed))
                 {
@@ -313,7 +319,8 @@ void Scott_e_Task(void *pvParameters)
                 Sabertooth_DriveM2(param->SaberToothArticulation, 0);
                 Sabertooth_DriveM1(param->SaberToothTool, 0);
                 Sabertooth_DriveM2(param->SaberToothTool, 0);
-                // MotorCtrl_Disable(param->motorControl);
+                Gpio_PinReset(E_STOP_PIN);
+
                 disarming_counter = 0;
                 if (!FMode_ChangeFMode(param->flightModeHandler, fmode_disarmed))
                 {
@@ -377,6 +384,8 @@ void main_fault(MaintaskParams_t *param)
     Sabertooth_DriveM2(param->SaberToothArticulation, 0);
     Sabertooth_DriveM1(param->SaberToothTool, 0);
     Sabertooth_DriveM2(param->SaberToothTool, 0);
+
+    Gpio_PinSet(E_STOP_PIN);
     FMode_Fault(param->flightModeHandler);
 }
 
