@@ -186,7 +186,14 @@ uint8_t SatSpHandler_UpdateState(spectrumSpHandler_t* obj, spektrum_data_t *merg
     if ((merged_data->ch[4].value > SATELLITE_CH_CENTER) // Flap is on
             && (merged_data->ch[0].value < 40)) // throttle is low
     {
-        if(obj->current_flight_mode_state != fmode_disarming && obj->current_flight_mode_state != fmode_disarmed)
+        if(obj->current_flight_mode_state == fmode_fault)
+        {
+            moduleMsg_t* msg = Msg_FlightModeReqCreate(FC_Broadcast_e, 0, fmode_exitFault);
+            Event_Send(obj->evHandler, msg);
+            // latch to avoid multiple events. Will get updated to real system state in event CB.
+            obj->current_flight_mode_state = fmode_exitFault;
+        }
+        else if(obj->current_flight_mode_state != fmode_disarming && obj->current_flight_mode_state != fmode_disarmed)
         {
             moduleMsg_t* msg = Msg_FlightModeReqCreate(FC_Broadcast_e, 0, fmode_disarming);
             Event_Send(obj->evHandler, msg);

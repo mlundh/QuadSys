@@ -379,10 +379,23 @@ void main_control_task( void *pvParameters )
              *
              *  TODO save reason for fault mode.
              */
-        {
-            static int i = 0;
-            i++;
-        }
+            {
+                static int i = 0;
+                i++;
+            }
+            break;
+        case fmode_exitFault:
+            /*-----------------------------------------fault mode---------------------------
+             *  Something has gone wrong and caused the FC to go into fault mode. Nothing
+             *  happens in fault mode. Only allowed transition is to disarmed mode.
+             *
+             *  TODO save reason for fault mode.
+             */
+            if(pdTRUE != FMode_ChangeFMode(param->flightModeHandler, fmode_disarming))
+            {
+                LOG_ENTRY(param->evHandler, "Main: Error - Failed to change flight mode to disarming!");
+                main_fault(param);
+            }
         break;
         case fmode_not_available:
             /*-----------------------------------------state not available mode----------------

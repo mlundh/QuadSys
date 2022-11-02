@@ -55,6 +55,8 @@
 #define LOOP_TIME (CTRL_TIME * 50) // CTRL_TIME is 1ms, run this each 50 ms.
 
 #define E_STOP_PIN (Gpio_Pwm1)
+#define RELAY_PIN (Gpio_Pwm2)
+
 
 const static unsigned int SpTimeoutMs = 500;
 
@@ -98,6 +100,12 @@ void Scott_e_Task(void *pvParameters);
  */
 void main_fault(MaintaskParams_t *param);
 
+
+void Scott_E_Estop();
+void Scott_E_ReleaseEstop();
+void Scott_E_PowerDriveMotors();
+void Scott_E_PowerDownDriveMotors();
+
 /*
  * void create_main_control_task(void)
  */
@@ -107,7 +115,9 @@ void Scott_e_CreateTask(eventHandler_t *evHandler, uint32_t uartNrSabertooth)
     /*Create the task*/
     Gpio_Init(HEARTBEAT, Gpio_OutputOpenDrain, Gpio_NoPull);
     Gpio_Init(E_STOP_PIN, Gpio_OutputOpenDrain, Gpio_NoPull); // used as e-stop.
-    Gpio_PinSet(E_STOP_PIN); // start in e-stop.
+    Gpio_Init(RELAY_PIN, Gpio_OutputPullPush, Gpio_NoPull); // Control relay powering main drive motors.
+    Scott_E_Estop(); // start in e-stop.
+    Scott_E_PowerDriveMotors(); // start in powerON state
 
     MaintaskParams_t *taskParam = pvPortMalloc(sizeof(MaintaskParams_t));
     taskParam->paramHandler = ParamHandler_CreateObj(10, evHandler, "Scott-E"); // Master handles all communication, we do not want to be master!
@@ -187,13 +197,14 @@ void Scott_e_Task(void *pvParameters)
     /*Initialize modules*/
     FMode_InitFModeHandler(param->flightModeHandler);
 
+    Scott_E_Estop(); // Estop should be enabled
+    Scott_E_PowerDownDriveMotors(); // Power down the motor controller.
     // Load saved parameters.
     moduleMsg_t *msg = Msg_ParamCreate(FC_Param_e, 0, param_load, 0, 0, 0);
     Event_Send(param->evHandler, msg);
 
     /*Utility variables*/
     TickType_t arming_counter = 0;
-    TickType_t disarming_counter = 0;
     uint32_t heartbeat_counter = 0;
 
     Log_t *Drive = Log_CreateObj(0, variable_type_fp_16_16, &param->motors.drive, NULL, param->logHandler, "Drive");
@@ -217,10 +228,13 @@ void Scott_e_Task(void *pvParameters)
             /*---------------------------------------Initialize mode------------------------
              * Initialize all modules then set the fc to disarmed state.
              */
+            Scott_E_PowerDriveMotors(); // Power up the motor controller so that we can configure timeouts etc.
+            vTaskDelay(250/LOOP_TIME); // wait so that the motor controller has time to start up.
+
             Sabertooth_SetTimeout(param->SaberToothDrive, 1);
             Sabertooth_SetTimeout(param->SaberToothArticulation, 1);
             Sabertooth_SetTimeout(param->SaberToothTool, 1);
-            // StateEst_init Might take time, reset the last wake time to avoid errors.
+            
             xLastWakeTime = xTaskGetTickCount();
 
             if (pdTRUE != FMode_ChangeFMode(param->flightModeHandler, fmode_disarming))
@@ -254,7 +268,7 @@ void Scott_e_Task(void *pvParameters)
 
             if (arming_counter >= (1000 / LOOP_TIME)) // Be in arming state for 1s.
             {
-                Gpio_PinSet(E_STOP_PIN);
+                Scott_E_ReleaseEstop(); // release e-stop
                 arming_counter = 0;
                 if (!FMode_ChangeFMode(param->flightModeHandler, fmode_armed))
                 {
@@ -310,27 +324,17 @@ void Scott_e_Task(void *pvParameters)
             /*---------------------------------------Disarming mode--------------------------
              * Transitional state. Only executed once.
              */
-
-            if (disarming_counter >= (200 / LOOP_TIME)) // Be in disarming state for 0.2s.
+            Sabertooth_DriveMixed(param->SaberToothDrive, 0);
+            Sabertooth_TurnMixed(param->SaberToothDrive, 0);
+            Sabertooth_DriveM1(param->SaberToothArticulation, 0);
+            Sabertooth_DriveM2(param->SaberToothArticulation, 0);
+            Sabertooth_DriveM1(param->SaberToothTool, 0);
+            Sabertooth_DriveM2(param->SaberToothTool, 0);
+            Scott_E_Estop(); // pull e-stop when disarming. This should ensure all motors are stopped. Slightly redundant.
+            if (!FMode_ChangeFMode(param->flightModeHandler, fmode_disarmed))
             {
-                Sabertooth_DriveMixed(param->SaberToothDrive, 0);
-                Sabertooth_TurnMixed(param->SaberToothDrive, 0);
-                Sabertooth_DriveM1(param->SaberToothArticulation, 0);
-                Sabertooth_DriveM2(param->SaberToothArticulation, 0);
-                Sabertooth_DriveM1(param->SaberToothTool, 0);
-                Sabertooth_DriveM2(param->SaberToothTool, 0);
-                Gpio_PinReset(E_STOP_PIN);
-
-                disarming_counter = 0;
-                if (!FMode_ChangeFMode(param->flightModeHandler, fmode_disarmed))
-                {
-                    LOG_ENTRY(param->evHandler, "Main: Error - Failed to change flight mode to disarmed.");
-                    main_fault(param);
-                }
-            }
-            else
-            {
-                disarming_counter++;
+                LOG_ENTRY(param->evHandler, "Main: Error - Failed to change flight mode to disarmed.");
+                main_fault(param);
             }
             break;
         case fmode_fault:
@@ -345,6 +349,20 @@ void Scott_e_Task(void *pvParameters)
                 i++;
             }
             break;
+        case fmode_exitFault:
+            /*-----------------------------------------fault mode---------------------------
+             *  Something has gone wrong and caused the FC to go into fault mode. Nothing
+             *  happens in fault mode. Only allowed transition is to disarmed mode.
+             *
+             *  TODO save reason for fault mode.
+             */
+            Scott_E_PowerDriveMotors();
+            if(pdTRUE != FMode_ChangeFMode(param->flightModeHandler, fmode_disarming))
+            {
+                LOG_ENTRY(param->evHandler, "Main: Error - Failed to change flight mode to disarming!");
+                main_fault(param);
+            }
+        break;
         case fmode_not_available:
             /*-----------------------------------------state not available mode----------------
              * Something is very wrong if the FC is in state_not_available.
@@ -385,8 +403,29 @@ void main_fault(MaintaskParams_t *param)
     Sabertooth_DriveM1(param->SaberToothTool, 0);
     Sabertooth_DriveM2(param->SaberToothTool, 0);
 
-    Gpio_PinSet(E_STOP_PIN);
+    Scott_E_PowerDownDriveMotors(); // Turn off power to motor controller.
+    Scott_E_Estop();
     FMode_Fault(param->flightModeHandler);
+}
+
+void Scott_E_Estop()
+{
+    Gpio_PinReset(E_STOP_PIN);
+}
+
+void Scott_E_ReleaseEstop()
+{
+    Gpio_PinSet(E_STOP_PIN);
+}
+
+void Scott_E_PowerDriveMotors()
+{
+    Gpio_PinSet(RELAY_PIN);
+}
+
+void Scott_E_PowerDownDriveMotors()
+{
+    Gpio_PinReset(RELAY_PIN);
 }
 
 uint8_t Scott_E_InitExternal(eventHandler_t *obj, void *data, moduleMsg_t *msg)

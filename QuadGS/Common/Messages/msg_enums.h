@@ -41,6 +41,7 @@ typedef enum {
     fmode_armed,         // Armed state, FC is flight ready.
     fmode_disarming,     // Disarming.
     fmode_fault,         // FC has encountered a serious problem and has halted.
+    fmode_exitFault,     // FC exiting fault condition.
     fmode_not_available, // state information not available.
 }FlightMode_t;
 

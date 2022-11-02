@@ -140,6 +140,12 @@ static BaseType_t FMode_ChangeAllowed(FlightModeHandler_t* obj, FlightMode_t sta
         }
         break;
     case fmode_fault:
+        if(    (state_req == fmode_exitFault) )
+        {
+            return pdTRUE;
+        }
+        break;
+    case fmode_exitFault:
         if(    (state_req == fmode_disarming) )
         {
             return pdTRUE;
