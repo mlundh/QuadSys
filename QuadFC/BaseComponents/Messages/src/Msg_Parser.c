@@ -39,6 +39,7 @@
 #include "../../Messages/inc/Msg_FlightModeReq.h"
 #include "../../Messages/inc/Msg_CtrlModeReq.h"
 #include "../../Messages/inc/Msg_NewSetpoint.h"
+#include "../../Messages/inc/Msg_NewRcSetpoint.h"
 #include "../../Messages/inc/Msg_RegisterHandler.h"
 #include "../../Messages/inc/Msg_Subscriptions.h"
 #include "../../Messages/inc/Msg_FcLog.h"
@@ -164,6 +165,12 @@ moduleMsg_t* Msg_Parse(uint8_t* buffer, uint32_t bufferLength)
     case Msg_NewSetpoint_e:
     {
         msgResult = Msg_NewSetpointDeserialize(buffer, bufferLength);
+        break;
+    }
+    
+    case Msg_NewRcSetpoint_e:
+    {
+        msgResult = Msg_NewRcSetpointDeserialize(buffer, bufferLength);
         break;
     }
     
@@ -337,6 +344,11 @@ uint8_t* Msg_Serializer(moduleMsg_t* msg, uint8_t* buffer, uint32_t bufferLength
         case Msg_NewSetpoint_e:
     {
         result = Msg_NewSetpointSerialize(msg, buffer, bufferLength);
+        break;
+    }
+        case Msg_NewRcSetpoint_e:
+    {
+        result = Msg_NewRcSetpointSerialize(msg, buffer, bufferLength);
         break;
     }
         case Msg_RegisterHandler_e:

@@ -74,7 +74,7 @@ uint8_t Sabertooth_DriveMixed(Sabertooth_t* obj, int32_t value)
     }
     if(value & ~0x7F) // check if we have a value above our max, if so, then clamp to max.
     {
-        value = 0x7b;
+        value = 0x7F;
     }
     
     return Sabertooth_SendCommand(obj, command, value);

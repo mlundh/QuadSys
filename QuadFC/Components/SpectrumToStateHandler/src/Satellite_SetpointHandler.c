@@ -29,7 +29,7 @@
 #include "Components/AppLog/inc/AppLog.h"
 #include "SetpointHandler/inc/setpoint_handler.h"
 #include "Parameters/inc/paramHandler.h"
-#include "SpectrumSatellite/inc/Satellite_SetpointHandler.h"
+#include "SpectrumToStateHandler/inc/Satellite_SetpointHandler.h"
 #include "SpectrumSatellite/inc/satellite_receiver_public.h"
 #include "EventHandler/inc/event_handler.h"
 #include "Messages/inc/Msg_FlightMode.h"

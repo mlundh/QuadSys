@@ -1,6 +1,7 @@
 list(APPEND src "Msg_FlightModeReq.cpp"
 				"Msg_CtrlModeReq.cpp"
 				"Msg_NewSetpoint.cpp"
+				"Msg_NewRcSetpoint.cpp"
 				)
                 
 list(APPEND dep "BinaryStream"

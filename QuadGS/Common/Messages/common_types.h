@@ -164,6 +164,11 @@ typedef struct state_data
   uint16_t state_valid_if;         //!< bits used to determine if the state is valid.
 }state_data_t;
 
+#define RC_CHANNELS (12)
+typedef struct genericRC
+{
+  int32_t channel[RC_CHANNELS];
+}genericRC_t;
 
 /**
  * Control signal struct. Values in 16.16 fixed point.
@@ -239,7 +244,7 @@ typedef struct ImuOrientation
 }ImuOrientation_t;
 
 /**
- * Stream operator ImuData_t struct.
+ * Stream operator state_data_t struct.
  */
 inline BinaryIStream&
 operator>>(BinaryIStream& stream, state_data_t& state)
@@ -257,7 +262,7 @@ operator>>(BinaryIStream& stream, state_data_t& state)
 	return stream;
 }
 /**
- * Stream operator ImuData_t struct.
+ * Stream operator state_data_t struct.
  */
 inline BinaryOStream&
 operator<<(BinaryOStream& stream, const state_data_t& state)
@@ -276,7 +281,32 @@ operator<<(BinaryOStream& stream, const state_data_t& state)
 }
 
 /**
- * Stream operator ImuData_t struct.
+ * Stream operator genericRC_t struct.
+ */
+inline BinaryIStream&
+operator>>(BinaryIStream& stream, genericRC_t& sp)
+{
+	for(int i = 0; i < RC_CHANNELS; i++)
+	{
+		stream >> sp.channel[i];
+	}
+	return stream;
+}
+/**
+ * Stream operator genericRC_t struct.
+ */
+inline BinaryOStream&
+operator<<(BinaryOStream& stream, const genericRC_t& sp)
+{
+	for(int i = 0; i < RC_CHANNELS; i++)
+	{
+		stream << sp.channel[i];
+	}
+	return stream;
+}
+
+/**
+ * Stream operator control_signal_t struct.
  */
 inline BinaryIStream&
 operator>>(BinaryIStream& stream, control_signal_t& ctrl)
@@ -288,9 +318,8 @@ operator>>(BinaryIStream& stream, control_signal_t& ctrl)
 	return stream;
 }
 
-
 /**
- * Stream operator ImuData_t struct.
+ * Stream operator control_signal_t struct.
  */
 inline BinaryOStream&
 operator<<(BinaryOStream& stream, const control_signal_t& ctrl)
@@ -301,6 +330,7 @@ operator<<(BinaryOStream& stream, const control_signal_t& ctrl)
 	}
 	return stream;
 }
+
 /**
  * Stream operator ImuData_t struct.
  */
@@ -351,8 +381,6 @@ operator>>(BinaryIStream& stream, ImuOrientation_t& imu)
 	stream >> imu.r_2_0;
 	stream >> imu.r_2_1;
 	stream >> imu.r_2_2;
-	stream >> imu.acc_sign;
-	stream >> imu.gyro_sign;
 
 	return stream;
 }
@@ -372,8 +400,6 @@ operator<<(BinaryOStream& stream, const ImuOrientation_t& imu)
 	stream << imu.r_2_0;
 	stream << imu.r_2_1;
 	stream << imu.r_2_2;
-	stream << imu.acc_sign;
-	stream << imu.gyro_sign;
 
 	return stream;
 }

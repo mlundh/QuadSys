@@ -164,6 +164,11 @@ typedef struct state_data
   uint16_t state_valid_if;         //!< bits used to determine if the state is valid.
 }state_data_t;
 
+#define RC_CHANNELS (12)
+typedef struct genericRC
+{
+  int32_t channel[RC_CHANNELS];
+}genericRC_t;
 
 /**
  * Control signal struct. Values in 16.16 fixed point.

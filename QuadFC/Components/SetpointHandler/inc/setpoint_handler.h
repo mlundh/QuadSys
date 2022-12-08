@@ -37,7 +37,7 @@ typedef struct SpObj SpHandler_t;
  * Create a setpointGenerator object.
  * @return    Control system object containing everything needed by the controller.
  */
-SpHandler_t *SpHandl_Create(eventHandler_t* eHandler);
+SpHandler_t *RcSpHandl_Create(eventHandler_t* eHandler);
 
 /**
  * Interface function for getting new setpoints. Only to be used by the owner of the module.

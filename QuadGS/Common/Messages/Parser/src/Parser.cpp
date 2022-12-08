@@ -54,6 +54,7 @@
 #include "Msg_FlightModeReq.h"
 #include "Msg_CtrlModeReq.h"
 #include "Msg_NewSetpoint.h"
+#include "Msg_NewRcSetpoint.h"
 
 
 
@@ -311,6 +312,14 @@ QGS_ModuleMsgBase::ptr Parser::parse( std::vector<unsigned char>  data)
 	case messageTypes_t::Msg_NewSetpoint_e:
 	{
 		Msg_NewSetpoint::ptr ptr = std::make_unique<Msg_NewSetpoint>(msgBase);
+		ptr->setSkipStreamHeader();
+		is >> *ptr;
+		returnPtr = std::move(ptr);
+		break;
+	}
+	case messageTypes_t::Msg_NewRcSetpoint_e:
+	{
+		Msg_NewRcSetpoint::ptr ptr = std::make_unique<Msg_NewRcSetpoint>(msgBase);
 		ptr->setSkipStreamHeader();
 		is >> *ptr;
 		returnPtr = std::move(ptr);

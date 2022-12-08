@@ -61,6 +61,10 @@ uint8_t* deserialize_string(uint8_t *buffer, uint32_t* size, uint8_t* string, ui
 uint8_t* serialize_control_signal_t(uint8_t *buffer, uint32_t* size, control_signal_t* value);
 uint8_t* deserialize_control_signal_t(uint8_t *buffer, uint32_t* size, control_signal_t* value);
 
+uint8_t* serialize_genericRC_t(uint8_t *buffer, uint32_t* size, genericRC_t* value);
+uint8_t* deserialize_genericRC_t(uint8_t *buffer, uint32_t* size, genericRC_t* value);
+
+
 uint8_t* serialize_state_data_t(uint8_t *buffer, uint32_t* size, state_data_t* value);
 uint8_t* deserialize_state_data_t(uint8_t *buffer, uint32_t* size, state_data_t* value);
 

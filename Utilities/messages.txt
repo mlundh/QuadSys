@@ -54,6 +54,8 @@ Msg_InitExternal --member std::string init
 Msg_FlightModeReq --member uint8_t mode
 Msg_CtrlModeReq --member uint8_t mode
 Msg_NewSetpoint --member state_data_t setpoint --member uint8_t priority --member uint8_t validFor
+Msg_NewRcSetpoint --member genericRC_t setpoint --member uint8_t priority --member uint8_t validFor
+
 *
 
 # ---------- FC only ---------------

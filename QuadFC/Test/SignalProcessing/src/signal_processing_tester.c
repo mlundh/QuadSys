@@ -34,7 +34,7 @@
 #include "Test/SignalProcessing/signal_processing_tester.h"
 #include "StateEstimator/inc/state_estimator.h"
 #include "SpectrumSatellite/inc/satellite_receiver_public.h"
-#include "SpectrumSatellite/inc/Satellite_SetpointHandler.h"
+#include "SpectrumToStateHandler/inc/Satellite_SetpointHandler.h"
 #include "StateEstimator/inc/signal_processing.h"
 #include "ControlModeHandler/inc/control_mode_handler.h"
 #include "Parameters/inc/parameters.h"

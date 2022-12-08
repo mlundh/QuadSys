@@ -50,7 +50,7 @@
 #include "QuadFC/QuadFC_IMU.h"
 #include "Parameters/inc/parameters.h"
 #include "SetpointHandler/inc/setpoint_handler.h"
-#include "SpectrumSatellite/inc/Satellite_SetpointHandler.h"
+#include "SpectrumToStateHandler/inc/Satellite_SetpointHandler.h"
 #include "ControlModeHandler/inc/control_mode_handler.h"
 #include "FlightModeHandler/inc/flight_mode_handler.h"
 #include "Log/inc/logHandler.h"
@@ -109,7 +109,7 @@ void QuadFC_CreateMainControlTask(eventHandler_t* evHandler)
     taskParam->flightModeHandler = FMode_CreateFmodeHandler(evHandler); // registers event handler for flight mode requests.
     taskParam->stateEst = StateEst_Create(ParamHandler_GetParam(taskParam->paramHandler));
     taskParam->imu = Imu_Create(ParamHandler_GetParam(taskParam->paramHandler),0);
-    taskParam->setPointHandler = SpHandl_Create(evHandler);
+    taskParam->setPointHandler = RcSpHandl_Create(evHandler);
     taskParam->spectrumSpHandler = SatSpHandler_CreateObj(evHandler, ParamHandler_GetParam(taskParam->paramHandler));
     taskParam->CtrlModeHandler = Ctrl_CreateModeHandler(evHandler);
     taskParam->evHandler = evHandler;

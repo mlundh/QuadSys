@@ -193,6 +193,51 @@ uint8_t* deserialize_control_signal_t(uint8_t *buffer, uint32_t* size, control_s
     return buffer;
 }
 
+uint8_t* serialize_genericRC_t(uint8_t *buffer, uint32_t* size, genericRC_t* value)
+{
+    if(!buffer || *size < (sizeof(int32_t)*4) || !value)
+    {
+        return NULL;
+    }
+    buffer = serialize_int32_t(buffer, size, &value->channel[0]);
+    buffer = serialize_int32_t(buffer, size, &value->channel[1]);
+    buffer = serialize_int32_t(buffer, size, &value->channel[2]);
+    buffer = serialize_int32_t(buffer, size, &value->channel[3]);
+    buffer = serialize_int32_t(buffer, size, &value->channel[4]);
+    buffer = serialize_int32_t(buffer, size, &value->channel[5]);
+    buffer = serialize_int32_t(buffer, size, &value->channel[6]);
+    buffer = serialize_int32_t(buffer, size, &value->channel[7]);
+    buffer = serialize_int32_t(buffer, size, &value->channel[8]);
+    buffer = serialize_int32_t(buffer, size, &value->channel[9]);
+    buffer = serialize_int32_t(buffer, size, &value->channel[10]);
+    buffer = serialize_int32_t(buffer, size, &value->channel[11]);
+    
+
+    return buffer;
+}
+uint8_t* deserialize_genericRC_t(uint8_t *buffer, uint32_t* size, genericRC_t* value)
+{
+    if(!buffer || *size < (sizeof(int32_t)*4) || !value)
+    {
+        return NULL;
+    }
+    buffer = deserialize_int32_t(buffer, size, &value->channel[0]);
+    buffer = deserialize_int32_t(buffer, size, &value->channel[1]);
+    buffer = deserialize_int32_t(buffer, size, &value->channel[2]);
+    buffer = deserialize_int32_t(buffer, size, &value->channel[3]);
+    buffer = deserialize_int32_t(buffer, size, &value->channel[4]);
+    buffer = deserialize_int32_t(buffer, size, &value->channel[5]);
+    buffer = deserialize_int32_t(buffer, size, &value->channel[6]);
+    buffer = deserialize_int32_t(buffer, size, &value->channel[7]);
+    buffer = deserialize_int32_t(buffer, size, &value->channel[8]);
+    buffer = deserialize_int32_t(buffer, size, &value->channel[9]);
+    buffer = deserialize_int32_t(buffer, size, &value->channel[10]);
+    buffer = deserialize_int32_t(buffer, size, &value->channel[11]);
+
+
+    return buffer;
+}
+
 uint8_t* serialize_state_data_t(uint8_t *buffer, uint32_t* size, state_data_t* value)
 {
     if(!buffer || *size < (sizeof(state_data_t)) || !value)
