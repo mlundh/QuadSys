@@ -60,10 +60,12 @@
 
 const static unsigned int SpTimeoutMs = 500;
 
+static int motorSelect = 0;
+
 typedef struct Scott_E
 {
-    int32_t drive;
-    int32_t turn;
+    int32_t drive_m1;
+    int32_t drive_m2;
     int32_t tool_1;
     int32_t tool_2;
     int32_t tool_pitch;
@@ -210,14 +212,16 @@ void Scott_e_Task(void *pvParameters)
     TickType_t arming_counter = 0;
     uint32_t heartbeat_counter = 0;
 
-    Log_t *Drive = Log_CreateObj(0, variable_type_fp_16_16, &param->motors.drive, NULL, param->logHandler, "Drive");
-    Log_t *Turn = Log_CreateObj(0, variable_type_fp_16_16, &param->motors.turn, NULL, param->logHandler, "Turn");
+    Log_t *drive_m1 = Log_CreateObj(0, variable_type_fp_16_16, &param->motors.drive_m1, NULL, param->logHandler, "drive_m1");
+    Log_t *drive_m2 = Log_CreateObj(0, variable_type_fp_16_16, &param->motors.drive_m2, NULL, param->logHandler, "drive_m2");
     Log_t *ToolPitch = Log_CreateObj(0, variable_type_fp_16_16, &param->motors.tool_pitch, NULL, param->logHandler, "ToolPitch");
     Log_t *ToolYaw = Log_CreateObj(0, variable_type_fp_16_16, &param->motors.tool_yaw, NULL, param->logHandler, "ToolYaw");
     Log_t *Tool_1 = Log_CreateObj(0, variable_type_fp_16_16, &param->motors.tool_1, NULL, param->logHandler, "Tool_1");
     Log_t *Tool_2 = Log_CreateObj(0, variable_type_fp_16_16, &param->motors.tool_2, NULL, param->logHandler, "Tool_2");
     Log_t *eStopRc = Log_CreateObj(0, variable_type_fp_16_16, &param->eStopRcState, NULL, param->logHandler, "eStopRC");
     Log_t *armingSw = Log_CreateObj(0, variable_type_fp_16_16, &param->armingSwithchStateRc, NULL, param->logHandler, "armingSw");
+    Log_t *motorSelectLog = Log_CreateObj(0, variable_type_fp_16_16, &motorSelect, NULL, param->logHandler, "motorSelect");
+
     /*The main control loop*/
 
     unsigned portBASE_TYPE xLastWakeTime = xTaskGetTickCount();
@@ -263,7 +267,7 @@ void Scott_e_Task(void *pvParameters)
              * Initialize all modules then set the fc to disarmed state.
              */
             Scott_E_PowerDriveMotors(); // Power up the motor controller so that we can configure timeouts etc.
-            vTaskDelay(250/LOOP_TIME); // wait so that the motor controller has time to start up.
+            vTaskDelay(700/LOOP_TIME); // wait so that the motor controller has time to start up.
 
             Sabertooth_SetTimeout(param->SaberToothDrive, 3);
             Sabertooth_SetTimeout(param->SaberToothArticulation, 4);
@@ -320,20 +324,45 @@ void Scott_e_Task(void *pvParameters)
              * The FC is armed and operational. The main control loop only handles
              * the Control system.
              */
-            Sabertooth_DriveMixed(param->SaberToothDrive, param->motors.drive);
-            Sabertooth_TurnMixed(param->SaberToothDrive, param->motors.turn);
+            if(( motorSelect > -DOUBLE_TO_FIXED(0.3, MAX16f) ) && ( DOUBLE_TO_FIXED(0.3, MAX16f) >  motorSelect ))
+            {
+                Sabertooth_DriveM1(param->SaberToothDrive, param->motors.drive_m1);
+                Sabertooth_DriveM2(param->SaberToothDrive, param->motors.drive_m2);
+            }
+            else if( DOUBLE_TO_FIXED(0.3, MAX16f) > motorSelect )
+            {
+                param->motors.drive_m2 = 0;
+                Sabertooth_DriveM1(param->SaberToothDrive, param->motors.drive_m1);
+            }
+            else
+            {
+                param->motors.drive_m1 = 0;
+                Sabertooth_DriveM2(param->SaberToothDrive, param->motors.drive_m2);
+            }
             Sabertooth_DriveM1(param->SaberToothArticulation, param->motors.tool_pitch);
             Sabertooth_DriveM2(param->SaberToothArticulation, param->motors.tool_yaw);
             Sabertooth_DriveM1(param->SaberToothTool, param->motors.tool_1);
             Sabertooth_DriveM2(param->SaberToothTool, param->motors.tool_2);
+
+
+
+            Log_Report(drive_m1);
+            Log_Report(drive_m2);
+            Log_Report(ToolPitch);
+            Log_Report(ToolYaw);
+            Log_Report(Tool_1);
+            Log_Report(Tool_2);
+            Log_Report(armingSw);
+            Log_Report(eStopRc);
+            Log_Report(motorSelectLog);
 
             break;
         case fmode_disarming:
             /*---------------------------------------Disarming mode--------------------------
              * Transitional state. Only executed once.
              */
-            Sabertooth_DriveMixed(param->SaberToothDrive, 0);
-            Sabertooth_TurnMixed(param->SaberToothDrive, 0);
+            Sabertooth_DriveM1(param->SaberToothDrive, 0);
+            Sabertooth_DriveM2(param->SaberToothDrive, 0);
             Sabertooth_DriveM1(param->SaberToothArticulation, 0);
             Sabertooth_DriveM2(param->SaberToothArticulation, 0);
             Sabertooth_DriveM1(param->SaberToothTool, 0);
@@ -395,14 +424,6 @@ void Scott_e_Task(void *pvParameters)
             heartbeat_counter = 0;
         }
 
-        Log_Report(Drive);
-        Log_Report(Turn);
-        Log_Report(ToolPitch);
-        Log_Report(ToolYaw);
-        Log_Report(Tool_1);
-        Log_Report(Tool_2);
-        Log_Report(armingSw);
-        Log_Report(eStopRc);
 
         vTaskDelayUntil(&xLastWakeTime, LOOP_TIME);
 
@@ -414,8 +435,8 @@ void Scott_e_Task(void *pvParameters)
 void main_fault(MaintaskParams_t *param)
 {
     // MotorCtrl_Disable(param->motorControl);
-    Sabertooth_DriveMixed(param->SaberToothDrive, 0);
-    Sabertooth_TurnMixed(param->SaberToothDrive, 0);
+    Sabertooth_DriveM1(param->SaberToothDrive, 0);
+    Sabertooth_DriveM2(param->SaberToothDrive, 0);
     Sabertooth_DriveM1(param->SaberToothArticulation, 0);
     Sabertooth_DriveM2(param->SaberToothArticulation, 0);
     Sabertooth_DriveM1(param->SaberToothTool, 0);
@@ -473,9 +494,9 @@ uint8_t Scott_E_InitExternal(eventHandler_t *obj, void *data, moduleMsg_t *msg)
         return 0;
     }
 
-    Sabertooth_SetTimeout(taskParam->SaberToothDrive, 1);
-    Sabertooth_SetTimeout(taskParam->SaberToothArticulation, 1);
-    Sabertooth_SetTimeout(taskParam->SaberToothTool, 1);
+    Sabertooth_SetTimeout(taskParam->SaberToothDrive, 3);
+    Sabertooth_SetTimeout(taskParam->SaberToothArticulation, 3);
+    Sabertooth_SetTimeout(taskParam->SaberToothTool, 3);
 
 
     // update the sabertooth baud on the connected units.
@@ -507,15 +528,22 @@ uint8_t Scott_E_InitExternal(eventHandler_t *obj, void *data, moduleMsg_t *msg)
 
 void Scott_E_SpToSaber(MaintaskParams_t *param, FlightMode_t mode)
 {
-    param->motors.tool_pitch = param->setpoint->channel[0]; //throttle
-    param->motors.turn       = param->setpoint->channel[1]; //turn  roll
-    param->motors.drive      = param->setpoint->channel[2]; //drive
-    param->motors.tool_yaw   = param->setpoint->channel[3]; //tool yaw
-    param->armingSwithchStateRc = param->setpoint->channel[4]; //gear 
-    param->motors.tool_2     = param->setpoint->channel[5]; //Tool2 aux1
+    int32_t drive = param->setpoint->channel[2]; //drive
+    int32_t turn = param->setpoint->channel[1]; //turn  
 
-    param->motors.tool_1     = param->setpoint->channel[6]; //tool 1 gear
+    param->motors.tool_pitch = param->setpoint->channel[0]; //throttle
+    param->motors.drive_m1   = drive + turn;
+    param->motors.drive_m2   = drive - turn;
+    param->motors.tool_yaw   = param->setpoint->channel[3]; //tool 
+    param->armingSwithchStateRc = param->setpoint->channel[4]; //gear
+
+    //param->motors.tool_2     = param->setpoint->channel[5]; //Tool2 
+    motorSelect = param->setpoint->channel[5]; //Tool2 
+
+    param->motors.tool_1     = param->setpoint->channel[6]; //tool 1 
+    
     param->eStopRcState      = param->setpoint->channel[7]; //aux 3
+    
 
     if(mode == fmode_init || mode == fmode_not_available)
     {
@@ -544,7 +572,7 @@ void Scott_E_SpToSaber(MaintaskParams_t *param, FlightMode_t mode)
         }
         else/*Arming request*/
         {
-            if(mode != fmode_arming && mode != fmode_armed)
+            if(mode != fmode_arming && mode != fmode_armed && mode != fmode_init)
             {
                 if(pdTRUE != FMode_ChangeFMode(param->flightModeHandler, fmode_arming))
                 {

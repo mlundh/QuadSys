@@ -27,6 +27,7 @@
 #include "HAL/QuadFC/QuadFC_Serial.h"
 
 #define CHECKSUM(buffer) (uint8_t)((buffer[0] + buffer[1] + buffer[2]) & 127)
+#define MAX_DRIVE_VALUE (100) //(127)
 
 uint8_t Sabertooth_SendCommand(Sabertooth_t* obj, uint8_t command, uint8_t value)
 {
@@ -72,9 +73,9 @@ uint8_t Sabertooth_DriveMixed(Sabertooth_t* obj, int32_t value)
         value = -value; // We should reverse, cange sign and change command.
         command = STC_driveBackwardMixed;
     }
-    if(value & ~0x7F) // check if we have a value above our max, if so, then clamp to max.
+    if (value > MAX_DRIVE_VALUE)// check if we have a value above our max, if so, then clamp to max.
     {
-        value = 0x7F;
+        value = MAX_DRIVE_VALUE;
     }
     
     return Sabertooth_SendCommand(obj, command, value);
@@ -95,9 +96,9 @@ uint8_t Sabertooth_TurnMixed(Sabertooth_t* obj, int32_t value)
         value = -value; // We should reverse, cange sign and change command.
         command = STC_turnLeftMixed;
     }
-    if(value & ~0x7F) // check if we have a value above our max, if so, then clamp to max.
+    if (value > MAX_DRIVE_VALUE)// check if we have a value above our max, if so, then clamp to max.
     {
-        value = 0x7F;
+        value = MAX_DRIVE_VALUE;
     }
     return Sabertooth_SendCommand(obj, command, value);
 
@@ -118,9 +119,9 @@ uint8_t Sabertooth_DriveM1(Sabertooth_t* obj, int32_t value)
         value = -value; // We should reverse, cange sign and change command.
         command = STC_driveBackwardM1;
     }
-    if(value & ~0x7F) // check if we have a value above our max, if so, then clamp to max.
+    if (value > MAX_DRIVE_VALUE) // check if we have a value above our max, if so, then clamp to max. 
     {
-        value = 0x7F;
+        value = MAX_DRIVE_VALUE;
     }
     return Sabertooth_SendCommand(obj, command, value);
 }
@@ -140,9 +141,9 @@ uint8_t Sabertooth_DriveM2(Sabertooth_t* obj, int32_t value)
         value = -value; // We should reverse, cange sign and change command.
         command = STC_driveBackwardM2;
     }
-    if(value & ~0x7F) // check if we have a value above our max, if so, then clamp to max.
+    if (value > MAX_DRIVE_VALUE)// check if we have a value above our max, if so, then clamp to max.
     {
-        value = 0x7F;
+        value = MAX_DRIVE_VALUE;
     }
     return Sabertooth_SendCommand(obj, command, value);
 }
@@ -164,7 +165,7 @@ uint8_t Sabertooth_SetDeadband(Sabertooth_t* obj, uint8_t deadband)
     {
         return 0;
     }
-    if(deadband > 127) // check if we have a deadband above our max, if so, return an error.
+    if(deadband > 0x7F) // check if we have a deadband above our max, if so, return an error.
     {
         return 0;
     }
