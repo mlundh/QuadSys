@@ -27,7 +27,7 @@
 #include "HAL/QuadFC/QuadFC_Serial.h"
 
 #define CHECKSUM(buffer) (uint8_t)((buffer[0] + buffer[1] + buffer[2]) & 127)
-#define MAX_DRIVE_VALUE (100) //(127)
+#define MAX_DRIVE_VALUE (127)
 
 uint8_t Sabertooth_SendCommand(Sabertooth_t* obj, uint8_t command, uint8_t value)
 {

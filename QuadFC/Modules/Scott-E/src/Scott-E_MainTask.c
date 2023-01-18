@@ -60,8 +60,6 @@
 
 const static unsigned int SpTimeoutMs = 500;
 
-static int motorSelect = 0;
-
 typedef struct Scott_E
 {
     int32_t drive_m1;
@@ -220,7 +218,6 @@ void Scott_e_Task(void *pvParameters)
     Log_t *Tool_2 = Log_CreateObj(0, variable_type_fp_16_16, &param->motors.tool_2, NULL, param->logHandler, "Tool_2");
     Log_t *eStopRc = Log_CreateObj(0, variable_type_fp_16_16, &param->eStopRcState, NULL, param->logHandler, "eStopRC");
     Log_t *armingSw = Log_CreateObj(0, variable_type_fp_16_16, &param->armingSwithchStateRc, NULL, param->logHandler, "armingSw");
-    Log_t *motorSelectLog = Log_CreateObj(0, variable_type_fp_16_16, &motorSelect, NULL, param->logHandler, "motorSelect");
 
     /*The main control loop*/
 
@@ -324,21 +321,9 @@ void Scott_e_Task(void *pvParameters)
              * The FC is armed and operational. The main control loop only handles
              * the Control system.
              */
-            if(( motorSelect > -DOUBLE_TO_FIXED(0.3, MAX16f) ) && ( DOUBLE_TO_FIXED(0.3, MAX16f) >  motorSelect ))
-            {
-                Sabertooth_DriveM1(param->SaberToothDrive, param->motors.drive_m1);
-                Sabertooth_DriveM2(param->SaberToothDrive, param->motors.drive_m2);
-            }
-            else if( DOUBLE_TO_FIXED(0.3, MAX16f) > motorSelect )
-            {
-                param->motors.drive_m2 = 0;
-                Sabertooth_DriveM1(param->SaberToothDrive, param->motors.drive_m1);
-            }
-            else
-            {
-                param->motors.drive_m1 = 0;
-                Sabertooth_DriveM2(param->SaberToothDrive, param->motors.drive_m2);
-            }
+
+            Sabertooth_DriveM1(param->SaberToothDrive, param->motors.drive_m1);
+            Sabertooth_DriveM2(param->SaberToothDrive, param->motors.drive_m2);
             Sabertooth_DriveM1(param->SaberToothArticulation, param->motors.tool_pitch);
             Sabertooth_DriveM2(param->SaberToothArticulation, param->motors.tool_yaw);
             Sabertooth_DriveM1(param->SaberToothTool, param->motors.tool_1);
@@ -354,7 +339,6 @@ void Scott_e_Task(void *pvParameters)
             Log_Report(Tool_2);
             Log_Report(armingSw);
             Log_Report(eStopRc);
-            Log_Report(motorSelectLog);
 
             break;
         case fmode_disarming:
@@ -423,7 +407,6 @@ void Scott_e_Task(void *pvParameters)
             Gpio_TogglePin(HEARTBEAT);
             heartbeat_counter = 0;
         }
-
 
         vTaskDelayUntil(&xLastWakeTime, LOOP_TIME);
 
@@ -536,12 +519,8 @@ void Scott_E_SpToSaber(MaintaskParams_t *param, FlightMode_t mode)
     param->motors.drive_m2   = drive - turn;
     param->motors.tool_yaw   = param->setpoint->channel[3]; //tool 
     param->armingSwithchStateRc = param->setpoint->channel[4]; //gear
-
-    //param->motors.tool_2     = param->setpoint->channel[5]; //Tool2 
-    motorSelect = param->setpoint->channel[5]; //Tool2 
-
+    param->motors.tool_2     = param->setpoint->channel[5]; //Tool2 
     param->motors.tool_1     = param->setpoint->channel[6]; //tool 1 
-    
     param->eStopRcState      = param->setpoint->channel[7]; //aux 3
     
 
